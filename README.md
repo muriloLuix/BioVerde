@@ -65,6 +65,7 @@ O projeto será desenvolvido com as seguintes tecnologias:
 👩‍💻 **Carlos Bandeira**  
 👩‍💻 **André Laurindo**  
 👩‍💻 **Leonardo Oliveira**  
+👩‍💻 **Guilherme Anholeto** 
 
 Se deseja contribuir com o projeto, sinta-se à vontade para abrir um pull request! 🚀
 
