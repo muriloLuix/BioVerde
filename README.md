@@ -60,7 +60,11 @@ O projeto será desenvolvido com as seguintes tecnologias:
 
 ## 🤝 Contribuidores
 👨‍💻 **Murilo Luiz Jaboinski**  
-👩‍💻 **[Outros Integrantes da Equipe]**  
+👩‍💻 **Fernando Kotinda**  
+👩‍💻 **Ana Beatriz da Costa Silva**  
+👩‍💻 **Carlos Bandeira**  
+👩‍💻 **André Laurindo**  
+👩‍💻 **Leonardo Oliveira**  
 
 Se deseja contribuir com o projeto, sinta-se à vontade para abrir um pull request! 🚀
 
