@@ -1,7 +1,9 @@
+import LoginPage from "./LoginPage";
+
 function App() {
   return (
     <>
-      <p className="text-xl font-medium">Os componentes serão colocados aqui</p>
+      <LoginPage></LoginPage> {/*Pagina de Login*/}
     </>
   );
 }
