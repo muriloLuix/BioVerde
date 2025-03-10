@@ -3,6 +3,29 @@
 
 @import "tailwindcss";
 
-.text-shadow {
+@theme {
+
+    --color-cinzaClaro: #DAD7CD;
+    --color-verdeClaro: #A3B18A;
+    --color-verdeMedio: #588157;
+    --color-verdeEscuro: #3A5A40;
+    --color-verdeEscuroForte: #344E41;
+    --color-verdePigmento: #4CAF50;
+    --color-verdeGrama: #2E7D32;
+    --color-canela: #8D6E63;
+    --color-laranja: #FF9800;
+    --color-cinza: #D7CCC8;
+    --color-brancoSal: #FAFAFA;
+
+}
+
+.shadow-title {
     text-shadow: 0px 10px 8px #00000040;
+}
+.shadow-text {
+    text-shadow: 1px 2px 0px #000000bf;
+}
+
+.sombra-login {
+    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.344);
 }
