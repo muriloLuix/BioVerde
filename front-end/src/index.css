@@ -25,7 +25,6 @@
 .shadow-text {
     text-shadow: 1px 2px 0px #000000bf;
 }
-
-.sombra-login {
-    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.344);
+.sombra {
+    box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.289);
 }

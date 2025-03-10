@@ -25,7 +25,8 @@ export default function LoginForm() {
             </div>
             <a href="#" className="font-[kufam] text-sm text-gray-300 hover:underline italic">Esqueceu a senha?</a>
           </div>
-          <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 m-auto p-2 rounded text-white font-[koulen] hover:bg-verdeGrama transition text-2xl">ENTRAR</button>
+          
+          <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 m-auto p-2 rounded text-white font-[koulen] hover:bg-verdeGrama transition text-2xl sombra">ENTRAR</button>
         </form>
     );
 }
