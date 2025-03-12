@@ -6,7 +6,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         koulen: ['Koulen', 'sans-serif'], 
-        kufam: ['Kufam', 'sans-serif'], 
+        open_sans: ['Open Sans', 'sans-serif'], 
+        bebas_neue: ['Bebas Neue', 'sans-serif'],
       },
     },
   },
