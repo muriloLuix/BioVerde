@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect  } from "react";
+import axios from "axios";
 import Logo from "../components/Logo"
 import InstructionsLogin from "../components/InstructionsLogin"
 
@@ -36,6 +37,28 @@ export default function RecoverPassword() {
 
 function EmailInput({ onNext }: StepProps) {
     const [email, setEmail] = useState("");
+    const [mensagem, setMensagem] = useState("");
+
+    const verificarEmail = async () => {
+
+      if (!email) {
+        setMensagem("Por favor, insira um e-mail.");
+        return;
+      }
+
+      try {
+          //Aqui estou mandando o email para o back-end verificar se o email existe no banco de dados
+          const response = await axios.post("http://localhost/bioverde-backend/api/verificar_email.php", { email });
+          if (response.data.success) {
+              setMensagem("Código enviado para seu e-mail!");
+              onNext();
+          } else {
+              setMensagem("E-mail não cadastrado.");
+          }
+      } catch {
+          setMensagem("Erro ao conectar com o servidor.");
+      }
+    };
   
     return (
       <div className="flex flex-col items-start gap-5">
@@ -50,13 +73,41 @@ function EmailInput({ onNext }: StepProps) {
               className="p-2 rounded text-black bg-brancoSal w-full"
             />
         </div>
-        <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={onNext}>Enviar Código</button>
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+        <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={verificarEmail}>Enviar Código</button>
       </div>
     );
 }
 
 function CodigoInput({ onNext, onBack }: StepProps) {
     const [codigo, setCodigo] = useState("");
+    const [mensagem, setMensagem] = useState("");
+    const [timer, setTimer] = useState(0);
+
+    useEffect(() => {
+      if (timer > 0) {
+          const interval = setInterval(() => {
+              setTimer((prev) => prev - 1);
+          }, 1000);
+          return () => clearInterval(interval);
+      }
+    }, [timer]);
+
+    const verificarCodigo = async () => { 
+
+      if (!codigo) {
+        setMensagem("Por favor, insira o código de verificação.");
+        return;
+      } else {
+        onNext();
+      }
+
+    }
+
+    const reenviarCodigo = () => {
+      setTimer(60); // Inicia o timer de 60 segundos
+      // Aqui você pode chamar a API para enviar um novo código
+    };
     
     return (
       <div className="flex flex-col items-start gap-5">
@@ -72,9 +123,19 @@ function CodigoInput({ onNext, onBack }: StepProps) {
               onChange={(e) => setCodigo(e.target.value)}
               className="p-2 rounded text-black bg-brancoSal w-full"
             />
-            <p>Reenviar Código</p>
+            <button 
+              className={`w-[155px] text-start ${timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-300 cursor-pointer hover:underline'}`}
+              onClick={reenviarCodigo} 
+              disabled={timer > 0}
+              >{timer > 0 ? `Reenviar Código (${timer}s)` : "Reenviar Código"}
+            </button>
         </div>
-        <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={onNext}>Validar Código</button>
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+        <button 
+          className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" 
+          onClick={verificarCodigo} 
+          >Validar Código
+        </button>
         <p>Se não encontrar o e-mail na sua caixa de entrada verifique a pasta de spam</p>
       </div>
     );
@@ -86,7 +147,7 @@ function NovaSenhaInput({ onNext }: StepProps) {
 
     return (
     <div className="flex flex-col gap-5">
-        <h2 className="font-[open_sans] text-lg shadow-text">Crie um nova senha:</h2> 
+        <h2 className="font-[open_sans] text-lg shadow-text">Crie um nova senha</h2> 
         <p >Digite sua nova senha e confirme:</p>
         <input 
         type="password" 
