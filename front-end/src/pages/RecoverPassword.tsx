@@ -1,7 +1,9 @@
 import { useState, useEffect  } from "react";
-import axios from "axios";
+import { Link } from "react-router-dom";
+// import axios from "axios"; //Descomentar quando for usar o axios
 import Logo from "../components/Logo"
 import InstructionsLogin from "../components/InstructionsLogin"
+import { Eye, EyeOff } from "lucide-react";
 
 type StepProps = {
     onNext: () => void;
@@ -45,19 +47,21 @@ function EmailInput({ onNext }: StepProps) {
         setMensagem("Por favor, insira um e-mail.");
         return;
       }
+      
+      onNext();// Apenas enquanto o back-end não está pronto, quando estiver remover essa linha e descomentar as linhas de baixo
 
-      try {
-          //Aqui estou mandando o email para o back-end verificar se o email existe no banco de dados
-          const response = await axios.post("http://localhost/bioverde-backend/api/verificar_email.php", { email });
-          if (response.data.success) {
-              setMensagem("Código enviado para seu e-mail!");
-              onNext();
-          } else {
-              setMensagem("E-mail não cadastrado.");
-          }
-      } catch {
-          setMensagem("Erro ao conectar com o servidor.");
-      }
+      // try {
+      //     //Aqui estou mandando o email para o back-end verificar se o email existe no banco de dados
+      //     const response = await axios.post("http://localhost/bioverde-backend/api/verificar_email.php", { email });
+      //     if (response.data.success) {
+      //         setMensagem("Código enviado para seu e-mail!");
+      //         onNext();
+      //     } else {
+      //         setMensagem("E-mail não cadastrado.");
+      //     }
+      // } catch {
+      //     setMensagem("Erro ao conectar com o servidor.");
+      // }
     };
   
     return (
@@ -144,26 +148,66 @@ function CodigoInput({ onNext, onBack }: StepProps) {
 function NovaSenhaInput({ onNext }: StepProps) {
     const [senha, setSenha] = useState("");
     const [confirmarSenha, setConfirmarSenha] = useState("");
+    const [mensagem, setMensagem] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+
+    const redefinirSenha = async () => {
+
+      if(senha === confirmarSenha) {
+        //Aqui ficará a logica para verificar qual email esta sendo feito a troca de senha e então alterar
+        setMensagem("");
+        onNext();
+      } else {
+        setMensagem("As Senhas devem ser iguais.");
+      }
+    }
 
     return (
     <div className="flex flex-col gap-5">
         <h2 className="font-[open_sans] text-lg shadow-text">Crie um nova senha</h2> 
         <p >Digite sua nova senha e confirme:</p>
-        <input 
-        type="password" 
-        placeholder="Nova Senha" 
-        value={senha} 
-        onChange={(e) => setSenha(e.target.value)}
-        className="p-2 rounded text-black bg-brancoSal w-full"
-        />
-        <input 
-        type="password" 
-        placeholder="Confirme a Nova Senha" 
-        value={confirmarSenha} 
-        onChange={(e) => setConfirmarSenha(e.target.value)}
-        className="p-2 rounded text-black bg-brancoSal w-full"
-        />
-        <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={onNext}>Redefinir Senha</button>
+
+        <div className="relative">
+          <input
+          type={showPassword ? "text" : "password"}
+          placeholder="Nova Senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          className="p-2 rounded text-black bg-brancoSal w-full"
+          />
+          {/* Botão de Mostrar/Ocultar Senha */}
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        <div className="relative">
+          <input
+          type={showPassword ? "text" : "password"}
+          placeholder="Confirme a Nova Senha"
+          value={confirmarSenha}
+          onChange={(e) => setConfirmarSenha(e.target.value)}
+          className="p-2 rounded text-black bg-brancoSal w-full"
+          />
+          {/* Botão de Mostrar/Ocultar Senha */}
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+
+        <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={redefinirSenha}>Redefinir Senha</button>
+
+        <Link to={"/"} className="text-gray-300 cursor-pointer hover:underline"> <i className="fa-solid fa-arrow-left"></i> Voltar para o login</Link>
     </div>
     );
 }

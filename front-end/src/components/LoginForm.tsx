@@ -4,7 +4,6 @@ import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginForm() {
-  const [user, setUser] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +12,6 @@ export default function LoginForm() {
     e.preventDefault();
     try {
         const response = await axios.post("http://localhost/back-end/login/login.php", {
-            user,
             email,
             password
         });
@@ -32,11 +30,6 @@ export default function LoginForm() {
 
     return (
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="user" className="font-[open_sans] text-lg shadow-text">Usuário:</label>
-            <input type="text" id="user" placeholder="Usuário" value={user} onChange={(e) => setUser(e.target.value)} className="p-2 rounded text-black bg-brancoSal" />
-          </div>
 
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="font-[open_sans] text-lg shadow-text">Email:</label>
