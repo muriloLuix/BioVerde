@@ -12,16 +12,23 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const response = await axios.post("http://localhost/bioverde-backend/api/login.php", {
+        const response = await axios.post("http://localhost/back-end/login/login.php", {
             user,
             email,
             password
         });
-        alert(response.data.message);
-    } catch  {
+
+        if (response.data.success) {
+            alert("Login realizado com sucesso!");
+            console.log("Usuário:", response.data.user);
+        } else {
+            alert(response.data.message);
+        }
+    } catch {
         alert("Erro ao conectar com o servidor.");
     }
-  };
+};
+
 
     return (
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
