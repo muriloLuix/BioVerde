@@ -77,7 +77,7 @@ function EmailInput({ onNext }: StepProps) {
               className="p-2 rounded text-black bg-brancoSal w-full"
             />
         </div>
-        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>} {/*Mensagem para erros*/}
         <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={verificarEmail}>Enviar Código</button>
       </div>
     );
@@ -134,7 +134,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
               >{timer > 0 ? `Reenviar Código (${timer}s)` : "Reenviar Código"}
             </button>
         </div>
-        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>} {/*Mensagem para erros*/}
         <button 
           className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" 
           onClick={verificarCodigo} 
@@ -153,7 +153,9 @@ function NovaSenhaInput({ onNext }: StepProps) {
 
     const redefinirSenha = async () => {
 
-      if(senha === confirmarSenha) {
+      if (!senha || !confirmarSenha) {  
+        setMensagem("Por favor, insira a nova senha nos dois campos.");
+      } else if(senha === confirmarSenha) {
         //Aqui ficará a logica para verificar qual email esta sendo feito a troca de senha e então alterar
         setMensagem("");
         onNext();
@@ -203,7 +205,7 @@ function NovaSenhaInput({ onNext }: StepProps) {
           </button>
         </div>
 
-        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>}
+        {mensagem && <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>} {/*Mensagem para erros*/}
 
         <button className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra" onClick={redefinirSenha}>Redefinir Senha</button>
 
