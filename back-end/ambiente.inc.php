@@ -1,5 +1,4 @@
 <?php
-
 // Configuração do banco de dados
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
@@ -11,9 +10,7 @@ $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 // Verificar conexão
 if ($conn->connect_error) {
-    die("Falha na conexão: " . $conn->connect_error);
-} 
-
-echo "Conexão bem-sucedida!";
+    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados"]));
+}
 
 ?>

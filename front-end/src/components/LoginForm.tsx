@@ -11,10 +11,12 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const response = await axios.post("http://localhost/back-end/login/login.php", {
-            email,
-            password
-        });
+      const response = await axios.post(
+        "http://localhost/bioverde/back-end/login/login.php",
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      
 
         if (response.data.success) {
             alert("Login realizado com sucesso!");
