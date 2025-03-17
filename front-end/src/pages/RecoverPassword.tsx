@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 // import axios from "axios"; //Descomentar quando for usar o axios
 import Logo from "../components/Logo";
@@ -58,10 +58,16 @@ export default function RecoverPassword() {
 function EmailInput({ onNext }: StepProps) {
   const [email, setEmail] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    emailInputRef.current?.focus();
+  }, []);
 
   const verificarEmail = async () => {
     if (!email) {
       setMensagem("Por favor, insira um e-mail.");
+      emailInputRef.current?.focus();
       return;
     }
 
@@ -92,6 +98,7 @@ function EmailInput({ onNext }: StepProps) {
         </p>
         <input
           type="email"
+          ref={emailInputRef}
           placeholder="Seu e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -118,6 +125,12 @@ function CodigoInput({ onNext, onBack }: StepProps) {
   const [codigo, setCodigo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [timer, setTimer] = useState(0);
+  const codeInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    codeInputRef.current?.focus();
+    enviarCodigo();
+  }, []);
 
   useEffect(() => {
     if (timer > 0) {
@@ -131,13 +144,13 @@ function CodigoInput({ onNext, onBack }: StepProps) {
   const verificarCodigo = async () => {
     if (!codigo) {
       setMensagem("Por favor, insira o código de verificação.");
-      return;
+      codeInputRef.current?.focus();
     } else {
       onNext();
     }
   };
 
-  const reenviarCodigo = () => {
+  const enviarCodigo = () => {
     setTimer(60); // Inicia o timer de 60 segundos
     // Aqui você pode chamar a API para enviar um novo código
   };
@@ -157,6 +170,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
         </p>
         <input
           type="text"
+          ref={codeInputRef}
           placeholder="Código"
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
@@ -168,7 +182,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
               ? "text-gray-400 cursor-not-allowed"
               : "text-gray-300 cursor-pointer hover:underline"
           }`}
-          onClick={reenviarCodigo}
+          onClick={enviarCodigo}
           disabled={timer > 0}
         >
           {timer > 0 ? `Reenviar Código (${timer}s)` : "Reenviar Código"}
@@ -199,16 +213,23 @@ function NovaSenhaInput({ onNext }: StepProps) {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const newPasswordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    newPasswordInputRef.current?.focus();
+  }, []);
 
   const redefinirSenha = async () => {
     if (!senha || !confirmarSenha) {
       setMensagem("Por favor, insira a nova senha nos dois campos.");
+      newPasswordInputRef.current?.focus();
     } else if (senha === confirmarSenha) {
       //Aqui ficará a logica para verificar qual email esta sendo feito a troca de senha e então alterar
       setMensagem("");
       onNext();
     } else {
       setMensagem("As Senhas devem ser iguais.");
+      newPasswordInputRef.current?.focus();
     }
   };
 
@@ -221,6 +242,7 @@ function NovaSenhaInput({ onNext }: StepProps) {
       <div className="relative">
         <input
           type={showPassword ? "text" : "password"}
+          ref={newPasswordInputRef}
           placeholder="Nova Senha"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
@@ -257,7 +279,6 @@ function NovaSenhaInput({ onNext }: StepProps) {
           {mensagem}
         </p>
       )}{" "}
-      {/*Mensagem para erros*/}
       <button
         className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
         onClick={redefinirSenha}

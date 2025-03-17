@@ -1,20 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
+// import * as Form from "@radix-ui/react-form";
 import { Form } from "radix-ui";
 import axios from "axios";
 
-import Password from "./password";
+import Password from "./Password";
 import LinksForm from "./LinksForm";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isChecked, setIsChecked] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    emailInputRef.current?.focus();
+  }, []);
 
   const handleCheckbox = () => setIsChecked(!isChecked);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let hasError = false;
+
+    if (emailError !== "" || passwordError !== "") {hasError = true;} 
+
+    if (password.length < 6) { 
+      setPasswordError("A senha deve ter pelo menos 6 caracteres.");
+      passwordInputRef.current?.focus();
+      hasError = true
+    } 
+
+    if (!email) { 
+      setEmailError("O e-mail é obrigatório."); 
+      emailInputRef.current?.focus();
+      hasError = true;
+    } 
+    
+    if (hasError) return;
+
+
     try {
       const response = await axios.post(
         "http://localhost/bioverde/back-end/login/login.php",
@@ -54,12 +83,27 @@ export default function LoginForm() {
           <input
             type="email"
             id="email"
+            ref={emailInputRef}
             placeholder="E-mail"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className=" text-black bg-brancoSal p-2 w-full rounded outline-hidden"
+            onChange={(e) => {
+              const value = e.target.value;
+              setEmail(value);
+    
+              if (!value) {
+                setEmailError("O e-mail é obrigatório.");
+              } else {
+                setEmailError(""); 
+              }
+            }}
+            className="text-black bg-brancoSal p-2 w-full rounded outline-hidden"
           />
         </Form.Control>
+        {/* Mensagens de erro para o email */}
+        {emailError && <span className="text-red-500 text-sm">{emailError}</span>}
+        <Form.Message match="typeMismatch" className="text-red-500 text-sm">
+          Insira um e-mail válido.
+        </Form.Message>
       </Form.Field>
       <Form.Field name="password">
         <Form.Label
@@ -69,8 +113,10 @@ export default function LoginForm() {
           Senha
         </Form.Label>
         <Form.Control asChild>
-          <Password setPassword={setPassword} passwordValue={password} />
+          <Password setPassword={setPassword} setPasswordError={setPasswordError} passwordValue={password} passwordInputRef={passwordInputRef} />
         </Form.Control>
+        {/* Mensagem de erro para a senha */}
+        {passwordError && <span className="text-red-500 text-sm">{passwordError}</span>}
       </Form.Field>
       <Form.Field
         name="link"
