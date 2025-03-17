@@ -1,12 +1,17 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+
+import { Form } from "radix-ui";
 import axios from "axios";
-import { Eye, EyeOff } from "lucide-react";
+
+import Password from "./password";
+import LinksForm from "./LinksForm";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
+
+  const handleCheckbox = () => setIsChecked(!isChecked);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,72 +34,63 @@ export default function LoginForm() {
   };
 
   return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="font-[open_sans] text-lg shadow-text">
-          Email:
-        </label>
-        <input
-          type="email"
-          id="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-2 rounded text-black bg-brancoSal "
-        />
-      </div>
-
-      <div className="flex flex-col gap-1 relative">
-        <label
-          htmlFor="password"
-          className="font-[open_sans] text-lg shadow-text"
+    <Form.Root
+      className="h-full box-border p-4 flex flex-col gap-10 "
+      onSubmit={handleSubmit}
+    >
+      <Form.Field name="title" className="w-full flex justify-center">
+        <Form.Label className="font-[koulen] text-4xl md:text-5xl text-white shadow-title tracking-wide">
+          Login
+        </Form.Label>
+      </Form.Field>
+      <Form.Field name="email">
+        <Form.Label
+          htmlFor="email"
+          className="font-[open_sans] text-base md:text-lg shadow-text"
         >
-          Senha:
-        </label>
-        <div className="relative">
+          Email
+        </Form.Label>
+        <Form.Control asChild>
           <input
-            type={showPassword ? "text" : "password"}
-            id="password"
-            placeholder="Senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-2 rounded text-black bg-brancoSal w-full pr-10"
+            type="email"
+            id="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className=" text-black bg-brancoSal p-2 w-full rounded outline-hidden"
           />
-          {/* Botão de Mostrar/Ocultar Senha */}
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center mt-1">
-        <div className="flex gap-1 items-center">
-          <input type="checkbox" name="remember" id="remember" />
-          <label
-            htmlFor="remember"
-            className="font-[open_sans] text-sm text-gray-300"
-          >
-            Lembrar-me
-          </label>
-        </div>
-        <Link
-          to="/recuperar-senha"
-          className="font-[open_sans] text-sm text-gray-300 hover:underline italic"
+        </Form.Control>
+      </Form.Field>
+      <Form.Field name="password">
+        <Form.Label
+          htmlFor="password"
+          className="font-[open_sans] text-base md:text-lg shadow-text"
         >
-          Esqueceu a senha?
-        </Link>
-      </div>
-
-      <button
-        type="submit"
-        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 m-auto p-2 rounded text-white font-[koulen] hover:bg-verdeGrama transition text-2xl sombra"
+          Senha
+        </Form.Label>
+        <Form.Control asChild>
+          <Password setPassword={setPassword} passwordValue={password} />
+        </Form.Control>
+      </Form.Field>
+      <Form.Field
+        name="link"
+        className="w-full flex justify-between items-center"
       >
-        ENTRAR
-      </button>
-    </form>
+        <Form.Control asChild>
+          <LinksForm handleCheckbox={handleCheckbox} />
+        </Form.Control>
+      </Form.Field>
+      <Form.Submit
+        asChild
+        className="flex justify-center items-center h-1/8 w-full"
+      >
+        <button
+          type="submit"
+          className="font-[koulen] text-xl md:text-2xl text-white bg-verdePigmento cursor-pointer tracking-wide rounded hover:bg-verdeGrama transition sombra"
+        >
+          Entrar
+        </button>
+      </Form.Submit>
+    </Form.Root>
   );
 }
