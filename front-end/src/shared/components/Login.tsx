@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 
-// import * as Form from "@radix-ui/react-form";
 import { Form } from "radix-ui";
 import axios from "axios";
 
 import Password from "./Password";
-import LinksForm from "./LinksForm";
+import FormOptions from "./FormOptions";
 
-export default function LoginForm() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isChecked, setIsChecked] = useState(false);
@@ -27,22 +26,23 @@ export default function LoginForm() {
 
     let hasError = false;
 
-    if (emailError !== "" || passwordError !== "") {hasError = true;} 
+    if (emailError !== "" || passwordError !== "") {
+      hasError = true;
+    }
 
-    if (password.length < 6) { 
-      setPasswordError("A senha deve ter pelo menos 6 caracteres.");
+    if (password.length < 6) {
+      setPasswordError("A senha deve ter pelo menos 6 caracteres");
       passwordInputRef.current?.focus();
-      hasError = true
-    } 
+      hasError = true;
+    }
 
-    if (!email) { 
-      setEmailError("O e-mail é obrigatório."); 
+    if (!email) {
+      setEmailError("O e-mail é obrigatório");
       emailInputRef.current?.focus();
       hasError = true;
-    } 
-    
-    if (hasError) return;
+    }
 
+    if (hasError) return;
 
     try {
       const response = await axios.post(
@@ -58,13 +58,24 @@ export default function LoginForm() {
         alert(response.data.message);
       }
     } catch {
-      alert("Erro ao conectar com o servidor.");
+      alert("Erro ao conectar com o servidor");
+    }
+  };
+
+  const handleError = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setPassword(value);
+
+    if (value.length < 6) {
+      setPasswordError("A senha deve ter pelo menos 6 caracteres.");
+    } else {
+      setPasswordError("");
     }
   };
 
   return (
     <Form.Root
-      className="h-full box-border p-4 flex flex-col gap-10 "
+      className="h-full box-border px-4 flex flex-col justify-center gap-10 "
       onSubmit={handleSubmit}
     >
       <Form.Field name="title" className="w-full flex justify-center">
@@ -75,9 +86,18 @@ export default function LoginForm() {
       <Form.Field name="email">
         <Form.Label
           htmlFor="email"
-          className="font-[open_sans] text-base md:text-lg shadow-text"
+          className="font-[open_sans] text-base flex justify-between items-center"
         >
-          Email
+          <span className="shadow-text md:text-lg">Email</span>
+          {/* Mensagens de erro para o email */}
+          {emailError && (
+            <Form.Message className="text-red-500 text-xs">
+              {emailError}
+            </Form.Message>
+          )}
+          <Form.Message match="typeMismatch" className="text-red-500 text-xs">
+            Insira um e-mail válido
+          </Form.Message>
         </Form.Label>
         <Form.Control asChild>
           <input
@@ -89,46 +109,51 @@ export default function LoginForm() {
             onChange={(e) => {
               const value = e.target.value;
               setEmail(value);
-    
+
               if (!value) {
-                setEmailError("O e-mail é obrigatório.");
+                setEmailError("O e-mail é obrigatório");
               } else {
-                setEmailError(""); 
+                setEmailError("");
               }
             }}
             className="text-black bg-brancoSal p-2 w-full rounded outline-hidden"
           />
         </Form.Control>
-        {/* Mensagens de erro para o email */}
-        {emailError && <span className="text-red-500 text-sm">{emailError}</span>}
-        <Form.Message match="typeMismatch" className="text-red-500 text-sm">
-          Insira um e-mail válido.
-        </Form.Message>
       </Form.Field>
       <Form.Field name="password">
         <Form.Label
           htmlFor="password"
-          className="font-[open_sans] text-base md:text-lg shadow-text"
+          className="font-[open_sans] text-base flex justify-between items-center"
         >
-          Senha
+          <span className="md:text-lg shadow-text">Senha</span>
+          {/* Mensagem de erro para a senha */}
+          {passwordError && (
+            <Form.Message className="text-red-500 text-xs">
+              {passwordError}
+            </Form.Message>
+          )}
         </Form.Label>
         <Form.Control asChild>
-          <Password setPassword={setPassword} setPasswordError={setPasswordError} passwordValue={password} passwordInputRef={passwordInputRef} />
+          <Password
+            passwordFunction={(e) => handleError(e)}
+            passwordValue={password}
+            passwordInputRef={passwordInputRef}
+            passwordPlaceholder="Insira sua senha"
+            passwordId="password"
+          />
         </Form.Control>
-        {/* Mensagem de erro para a senha */}
-        {passwordError && <span className="text-red-500 text-sm">{passwordError}</span>}
       </Form.Field>
       <Form.Field
         name="link"
         className="w-full flex justify-between items-center"
       >
         <Form.Control asChild>
-          <LinksForm handleCheckbox={handleCheckbox} />
+          <FormOptions handleCheckbox={handleCheckbox} />
         </Form.Control>
       </Form.Field>
       <Form.Submit
         asChild
-        className="flex justify-center items-center h-1/8 w-full"
+        className="flex justify-center items-center h-1/10 w-full"
       >
         <button
           type="submit"

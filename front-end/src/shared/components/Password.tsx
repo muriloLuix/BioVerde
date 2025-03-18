@@ -2,33 +2,31 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 type PasswordProps = {
-  setPassword: React.Dispatch<React.SetStateAction<string>>;
-  setPasswordError:React.Dispatch<React.SetStateAction<string>>;
   passwordValue: string;
-  passwordInputRef: React.RefObject<HTMLInputElement | null>;
+  passwordId: string;
+  passwordPlaceholder: string;
+  passwordInputRef?: React.RefObject<HTMLInputElement | null>;
+  passwordFunction: React.ChangeEventHandler<HTMLInputElement> | undefined;
 };
 
-const Password = ({ setPassword, setPasswordError, passwordValue, passwordInputRef }: PasswordProps) => {
+const Password = ({
+  passwordValue,
+  passwordId,
+  passwordPlaceholder,
+  passwordInputRef,
+  passwordFunction,
+}: PasswordProps) => {
   const [isHidden, setIsHidden] = useState(false);
 
   return (
     <div className="relative">
       <input
         type={isHidden ? "text" : "password"}
-        id="password"
+        id={passwordId}
         ref={passwordInputRef}
-        placeholder="Senha"
+        placeholder={passwordPlaceholder}
         value={passwordValue}
-        onChange={(e) => {
-          const value = e.target.value;
-          setPassword(value);
-
-          if(value.length < 6) {
-            setPasswordError("A senha deve ter pelo menos 6 caracteres."); 
-          } else {
-            setPasswordError("");
-          }
-        }}
+        onChange={passwordFunction}
         className="p-2 rounded text-black bg-brancoSal w-full outline-hidden"
       />
       {/* Botão de Mostrar/Ocultar Senha */}

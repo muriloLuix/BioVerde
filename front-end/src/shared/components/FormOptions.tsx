@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import Remember, { RememberProps } from "./Remember";
 
-const LinksForm = ({ handleCheckbox }: RememberProps) => {
+const FormOptions = ({ handleCheckbox }: RememberProps) => {
   return (
     <>
       <Remember handleCheckbox={handleCheckbox} />
@@ -16,4 +16,4 @@ const LinksForm = ({ handleCheckbox }: RememberProps) => {
   );
 };
 
-export default LinksForm;
+export default FormOptions;

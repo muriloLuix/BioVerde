@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-// import axios from "axios"; //Descomentar quando for usar o axios
-import Logo from "../components/Logo";
-import InstructionsLogin from "../components/InstructionsLogin";
-import { Eye, EyeOff } from "lucide-react";
 
-type StepProps = {
+// import axios from "axios"; //Descomentar quando for usar o axios
+
+import { Logo, InstructionsLogin, Password } from "./../shared";
+
+export type StepProps = {
   onNext: () => void;
   onBack: () => void;
 };
@@ -15,21 +15,21 @@ export default function RecoverPassword() {
 
   return (
     <div
-      className="h-screen bg-cover bg-center flex items-center justify-center"
+      className=" md:h-screen bg-cover bg-center flex items-center justify-center"
       style={{ backgroundImage: "url('/fundo-login.png')" }}
     >
-      <div className="flex max-w-4xl m-5 sombra rounded-2xl">
+      <div className="flex-col md:flex md:flex-row max-w-4xl m-5 sombra rounded-2xl">
         {/* Informações e dicas */}
-        <div className="w-1/2 bg-brancoSal rounded-2xl rounded-r-none p-6">
+        <div className="w-full rounded-b-none md:rounded-bl-2xl md:w-1/2 bg-brancoSal rounded-2xl md:rounded-r-none p-6">
           <Logo />
           <InstructionsLogin />
         </div>
         {/* Formulário de Recuperação de senha */}
-        <div className="w-1/2 p-6 text-white rounded-2xl rounded-l-none bg-verdeEscuroForte border-l border-black">
-          <h2 className="shadow-title font-[koulen] text-5xl text-center tracking-wide text-white mt-[22px] mb-9">
-            RECUPERAR SENHA
-          </h2>
-          <div>
+        <div className="w-full rounded-t-none md:rounded-t-2xl md:w-1/2 p-6 text-white rounded-2xl md:rounded-l-none bg-verdeEscuroForte border-l border-black">
+          <div className="h-full box-border py-10 flex flex-col gap-10">
+            <span className="font-[koulen] text-4xl text-white text-center tracking-wide shadow-title">
+              RECUPERAR SENHA
+            </span>
             {etapa === 1 && (
               <EmailInput
                 onNext={() => setEtapa(2)}
@@ -88,35 +88,33 @@ function EmailInput({ onNext }: StepProps) {
   };
 
   return (
-    <div className="flex flex-col items-start gap-5">
-      <h2 className="font-[open_sans] text-lg shadow-text">
-        Redefina a senha em duas Etapas
-      </h2>
-      <div>
-        <p className="mb-1">
-          Digite seu e-mail para receber um código de recuperação:
-        </p>
+    <div className="h-full box-border p-6 flex flex-col justify-center ">
+      <div className="h-full flex flex-col gap-8">
+        <span className="font-[open_sans] text-lg shadow-text">
+          Redefina a senha em duas Etapas
+        </span>
+        <span>Digite seu e-mail para receber um código de recuperação:</span>
         <input
           type="email"
           ref={emailInputRef}
-          placeholder="Seu e-mail"
+          placeholder="Insira seu e-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="p-2 rounded text-black bg-brancoSal w-full"
+          className="p-2 rounded text-black bg-brancoSal w-full outline-none"
         />
+        {mensagem && (
+          <p className="bg-corErro w-full p-3 text-center rounded-sm">
+            {mensagem}
+          </p>
+        )}
+        {/*Mensagem para erros*/}
+        <button
+          className="bg-verdePigmento cursor-pointer tracking-wide w-full h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-xl sombra"
+          onClick={verificarEmail}
+        >
+          Enviar Código
+        </button>
       </div>
-      {mensagem && (
-        <p className="bg-corErro w-full p-3 text-center rounded-sm">
-          {mensagem}
-        </p>
-      )}{" "}
-      {/*Mensagem para erros*/}
-      <button
-        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
-        onClick={verificarEmail}
-      >
-        Enviar Código
-      </button>
     </div>
   );
 }
@@ -159,7 +157,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
     <div className="flex flex-col items-start gap-5">
       <h2 className="font-[open_sans] text-lg shadow-text">Verificação</h2>
       <div className="flex flex-col gap-2">
-        <p className="mb-1">
+        <span className="mb-1">
           Digite o código de recuperação enviado ao seu e-mail.
           <p
             className="text-gray-300 cursor-pointer underline "
@@ -167,7 +165,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
           >
             Alterar
           </p>
-        </p>
+        </span>
         <input
           type="text"
           ref={codeInputRef}
@@ -192,7 +190,7 @@ function CodigoInput({ onNext, onBack }: StepProps) {
         <p className="bg-corErro w-full p-3 text-center rounded-sm">
           {mensagem}
         </p>
-      )}{" "}
+      )}
       {/*Mensagem para erros*/}
       <button
         className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
@@ -212,7 +210,6 @@ function NovaSenhaInput({ onNext }: StepProps) {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const newPasswordInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -235,50 +232,29 @@ function NovaSenhaInput({ onNext }: StepProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="font-[open_sans] text-lg shadow-text">
+      <span className="font-[open_sans] text-lg shadow-text">
         Crie um nova senha
-      </h2>
+      </span>
       <p>Digite sua nova senha e confirme:</p>
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          ref={newPasswordInputRef}
-          placeholder="Nova Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          className="p-2 rounded text-black bg-brancoSal w-full"
-        />
-        {/* Botão de Mostrar/Ocultar Senha */}
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-        >
-          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-        </button>
-      </div>
-      <div className="relative">
-        <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Confirme a Nova Senha"
-          value={confirmarSenha}
-          onChange={(e) => setConfirmarSenha(e.target.value)}
-          className="p-2 rounded text-black bg-brancoSal w-full"
-        />
-        {/* Botão de Mostrar/Ocultar Senha */}
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-        >
-          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-        </button>
-      </div>
+      <Password
+        passwordId="new-password"
+        passwordInputRef={newPasswordInputRef}
+        passwordValue={senha}
+        passwordPlaceholder="Insira sua nova senha"
+        passwordFunction={(e) => setSenha(e.target.value)}
+      />
+      <Password
+        passwordId="confirm-password"
+        passwordInputRef={newPasswordInputRef}
+        passwordValue={confirmarSenha}
+        passwordPlaceholder="Confirme sua nova senha"
+        passwordFunction={(e) => setConfirmarSenha(e.target.value)}
+      />
       {mensagem && (
         <p className="bg-corErro w-full p-3 text-center rounded-sm">
           {mensagem}
         </p>
-      )}{" "}
+      )}
       <button
         className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
         onClick={redefinirSenha}
@@ -286,8 +262,7 @@ function NovaSenhaInput({ onNext }: StepProps) {
         Redefinir Senha
       </button>
       <Link to={"/"} className="text-gray-300 cursor-pointer hover:underline">
-        {" "}
-        <i className="fa-solid fa-arrow-left"></i> Voltar para o login
+        <i className="fa-solid fa-arrow-left" /> Voltar para o login
       </Link>
     </div>
   );

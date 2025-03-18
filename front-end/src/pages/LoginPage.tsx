@@ -1,6 +1,4 @@
-import Logo from "../components/Logo";
-import InstructionsLogin from "../components/InstructionsLogin";
-import LoginForm from "../components/LoginForm";
+import { InstructionsLogin, Login, Logo } from "./../shared";
 
 export default function LoginPage() {
   return (
@@ -16,7 +14,7 @@ export default function LoginPage() {
         </div>
         {/* Formulário de Login */}
         <div className="w-full rounded-t-none md:rounded-t-2xl md:w-1/2 p-6 text-white rounded-2xl md:rounded-l-none bg-verdeEscuroForte border-l border-black">
-          <LoginForm />
+          <Login />
         </div>
       </div>
     </div>
