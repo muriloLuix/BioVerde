@@ -12,6 +12,14 @@ export type StepProps = {
 
 export default function RecoverPassword() {
   const [etapa, setEtapa] = useState(1);
+  const [showPopup, setShowPopup] = useState(false);
+
+  const handleNewPassword = () => {
+    setShowPopup(true);
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 3000); 
+  };
 
   return (
     <div
@@ -44,13 +52,20 @@ export default function RecoverPassword() {
             )}
             {etapa === 3 && (
               <NovaSenhaInput
-                onNext={() => alert("Senha alterada!")}
+                onNext={handleNewPassword}
                 onBack={() => setEtapa(1)}
               />
             )}
           </div>
         </div>
       </div>
+
+      {/* Pop-up de confirmação */}
+      {showPopup && (
+        <div className="fixed bottom-10 right-10 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg">
+          Senha alterada com sucesso!
+        </div>
+      )}
     </div>
   );
 }
@@ -94,6 +109,7 @@ function EmailInput({ onNext }: StepProps) {
           Redefina a senha em duas Etapas
         </span>
         <span>Digite seu e-mail para receber um código de recuperação:</span>
+        
         <input
           type="email"
           ref={emailInputRef}
@@ -216,10 +232,13 @@ function NovaSenhaInput({ onNext }: StepProps) {
     newPasswordInputRef.current?.focus();
   }, []);
 
+
   const redefinirSenha = async () => {
     if (!senha || !confirmarSenha) {
       setMensagem("Por favor, insira a nova senha nos dois campos.");
       newPasswordInputRef.current?.focus();
+    } else if(senha.length < 6) {
+      setMensagem("A senha deve ter pelo menos 6 caracteres");
     } else if (senha === confirmarSenha) {
       //Aqui ficará a logica para verificar qual email esta sendo feito a troca de senha e então alterar
       setMensagem("");
@@ -245,7 +264,6 @@ function NovaSenhaInput({ onNext }: StepProps) {
       />
       <Password
         passwordId="confirm-password"
-        passwordInputRef={newPasswordInputRef}
         passwordValue={confirmarSenha}
         passwordPlaceholder="Confirme sua nova senha"
         passwordFunction={(e) => setConfirmarSenha(e.target.value)}

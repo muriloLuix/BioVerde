@@ -5,44 +5,25 @@ import axios from "axios";
 
 import Password from "./Password";
 import FormOptions from "./FormOptions";
+import Email from "./Email";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isChecked, setIsChecked] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  // const [emailError, setEmailError] = useState("");
+  // const [passwordError, setPasswordError] = useState("");
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCheckbox = () => setIsChecked(!isChecked);
 
   useEffect(() => {
     emailInputRef.current?.focus();
   }, []);
 
-  const handleCheckbox = () => setIsChecked(!isChecked);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    let hasError = false;
-
-    if (emailError !== "" || passwordError !== "") {
-      hasError = true;
-    }
-
-    if (password.length < 6) {
-      setPasswordError("A senha deve ter pelo menos 6 caracteres");
-      passwordInputRef.current?.focus();
-      hasError = true;
-    }
-
-    if (!email) {
-      setEmailError("O e-mail é obrigatório");
-      emailInputRef.current?.focus();
-      hasError = true;
-    }
-
-    if (hasError) return;
 
     try {
       const response = await axios.post(
@@ -62,17 +43,6 @@ export default function Login() {
     }
   };
 
-  const handleError = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setPassword(value);
-
-    if (value.length < 6) {
-      setPasswordError("A senha deve ter pelo menos 6 caracteres.");
-    } else {
-      setPasswordError("");
-    }
-  };
-
   return (
     <Form.Root
       className="h-full box-border px-4 flex flex-col justify-center gap-10 "
@@ -89,34 +59,20 @@ export default function Login() {
           className="font-[open_sans] text-base flex justify-between items-center"
         >
           <span className="shadow-text md:text-lg">Email</span>
-          {/* Mensagens de erro para o email */}
-          {emailError && (
-            <Form.Message className="text-red-500 text-xs">
-              {emailError}
-            </Form.Message>
-          )}
-          <Form.Message match="typeMismatch" className="text-red-500 text-xs">
+          <Form.Message className="text-red-500 text-xs" match="valueMissing">
+            O e-mail é obrigatório
+          </Form.Message>
+          <Form.Message className="text-red-500 text-xs" match="typeMismatch">
             Insira um e-mail válido
           </Form.Message>
         </Form.Label>
         <Form.Control asChild>
-          <input
-            type="email"
-            id="email"
-            ref={emailInputRef}
-            placeholder="E-mail"
-            value={email}
-            onChange={(e) => {
-              const value = e.target.value;
-              setEmail(value);
-
-              if (!value) {
-                setEmailError("O e-mail é obrigatório");
-              } else {
-                setEmailError("");
-              }
-            }}
-            className="text-black bg-brancoSal p-2 w-full rounded outline-hidden"
+        <Email 
+            emailId="email"
+            emailInputRef={emailInputRef}
+            emailValue={email}
+            emailPlaceholder="E-mail"
+            emailFunction={(e) => { setEmail(e.target.value); }}
           />
         </Form.Control>
       </Form.Field>
@@ -126,16 +82,16 @@ export default function Login() {
           className="font-[open_sans] text-base flex justify-between items-center"
         >
           <span className="md:text-lg shadow-text">Senha</span>
-          {/* Mensagem de erro para a senha */}
-          {passwordError && (
-            <Form.Message className="text-red-500 text-xs">
-              {passwordError}
-            </Form.Message>
-          )}
+          <Form.Message className="text-red-500 text-xs" match="valueMissing">
+            A senha é obrigatória.
+          </Form.Message>
+          <Form.Message className="text-red-500 text-xs" match="tooShort">
+            A senha deve ter pelo menos 8 caracteres.
+          </Form.Message>
         </Form.Label>
         <Form.Control asChild>
           <Password
-            passwordFunction={(e) => handleError(e)}
+            passwordFunction={(e) => setPassword(e.target.value)}
             passwordValue={password}
             passwordInputRef={passwordInputRef}
             passwordPlaceholder="Insira sua senha"

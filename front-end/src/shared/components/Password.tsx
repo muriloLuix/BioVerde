@@ -28,6 +28,8 @@ const Password = ({
         value={passwordValue}
         onChange={passwordFunction}
         className="p-2 rounded text-black bg-brancoSal w-full outline-hidden"
+        minLength={8}
+        required
       />
       {/* Botão de Mostrar/Ocultar Senha */}
       <button
