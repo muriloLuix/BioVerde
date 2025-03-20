@@ -1,6 +1,12 @@
-import { useState, } from "react";
+import { useState } from "react";
 
-import { Logo, InstructionsLogin, EmailRecoverPassword, CodeRecoverPassword, NewPassword } from "./../shared";
+import {
+  Logo,
+  InstructionsLogin,
+  EmailRecoverPassword,
+  CodeRecoverPassword,
+  NewPassword,
+} from "./../../shared";
 
 export type StepProps = {
   onNext: () => void;
@@ -15,7 +21,7 @@ export default function RecoverPassword() {
     setShowPopup(true);
     setTimeout(() => {
       setShowPopup(false);
-    }, 3000); 
+    }, 3000);
   };
 
   return (
@@ -35,22 +41,14 @@ export default function RecoverPassword() {
             <span className="font-[koulen] text-4xl text-white text-center tracking-wide shadow-title">
               RECUPERAR SENHA
             </span>
-            {etapa === 1 && (
-              <EmailRecoverPassword
-                onNext={() => setEtapa(2)}
-              />
-            )}
+            {etapa === 1 && <EmailRecoverPassword onNext={() => setEtapa(2)} />}
             {etapa === 2 && (
               <CodeRecoverPassword
                 onNext={() => setEtapa(3)}
                 onBack={() => setEtapa(1)}
               />
             )}
-            {etapa === 3 && (
-              <NewPassword
-                onNext={handleNewPassword}
-              />
-            )}
+            {etapa === 3 && <NewPassword onNext={handleNewPassword} />}
           </div>
         </div>
       </div>

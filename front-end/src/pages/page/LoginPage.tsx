@@ -1,4 +1,4 @@
-import { InstructionsLogin, Login, Logo } from "./../shared";
+import { InstructionsLogin, Login, Logo } from "../../shared";
 
 export default function LoginPage() {
   return (
