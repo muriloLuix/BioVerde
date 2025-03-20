@@ -30,7 +30,7 @@ if (!isset($data["email"]) || !isset($data["password"])) {
 $email = $conn->real_escape_string($data["email"]);
 $password = $data["password"];
 
-$sql = "SELECT usu_id, usu_nome, usu_senha FROM usuario WHERE usu_email = ?";
+$sql = "SELECT user_id, user_nome, user_senha FROM usuarios WHERE user_email = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -41,13 +41,13 @@ if ($res->num_rows > 0) {
     $userData = $res->fetch_assoc();
 
     // Verifica se a senha informada corresponde à armazenada no banco (usando MD5)
-    if (md5($password) === $userData["usu_senha"]) {
+    if (md5($password) === $userData["user_senha"]) {
         echo json_encode([
             "success" => true,
             "message" => "Login realizado com sucesso!",
             "user" => [
-                "id" => $userData["usu_id"],
-                "nome" => $userData["usu_nome"]
+                "id" => $userData["user_id"],
+                "nome" => $userData["user_nome"]
             ]
         ]);
     } else {

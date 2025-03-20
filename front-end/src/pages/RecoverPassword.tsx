@@ -85,20 +85,18 @@ function EmailInput({ onNext }: StepProps) {
       return;
     }
 
-    onNext(); // Apenas enquanto o back-end não está pronto, quando estiver remover essa linha e descomentar as linhas de baixo
-
-     try {
-         //Aqui estou mandando o email para o back-end verificar se o email existe no banco de dados
-         const response = await axios.post("http://localhost/bioverde/back-end/recuperar-senha/recuperar.senha.php", { email });
-         if (response.data.success) {
-             setMensagem("Código enviado para seu e-mail!");
-             onNext();
-         } else {
-             setMensagem("E-mail não cadastrado.");
-         }
-     } catch {
-         setMensagem("Erro ao conectar com o servidor.");
-     }
+    try {
+      const response = await axios.post("http://localhost/bioverde/back-end/recuperar-senha/recuperar.senha.php", { email });
+      if (response.data.success) {
+        setMensagem("Código enviado para seu e-mail!");
+        onNext();
+      } else {
+        setMensagem("E-mail não cadastrado.");
+      }
+    } catch (error) {
+      setMensagem("Erro ao conectar com o servidor.");
+      console.error(error);
+    }
   };
 
   return (
