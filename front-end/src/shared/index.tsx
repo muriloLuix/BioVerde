@@ -3,4 +3,9 @@ export { default as InstructionsLogin } from "./components/InstructionsLogin";
 export { default as Login } from "./components/Login";
 export { default as Logo } from "./components/Logo";
 export { default as Password } from "./components/Password";
+export { default as Email } from "./components/Email";
 export { default as Remember } from "./components/Remember";
+export { default as EmailRecoverPassword } from "./components/EmailRecoverPassword";
+export { default as CodeRecoverPassword } from "./components/CodeRecoverPassword";
+export { default as NewPassword } from "./components/NewPassword";
+

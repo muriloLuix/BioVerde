@@ -67,12 +67,12 @@ export default function Login() {
           </Form.Message>
         </Form.Label>
         <Form.Control asChild>
-        <Email 
-            emailId="email"
-            emailInputRef={emailInputRef}
-            emailValue={email}
-            emailPlaceholder="E-mail"
-            emailFunction={(e) => { setEmail(e.target.value); }}
+          <Email 
+              emailId="email"
+              emailInputRef={emailInputRef}
+              emailValue={email}
+              emailPlaceholder="E-mail"
+              emailFunction={(e) => { setEmail(e.target.value); }}
           />
         </Form.Control>
       </Form.Field>
