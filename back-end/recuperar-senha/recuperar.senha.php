@@ -1,4 +1,7 @@
 <?php
+
+include_once '../inc/ambiente.inc.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -6,8 +9,6 @@ require '../../vendor/phpmailer/phpmailer/src/Exception.php';
 require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
-
-include_once '../ambiente.inc.php';
 
 // Configurações de CORS
 header("Access-Control-Allow-Origin: *");
@@ -25,25 +26,58 @@ if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
 
-// Decodifica os dados JSON recebidos
-$data = json_decode(file_get_contents("php://input"), true);
+// Lê o corpo da requisição
+$rawData = file_get_contents("php://input");
+
+// Verifica se o corpo da requisição está vazio
+if (empty($rawData)) {
+    echo json_encode(["success" => false, "message" => "Nenhum dado recebido."]);
+    exit;
+}
+
+// Decodifica o JSON
+$data = json_decode($rawData, true);
 
 // Verifica se o e-mail foi enviado
 if (!isset($data["email"])) {
-    echo json_encode(["success" => false, "message" => "Campos obrigatórios não informados."]);
-    exit();
+    echo json_encode(["success" => false, "message" => "Campo 'email' não informado."]);
+    exit;
+}
+
+$email = $conn->real_escape_string($data["email"]);
+
+var_dump($data); // Para ver os dados recebidos
+var_dump($email); // Para ver se o email foi tratado corretamente
+die();
+
+
+// Verifica se houve erro na decodificação do JSON
+if (json_last_error() !== JSON_ERROR_NONE) {
+    echo json_encode(["success" => false, "message" => "Erro ao decodificar JSON: " . json_last_error_msg()]);
+    exit;
+}
+
+// Verifica se o e-mail foi enviado
+if (!isset($data["email"])) {
+    echo json_encode(["success" => false, "message" => "Campo 'email' não informado."]);
+    exit;
 }
 
 // Escapa o e-mail para prevenir SQL injection
 $email = $conn->real_escape_string($data["email"]);
 
+// Prepara e executa a query
 $sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
 $res = $conn->prepare($sql);
 $res->bind_param("s", $email);
 $res->execute();
+$res->store_result();
 
-echo $sql;
-exit;
+if ($res->num_rows > 0) {
+    echo json_encode(["success" => true, "message" => "Código enviado para seu e-mail!"]);
+} else {
+    echo json_encode(["success" => false, "message" => "E-mail não cadastrado."]);
+}
 
 if ($res) {
 

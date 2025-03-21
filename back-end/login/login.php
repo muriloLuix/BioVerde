@@ -1,6 +1,6 @@
 <?php
 
-include_once '../ambiente.inc.php';
+include_once '../inc/ambiente.inc.php';
 
 // Configuração dos cabeçalhos para permitir requisições de qualquer origem (CORS)
 header("Access-Control-Allow-Origin: *");
