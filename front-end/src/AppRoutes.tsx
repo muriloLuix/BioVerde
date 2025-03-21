@@ -1,18 +1,20 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/page/LoginPage";
-import RecoverPassword from "./pages/page/RecoverPassword";
-import LayoutSideBar from "./Layout/LayoutSideBar";
-import UsersPage from "./pages/UsersPage";
-import Dashboard from "./pages/Dashboard";
-import Clients from "./pages/Clients";
-import ConsumptionSupplies from "./pages/ConsumptionSupplies";
-import InventoryControl from "./pages/InventoryControl";
-import ProductionSteps from "./pages/ProductionSteps";
-import ProductStructure from "./pages/ProductStructure";
-import Reports from "./pages/Reports";
-import Requests from "./pages/Requests";
-import Suppliers from "./pages/Suppliers";
 
+import { LayoutSideBar } from "./shared/index.tsx";
+import {
+  LoginPage,
+  RecoverPassword,
+  UsersPage,
+  Dashboard,
+  Clients,
+  ConsumptionSupplies,
+  InventoryControl,
+  ProductionSteps,
+  ProductStructure,
+  Reports,
+  Requests,
+  Suppliers,
+} from "./pages/index.tsx";
 
 const AppRoutes = () => {
   return (
@@ -22,7 +24,7 @@ const AppRoutes = () => {
         <Route path="/recuperar-senha" element={<RecoverPassword />} />
 
         {/* Layout SideBar Fixo */}
-        <Route path="/app" element={<LayoutSideBar />} >
+        <Route path="/app" element={<LayoutSideBar />}>
           {/* Todos as rotas a partir daqui terão o sideBar */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="controle-estoque" element={<InventoryControl />} />
@@ -35,7 +37,6 @@ const AppRoutes = () => {
           <Route path="fornecedores" element={<Suppliers />} />
           <Route path="clientes" element={<Clients />} />
         </Route>
-
       </Routes>
     </Router>
   );

@@ -8,3 +8,4 @@ export { default as Remember } from "./components/Remember";
 export { default as EmailRecoverPassword } from "./components/EmailRecoverPassword";
 export { default as CodeRecoverPassword } from "./components/CodeRecoverPassword";
 export { default as NewPassword } from "./components/NewPassword";
+export { default as LayoutSideBar } from "./components/LayoutSideBar";
