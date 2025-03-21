@@ -19,10 +19,10 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
         return;
         }
 
-        onNext();
+        // onNext();
 
         try {
-        const response = await axios.post("http://localhost/bioverde/back-end/recuperar-senha/recuperar.senha.php", { email });
+        const response = await axios.post("http://localhost/BioVerde/back-end/recuperar-senha/recuperar.senha.php", { email });
         if (response.data.success) {
             setMensagem("Código enviado para seu e-mail!");
             onNext();

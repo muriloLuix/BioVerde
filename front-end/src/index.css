@@ -13,6 +13,7 @@
     --color-verdeMedio: #588157;
     --color-verdeEscuro: #3A5A40;
     --color-verdeEscuroForte: #344E41;
+    --color-verdeEscuroConta: #26382f;
     --color-verdePigmento: #4CAF50;
     --color-verdeGrama: #2E7D32;
     --color-canela: #8D6E63;
@@ -20,6 +21,8 @@
     --color-cinza: #D7CCC8;
     --color-brancoSal: #FAFAFA;
     --color-corErro: rgba(255, 32, 32, 0.432);
+    --color-separator: #CAC4D0;
+    --color-hoverMenu: #dedede1e;
 
 }
 
@@ -32,3 +35,17 @@
 .sombra {
     box-shadow: 0px 0px 20px 0px rgba(0, 0, 0, 0.289);
 }
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+background: transparent;
+border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+background: #26382f;
+border-radius: 8px;
+}
+

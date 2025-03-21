@@ -11,7 +11,8 @@ export default function CodeRecoverPassword({ onNext, onBack }: StepProps) {
     codeInputRef.current?.focus();
     enviarCodigo();
   }, []);
-
+  
+    //Inicia a contagem regressiva de 60seg após enivar codigo no email
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {

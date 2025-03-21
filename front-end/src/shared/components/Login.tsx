@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Form } from "radix-ui";
 import axios from "axios";
@@ -17,6 +18,7 @@ export default function Login() {
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const handleCheckbox = () => setIsChecked(!isChecked);
+  const navigate = useNavigate();
 
   useEffect(() => {
     emailInputRef.current?.focus();
@@ -25,9 +27,11 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    navigate("/app/dashboard");
+
     try {
       const response = await axios.post(
-        "http://localhost/bioverde/back-end/login/login.php",
+        "http://localhost/BioVerde/back-end/login/login.php",
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
@@ -35,6 +39,7 @@ export default function Login() {
       if (response.data.success) {
         alert("Login realizado com sucesso!");
         console.log("Usuário:", response.data.user);
+        navigate("/app/dashboard");
       } else {
         alert(response.data.message);
       }

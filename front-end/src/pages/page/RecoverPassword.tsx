@@ -32,7 +32,12 @@ export default function RecoverPassword() {
       <div className="flex-col md:flex md:flex-row max-w-4xl m-5 sombra rounded-2xl">
         {/* Informações e dicas */}
         <div className="w-full rounded-b-none md:rounded-bl-2xl md:w-1/2 bg-brancoSal rounded-2xl md:rounded-r-none p-6">
-          <Logo />
+          <Logo 
+            src = "/logo-bioverde.png"
+            imgClassName = "h-15 w-15 md:w-20 md:h-20 md:mr-4"
+            titleClassName = "md:text-5xl text-4xl tracking-wide"
+            gap = "gap-5" 
+          />
           <InstructionsLogin />
         </div>
         {/* Formulário de Recuperação de senha */}

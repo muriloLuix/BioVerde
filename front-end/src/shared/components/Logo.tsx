@@ -1,14 +1,24 @@
-export default function Logo() {
+interface LogoProps {
+  src?: string; 
+  imgClassName?: string; 
+  titleClassName?: string; 
+  gap?: string;
+}
+
+const Logo = ({
+  src,
+  imgClassName,
+  titleClassName,
+  gap
+}: LogoProps) => {
   return (
-    <div className="flex items-center mb-4 justify-center gap-5">
-      <img
-        src="/logo-bioverde.png"
-        alt="Bioverde Logo"
-        className="h-15 w-15 md:w-20 md:h-20 md:mr-4"
-      />
-      <h1 className="shadow-title font-[koulen] md:text-5xl text-4xl tracking-wide text-verdePigmento">
+    <div className={`flex items-center mb-4 justify-center p-5 pb-0 ${gap}`}>
+      <img src={src} alt="Bioverde Logo" className={imgClassName} />
+      <h1 className={`shadow-title font-[koulen] text-verdePigmento ${titleClassName}`}>
         BIOVERDE
       </h1>
     </div>
   );
-}
+};
+
+export default Logo;

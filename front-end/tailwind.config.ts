@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss'
 
-
 const config: Config = {
+  
   theme: {
     extend: {
       fontFamily: {
@@ -13,5 +13,6 @@ const config: Config = {
   },
   plugins: [],
 };
+
 
 export default config;
