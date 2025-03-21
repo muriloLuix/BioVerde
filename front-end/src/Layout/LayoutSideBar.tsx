@@ -48,7 +48,7 @@ export default function LayoutSideBar() {
     return(
         <div className="flex h-full">
             {/* Sidebar */}
-            <aside className="w-64 bg-verdeEscuroForte fixed bottom-0 left-0 text-white h-screen flex flex-col">
+            <aside className="w-64 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col">
                 <Logo 
                   src="/logo-bioverde-branco.png"
                   imgClassName="h-15 w-15 md:w-20 md:h-19 md:mr-1"
@@ -60,7 +60,7 @@ export default function LayoutSideBar() {
                     {menuItems.map((item) => (
                       <React.Fragment key={item.name}>
                         <li
-                            className={`p-2.5 my-2 mr-5 cursor-pointer rounded-[5px] transition ${
+                            className={`p-2.5 my-2 mr-5 cursor-pointer rounded-[5px] transition font-[inter] ${
                             activeItem  === item.name 
                               ? "bg-brancoSal text-black" 
                               : "text-cinzaClaro hover:bg-hoverMenu"
@@ -80,15 +80,15 @@ export default function LayoutSideBar() {
                 <div className="bg-verdeEscuroConta gap-3 p-3 w-64 flex items-center sticky bottom-0 left-0 -m-5 ">
                     <User size={40} />
                     <div>
-                        <p className="text-sm">Nome Sobrenome</p>
-                        <p className="text-sm">Admin</p>
+                        <p className="text-sm font-[inter]">Nome Sobrenome</p>
+                        <p className="text-sm font-[inter]">Admin</p>
                     </div>
                     <Bell size={25} className="ml-auto" />
                 </div>
             </aside>
 
             {/* Conteúdo principal */}
-            <main className="flex-1 bg-white p-6 pl-[280px]">
+            <main className="flex-1 bg-brancoSal h-screen p-6 pl-[280px]">
                 <Outlet />
             </main>
         </div>
