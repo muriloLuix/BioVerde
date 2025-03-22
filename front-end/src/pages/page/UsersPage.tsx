@@ -9,6 +9,8 @@ export default function UsersPage() {
   return (
     <div className="px-6 font-[inter]">
       <h1 className=" text-[40px] font-semibold text-center">Usuários</h1>
+
+      {/* Selelcionar Abas */}
       <Tabs.Root
         defaultValue="list"
         className="w-full"
@@ -35,14 +37,19 @@ export default function UsersPage() {
           </Tabs.Trigger>
         </Tabs.List>
 
+        {/* Aba de Lista de Usuários */}
         <Tabs.Content 
           value="list"
           className="flex flex-col w-full"
-        >
+        > 
+          {/* Filtro de Usuários */}
           <Form.Root className="flex flex-col gap-4 ">
             <h2 className="text-3xl">Filtros:</h2>
             <div className="flex gap-7">
+
+              {/* Coluna Nome e Email */}
               <div className="flex flex-col gap-7 mb-10 justify-between">
+
                 <Form.Field name="filter-name" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">
@@ -60,6 +67,7 @@ export default function UsersPage() {
                     />
                   </Form.Control>
                 </Form.Field>
+
                 <Form.Field name="filter-email" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">Email:</span>
@@ -75,8 +83,10 @@ export default function UsersPage() {
                     />
                   </Form.Control>
                 </Form.Field>
+
               </div>
 
+              {/* Coluna CPF e Cargo */}
               <div className="flex flex-col gap-7 mb-10 justify-between">
                 <Form.Field name="filter-cpf" className="flex flex-col">
                   <Form.Label asChild>
@@ -109,6 +119,7 @@ export default function UsersPage() {
                 </Form.Field>
               </div>
 
+              {/* Coluna Telefone e Nivel de Acesso */}
               <div className="flex flex-col gap-7 mb-10 justify-between">
                 <Form.Field name="filter-tel" className="flex flex-col">
                   <Form.Label asChild>
@@ -147,6 +158,7 @@ export default function UsersPage() {
 
               </div>
 
+              {/* Coluna Data de Cadastro e Botão Pesquisar */}
               <div className="flex flex-col gap-7 mb-10 justify-between">
                 <Form.Field name="data-cadastro" className="flex flex-col">
                   <Form.Label asChild>
@@ -174,103 +186,108 @@ export default function UsersPage() {
                   </div>
                 </Form.Submit>
               </div>
+
             </div>
           </Form.Root>
-
-        <div className="max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-15">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-verdePigmento text-white shadow-thead">
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Email</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">CPF</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Cargo</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Nível de Acesso</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Data de Cadastro</th>
-                <th className="border border-black px-4 py-4 whitespace-nowrap">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                {
-                  nome: "Fernando Kotinda",
-                  email: "fernando@email.com",
-                  telefone: "(11) 99999-9999",
-                  cpf: "123.456.789-00",
-                  cargo: "Gerente",
-                  nivelAcesso: "Administrador",
-                  dataCadastro: "01/01/2025",
-                },
-                {
-                  nome: "Carlos Bandeira",
-                  email: "carlos@email.com",
-                  telefone: "(21) 98888-8888",
-                  cpf: "987.654.321-00",
-                  cargo: "Coordenador",
-                  nivelAcesso: "Gerente",
-                  dataCadastro: "15/02/2025",
-                },
-                {
-                  nome: "Murilo Luiz",
-                  email: "nurilo@email.com",
-                  telefone: "(31) 97777-7777",
-                  cpf: "111.222.333-44",
-                  cargo: "Analista",
-                  nivelAcesso: "Funcionário",
-                  dataCadastro: "28/02/2025",
-                },
-                {
-                  nome: "Guilherme Santos",
-                  email: "guilherme@email.com",
-                  telefone: "(41) 96666-6666",
-                  cpf: "555.666.777-88",
-                  cargo: "Assistente",
-                  nivelAcesso: "Funcionário",
-                  dataCadastro: "10/03/2025",
-                },
-                
-              ].map((usuario, index) => (
-                <tr
-                  key={usuario.cpf}
-                  className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                >
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nome}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.email}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.telefone}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cpf}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cargo}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivelAcesso}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.dataCadastro}</td>
-                  <td className="border border-black px-4 py-4 whitespace-nowrap">
-                    <button className="mr-4 text-black cursor-pointer relative group">
-                      <PencilLine /> 
-                      <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                        Editar
-                      </div>
-                    </button>
-                    <button className="text-red-500 cursor-pointer relative group">
-                      <Trash />
-                      <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                        Excluir
-                      </div>
-                    </button>
-                  </td>
+        
+          {/* Tabela Lista de Usuários */}
+          <div className="max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-15">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-verdePigmento text-white shadow-thead">
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Email</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">CPF</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Cargo</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Nível de Acesso</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Data de Cadastro</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    nome: "Fernando Kotinda",
+                    email: "fernando@email.com",
+                    telefone: "(11) 99999-9999",
+                    cpf: "123.456.789-00",
+                    cargo: "Gerente",
+                    nivelAcesso: "Administrador",
+                    dataCadastro: "01/01/2025",
+                  },
+                  {
+                    nome: "Carlos Bandeira",
+                    email: "carlos@email.com",
+                    telefone: "(21) 98888-8888",
+                    cpf: "987.654.321-00",
+                    cargo: "Coordenador",
+                    nivelAcesso: "Gerente",
+                    dataCadastro: "15/02/2025",
+                  },
+                  {
+                    nome: "Murilo Luiz",
+                    email: "nurilo@email.com",
+                    telefone: "(31) 97777-7777",
+                    cpf: "111.222.333-44",
+                    cargo: "Analista",
+                    nivelAcesso: "Funcionário",
+                    dataCadastro: "28/02/2025",
+                  },
+                  {
+                    nome: "Guilherme Santos",
+                    email: "guilherme@email.com",
+                    telefone: "(41) 96666-6666",
+                    cpf: "555.666.777-88",
+                    cargo: "Assistente",
+                    nivelAcesso: "Funcionário",
+                    dataCadastro: "10/03/2025",
+                  },
+                  
+                ].map((usuario, index) => (
+                  <tr
+                    key={usuario.cpf}
+                    className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+                  >
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nome}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.email}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.telefone}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cpf}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cargo}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivelAcesso}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.dataCadastro}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">
+                      <button className="mr-4 text-black cursor-pointer relative group">
+                        <PencilLine /> 
+                        <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                          Editar
+                        </div>
+                      </button>
+                      <button className="text-red-500 cursor-pointer relative group">
+                        <Trash />
+                        <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                          Excluir
+                        </div>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-
+         {/* Fim aba de Lista de Usuários */}         
         </Tabs.Content>
-
+        
+        {/* Aba de Cadastro de Usuários */}  
         <Tabs.Content
           value="register"
           className="flex items-center justify-center"
         >
           <Form.Root className="flex flex-col">
             <h2 className="text-3xl mb-8">Cadastro de usuários:</h2>
+
+            {/* Linha Nome e Email*/} 
             <div className="flex gap-x-25 mb-10 justify-between">
               <Form.Field name="name" className="flex flex-col">
                 <Form.Label asChild>
@@ -290,7 +307,7 @@ export default function UsersPage() {
                   />
                 </Form.Control>
               </Form.Field>
-
+              
               <Form.Field name="email" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">Email:</span>
@@ -308,7 +325,8 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
             </div>
-
+            
+            {/* Linha Telefone, CPF, e Cargo*/} 
             <div className="flex gap-x-25 mb-10 justify-between">
               <Form.Field name="tel" className="flex flex-col">
                 <Form.Label asChild>
@@ -359,7 +377,8 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
             </div>
-
+            
+            {/* Linha Nivel de Acesso e Senha*/} 
             <div className="flex gap-x-25 mb-10 items-center">
               <Form.Field name="nivel" className="flex flex-col">
                 <Form.Label asChild>
@@ -422,10 +441,12 @@ export default function UsersPage() {
                 Cadastrar Usuário
               </button>
             </div>
-
             </Form.Submit>
           </Form.Root>
+
+        {/* Fim aba de cadastro de usuários*/} 
         </Tabs.Content>
+        
       </Tabs.Root>
     </div>
   );
