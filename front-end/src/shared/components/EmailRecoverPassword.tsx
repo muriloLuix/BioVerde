@@ -22,6 +22,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
     // onNext();
 
     try {
+      console.log(email);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/recuperar.senha.php",
         { email }
@@ -32,6 +33,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
       } else {
         setMensagem("E-mail não cadastrado.");
       }
+      console.log(response.data);
     } catch (error) {
       setMensagem("Erro ao conectar com o servidor.");
       console.error(error);
