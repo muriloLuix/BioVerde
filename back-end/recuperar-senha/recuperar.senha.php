@@ -1,18 +1,16 @@
 <?php
 
 header('Content-Type: application/json');
-
 include_once '../inc/ambiente.inc.php';
 
-// PHPMAiler
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
 require '../../vendor/phpmailer/phpmailer/src/Exception.php';
 require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
 
-// Cors e verificação
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -22,14 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Verificando se deu algum erro no banco de dados
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
 
-// Pegando os dados e decodificando JSON
 $rawData = file_get_contents("php://input");
-error_log("Raw data: " . $rawData); 
 
 if (empty($rawData)) {
     echo json_encode(["success" => false, "message" => "Nenhum dado recebido."]);
@@ -37,47 +32,39 @@ if (empty($rawData)) {
 }
 
 $data = json_decode($rawData, true);
-error_log("Decoded data: " . print_r($data, true)); 
 
-if (empty($data)) {
-    echo json_encode(["success" => false, "message" => "Erro ao decodificar JSON"]);
-    exit;
-}
-
-// Verificando se existe o e-mail
-if (!isset($data["email"])) {
-    echo json_encode(["success" => false, "message" => "Campo 'email' não informado."]);
+if (empty($data) || !isset($data["email"])) {
+    echo json_encode(["success" => false, "message" => "E-mail não informado ou erro ao decodificar JSON"]);
     exit;
 }
 
 $email = $conn->real_escape_string($data["email"]);
-error_log("Email a ser verificado: " . $email);
 
-var_dump($data);
-var_dump($email);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_encode(["success" => false, "message" => "Erro ao decodificar JSON: " . json_last_error_msg()]);
-    exit;
-}
-
-$sql = "SELECT user_email FROM usuarios WHERE user_email = ?;";
+$sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
 $res = $conn->prepare($sql);
 $res->bind_param("s", $email);
 $res->execute();
 $res->store_result();
 
-error_log("Número de linhas retornadas: " . $res->num_rows);
-
 if ($res->num_rows > 0) {
-
     $mail = new PHPMailer(true);
 
-    // Log para debug
-    // error_log("E-mail encontrado, iniciando envio de e-mail.");
-
     try {
-        // Configuração do servidor SMTP do Gmail
+        $alfabeto = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $codigo = '';
+
+        for ($i = 0; $i < 6; $i++) {
+            $codigo .= $alfabeto[rand(0, strlen($alfabeto) - 1)];
+        }
+
+        // Salvar o código no banco de dados
+        $update_sql = "UPDATE usuarios SET codigo_recuperacao = ? WHERE user_email = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("ss", $codigo, $email);
+        $update_stmt->execute();
+        $update_stmt->close();
+
+        // Configuração do PHPMailer
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -86,45 +73,49 @@ if ($res->num_rows > 0) {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        // Remetente e destinatário
         $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
         $mail->addAddress($email);
 
-        // Conteúdo do e-mail
         $mail->isHTML(true);
-        $mail->Subject = utf8_decode('Bio Verde - Recuperação de Senha');
-        $mail->Body    = utf8_decode('
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; }
-                    .container { width: 80%; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background-color: #f9f9f9; }
-                    .header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; border-radius: 10px 10px 0 0; }
-                    .content { padding: 20px; }
-                    .code { font-size: 20px; color: #4CAF50; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h2>Bio Verde</h2>
-                    </div>
-                    <div class="content">
-                        <p>Olá,</p>
-                        <p>Recebemos uma solicitação para redefinir sua senha. Por favor, use o código abaixo para continuar:</p>
-                        <p class="code"><strong>123456</strong></p>
-                        <p>Se você não solicitou a recuperação da senha, por favor ignore este e-mail.</p>
-                        <p>Atenciosamente,<br>Equipe Bio Verde</p>
-                    </div>
+        $mail->CharSet = 'UTF-8'; // Define a codificação como UTF-8
+        $mail->Subject = 'Bio Verde - Código de Recuperação';
+        $mail->Body = "
+        <html>
+        <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
+            <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
+                <!-- Cabeçalho com gradiente verde -->
+                <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
+                    <h1 style='color: #ffffff; font-size: 28px; margin: 0;'>Recuperação de Senha</h1>
+                    <p style='color: #e0f2e9; font-size: 16px; margin: 10px 0 0;'>Segurança e praticidade para você</p>
                 </div>
-            </body>
-            </html>
-        ');
-        $mail->AltBody = utf8_decode('Seu código de recuperação é: 123456');
+    
+                <!-- Corpo do e-mail -->
+                <div style='padding: 30px; color: #333333;'>
+                    <p style='font-size: 18px; line-height: 1.6;'>Olá,</p>
+                    <p style='font-size: 18px; line-height: 1.6;'>Seu código de recuperação é:</p>
+                    <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
+                        <strong style='color: #2e7d32; font-size: 24px; letter-spacing: 2px;'>{$codigo}</strong>
+                    </div>
+                    <p style='font-size: 18px; line-height: 1.6;'>Se você não solicitou essa recuperação, por favor, ignore este e-mail.</p>
+                    <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Atenciosamente,<br>Equipe de Suporte</p>
+                </div>
+    
+                <!-- Rodapé -->
+                <div style='background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 14px; color: #777777;'>
+                    <p style='margin: 0;'>Este é um e-mail automático, por favor não responda.</p>
+                    <p style='margin: 5px 0 0;'>&copy; " . date('Y') . " Sua Empresa. Todos os direitos reservados.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    ";
+    
+    $mail->AltBody = "Seu código de recuperação é: {$codigo}";
 
-        // Envia o e-mail
         $mail->send();
-        echo json_encode(["success" => true, "message" => "Código enviado para seu e-mail!"]);
+        
+        echo json_encode(["success" => true, "message" => "Código enviado para seu e-mail!", "email" => $email]);
+
     } catch (Exception $e) {
         echo json_encode(["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo]);
     }
@@ -134,4 +125,5 @@ if ($res->num_rows > 0) {
 
 $res->close();
 $conn->close();
+
 ?>

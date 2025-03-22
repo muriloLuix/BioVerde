@@ -13,32 +13,39 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
   }, []);
 
   const verificarEmail = async () => {
+  
     if (!email) {
       setMensagem("Por favor, insira um e-mail.");
       emailInputRef.current?.focus();
       return;
     }
-
-    // onNext();
-
+  
     try {
-      console.log(email);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/recuperar.senha.php",
         { email }
       );
+      
       if (response.data.success) {
         setMensagem("Código enviado para seu e-mail!");
-        onNext();
+        setTimeout(() => {
+          onNext();
+        }, 2000);
       } else {
         setMensagem("E-mail não cadastrado.");
+        setTimeout(() => {
+          setMensagem("");
+        }, 2000);
       }
-      console.log(response.data);
     } catch (error) {
       setMensagem("Erro ao conectar com o servidor.");
+      setTimeout(() => {
+        setMensagem("");
+      }, 2000);
       console.error(error);
     }
   };
+  
 
   return (
     <div className="h-full box-border p-6 flex flex-col justify-center ">
