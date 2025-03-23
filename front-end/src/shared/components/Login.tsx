@@ -27,7 +27,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    navigate("/app/dashboard");
+    // navigate("/app/dashboard");
 
     try {
       const response = await axios.post(
