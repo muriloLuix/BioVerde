@@ -1,7 +1,13 @@
 <?php
-session_start();
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 0); // Mude para 1 se estiver usando HTTPS
+ini_set('session.cookie_samesite', 'Lax'); // Ou 'Strict' para mais segurança
+ini_set('session.use_strict_mode', 1);
+ini_set('session.cookie_lifetime', 600); // 10 minutos
 
-header('Content-Type: application/json');
+session_start();
+header_remove('X-Powered-By');
+header('Content-Type: application/json; charset=UTF-8');
 include_once '../inc/ambiente.inc.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -55,6 +61,12 @@ $res->store_result();
 
 
 if ($res->num_rows > 0) {
+
+    // Armazena o email na sessão
+    $_SESSION['email_recuperacao'] = $email;
+    // Define o tempo de expiração da sessão (10 minutos)
+    $_SESSION['expire_time'] = time() + 600;
+        
     $mail = new PHPMailer(true);
 
     try {
@@ -119,8 +131,12 @@ if ($res->num_rows > 0) {
 
         $mail->send();
         
-        echo json_encode(["success" => true, "message" => "Código enviado para seu e-mail!", "email" => $email]);
-
+        echo json_encode([
+            "success" => true, 
+            "message" => "Código enviado para seu e-mail!", 
+            "email" => $email,
+            "session_id" => session_id()
+        ]);
     } catch (Exception $e) {
         echo json_encode(["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo]);
     }

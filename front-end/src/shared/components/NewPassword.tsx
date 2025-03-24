@@ -3,16 +3,28 @@ import { Link } from "react-router-dom";
 import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
 
 export default function NewPassword({ onNext }: StepProps) {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const newPasswordInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     newPasswordInputRef.current?.focus();
   }, []);
+
+  const api = axios.create({
+    baseURL: 'http://localhost/BioVerde/back-end/',
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
 
   const redefinirSenha = async () => {
     if (!senha || !confirmarSenha) {
@@ -29,29 +41,28 @@ export default function NewPassword({ onNext }: StepProps) {
     }
 
     try {
-      const response = await axios.post('http://localhost/BioVerde/back-end/recuperar-senha/nova.senha.php', 
-        { senha },
-        {
+      const sessionId = localStorage.getItem('session_id');
+      const response = await api.post(
+        'recuperar-senha/nova.senha.php',
+        { senha },    {
           headers: {
-            'Content-Type': 'application/json'
+            'X-Session-ID': sessionId
           }
         }
       );
       
-
-      console.log("Resposta do back-end:", response.data);
-
       if (response.data.success) {
         setMensagem("Senha redefinida com sucesso!");
         setTimeout(() => {
           onNext();
-        }, 1000);
+          navigate("/");
+        }, 3000);
       } else {
         setMensagem(response.data.message);
       }
     } catch (error) {
       setMensagem("Erro ao redefinir a senha.");
-      console.error(error);
+
     }
   };
 

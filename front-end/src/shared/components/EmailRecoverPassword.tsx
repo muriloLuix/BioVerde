@@ -12,6 +12,14 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
     emailInputRef.current?.focus();
   }, []);
 
+  const api = axios.create({
+    baseURL: 'http://localhost/BioVerde/back-end/',
+    withCredentials: true, 
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  });
+
   const verificarEmail = async () => {
   
     if (!email) {
@@ -21,14 +29,15 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
     }
   
     try {
-      const response = await axios.post(
-        "http://localhost/BioVerde/back-end/recuperar-senha/recuperar.senha.php",
+      const response = await api.post(
+        "recuperar-senha/recuperar.senha.php",
         { email }
       );
 
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
+        localStorage.setItem('session_id', response.data.session_id);
         setMensagem("Código enviado para seu e-mail!");
         setTimeout(() => {
           onNext();

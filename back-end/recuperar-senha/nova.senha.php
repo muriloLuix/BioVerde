@@ -1,14 +1,49 @@
 <?php 
 
+// Inclua o cors.php no início
+include_once "../cors.php";
+
+// Configurações de sessão
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 0);
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.use_strict_mode', 1);
+
+// Verifique o cabeçalho X-Session-ID
+if (isset($_SERVER['HTTP_X_SESSION_ID'])) {
+    session_id($_SERVER['HTTP_X_SESSION_ID']);
+}
+
+session_start();
+
+// Verifique se a sessão expirou
+if (isset($_SESSION['expire_time']) && time() > $_SESSION['expire_time']) {
+    session_unset();
+    session_destroy();
+    echo json_encode(["success" => false, "message" => "Sessão expirada. Por favor, inicie o processo novamente."]);
+    exit;
+}
+
+// Verifique se o email está na sessão
+if (!isset($_SESSION['email_recuperacao'])) {
+    echo json_encode(["success" => false, "message" => "Nenhum e-mail fornecido ou sessão inválida."]);
+    exit;
+}
+
+$email = $_SESSION['email_recuperacao'];
+
 header('Content-Type: application/json');
 include_once '../inc/ambiente.inc.php';
 
-include_once "../cors.php";
-
-if(!isset($_COOKIE["email_recuperacao"])){
-    echo json_encode(["success" => false, "message" => "Nenhum e-mail fornecido."]);
-    exit;
+if ($conn->connect_error) {
+    error_log("Erro de conexão com o banco: " . $conn->connect_error);
+    die(json_encode([
+        "success" => false, 
+        "message" => "Erro no servidor. Por favor, tente novamente mais tarde."
+    ]));
 }
+
+include_once "../cors.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -31,8 +66,11 @@ $senha = $conn->real_escape_string($data["senha"]);
 
 $senha = md5($senha);
 
+// QUANDO O CADASTRO DE USUARIO FOI CRIADO COM HASH, PODERÁ DESCOMENTAR O CÓDIGO ABAIXO
+// $senha = password_hash($senha, PASSWORD_DEFAULT);
+
 // Preparando a consulta SQL para buscar a senha armazenada no banco
-$sql = "SELECT usu_senha FROM usuarios WHERE usu_senha = ?";
+$sql = "SELECT user_senha FROM usuarios WHERE user_senha = ?";
 $res = $conn->prepare($sql);
 $res->bind_param("s", $senha);
 $res->execute();
@@ -43,13 +81,16 @@ if ($res->num_rows > 0) {
     echo json_encode(["success" => false, "message" => "A nova senha não pode ser igual à atual."]);
     exit;
 } else {
-    $sql = "UPDATE usuarios SET usu_senha = ? WHERE usu_email = ?";
+    $sql = "UPDATE usuarios SET user_senha = ? WHERE user_email = ?";
     $res = $conn->prepare($sql);
     $res->bind_param("ss", $senha, $email); 
     $res->execute();
     
     if (!$res->execute()) {
         echo json_encode(["success" => false, "message" => "Erro ao atualizar a senha: " . $conn->error]);
+        exit;
+    } else {
+        echo json_encode(["success"=> true]);
         exit;
     }
     

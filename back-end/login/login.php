@@ -41,6 +41,19 @@ $res = $stmt->get_result();
 if ($res->num_rows > 0) {
     $userData = $res->fetch_assoc();
 
+    // QUANDO O CADASTRO DE USUARIO FOI CRIADO COM HASH, PODERÁ DESCOMENTAR O CÓDIGO ABAIXO
+    // if (password_verify($password, $userData["user_senha"])) {
+    //     echo json_encode([
+    //         "success" => true,
+    //         "message" => "Login realizado com sucesso!",
+    //         "user" => [
+    //             "id" => $userData["user_id"],
+    //             "nome" => $userData["user_nome"]
+    //         ]
+    //     ]);
+    // }
+    
+
     // Verifica se a senha informada corresponde à armazenada no banco (usando MD5)
     if (md5($password) === $userData["user_senha"]) {
         echo json_encode([
