@@ -1,44 +1,114 @@
+import { useState } from "react";
+import { AgChartProps, AgCharts } from "ag-charts-react";
+
 const Dashboard = () => {
+  const cardsNames = [
+    { title: "Produtos em estoque", color: "bg-blue-500", quantity: 45 },
+    {
+      title: "Produtos em desenvolvimento",
+      color: "bg-yellow-300",
+      quantity: 12,
+    },
+    { title: "Pedidos pendentes", color: "bg-red-500", quantity: 20 },
+    {
+      title: "Pedidos concluídos (por mês)",
+      color: "bg-green-600",
+      quantity: 5,
+    },
+  ];
+
+  const messages = [
+    {
+      title: "Novo Pedido",
+      content: "Cliente solicitou 10 unidades de alface.",
+      time: "10:30 AM",
+    },
+    {
+      title: "Estoque Baixo",
+      content: "Tomates quase acabando!",
+      time: "11:00 AM",
+    },
+    {
+      title: "Reunião",
+      content: "Lembre-se da reunião às 15h.",
+      time: "12:15 PM",
+    },
+  ];
+
+  const feedbacks = [
+    { user: "João Silva", message: "Ótima qualidade dos produtos!", rating: 5 },
+    {
+      user: "Ana Souza",
+      message: "Entrega poderia ser mais rápida.",
+      rating: 3,
+    },
+    {
+      user: "Carlos Pereira",
+      message: "Muito satisfeito com o atendimento!",
+      rating: 4,
+    },
+  ];
+
+  const [chartOptions, setChartOptions] = useState<AgChartProps["options"]>({
+    data: [
+      { month: "Jan", avgTemp: 2.3, iceCreamSales: 162000 },
+      { month: "Mar", avgTemp: 6.3, iceCreamSales: 302000 },
+      { month: "May", avgTemp: 16.2, iceCreamSales: 800000 },
+      { month: "Jul", avgTemp: 22.8, iceCreamSales: 1254000 },
+      { month: "Sep", avgTemp: 14.5, iceCreamSales: 950000 },
+      { month: "Nov", avgTemp: 8.9, iceCreamSales: 200000 },
+    ],
+    series: [{ type: "bar", xKey: "month", yKey: "iceCreamSales" }],
+  });
+
+  console.log(typeof setChartOptions);
+
   return (
-    <div className="h-screen w-full flex flex-wrap justify-around items-center px-10 py-5">
-      <div className="h-1/4 w-2/5 basis-3xl bg-gray-300 rounded-lg p-4">
-        <div className="h-1/4 w-full">
-          <span className="font-medium text-2xl">Produtos em estoque</span>
+    <div className="h-screen w-full flex flex-wrap justify-evenly p-5">
+      {cardsNames.map((card, index) => (
+        <div
+          key={index}
+          className={`h-1/4 w-1/5 ${card.color} rounded-lg p-4 text-white shadow-2xl`}
+        >
+          <div className="h-1/4 w-full">
+            <span className="font-medium text-2xl block truncate">
+              {card.title}
+            </span>
+          </div>
+          <div className="h-3/4 w-full text-center flex items-center justify-center">
+            <span className="font-medium text-6xl">{card.quantity}</span>
+          </div>
         </div>
-        <div className="h-3/4 w-full text-center place-content-center">
-          <span className="font-medium text-6xl">20</span>
-        </div>
-      </div>
-      <div className="h-1/4 w-2/5 basis-3xl bg-gray-300 rounded-lg p-4">
-        <div className="h-1/4 w-full">
-          <span className="font-medium text-2xl">
-            Produtos em desenvolvimento
-          </span>
-        </div>
-        <div className="h-3/4 w-full text-center place-content-center">
-          <span className="font-medium text-6xl">20</span>
-        </div>
-      </div>
-      <div className="h-1/4 w-2/5 basis-3xl bg-gray-300 rounded-lg p-4">
-        <div className="h-1/4 w-full">
-          <span className="font-medium text-2xl">Pedidos pendentes</span>
-        </div>
-        <div className="h-3/4 w-full text-center place-content-center">
-          <span className="font-medium text-6xl">20</span>
-        </div>
-      </div>
-      <div className="h-1/4 w-2/5 basis-3xl bg-gray-300 rounded-lg p-4">
-        <div className="h-1/4 w-full">
-          <span className="font-medium text-2xl">
-            Pedidos concluídos (por mês)
-          </span>
-        </div>
-        <div className="h-3/4 w-full text-center place-content-center">
-          <span className="font-medium text-6xl">20</span>
+      ))}
+
+      <div className="h-1/4 w-2/4 bg-gray-300 rounded-lg p-4 text-black overflow-auto">
+        <span className="font-bold text-xl">Mensagens</span>
+        <div className="mt-2 space-y-2">
+          {messages.map((msg, index) => (
+            <div key={index} className="bg-white p-2 rounded-lg shadow-md">
+              <span className="font-semibold">{msg.title}</span>
+              <p className="text-sm">{msg.content}</p>
+              <span className="text-xs text-gray-500">{msg.time}</span>
+            </div>
+          ))}
         </div>
       </div>
+
+      <div className="h-1/4 w-1/3 bg-gray-300 rounded-lg p-4 text-black overflow-auto">
+        <span className="font-bold text-xl">Feedback</span>
+        <div className="mt-2 space-y-2">
+          {feedbacks.map((fb, index) => (
+            <div key={index} className="bg-white p-2 rounded-lg shadow-md">
+              <span className="font-semibold">{fb.user}</span>
+              <p className="text-sm">{fb.message}</p>
+              <span className="text-yellow-500">{"⭐".repeat(fb.rating)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="h-1/3 w-full bg-gray-300 rounded-lg p-4">
-        <span>grafico muito louco</span>
+        <AgCharts options={chartOptions} />
       </div>
     </div>
   );
