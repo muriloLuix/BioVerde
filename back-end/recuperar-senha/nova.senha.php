@@ -1,24 +1,14 @@
 <?php 
-session_start(); 
-include("../cookies.php");
-
-if (isset($_SESSION["email_recuperacao"])){
-    $email = $_SESSION["email_recuperacao"];
-    error_log("Session ID: " . session_id());
-    error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
-} else{
-    error_log("Session ID: " . session_id());
-    error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
-    var_dump($email);
-    die("Erro: E-mail não encontrado! Tente recuperar a senha novamente.");
-}
-
-
 
 header('Content-Type: application/json');
 include_once '../inc/ambiente.inc.php';
 
 include_once "../cors.php";
+
+if(!isset($_COOKIE["email_recuperacao"])){
+    echo json_encode(["success" => false, "message" => "Nenhum e-mail fornecido."]);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -55,7 +45,7 @@ if ($res->num_rows > 0) {
 } else {
     $sql = "UPDATE usuarios SET usu_senha = ? WHERE usu_email = ?";
     $res = $conn->prepare($sql);
-    $res->bind_param("ss", $senha, $email); // Aqui precisa ser "ss"
+    $res->bind_param("ss", $senha, $email); 
     $res->execute();
     
     if (!$res->execute()) {

@@ -1,7 +1,5 @@
 <?php
-session_start(); 
-include("../cookies.php");
-
+session_start();
 
 header('Content-Type: application/json');
 include_once '../inc/ambiente.inc.php';
@@ -40,19 +38,20 @@ if (empty($data) || !isset($data["email"])) {
 }
 
 $email = $conn->real_escape_string($data["email"]);
-$_SESSION['email_recuperacao'] = $email;
 
-// error_log("Session ID: " . session_id());
-// error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
+// $_SESSION["email_recuperacao"] = $email;
+
+// var_dump($_SESSION);
 // exit;
+
+// // Armazena o e-mail em um cookie válido por 10 minutos
+// setcookie("email_recuperacao", $email, time() + 600, "/", "", false, true);
 
 $sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
 $res = $conn->prepare($sql);
 $res->bind_param("s", $email);
 $res->execute();
 $res->store_result();
-
-
 
 
 if ($res->num_rows > 0) {
@@ -72,7 +71,7 @@ if ($res->num_rows > 0) {
         $update_stmt->bind_param("ss", $codigo, $email);
         $update_stmt->execute();
         $update_stmt->close();
-        
+
         // Configuração do PHPMailer
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
@@ -116,7 +115,7 @@ if ($res->num_rows > 0) {
         </html>
     ";
 
-    $mail->AltBody = "Seu código de recuperação é: {$codigo}";
+        $mail->AltBody = "Seu código de recuperação é: {$codigo}";
 
         $mail->send();
         
@@ -131,4 +130,3 @@ if ($res->num_rows > 0) {
 
 $res->close();
 $conn->close();
-?>
