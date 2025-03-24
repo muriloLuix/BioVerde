@@ -1,7 +1,6 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+include_once "../cors.php";
+
 
 // Permitir requisições OPTIONS (necessário para CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -13,9 +12,6 @@ include_once '../inc/ambiente.inc.php';
 
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
-
-// Verifique se os dados estão chegando corretamente
-var_dump($data);  // Isso vai mostrar o que foi recebido do frontend
 
 if (!isset($data["codigo"])) {
     echo json_encode(["success" => false, "message" => "Código não fornecido."]);

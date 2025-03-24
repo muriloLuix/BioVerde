@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
+import axios from "axios";
 
 export default function NewPassword({ onNext }: StepProps) {
   const [senha, setSenha] = useState("");
@@ -17,15 +18,40 @@ export default function NewPassword({ onNext }: StepProps) {
     if (!senha || !confirmarSenha) {
       setMensagem("Por favor, insira a nova senha nos dois campos.");
       newPasswordInputRef.current?.focus();
+      return;
     } else if (senha.length < 8) {
       setMensagem("A senha deve ter pelo menos 8 caracteres");
-    } else if (senha === confirmarSenha) {
-      //Aqui ficará a logica para verificar qual email esta sendo feito a troca de senha e então alterar
-      setMensagem("");
-      onNext();
-    } else {
+      return;
+    } else if (senha !== confirmarSenha) {
       setMensagem("As Senhas devem ser iguais.");
       newPasswordInputRef.current?.focus();
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://localhost/BioVerde/back-end/recuperar-senha/nova.senha.php', 
+        { senha },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setMensagem("Senha redefinida com sucesso!");
+        setTimeout(() => {
+          onNext();
+        }, 1000);
+      } else {
+        setMensagem(response.data.message);
+      }
+    } catch (error) {
+      setMensagem("Erro ao redefinir a senha.");
+      console.error(error);
     }
   };
 

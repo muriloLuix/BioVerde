@@ -1,4 +1,5 @@
 <?php
+session_start(); 
 
 header('Content-Type: application/json');
 include_once '../inc/ambiente.inc.php';
@@ -11,9 +12,7 @@ require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+include_once "../cors.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -46,6 +45,11 @@ $res->bind_param("s", $email);
 $res->execute();
 $res->store_result();
 
+// Salvar o e-mail na sessão
+$_SESSION['usu_email'] = $email;
+session_write_close(); 
+
+
 if ($res->num_rows > 0) {
     $mail = new PHPMailer(true);
 
@@ -63,7 +67,7 @@ if ($res->num_rows > 0) {
         $update_stmt->bind_param("ss", $codigo, $email);
         $update_stmt->execute();
         $update_stmt->close();
-
+        
         // Configuração do PHPMailer
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
@@ -77,19 +81,17 @@ if ($res->num_rows > 0) {
         $mail->addAddress($email);
 
         $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8'; // Define a codificação como UTF-8
+        $mail->CharSet = 'UTF-8';
         $mail->Subject = 'Bio Verde - Código de Recuperação';
         $mail->Body = "
         <html>
         <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
             <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
-                <!-- Cabeçalho com gradiente verde -->
                 <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
                     <h1 style='color: #ffffff; font-size: 28px; margin: 0;'>Recuperação de Senha</h1>
                     <p style='color: #e0f2e9; font-size: 16px; margin: 10px 0 0;'>Segurança e praticidade para você</p>
                 </div>
     
-                <!-- Corpo do e-mail -->
                 <div style='padding: 30px; color: #333333;'>
                     <p style='font-size: 18px; line-height: 1.6;'>Olá,</p>
                     <p style='font-size: 18px; line-height: 1.6;'>Seu código de recuperação é:</p>
@@ -97,19 +99,18 @@ if ($res->num_rows > 0) {
                         <strong style='color: #2e7d32; font-size: 24px; letter-spacing: 2px;'>{$codigo}</strong>
                     </div>
                     <p style='font-size: 18px; line-height: 1.6;'>Se você não solicitou essa recuperação, por favor, ignore este e-mail.</p>
-                    <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Atenciosamente,<br>Equipe de Suporte</p>
+                    <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Atenciosamente,<br>Equipe da Bio Verde</p>
                 </div>
     
-                <!-- Rodapé -->
                 <div style='background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 14px; color: #777777;'>
                     <p style='margin: 0;'>Este é um e-mail automático, por favor não responda.</p>
-                    <p style='margin: 5px 0 0;'>&copy; " . date('Y') . " Sua Empresa. Todos os direitos reservados.</p>
+                    <p style='margin: 5px 0 0;'>&copy; " . date('Y') . " Bio Verde. Todos os direitos reservados.</p>
                 </div>
             </div>
         </body>
         </html>
     ";
-    
+
     $mail->AltBody = "Seu código de recuperação é: {$codigo}";
 
         $mail->send();
@@ -125,5 +126,4 @@ if ($res->num_rows > 0) {
 
 $res->close();
 $conn->close();
-
 ?>

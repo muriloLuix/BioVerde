@@ -34,13 +34,15 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
     try {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/verificar-codigo.php",
-        { codigo }, // Envia apenas o código
+        { codigo }, 
         {
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
+
+      // console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
         setMensagem("Código validado com sucesso!");
