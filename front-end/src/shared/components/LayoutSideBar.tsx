@@ -13,9 +13,7 @@ import {
   ShoppingCart,     
   Users,           
   Truck,           
-  User,             
-  UserCircle,       
-  Settings,
+  User,                 
   Bell,      
 } from "lucide-react";
 
@@ -31,15 +29,13 @@ export default function LayoutSideBar() {
       { name: "Dashboards", icon: <LayoutDashboard/>, path: "/app/dashboard" },
       { name: "Controle de Estoque", icon: <Package />, path: "/app/controle-estoque" },
       { name: "Estrutura de Produtos", icon: <Boxes />, path: "/app/estrututa-produtos" },
-      { name: "Etapas de Produtos", icon: <Layers />, path: "/app/etapas-producao" },
+      { name: "Etapas de Produção", icon: <Layers />, path: "/app/etapas-producao" },
       { name: "Consumo de Insumos", icon: <Factory />, path: "/app/consumo-insumos" },
       { name: "Relatórios", icon: <BarChart2 />, path: "/app/relatorios" },
       { name: "Pedidos", icon: <ShoppingCart />, path: "/app/pedidos" },
       { name: "Usuários", icon: <Users />, path: "/app/usuarios" },
       { name: "Fornecedores", icon: <Truck />, path: "/app/fornecedores" },
       { name: "Clientes", icon: <User />, path: "/app/clientes" },
-      { name: "Conta", icon: <UserCircle />, },
-      { name: "Configurações", icon: <Settings />, },
     ],
     []
   );
@@ -61,7 +57,7 @@ export default function LayoutSideBar() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-brancoSal">
       {/* Sidebar */}
       <aside className="w-64 z-1000 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col">
         <Logo
@@ -86,7 +82,7 @@ export default function LayoutSideBar() {
                   {item.name}
                 </li>
 
-                {(item.name === "Pedidos" || item.name === "Clientes") && (
+                {(item.name === "Pedidos") && (
                   <Separator.Root className="bg-separator w-[92%] h-[1px] my-4" />
                 )}
               </React.Fragment>

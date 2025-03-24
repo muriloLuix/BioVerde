@@ -149,6 +149,7 @@ export default function UsersPage() {
                       id="filter-nivel"
                       className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
                     >
+                      <option value="todos">Todos</option>
                       <option value="funcionario">Funcionário</option>
                       <option value="gerente">Gerente</option>
                       <option value="admin">Administrador</option>

@@ -1,9 +1,19 @@
-import { Tabs, Form } from "radix-ui";
+import { Tabs, Form, Dialog } from "radix-ui";
 import { useState } from "react";
 import { Search, PencilLine, Trash, Eye } from "lucide-react";
 
 export default function InventoryControl() {
     const [activeTab, setActiveTab] = useState("list");
+
+    const [modalContent, setModalContent] = useState("");
+    const [modalTitle, setModalTitle] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const openModal = (title: string, content: string) => {
+      setModalTitle(title);
+      setModalContent(content);
+      setIsModalOpen(true);
+    };
 
     const produtos = [
         {
@@ -164,6 +174,7 @@ export default function InventoryControl() {
                         id="product-prod-category"
                         className="bg-white w-[210px] border border-separator rounded-lg p-2.5 shadow-xl"
                         >
+                        <option value="todas">Todas</option>
                         <option value="materia-prima">Matéria-Prima</option>
                         <option value="produto-semiacabado">Produto Semiacabado</option>
                         <option value="produto-acabado">Produto Acabado</option>
@@ -216,6 +227,7 @@ export default function InventoryControl() {
                         id="filter-prod-unit"
                         className="bg-white w-[181px] border border-separator rounded-lg p-2.5 shadow-xl"
                       >
+                        <option value="todas">Todas</option>
                         <option value="un">un</option>
                         <option value="g">g</option>
                         <option value="kg">kg</option>
@@ -270,6 +282,7 @@ export default function InventoryControl() {
                         id="filter-prod-status"
                         className="bg-white w-[181px] border border-separator rounded-lg p-2.5 shadow-xl"
                       >
+                        <option value="todos">Todos</option>
                         <option value="valido">Válido</option>
                         <option value="invalido">Inválido</option>
                       </select>
@@ -363,7 +376,10 @@ export default function InventoryControl() {
                     <td key={idx} className="border border-black px-4 py-4 whitespace-nowrap">{value}</td>
                     ))}
                     <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <button 
+                          className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                          onClick={() => openModal("Observações", produto.observacoes)}
+                        >
                             <Eye />
                             <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
                             Ver
@@ -389,6 +405,26 @@ export default function InventoryControl() {
                 </tbody>
               </table>
             </div>
+            {/* Modal (Pop-up) */}
+            <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg min-w-[300px]">
+                    <Dialog.Title className="text-xl font-bold mb-4">{modalTitle}</Dialog.Title>
+                    <Dialog.Description className="text-gray-700">
+                    {modalContent}
+                    </Dialog.Description>
+                    <div className="mt-4 flex justify-end">
+                    <button
+                        className="bg-verdeMedio text-white px-4 py-2 rounded-lg hover:bg-verdeEscuro cursor-pointer"
+                        onClick={() => setIsModalOpen(false)}
+                    >
+                        Fechar
+                    </button>
+                    </div>
+                </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
        
           </Tabs.Content>
           
