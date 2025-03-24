@@ -25,6 +25,8 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
         "http://localhost/BioVerde/back-end/recuperar-senha/recuperar.senha.php",
         { email }
       );
+
+      console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
         setMensagem("Código enviado para seu e-mail!");

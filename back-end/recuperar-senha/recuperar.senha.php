@@ -1,5 +1,7 @@
 <?php
 session_start(); 
+include("../cookies.php");
+
 
 header('Content-Type: application/json');
 include_once '../inc/ambiente.inc.php';
@@ -38,6 +40,11 @@ if (empty($data) || !isset($data["email"])) {
 }
 
 $email = $conn->real_escape_string($data["email"]);
+$_SESSION['email_recuperacao'] = $email;
+
+// error_log("Session ID: " . session_id());
+// error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
+// exit;
 
 $sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
 $res = $conn->prepare($sql);
@@ -45,9 +52,7 @@ $res->bind_param("s", $email);
 $res->execute();
 $res->store_result();
 
-// Salvar o e-mail na sessão
-$_SESSION['usu_email'] = $email;
-session_write_close(); 
+
 
 
 if ($res->num_rows > 0) {

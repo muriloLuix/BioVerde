@@ -1,21 +1,33 @@
 <?php 
+session_start(); 
+include("../cookies.php");
+
+if (isset($_SESSION["email_recuperacao"])){
+    $email = $_SESSION["email_recuperacao"];
+    error_log("Session ID: " . session_id());
+    error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
+} else{
+    error_log("Session ID: " . session_id());
+    error_log("Session email_recuperacao: " . ($_SESSION['email_recuperacao'] ?? 'NULL'));
+    var_dump($email);
+    die("Erro: E-mail não encontrado! Tente recuperar a senha novamente.");
+}
+
+
+
+header('Content-Type: application/json');
+include_once '../inc/ambiente.inc.php';
 
 include_once "../cors.php";
 
-header("Access-Control-Allow-Credentials: true");
-
-session_start(); 
-
-$email = $_SESSION["usu_email"];
-
-
-// Permitir requisições OPTIONS (necessário para CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-include_once '../inc/ambiente.inc.php';
+if ($conn->connect_error) {
+    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
+}
 
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
