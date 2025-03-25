@@ -50,7 +50,7 @@ export default function UsersPage() {
               {/* Coluna Nome e Email */}
               <div className="flex flex gap-7 mb-10 justify-between">
 
-                <Form.Field name="filter-name" className="flex flex-col">
+                <Form.Field name="filter-id" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">
                       ID:
@@ -67,7 +67,7 @@ export default function UsersPage() {
                   </Form.Control>
                 </Form.Field>
 
-                <Form.Field name="filter-cpf" className="flex flex-col">
+                <Form.Field name="filter-QtdConsumida" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">Quantidade Consumida:</span>
                   </Form.Label>
@@ -82,7 +82,7 @@ export default function UsersPage() {
                   </Form.Control>
                 </Form.Field>
 
-                <Form.Field name="filter-tel" className="flex flex-col">
+                <Form.Field name="filter-data" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">Data:</span>
                   </Form.Label>
@@ -102,7 +102,7 @@ export default function UsersPage() {
 
               {/* Quantidade Consumida e unidade */}
               <div className="flex gap-7 mb-10 items-center">
-              <Form.Field name="filter-email" className="flex flex-col">
+              <Form.Field name="filter-insumo" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">Insumo:</span>
                   </Form.Label>
@@ -117,7 +117,7 @@ export default function UsersPage() {
                   </Form.Control>
                 </Form.Field>
 
-                <Form.Field name="filter-cargo" className="flex flex-col">
+                <Form.Field name="filter-unidade" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">Unidade:</span>
                   </Form.Label>
@@ -132,7 +132,7 @@ export default function UsersPage() {
                   </Form.Control>
                 </Form.Field>
 
-                <Form.Field name="filter-nivel" className="flex flex-col">
+                <Form.Field name="filter-resp" className="flex flex-col">
                   <Form.Label asChild>
                     <span className="text-xl pb-2 font-light">
                       Responsável:
@@ -260,7 +260,7 @@ export default function UsersPage() {
 
             {/* Linha ID e Insumo utilizado*/} 
             <div className="flex gap-x-25 mb-10 items-center">
-              <Form.Field name="name" className="flex flex-col">
+              <Form.Field name="id" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">
                     ID:
@@ -278,7 +278,7 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
               
-              <Form.Field name="email" className="flex flex-col">
+              <Form.Field name="insumo" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">Insumo Utilizado:</span>
                 </Form.Label>
@@ -297,7 +297,7 @@ export default function UsersPage() {
             
             {/* Linha Quantidade e unidade*/} 
             <div className="flex gap-x-25 mb-10 items-center">
-              <Form.Field name="tel" className="flex flex-col">
+              <Form.Field name="quantidade" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">Quantidade:</span>
                 </Form.Label>
@@ -313,7 +313,7 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
 
-              <Form.Field name="cpf" className="flex flex-col">
+              <Form.Field name="unidade" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">Undidade:</span>
                 </Form.Label>
@@ -333,7 +333,7 @@ export default function UsersPage() {
             
             {/* Linha Responsável e data*/} 
             <div className="flex gap-x-25 mb-10 items-center">
-              <Form.Field name="nivel" className="flex flex-col">
+              <Form.Field name="responsavel" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">
                     Responsável:
@@ -351,7 +351,7 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
 
-              <Form.Field name="password" className="flex flex-col">
+              <Form.Field name="data" className="flex flex-col">
                 <Form.Label asChild>
                   <span className="text-xl pb-2 font-light">Data:</span>
                 </Form.Label>
