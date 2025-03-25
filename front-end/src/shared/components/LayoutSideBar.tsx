@@ -27,7 +27,7 @@ export default function LayoutSideBar() {
     () => [
       { name: "Dashboards", icon: <LayoutDashboard/>, path: "/app/dashboard" },
       { name: "Controle de Estoque", icon: <Package />, path: "/app/controle-estoque" },
-      { name: "Estrutura de Produtos", icon: <Boxes />, path: "/app/estrututa-produtos" },
+      { name: "Estrutura de Produtos", icon: <Boxes />, path: "/app/estrutura-produtos" },
       { name: "Etapas de Produção", icon: <Layers />, path: "/app/etapas-producao" },
       { name: "Consumo de Insumos", icon: <Factory />, path: "/app/consumo-insumos" },
       { name: "Pedidos", icon: <ShoppingCart />, path: "/app/pedidos" },

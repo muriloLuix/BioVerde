@@ -171,10 +171,10 @@ export default function Requests() {
                     </Form.Label>
                     <Form.Control asChild>
                       <input
-                        type="text"
+                        type="number"
                         name="filterReqNum"
                         id="filterReqNum"
-                        placeholder="N. do Pedido"
+                        placeholder="N. Pedido"
                         className="bg-white border w-[120px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
