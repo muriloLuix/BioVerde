@@ -107,8 +107,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="h-1/3 w-full bg-gray-300 rounded-lg p-4">
-        <AgCharts options={chartOptions} />
+      <div className="h-1/3 w-full rounded-lg p-4 box-border text-center bg-gray-300">
+        <span className="font-bold text-xl">Previsão de demandas</span>
+        <AgCharts className="h-9/10 w-full rounded-lg" options={chartOptions} />
       </div>
     </div>
   );
