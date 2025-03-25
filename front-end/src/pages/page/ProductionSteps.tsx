@@ -253,7 +253,7 @@ export default function ProductionSteps() {
                                     {ListSteps.map((step, index) => (
                                         <tr
                                         key={step.order}
-                                        className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                                        className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                                         >
                                         <td className="border border-black px-4 py-2 whitespace-nowrap">{step.order}</td>
                                         <td className="border border-black px-4 py-2 whitespace-nowrap">{step.name}</td>
