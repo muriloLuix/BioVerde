@@ -2,11 +2,13 @@
 
 include_once '../inc/ambiente.inc.php';
 
+// Inicia a sessão para armazenar o ID do usuário
+session_start();
+
 // Configuração dos cabeçalhos para permitir requisições de qualquer origem (CORS)
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
 
 // Verificação se a requisição é do tipo OPTIONS (preflight) e responde com sucesso
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -43,6 +45,7 @@ if ($res->num_rows > 0) {
 
     // QUANDO O CADASTRO DE USUARIO FOI CRIADO COM HASH, PODERÁ DESCOMENTAR O CÓDIGO ABAIXO
     // if (password_verify($password, $userData["user_senha"])) {
+    //     $_SESSION['user_id'] = $userData["user_id"]; // Salva o ID na sessão
     //     echo json_encode([
     //         "success" => true,
     //         "message" => "Login realizado com sucesso!",
@@ -53,9 +56,9 @@ if ($res->num_rows > 0) {
     //     ]);
     // }
     
-
     // Verifica se a senha informada corresponde à armazenada no banco (usando MD5)
     if (md5($password) === $userData["user_senha"]) {
+        $_SESSION['user_id'] = $userData["user_id"]; // Salva o ID na sessão
         echo json_encode([
             "success" => true,
             "message" => "Login realizado com sucesso!",
