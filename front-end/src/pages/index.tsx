@@ -6,7 +6,6 @@ export { default as ConsumptionSupplies } from "./page/ConsumptionSupplies";
 export { default as InventoryControl } from "./page/InventoryControl";
 export { default as ProductStructure } from "./page/ProductStructure";
 export { default as ProductionSteps } from "./page/ProductionSteps";
-export { default as Reports } from "./page/Reports";
 export { default as Requests } from "./page/Requests";
 export { default as Suppliers } from "./page/Suppliers";
 export { default as UsersPage } from "./page/UsersPage";
