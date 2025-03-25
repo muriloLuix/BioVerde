@@ -11,7 +11,6 @@ import {
   InventoryControl,
   ProductionSteps,
   ProductStructure,
-  Reports,
   Requests,
   Suppliers,
 } from "./pages/index.tsx";
@@ -28,10 +27,9 @@ const AppRoutes = () => {
           {/* Todos as rotas a partir daqui terão o sideBar */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="controle-estoque" element={<InventoryControl />} />
-          <Route path="estrututa-produtos" element={<ProductStructure />} />
+          <Route path="estrutura-produtos" element={<ProductStructure />} />
           <Route path="etapas-producao" element={<ProductionSteps />} />
           <Route path="consumo-insumos" element={<ConsumptionSupplies />} />
-          <Route path="relatorios" element={<Reports />} />
           <Route path="pedidos" element={<Requests />} />
           <Route path="usuarios" element={<UsersPage />} />
           <Route path="fornecedores" element={<Suppliers />} />
