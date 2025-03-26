@@ -1,9 +1,19 @@
-import { Tabs, Form } from "radix-ui";
+import { Tabs, Form, Dialog } from "radix-ui";
 import { useState } from "react";
-import { Search, PencilLine, Trash } from "lucide-react";
+import { Search, PencilLine, Trash, Eye } from "lucide-react";
 
 export default function Clients() {
   const [activeTab, setActiveTab] = useState("list");
+
+  const [modalContent, setModalContent] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (title: string, content: string) => {
+    setModalTitle(title);
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="px-6 font-[inter]">
@@ -78,14 +88,14 @@ export default function Clients() {
               <div className="flex flex-col gap-7 mb-10 justify-between">
                 <Form.Field name="filter-cpf" className="flex flex-col">
                   <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">CPF:</span>
+                    <span className="text-xl pb-2 font-light">CPF/CNPJ:</span>
                   </Form.Label>
                   <Form.Control asChild>
                     <input
                       type="text"
                       name="filter-cpf"
                       id="filter-cpf"
-                      placeholder="XXXXXXXX-XX"
+                      placeholder="Digite o CPF ou CNPJ"
                       className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
                     />
                   </Form.Control>
@@ -180,6 +190,7 @@ export default function Clients() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-verdePigmento text-white shadow-thead">
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">ID</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">E-mail</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
@@ -188,38 +199,45 @@ export default function Clients() {
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Tipo</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Cidade</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Status</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Data de Cadastro</th>
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">Observações</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  {
+                  { 
+                    id: 1,
                     nome: "André Maia",
                     email: "andre@email.com",
-                    telefone: "1199999-9999",
+                    telefone: "(11)99999-9999",
                     cpf: "123.456.789-00",
                     cep: "01234-567",
                     tipo: "Pessoa Física",
-                    cidade: "curitiba",
+                    cidade: "Curitiba",
                     status: "Ativo",
                     dataCadastro: "01/01/2025",
+                    obs: "Observações do Cliente"
                   },
                   {
+                    id: 2,
                     nome: "Empresa XYZ Ltda",
                     email: "contato@xyz.com",
-                    telefone: "213333-4444",
+                    telefone: "(21)3333-4444",
                     cpf: "00.000.000/0001-00",
                     cep: "20000-000",
                     tipo: "Pessoa Jurídica",
                     cidade: "Rio de Janeiro",
                     status: "Ativo",
                     dataCadastro: "15/02/2025",
+                    obs: "Observações do Cliente"
                   },
                 ].map((cliente, index) => (
                   <tr
-                    key={cliente.cpf}
+                    key={cliente.id}
                     className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                  >
+                    >
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.id}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.nome}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.email}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.telefone}</td>
@@ -228,6 +246,18 @@ export default function Clients() {
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.tipo}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.cidade}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.status}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{cliente.dataCadastro}</td>
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">
+                        <button 
+                          className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                          onClick={() => openModal("Observações", cliente.obs)}
+                        >
+                          <Eye />
+                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                          Ver
+                          </div>
+                        </button>
+                    </td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">
                       <button className="mr-4 text-black cursor-pointer relative group">
                         <PencilLine /> 
@@ -247,6 +277,28 @@ export default function Clients() {
               </tbody>
             </table>
           </div>
+
+          
+          {/* Modal (Pop-up) */}
+          <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
+                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg min-w-[300px]">
+                    <Dialog.Title className="text-xl font-bold mb-4">{modalTitle}</Dialog.Title>
+                    <Dialog.Description className="text-gray-700">
+                    {modalContent}
+                    </Dialog.Description>
+                    <div className="mt-4 flex justify-end">
+                    <button
+                        className="bg-verdeMedio text-white px-4 py-2 rounded-lg hover:bg-verdeEscuro cursor-pointer"
+                        onClick={() => setIsModalOpen(false)}
+                    >
+                        Fechar
+                    </button>
+                    </div>
+                </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
         </Tabs.Content>
         
         {/* Aba de Cadastro de Clientes */}  
@@ -296,7 +348,7 @@ export default function Clients() {
                     type="tel"
                     name="telefone"
                     id="telefone"
-                    placeholder="XXXXXXXX-XXXX"
+                    placeholder="(XX)XXXXX-XXXX"
                     required
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
@@ -313,6 +365,7 @@ export default function Clients() {
                     name="cep"
                     id="cep"
                     placeholder="XXXXX-XXX"
+                    autoComplete="postal-code"
                     required
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
@@ -321,14 +374,14 @@ export default function Clients() {
 
               <Form.Field name="cpf" className="flex flex-col">
                 <Form.Label asChild>
-                  <span className="text-xl pb-2 font-light">CPF:</span>
+                  <span className="text-xl pb-2 font-light">CPF/CNPJ:</span>
                 </Form.Label>
                 <Form.Control asChild>
                   <input
                     type="text"
                     name="cpf"
                     id="cpf"
-                    placeholder="XXXXXXXX-XX"
+                    placeholder="Digite seu CPF ou CNPJ"
                     required
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
@@ -347,9 +400,33 @@ export default function Clients() {
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="">Selecionar</option>
-                    <option value="SP">São Paulo</option>
+                    <option value="AC">Acre</option>
+                    <option value="AL">Alagoas</option>
+                    <option value="AP">Amapá</option>
+                    <option value="AM">Amazonas</option>
+                    <option value="BA">Bahia</option>
+                    <option value="CE">Ceará</option>
+                    <option value="DF">Distrito Federal</option>
+                    <option value="ES">Espírito Santo</option>
+                    <option value="GO">Goiás</option>
+                    <option value="MA">Maranhão</option>
+                    <option value="MT">Mato Grosso</option>
+                    <option value="MS">Mato Grosso do Sul</option>
+                    <option value="MG">Minas Gerais</option>
+                    <option value="PA">Pará</option>
+                    <option value="PB">Paraíba</option>
+                    <option value="PR">Paraná</option>
+                    <option value="PE">Pernambuco</option>
+                    <option value="PI">Piauí</option>
                     <option value="RJ">Rio de Janeiro</option>
-                    {/* outros estados */}
+                    <option value="RN">Rio Grande do Norte</option>
+                    <option value="RS">Rio Grande do Sul</option>
+                    <option value="RO">Rondônia</option>
+                    <option value="RR">Roraima</option>
+                    <option value="SC">Santa Catarina</option>
+                    <option value="SP">São Paulo</option>
+                    <option value="SE">Sergipe</option>
+                    <option value="TO">Tocantins</option>
                   </select>
                 </Form.Control>
               </Form.Field>
@@ -421,10 +498,28 @@ export default function Clients() {
                   </select>
                 </Form.Control>
               </Form.Field>
+
+              <Form.Field name="ClientObservation"className="w-full flex flex-col col-span-full">
+                  <Form.Label asChild>
+                      <span className="text-xl pb-2 font-light">Observações:</span>
+                  </Form.Label>
+                  <Form.Control asChild>
+                  <textarea
+                      id="ClientObservation"
+                      name="ClientObservation"
+                      rows={3}
+                      cols={50}
+                      placeholder="Digite as observações do cliente"
+                      maxLength={500}
+                      className="g-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
+                  ></textarea>
+                  </Form.Control>
+              </Form.Field>        
+
             </div>
 
             <Form.Submit asChild>
-              <div className="flex place-content-center mb-10 mt-5">
+              <div className="flex place-content-center mb-10 mt-0">
                 <button
                   type="submit"
                   className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra hover:bg-verdeGrama"

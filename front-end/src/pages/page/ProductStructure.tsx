@@ -95,7 +95,7 @@ export default function ProductStructure() {
           code: "ML-ORG-001",
           quantity: "1",
           unit: "unidade",
-          category: "Plantio",
+          category: "Matéria-prima",
           obs: "Certificada como orgânica",
         },
         {
@@ -104,7 +104,7 @@ export default function ProductStructure() {
           code: "COMP-ORG-005",
           quantity: "5",
           unit: "kg",
-          category: "Fertilização",
+          category: "Matéria-prima",
           obs: "Produzido com resíduos vegetais",
         },
         {
@@ -113,7 +113,7 @@ export default function ProductStructure() {
           code: "BIOF-002",
           quantity: "2",
           unit: "litros",
-          category: "Nutrição",
+          category: "Produto acabado",
           obs: "A base de algas marinhas",
         },
         {
@@ -122,7 +122,7 @@ export default function ProductStructure() {
           code: "COB-ORG-010",
           quantity: "10",
           unit: "kg",
-          category: "Proteção do solo",
+          category: "Matéria-prima",
           obs: "Palha de arroz ou serragem",
         },
         {
@@ -131,12 +131,11 @@ export default function ProductStructure() {
           code: "CALDA-ORG-003",
           quantity: "1",
           unit: "litro",
-          category: "Controle de pragas",
+          category: "Produto acabado",
           obs: "Preparo natural para prevenção de fungos",
         },
       ];
 
-      
 
     return (
       <div className="px-6 font-[inter] bg-brancoSal">
