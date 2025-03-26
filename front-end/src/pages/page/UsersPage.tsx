@@ -209,7 +209,6 @@ export default function UsersPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-verdePigmento text-white shadow-thead">
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">ID</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Email</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
@@ -223,7 +222,6 @@ export default function UsersPage() {
               <tbody>
                 {[
                   {
-                    id: 1,
                     nome: "Fernando Kotinda",
                     email: "fernando@email.com",
                     telefone: "(11) 99999-9999",
@@ -233,7 +231,6 @@ export default function UsersPage() {
                     dataCadastro: "01/01/2025",
                   },
                   {
-                    id: 2,
                     nome: "Carlos Bandeira",
                     email: "carlos@email.com",
                     telefone: "(21) 98888-8888",
@@ -243,7 +240,6 @@ export default function UsersPage() {
                     dataCadastro: "15/02/2025",
                   },
                   {
-                    id: 3,
                     nome: "Murilo Luiz",
                     email: "nurilo@email.com",
                     telefone: "(31) 97777-7777",
@@ -253,7 +249,6 @@ export default function UsersPage() {
                     dataCadastro: "28/02/2025",
                   },
                   {
-                    id: 4,
                     nome: "Guilherme Santos",
                     email: "guilherme@email.com",
                     telefone: "(41) 96666-6666",
@@ -265,10 +260,9 @@ export default function UsersPage() {
                   
                 ].map((usuario, index) => (
                   <tr
-                    key={usuario.id}
+                    key={usuario.cpf}
                     className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                   >
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.id}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nome}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.email}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.telefone}</td>
