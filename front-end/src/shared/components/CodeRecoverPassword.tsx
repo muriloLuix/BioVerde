@@ -12,7 +12,6 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
 
   useEffect(() => {
     codeInputRef.current?.focus();
-    enviarCodigo();
   }, []);
 
   useEffect(() => {
@@ -58,10 +57,33 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
     }
   };
 
-  const enviarCodigo = () => {
-    setTimer(60); // Inicia o timer de 60 segundos
-    // Aqui você pode chamar a API para enviar um novo código
-  };
+  const enviarCodigo = async () => {
+    // setTimer(60); // Habilite o timer
+    
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/recuperar-senha/reenviar.codigo.php",
+        {}, // Mantenha vazio pois o email vem da sessão
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true // Importante para manter a sessão
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setMensagem("Código reenviado com sucesso!");
+      } else {
+        setMensagem(response.data.message);
+      }
+    } catch (error) {
+      setMensagem("Erro ao reenviar o código.");
+      console.error(error);
+    }
+};
 
   return (
     <div className="flex flex-col items-start gap-5">
