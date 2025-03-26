@@ -27,8 +27,6 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // navigate("/app/dashboard");
-
     try {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/login/login.php",

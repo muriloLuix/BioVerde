@@ -105,16 +105,29 @@ export default function UsersPage() {
 
                 <Form.Field name="filter-cargo" className="flex flex-col">
                   <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Cargo:</span>
+                    <span className="text-xl pb-2 font-light">
+                      Cargo:
+                    </span>
                   </Form.Label>
                   <Form.Control asChild>
-                    <input
-                      type="text"
+                    <select
                       name="filter-cargo"
                       id="filter-cargo"
-                      placeholder="Cargo"
-                      className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                    />
+                      className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="funcionario">Analista de Vendas</option>
+                      <option value="funcionario">Analista de Estoque</option>
+                      <option value="funcionario">Técnico em Agropecuária</option>
+                      <option value="funcionario">Engenheiro Agrônomo</option>
+                      <option value="funcionario">Engenheiro de Alimentos</option>
+                      <option value="gerente">Gerente Administrativo</option>
+                      <option value="gerente">Gerente Financeiro</option>
+                      <option value="gerente">Gerente Comercial</option>
+                      <option value="gerente">Gerente Qualidade </option>
+                      <option value="gerente">Coordenador</option>
+                      <option value="admin">Diretor</option>
+                    </select>
                   </Form.Control>
                 </Form.Field>
               </div>
@@ -362,21 +375,32 @@ export default function UsersPage() {
                 </Form.Control>
               </Form.Field>
 
-              <Form.Field name="cargo" className="flex flex-col">
-                <Form.Label asChild>
-                  <span className="text-xl pb-2 font-light">Cargo:</span>
-                </Form.Label>
-                <Form.Control asChild>
-                  <input
-                    type="text"
-                    name="cargo"
-                    id="cargo"
-                    placeholder="Digite seu Cargo"
-                    required
-                    className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                  />
-                </Form.Control>
-              </Form.Field>
+              <Form.Field name="filter-cargo" className="flex flex-col">
+                  <Form.Label asChild>
+                    <span className="text-xl pb-2 font-light">
+                      Cargo:
+                    </span>
+                  </Form.Label>
+                  <Form.Control asChild>
+                    <select
+                      name="filter-cargo"
+                      id="filter-cargo"
+                      className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    >
+                      <option value="funcionario">Analista de Vendas</option>
+                      <option value="funcionario">Analista de Estoque</option>
+                      <option value="funcionario">Técnico em Agropecuária</option>
+                      <option value="funcionario">Engenheiro Agrônomo</option>
+                      <option value="funcionario">Engenheiro de Alimentos</option>
+                      <option value="gerente">Gerente Administrativo</option>
+                      <option value="gerente">Gerente Financeiro</option>
+                      <option value="gerente">Gerente Comercial</option>
+                      <option value="gerente">Gerente Qualidade </option>
+                      <option value="gerente">Coordenador</option>
+                      <option value="admin">Diretor</option>
+                    </select>
+                  </Form.Control>
+                </Form.Field>
             </div>
             
             {/* Linha Nivel de Acesso e Senha*/} 
