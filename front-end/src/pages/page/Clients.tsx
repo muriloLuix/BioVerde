@@ -17,7 +17,7 @@ export default function Clients() {
 
   return (
     <div className="px-6 font-[inter]">
-      <h1 className="text-[40px] font-semibold text-center">Clientes</h1>
+      <h1 className="text-[40px] font-semibold text-center mb-3">Clientes</h1>
 
       {/* Selelcionar Abas */}
       <Tabs.Root

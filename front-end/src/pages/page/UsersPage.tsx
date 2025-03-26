@@ -8,7 +8,7 @@ export default function UsersPage() {
 
   return (
     <div className="px-6 font-[inter]">
-      <h1 className=" text-[40px] font-semibold text-center">Usuários</h1>
+      <h1 className=" text-[40px] font-semibold text-center mb-3">Usuários</h1>
 
       {/* Selelcionar Abas */}
       <Tabs.Root
@@ -385,7 +385,7 @@ export default function UsersPage() {
                     <select
                       name="filter-cargo"
                       id="filter-cargo"
-                      className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
+                      className="bg-white w-[230px] border border-separator rounded-lg p-2.5 shadow-xl"
                     >
                       <option value="funcionario">Analista de Vendas</option>
                       <option value="funcionario">Analista de Estoque</option>

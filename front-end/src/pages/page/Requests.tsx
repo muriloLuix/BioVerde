@@ -127,7 +127,7 @@ export default function Requests() {
     
     return (
       <div className="px-6 font-[inter] bg-brancoSal">
-        <h1 className=" text-[40px] font-semibold text-center">Pedidos</h1>
+        <h1 className=" text-[40px] font-semibold text-center mb-3">Pedidos</h1>
   
         <Tabs.Root
           defaultValue="list"
@@ -174,7 +174,7 @@ export default function Requests() {
                         type="number"
                         name="filterReqNum"
                         id="filterReqNum"
-                        placeholder="N. Pedido"
+                        placeholder="Nº Pedido"
                         className="bg-white border w-[120px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>

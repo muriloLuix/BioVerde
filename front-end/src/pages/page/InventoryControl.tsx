@@ -92,7 +92,7 @@ export default function InventoryControl() {
 
     return (
       <div className="px-6 font-[inter]">
-        <h1 className=" text-[40px] font-semibold text-center">Controle de Estoque</h1>
+        <h1 className=" text-[40px] font-semibold text-center mb-3">Controle de Estoque</h1>
   
         <Tabs.Root
           defaultValue="list"
@@ -142,7 +142,7 @@ export default function InventoryControl() {
                         name="filter-prod-name"
                         id="filter-prod-name"
                         placeholder="Nome do Produto"
-                        className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                   </Form.Field>
@@ -210,7 +210,7 @@ export default function InventoryControl() {
                         name="filter-prod-quantity"
                         id="filter-prod-quantity"
                         placeholder="Quantidade"
-                        className="bg-white border w-[181px] border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white border w-[174px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                   </Form.Field>
@@ -225,7 +225,7 @@ export default function InventoryControl() {
                       <select
                         name="filter-prod-unit"
                         id="filter-prod-unit"
-                        className="bg-white w-[181px] border border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white w-[174px] border border-separator rounded-lg p-2.5 shadow-xl"
                       >
                         <option value="todas">Todas</option>
                         <option value="un">un</option>
@@ -250,7 +250,7 @@ export default function InventoryControl() {
                         name="filter-prod-minimum"
                         id="filter-prod-minimum"
                         placeholder="Estoque mínimo"
-                        className="bg-white border w-[181px] border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white border w-[174px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                   </Form.Field>
@@ -265,7 +265,7 @@ export default function InventoryControl() {
                         name="filter-prod-maximum"
                         id="filter-prod-maximum"
                         placeholder="Estoque Máximo"
-                        className="bg-white border w-[181px] border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white border w-[174px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                   </Form.Field>
@@ -280,7 +280,7 @@ export default function InventoryControl() {
                       <select
                         name="filter-prod-status"
                         id="filter-prod-status"
-                        className="bg-white w-[181px] border border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white w-[174px] border border-separator rounded-lg p-2.5 shadow-xl"
                       >
                         <option value="todos">Todos</option>
                         <option value="valido">Válido</option>
@@ -303,7 +303,7 @@ export default function InventoryControl() {
                             name="filter-prod-supplier"
                             id="filter-prod-supplier"
                             placeholder="Fornecedor"
-                            className="bg-white border w-[350px] border-separator rounded-lg p-2.5 shadow-xl"
+                            className="bg-white border w-[315px] border-separator rounded-lg p-2.5 shadow-xl"
                         />
                         </Form.Control>
                     </Form.Field>

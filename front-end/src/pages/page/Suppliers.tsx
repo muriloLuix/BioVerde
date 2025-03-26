@@ -7,7 +7,7 @@ export default function Suppliers() {
 
   return (
     <div className="px-6 font-[inter]">
-      <h1 className=" text-[40px] font-semibold text-center">Fornecedores</h1>
+      <h1 className=" text-[40px] font-semibold text-center mb-3">Fornecedores</h1>
 
       {/* Selelcionar Abas */}
       <Tabs.Root
@@ -238,8 +238,8 @@ export default function Suppliers() {
                 {[
                   {
                     id: 1,
-                    nome: "Mega Materiais Construção Ltda",
-                    email: "contato@megamateriais.com.br",
+                    nome: "Empresa XYZ Ltda",
+                    email: "contato@xyz.com",
                     telefone: "(11) 98765-4321",
                     cnpj: "12.345.678/0001-99",
                     cidade: "São Paulo",
@@ -261,19 +261,6 @@ export default function Suppliers() {
                     responsavel: "Leonardo Oliveira",
                     status: "Ativo",
                     dataCadastro: "10/02/2025"
-                  },
-                  {
-                    id: 3,
-                    nome: "TecnoComponentes Eletrônicos Ltda",
-                    email: "suporte@tecnocomponentes.com.br",
-                    telefone: "(31) 91234-5678",
-                    cnpj: "45.678.901/0001-34",
-                    cidade: "Belo Horizonte",
-                    estado: "MG",
-                    cep: "30150-050",
-                    responsavel: "Fernando Kotinda",
-                    status: "Inativo",
-                    dataCadastro: "02/01/2025"
                   },
 
                   
