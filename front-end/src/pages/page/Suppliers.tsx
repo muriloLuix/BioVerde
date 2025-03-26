@@ -1,10 +1,9 @@
 import { Tabs, Form } from "radix-ui";
 import { useState } from "react";
-import { Eye, EyeOff, Search, PencilLine, Trash } from "lucide-react";
+import { Search, PencilLine, Trash } from "lucide-react";
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState("list");
-  const [isHidden, setIsHidden] = useState(false);
 
   return (
     <div className="px-6 font-[inter]">
