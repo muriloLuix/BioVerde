@@ -1,9 +1,7 @@
 <?php
 session_start();
 
-// Log de sessão para depuração
-error_log("Sessão ativa: " . session_id());
-error_log("Email na sessão: " . ($_SESSION["email_recuperacao"] ?? "N/A"));
+include_once "../cors.php";
 
 // Debug para o console do front-end
 echo json_encode(["debug" => "Email na sessão: " . ($_SESSION["email_recuperacao"] ?? "N/A")]);
@@ -25,7 +23,7 @@ require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
 
-include_once "../cors.php";
+
 
 if ($conn->connect_error) {
     error_log("Erro na conexão com o banco de dados: " . $conn->connect_error);
