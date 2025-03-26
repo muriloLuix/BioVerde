@@ -70,9 +70,9 @@ $senha = md5($senha);
 // $senha = password_hash($senha, PASSWORD_DEFAULT);
 
 // Preparando a consulta SQL para buscar a senha armazenada no banco
-$sql = "SELECT user_senha FROM usuarios WHERE user_senha = ?";
+$sql = "SELECT user_senha FROM usuarios WHERE user_senha = ? AND user_email = ?";
 $res = $conn->prepare($sql);
-$res->bind_param("s", $senha);
+$res->bind_param("ss", $senha, $email);
 $res->execute();
 $res->store_result();
 
