@@ -1,8 +1,6 @@
 <?php
 include_once "../cors.php";
 
-
-
 // Permitir requisições OPTIONS (necessário para CORS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);

@@ -3,7 +3,6 @@ session_start();
 
 include_once "../cors.php";
 
-// Debug para o console do front-end
 echo json_encode(["debug" => "Email na sessão: " . ($_SESSION["email_recuperacao"] ?? "N/A")]);
 
 $email = $_SESSION['email_recuperacao'] ?? null;

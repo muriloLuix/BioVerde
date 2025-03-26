@@ -1,7 +1,7 @@
 <?php
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Mude para 1 se estiver usando HTTPS
-ini_set('session.cookie_samesite', 'Lax'); // Ou 'Strict' para mais segurança
+ini_set('session.cookie_secure', 0); // 1 se estiver usando HTTPS
+ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.use_strict_mode', 1);
 ini_set('session.cookie_lifetime', 600); // 10 minutos
 
