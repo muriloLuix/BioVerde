@@ -63,6 +63,7 @@ export default function Clients() {
                       name="filter-name"
                       id="filter-name"
                       placeholder="Nome completo"
+                      autoComplete="name"
                       className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
                     />
                   </Form.Control>
@@ -77,6 +78,7 @@ export default function Clients() {
                       type="tel"
                       name="filter-telefone"
                       id="filter-telefone"
+                      autoComplete="tel"
                       placeholder="XXXXXXXX-XXXX"
                       className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
                     />
@@ -111,6 +113,7 @@ export default function Clients() {
                       name="filter-cep"
                       id="filter-cep"
                       placeholder="XXXXX-XXX"
+                      autoComplete="postal-code"
                       className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
                     />
                   </Form.Control>
@@ -397,6 +400,7 @@ export default function Clients() {
                     name="estado"
                     id="estado"
                     required
+                    autoComplete="address-level1"
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="">Selecionar</option>
@@ -460,6 +464,7 @@ export default function Clients() {
                     id="cidade"
                     placeholder="Cidade"
                     required
+                    autoComplete="address-level2"
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
@@ -476,6 +481,7 @@ export default function Clients() {
                     id="endereco"
                     placeholder="Endereço completo"
                     required
+                    autoComplete="street-address"
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
