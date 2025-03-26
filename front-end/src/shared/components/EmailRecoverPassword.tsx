@@ -2,11 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { StepProps } from "../../pages";
 import { Email } from "./../../shared";
+import { Loader2 } from "lucide-react";
 
 export default function EmailRecoverPassword({ onNext }: StepProps) {
   const [email, setEmail] = useState("");
   const [mensagem, setMensagem] = useState("");
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     emailInputRef.current?.focus();
@@ -21,7 +24,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
   });
 
   const verificarEmail = async () => {
-  
+
     if (!email) {
       setMensagem("Por favor, insira um e-mail.");
       emailInputRef.current?.focus();
@@ -29,15 +32,16 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
     }
   
     try {
+      setLoading(true);
       const response = await api.post(
         "recuperar-senha/recuperar.senha.php",
         { email }
       );
-
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
         localStorage.setItem('session_id', response.data.session_id);
+        setSuccess(true);
         setMensagem("Código enviado para seu e-mail!");
         setTimeout(() => {
           onNext();
@@ -46,7 +50,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
         setMensagem("E-mail não cadastrado.");
         setTimeout(() => {
           setMensagem("");
-        }, 2000);
+        }, 3000);
       }
     } catch (error) {
       setMensagem("Erro ao conectar com o servidor.");
@@ -54,6 +58,8 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
         setMensagem("");
       }, 2000);
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -75,17 +81,24 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
           }}
         />
         {mensagem && (
-          <p className="bg-corErro w-full p-3 text-center rounded-sm">
+          <p className={`w-full p-2 text-center rounded-sm ${success ? "bg-corSucesso" : "bg-corErro "}`}>
             {mensagem}
           </p>
         )}
         {/*Mensagem para erros*/}
-        <button
-          className="bg-verdePigmento cursor-pointer tracking-wide w-full h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-xl sombra"
-          onClick={verificarEmail}
-        >
-          Enviar Código
-        </button>
+        {/* <div className="flex justify-center items-center  w-full"> */}
+          <button
+            className="bg-verdePigmento cursor-pointer flex place-content-center tracking-wide w-full h-12 p-2 m-x-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-xl sombra"
+            onClick={verificarEmail}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="animate-spin h-7 w-7" />
+            ) : (
+              "Enviar Código"
+            )}
+          </button>
+        {/* </div> */}
       </div>
     </div>
   );

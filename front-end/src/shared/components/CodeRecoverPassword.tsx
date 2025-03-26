@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { StepProps } from "./../../pages";
 import axios from "axios";
+ import { Loader2 } from "lucide-react";
 
-interface CodeRecoverPasswordProps extends StepProps {}
+type CodeRecoverPasswordProps = StepProps
 
 export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPasswordProps) {
   const [codigo, setCodigo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [timer, setTimer] = useState(0);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     codeInputRef.current?.focus();
@@ -32,6 +35,7 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
     }
 
     try {
+      setLoading(true);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/verificar-codigo.php",
         { codigo }, 
@@ -45,6 +49,7 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
       // console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
+        setSuccess(true);
         setMensagem("Código validado com sucesso!");
         setTimeout(() => {
           onNext();
@@ -55,11 +60,14 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
     } catch (error) {
       setMensagem("Erro ao validar o código.");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const enviarCodigo = async () => {    
+  const enviarCodigo = async () => {   
     try {
+      setLoading(true); 
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/reenviar.codigo.php",
         {}, 
@@ -74,6 +82,7 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
+        setSuccess(true);
         setMensagem("Código reenviado com sucesso!");
       } else {
         setMensagem(response.data.message);
@@ -81,6 +90,8 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
     } catch (error) {
       setMensagem("Erro ao reenviar o código.");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
 };
 
@@ -119,13 +130,20 @@ const aguardarReenvio = () => {
         </button>
       </div>
       {mensagem && (
-        <p className="bg-corErro w-full p-3 text-center rounded-sm">{mensagem}</p>
+        <p className={`w-full p-2 text-center rounded-sm ${success ? "bg-corSucesso" : "bg-corErro "}`}>
+          {mensagem}
+        </p>
       )}
       <button
-        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
+        className="bg-verdePigmento cursor-pointer flex place-content-center tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
         onClick={verificarCodigo}
+        disabled={loading}
       >
-        Validar Código
+        {loading ? (
+          <Loader2 className="animate-spin h-7 w-7" />
+        ) : (
+          "Validar Código"
+        )}
       </button>
       <p>
         Se não encontrar o e-mail na sua caixa de entrada verifique a pasta de spam

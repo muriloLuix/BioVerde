@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Form } from "radix-ui";
+import { Form, Toast } from "radix-ui";
+import { Loader2 } from "lucide-react";
 import axios from "axios";
 
-import Password from "./Password";
+// import Password from "./Password";
 import FormOptions from "./FormOptions";
-import Email from "./Email";
+// import Email from "./Email";
+
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,6 +20,24 @@ export default function Login() {
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
+  const [isHidden, setIsHidden] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const validatePassword = () => {
+    if (!password) {
+      setError("A senha é obrigatória.");
+    } else if (password.length < 8) {
+      setError("A senha deve ter pelo menos 8 caracteres.");
+    } else {
+      setError(""); 
+    }
+  };
+  
+
   const handleCheckbox = () => setIsChecked(!isChecked);
   const navigate = useNavigate();
 
@@ -26,6 +47,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const response = await axios.post(
@@ -35,14 +57,19 @@ export default function Login() {
       );
 
       if (response.data.success) {
-        alert("Login realizado com sucesso!");
         console.log("Usuário:", response.data.user);
-        navigate("/app/dashboard");
+        setMessage("")
+        setOpen(true);
+        setTimeout(() => {
+          navigate("/app/dashboard");
+        }, 1000);
       } else {
-        alert(response.data.message);
+        setMessage(response.data.message);
       }
     } catch {
-      alert("Erro ao conectar com o servidor");
+      setMessage("Erro ao conectar com o servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,13 +97,23 @@ export default function Login() {
           </Form.Message>
         </Form.Label>
         <Form.Control asChild>
-          <Email 
+          {/* <Email 
               emailId="email"
               emailInputRef={emailInputRef}
               emailValue={email}
               emailPlaceholder="E-mail"
               emailFunction={(e) => { setEmail(e.target.value); }}
-          />
+          /> */}
+          <input
+              type="email"
+              id="email"
+              ref={emailInputRef}
+              placeholder="E-mail"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); }}
+              className={`text-black bg-brancoSal p-2 w-full rounded outline-hidden`}
+              required
+            />
         </Form.Control>
       </Form.Field>
       <Form.Field name="password">
@@ -85,21 +122,40 @@ export default function Login() {
           className="font-[open_sans] text-base flex justify-between items-center"
         >
           <span className="md:text-lg shadow-text">Senha</span>
-          <Form.Message className="text-red-500 text-xs" match="valueMissing">
-            A senha é obrigatória.
-          </Form.Message>
-          <Form.Message className="text-red-500 text-xs" match="tooShort">
-            A senha deve ter pelo menos 8 caracteres.
-          </Form.Message>
+          {error && <span className="text-red-500 text-xs">{error}</span>}
         </Form.Label>
         <Form.Control asChild>
-          <Password
+          {/* <Password
             passwordFunction={(e) => setPassword(e.target.value)}
             passwordValue={password}
             passwordInputRef={passwordInputRef}
             passwordPlaceholder="Insira sua senha"
             passwordId="password"
-          />
+          /> */}
+          
+          <div className="relative">
+            <input
+              type={isHidden ? "text" : "password"}
+              id="password"
+              ref={passwordInputRef}
+              placeholder="Insira sua senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={validatePassword}
+              className="p-2 rounded text-black bg-brancoSal w-full outline-hidden"
+              minLength={8}
+              required
+            />
+
+            <button
+              type="button"
+              onClick={() => setIsHidden(!isHidden)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+            >
+              {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+
+          </div> 
         </Form.Control>
       </Form.Field>
       <Form.Field
@@ -110,6 +166,13 @@ export default function Login() {
           <FormOptions handleCheckbox={handleCheckbox} />
         </Form.Control>
       </Form.Field>
+
+      {message && (
+          <p className="w-full p-2 text-center rounded-sm bg-corErro">
+            {message}
+          </p>
+      )}
+
       <Form.Submit
         asChild
         className="flex justify-center items-center h-1/10 w-full"
@@ -117,10 +180,30 @@ export default function Login() {
         <button
           type="submit"
           className="font-[koulen] text-xl md:text-2xl text-white bg-verdePigmento cursor-pointer tracking-wide rounded hover:bg-verdeGrama transition sombra"
+          disabled={loading}
         >
-          Entrar
+          {loading ? (
+            <Loader2 className="animate-spin h-7 w-7" />
+          ) : (
+            "Entrar"
+          )}
         </button>
       </Form.Submit>
+
+      <Toast.Provider swipeDirection="right">
+          <Toast.Root
+          className="fixed bottom-4 right-4 w-80 p-4 rounded-lg text-white bg-verdePigmento shadow-lg"
+          open={open}
+          onOpenChange={setOpen}
+          duration={3000}
+        >
+          <Toast.Title className="font-bold">Sucesso!</Toast.Title>
+          <Toast.Description>Login realizado com sucesso!</Toast.Description>
+        </Toast.Root>
+
+        <Toast.Viewport className="fixed bottom-4 right-4" />
+      </Toast.Provider>
+
     </Form.Root>
   );
 }

@@ -20,7 +20,8 @@
     --color-laranja: #FF9800;
     --color-cinza: #D7CCC8;
     --color-brancoSal: #FAFAFA;
-    --color-corErro: rgba(255, 32, 32, 0.432);
+    --color-corErro: #ff20206e;
+    --color-corSucesso: #92d7946a;
     --color-separator: #CAC4D0;
     --color-hoverMenu: #dedede1e;
 

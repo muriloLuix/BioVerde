@@ -4,6 +4,8 @@ import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Toast } from "radix-ui";
+import { Loader2 } from "lucide-react";
 
 
 export default function NewPassword({ onNext }: StepProps) {
@@ -11,6 +13,8 @@ export default function NewPassword({ onNext }: StepProps) {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const newPasswordInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
 
@@ -41,6 +45,7 @@ export default function NewPassword({ onNext }: StepProps) {
     }
 
     try {
+      setLoading(true);
       const sessionId = localStorage.getItem('session_id');
       const response = await api.post(
         'recuperar-senha/nova.senha.php',
@@ -52,7 +57,8 @@ export default function NewPassword({ onNext }: StepProps) {
       );
       
       if (response.data.success) {
-        setMensagem("Senha redefinida com sucesso!");
+        setMensagem("")
+        setOpen(true);
         setTimeout(() => {
           onNext();
           navigate("/");
@@ -60,9 +66,11 @@ export default function NewPassword({ onNext }: StepProps) {
       } else {
         setMensagem(response.data.message);
       }
-    } catch (error) {
+    } catch {
       setMensagem("Erro ao redefinir a senha.");
 
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,14 +99,33 @@ export default function NewPassword({ onNext }: StepProps) {
         </p>
       )}
       <button
-        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
+        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra flex place-content-center"
         onClick={redefinirSenha}
+        disabled={loading}
       >
-        Redefinir Senha
+        {loading ? (
+          <Loader2 className="animate-spin h-7 w-7" />
+        ) : (
+          "Redefinir Senha"
+        )}
       </button>
       <Link to={"/"} className="text-gray-300 cursor-pointer hover:underline">
         <i className="fa-solid fa-arrow-left" /> Voltar para o login
       </Link>
+
+      <Toast.Provider swipeDirection="right">
+          <Toast.Root
+          className="fixed bottom-4 right-4 w-80 p-4 rounded-lg text-white bg-verdePigmento shadow-lg"
+          open={open}
+          onOpenChange={setOpen}
+          duration={3000}
+          >
+            <Toast.Title className="font-bold">Sucesso!</Toast.Title>
+            <Toast.Description>Senha redefinida com sucesso!</Toast.Description>
+          </Toast.Root>
+
+          <Toast.Viewport className="fixed bottom-4 right-4" />
+        </Toast.Provider>
     </div>
   );
 }
