@@ -2,6 +2,8 @@
 
 session_start();
 
+// ini_set("display_errors","1");
+// error_reporting(E_ALL);
 
 include_once '../inc/ambiente.inc.php';
 include_once '../log/log.php';
@@ -58,7 +60,7 @@ if ($res->num_rows > 0) {
         $res = $stmt->get_result();
         $userData = $res->fetch_assoc();
 
-        salvarLog($conn, "O usuario '" . $userData["user_nome"] . "' realizou login com sucesso!");
+        salvarLog($conn, "Usuário realizou login no sistema", "login", "sucesso");
 
         echo json_encode([
             "success" => true,
@@ -69,12 +71,12 @@ if ($res->num_rows > 0) {
             ]
         ]);
     } else {
-        salvarLog($conn, "O usuario " . $userData["user_id"] . " tentou realizar o login com a senha incorreta para o email " . $email . "!");
+        salvarLog($conn, "O usuário tentou realizar login com a senha incorreta para o e-mail:" . $email, "login", "erro");
 
         echo json_encode(["success" => false, "message" => "Senha incorreta."]);
     }
 } else {
-    salvarLog($conn, "O usuario " . $userData["user_id"] . " tentou realizar login com o e-mail incorreto!");
+    salvarLog($conn, "O usuário tentou realizar login com o e-mail incorreto!", "login", "erro");
     // Retorna erro se o e-mail não for encontrado no banco de dados
     echo json_encode(["success" => false, "message" => "Usuário ou e-mail não encontrado."]);
 }
