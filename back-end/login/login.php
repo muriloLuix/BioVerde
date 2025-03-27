@@ -1,20 +1,11 @@
 <?php
 
-include_once '../inc/ambiente.inc.php';
-
-// Inicia a sessão para armazenar o ID do usuário
 session_start();
 
-// Configuração dos cabeçalhos para permitir requisições de qualquer origem (CORS)
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Verificação se a requisição é do tipo OPTIONS (preflight) e responde com sucesso
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+include_once '../inc/ambiente.inc.php';
+include_once '../log/log.php';
+include_once '../cors.php';
 
 // Aqui verifica se a conexão com o banco de dados foi bem sucedida
 if ($conn->connect_error) {
@@ -58,7 +49,17 @@ if ($res->num_rows > 0) {
     
     // Verifica se a senha informada corresponde à armazenada no banco (usando MD5)
     if (md5($password) === $userData["user_senha"]) {
-        $_SESSION['user_id'] = $userData["user_id"]; // Salva o ID na sessão
+        $_SESSION['user_id'] = $userData["user_id"]; 
+
+        $sql = "SELECT user_id, user_nome FROM usuarios WHERE user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $userData["user_id"]);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $userData = $res->fetch_assoc();
+
+        salvarLog($conn, "O usuario '" . $userData["user_nome"] . "' realizou login com sucesso!");
+
         echo json_encode([
             "success" => true,
             "message" => "Login realizado com sucesso!",
@@ -68,9 +69,12 @@ if ($res->num_rows > 0) {
             ]
         ]);
     } else {
+        salvarLog($conn, "O usuario " . $userData["user_id"] . " tentou realizar o login com a senha incorreta para o email " . $email . "!");
+
         echo json_encode(["success" => false, "message" => "Senha incorreta."]);
     }
 } else {
+    salvarLog($conn, "O usuario " . $userData["user_id"] . " tentou realizar login com o e-mail incorreto!");
     // Retorna erro se o e-mail não for encontrado no banco de dados
     echo json_encode(["success" => false, "message" => "Usuário ou e-mail não encontrado."]);
 }
