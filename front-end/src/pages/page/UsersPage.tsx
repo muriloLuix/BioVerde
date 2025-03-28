@@ -26,13 +26,17 @@ export default function UsersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.cargo || !formData.nivel) { setError(true); }
-
+    if (!formData.name || !formData.email || !formData.tel || !formData.cpf || !formData.cargo || !formData.nivel || !formData.password) {
+      setError(true);
+      return;
+  }
     try {
       const response = await axios.post(
       "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
         formData, 
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" },
+        withCredentials: true
+      }
       );
 
       alert(response.data.message); 

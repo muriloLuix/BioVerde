@@ -28,7 +28,7 @@ export default function Login() {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/login/login.php",
         { email, password },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, withCredentials: true }
       );
 
       console.log("Resposta do back-end:", response.data);
