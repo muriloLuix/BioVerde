@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { StepProps } from "../../pages";
 import { Email } from "./../../shared";
@@ -7,13 +7,8 @@ import { Loader2 } from "lucide-react";
 export default function EmailRecoverPassword({ onNext }: StepProps) {
   const [email, setEmail] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const emailInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    emailInputRef.current?.focus();
-  }, []);
 
   const api = axios.create({
     baseURL: 'http://localhost/BioVerde/back-end/',
@@ -27,7 +22,6 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
 
     if (!email) {
       setMensagem("Por favor, insira um e-mail.");
-      emailInputRef.current?.focus();
       return;
     }
   
@@ -71,7 +65,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
           Redefina a senha em duas Etapas
         </span>
         <span>Digite seu e-mail para receber um código de recuperação:</span>
-        <Email
+        {/* <Email
           emailId="email"
           emailInputRef={emailInputRef}
           emailValue={email}
@@ -79,6 +73,11 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
           emailFunction={(e) => {
             setEmail(e.target.value);
           }}
+        /> */}
+        <Email 
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); }}
+          autoFocus 
         />
         {mensagem && (
           <p className={`w-full p-2 text-center rounded-sm ${success ? "bg-corSucesso" : "bg-corErro "}`}>

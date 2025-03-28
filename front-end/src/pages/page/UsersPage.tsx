@@ -1,10 +1,52 @@
 import { Tabs, Form } from "radix-ui";
 import { useState } from "react";
 import { Eye, EyeOff, Search, PencilLine, Trash } from "lucide-react";
+import axios from "axios";
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
+  const [error, setError] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    tel: "",
+    cpf: "",
+    cargo: "",
+    nivel: "",
+    password: "",
+  });
+  
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.cargo || !formData.nivel) { setError(true); }
+
+    try {
+      const response = await axios.post("http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", formData);
+      alert(response.data.message); 
+
+    } catch {
+      alert("Erro ao cadastrar usuário!");
+    }
+  };
+
+  const generatePassword = () => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let newPassword = "";
+    for (let i = 0; i < 12; i++) { 
+      newPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+  
+    setFormData({ ...formData, password: newPassword }); 
+  };
+  
 
   return (
     <div className="px-6 font-[inter]">
@@ -209,6 +251,7 @@ export default function UsersPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-verdePigmento text-white shadow-thead">
+                  <th className="border border-black px-4 py-4 whitespace-nowrap">ID</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Email</th>
                   <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
@@ -263,6 +306,7 @@ export default function UsersPage() {
                     key={usuario.cpf}
                     className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                   >
+                    <td className="border border-black px-4 py-4 whitespace-nowrap">{index + 1}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nome}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.email}</td>
                     <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.telefone}</td>
@@ -298,16 +342,17 @@ export default function UsersPage() {
           value="register"
           className="flex items-center justify-center"
         >
-          <Form.Root className="flex flex-col">
+          <Form.Root className="flex flex-col" onSubmit={handleSubmit}>
             <h2 className="text-3xl mb-8">Cadastro de usuários:</h2>
 
             {/* Linha Nome e Email*/} 
             <div className="flex gap-x-25 mb-10 justify-between">
               <Form.Field name="name" className="flex flex-col">
-                <Form.Label asChild>
-                  <span className="text-xl pb-2 font-light">
-                    Nome Completo:
-                  </span>
+                <Form.Label className="flex justify-between items-center">
+                  <span className="text-xl pb-2 font-light">Nome Completo:</span>
+                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
+                    Campo obrigatório*
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
                   <input
@@ -317,14 +362,22 @@ export default function UsersPage() {
                     placeholder="Digite seu nome completo"
                     required
                     autoComplete="name"
+                    value={formData.name}
+                    onChange={handleChange}
                     className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
               </Form.Field>
               
               <Form.Field name="email" className="flex flex-col">
-                <Form.Label asChild>
+                <Form.Label className="flex justify-between items-center">
                   <span className="text-xl pb-2 font-light">Email:</span>
+                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
+                    O e-mail é obrigatório* 
+                  </Form.Message>
+                  <Form.Message className="text-red-500 text-xs" match="typeMismatch">
+                    Insira um e-mail válido* 
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
                   <input
@@ -334,6 +387,8 @@ export default function UsersPage() {
                     placeholder="Digite seu email"
                     required
                     autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
@@ -343,8 +398,11 @@ export default function UsersPage() {
             {/* Linha Telefone, CPF, e Cargo*/} 
             <div className="flex gap-x-25 mb-10 justify-between">
               <Form.Field name="tel" className="flex flex-col">
-                <Form.Label asChild>
+                <Form.Label className="flex justify-between items-center">
                   <span className="text-xl pb-2 font-light">Telefone:</span>
+                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
+                    Campo obrigatório*
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
                   <input
@@ -354,14 +412,19 @@ export default function UsersPage() {
                     placeholder="(xx)xxxxx-xxxx"
                     required
                     autoComplete="tel"
+                    value={formData.tel}
+                    onChange={handleChange}
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
               </Form.Field>
 
               <Form.Field name="cpf" className="flex flex-col">
-                <Form.Label asChild>
+                <Form.Label className="flex justify-between items-center">
                   <span className="text-xl pb-2 font-light">CPF:</span>
+                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
+                    Campo obrigatório*
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
                   <input
@@ -370,64 +433,74 @@ export default function UsersPage() {
                     id="cpf"
                     placeholder="Digite seu CPF"
                     required
+                    value={formData.cpf}
+                    onChange={handleChange}
                     className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
               </Form.Field>
 
-              <Form.Field name="filter-cargo" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">
-                      Cargo:
-                    </span>
+              <Form.Field name="cargo" className="flex flex-col">
+                  <Form.Label className="flex justify-between items-center">
+                    <span className="text-xl pb-2 font-light">Cargo:</span>
+                    {error && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                   </Form.Label>
-                  <Form.Control asChild>
-                    <select
-                      name="filter-cargo"
-                      id="filter-cargo"
-                      className="bg-white w-[230px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="funcionario">Analista de Vendas</option>
-                      <option value="funcionario">Analista de Estoque</option>
-                      <option value="funcionario">Técnico em Agropecuária</option>
-                      <option value="funcionario">Engenheiro Agrônomo</option>
-                      <option value="funcionario">Engenheiro de Alimentos</option>
-                      <option value="gerente">Gerente Administrativo</option>
-                      <option value="gerente">Gerente Financeiro</option>
-                      <option value="gerente">Gerente Comercial</option>
-                      <option value="gerente">Gerente Qualidade </option>
-                      <option value="gerente">Coordenador</option>
-                      <option value="admin">Diretor</option>
-                    </select>
-                  </Form.Control>
+                  <select
+                    name="cargo"
+                    id="cargo"
+                    value={formData.cargo}
+                    onChange={handleChange}
+                    required
+                    className="bg-white w-[230px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  >
+                    <option value="" disabled>Selecione seu cargo</option>
+                    <option value="analisVendas">Analista de Vendas</option>
+                    <option value="analisEstoque">Analista de Estoque</option>
+                    <option value="tecnicoAgro">Técnico em Agropecuária</option>
+                    <option value="engAgro">Engenheiro Agrônomo</option>
+                    <option value="engAlimentos">Engenheiro de Alimentos</option>
+                    <option value="desenvolvedor">Desenvolvedor</option>
+                    <option value="gerAdm">Gerente Administrativo</option>
+                    <option value="gerFin">Gerente Financeiro</option>
+                    <option value="gerComercial">Gerente Comercial</option>
+                    <option value="gerQualidade">Gerente Qualidade </option>
+                    <option value="coordenador">Coordenador</option>
+                    <option value="diretor">Diretor</option>
+                  </select>
                 </Form.Field>
             </div>
             
             {/* Linha Nivel de Acesso e Senha*/} 
             <div className="flex gap-x-25 mb-10 items-center">
               <Form.Field name="nivel" className="flex flex-col">
-                <Form.Label asChild>
-                  <span className="text-xl pb-2 font-light">
-                    Nível de Acesso:
-                  </span>
+                <Form.Label className="flex justify-between items-center">
+                  <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
+                  {error && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                 </Form.Label>
-                <Form.Control asChild>
                   <select
                     name="nivel"
                     id="nivel"
                     required
+                    value={formData.nivel}
+                    onChange={handleChange}
                     className="bg-white w-[240px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
+                    <option value="" disabled>Selecione o nível</option>
                     <option value="funcionario">Funcionário</option>
                     <option value="gerente">Gerente</option>
                     <option value="admin">Administrador</option>
                   </select>
-                </Form.Control>
               </Form.Field>
 
               <Form.Field name="password" className="flex flex-col">
-                <Form.Label asChild>
+                <Form.Label className="flex gap-13 items-center">
                   <span className="text-xl pb-2 font-light">Senha:</span>
+                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
+                   A senha é obrigatória* 
+                  </Form.Message>
+                  <Form.Message className="text-red-500 text-xs" match="tooShort">
+                    A senha deve ter pelo menos 8 caracteres* 
+                  </Form.Message>
                 </Form.Label>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -438,6 +511,9 @@ export default function UsersPage() {
                         id="password"
                         placeholder="Gerada aleatoriamente"
                         required
+                        value={formData.password}
+                        onChange={handleChange}
+                        minLength={8}
                         className="bg-white w-[240px] border border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
@@ -451,7 +527,11 @@ export default function UsersPage() {
                     </button>
                   </div>
                   {/* Botão de Gerar Senha Aleatoria */}
-                  <button className="bg-verdeMedio p-3 rounded-2xl text-white cursor-pointer   hover:bg-verdeEscuro">
+                  <button 
+                    type="button"
+                    className="bg-verdeMedio p-3 rounded-2xl text-white cursor-pointer hover:bg-verdeEscuro"
+                    onClick={generatePassword}
+                  >
                     Gerar Senha
                   </button>
                 </div>
