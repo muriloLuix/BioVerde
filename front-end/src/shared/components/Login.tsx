@@ -31,6 +31,8 @@ export default function Login() {
         { headers: { "Content-Type": "application/json" } }
       );
 
+      console.log("Resposta do back-end:", response.data);
+
       if (response.data.success) {
         console.log("Usuário:", response.data.user);
         setMessage("")
@@ -41,8 +43,9 @@ export default function Login() {
       } else {
         setMessage(response.data.message);
       }
-    } catch {
+    } catch (error) {
       setMessage("Erro ao conectar com o servidor");
+      console.error(error);
     } finally {
       setLoading(false);
     }

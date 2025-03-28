@@ -1,4 +1,7 @@
 <?php
+
+include_once "../cors.php";
+
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 0); // 1 se estiver usando HTTPS
 ini_set('session.cookie_samesite', 'Lax');
@@ -17,8 +20,6 @@ require '../../vendor/phpmailer/phpmailer/src/Exception.php';
 require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
-
-include_once "../cors.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
