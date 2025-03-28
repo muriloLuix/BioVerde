@@ -65,15 +65,6 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
           Redefina a senha em duas Etapas
         </span>
         <span>Digite seu e-mail para receber um código de recuperação:</span>
-        {/* <Email
-          emailId="email"
-          emailInputRef={emailInputRef}
-          emailValue={email}
-          emailPlaceholder="E-mail"
-          emailFunction={(e) => {
-            setEmail(e.target.value);
-          }}
-        /> */}
         <Email 
           value={email}
           onChange={(e) => { setEmail(e.target.value); }}

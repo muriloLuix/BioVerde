@@ -6,7 +6,11 @@ import axios from "axios";
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
-  const [error, setError] = useState(false);
+  const [errors, setErrors] = useState({
+    position: false,
+    level: false,
+    password: false,
+  });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,19 +24,28 @@ export default function UsersPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(false);
+    setErrors((prevErrors) => ({ ...prevErrors, position: false, level: false, password: false }));
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.tel || !formData.cpf || !formData.cargo || !formData.nivel || !formData.password) {
-      setError(true);
-      return;
-  }
+    if (!formData.cargo ) { 
+      setErrors((prevErrors) => ({ ...prevErrors, position: true })); 
+      return; 
+    }
+    if (!formData.nivel) { 
+      setErrors((prevErrors) => ({ ...prevErrors, level: true })); 
+      return; 
+    }
+    if (!formData.password || formData.password.length < 8) { 
+      setErrors((prevErrors) => ({ ...prevErrors, password: true })); 
+      return; 
+    }
+
     try {
       const response = await axios.post(
-      "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
+        "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
         formData, 
         { headers: { "Content-Type": "application/json" },
         withCredentials: true
@@ -47,6 +60,7 @@ export default function UsersPage() {
     }
   };
 
+
   const generatePassword = () => {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
     let newPassword = "";
@@ -54,7 +68,8 @@ export default function UsersPage() {
       newPassword += charset.charAt(Math.floor(Math.random() * charset.length));
     }
   
-    setFormData({ ...formData, password: newPassword }); 
+    setFormData({ ...formData, password: newPassword });
+    setErrors((prevErrors) => ({ ...prevErrors, password: false }));  
   };
   
 
@@ -356,7 +371,7 @@ export default function UsersPage() {
             <h2 className="text-3xl mb-8">Cadastro de usuários:</h2>
 
             {/* Linha Nome e Email*/} 
-            <div className="flex gap-x-25 mb-10 justify-between">
+            <div className="flex mb-10 justify-between">
               <Form.Field name="name" className="flex flex-col">
                 <Form.Label className="flex justify-between items-center">
                   <span className="text-xl pb-2 font-light">Nome Completo:</span>
@@ -406,7 +421,7 @@ export default function UsersPage() {
             </div>
             
             {/* Linha Telefone, CPF, e Cargo*/} 
-            <div className="flex gap-x-25 mb-10 justify-between">
+            <div className="flex gap-x-15 mb-10 justify-between">
               <Form.Field name="tel" className="flex flex-col">
                 <Form.Label className="flex justify-between items-center">
                   <span className="text-xl pb-2 font-light">Telefone:</span>
@@ -424,7 +439,7 @@ export default function UsersPage() {
                     autoComplete="tel"
                     value={formData.tel}
                     onChange={handleChange}
-                    className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
               </Form.Field>
@@ -445,7 +460,7 @@ export default function UsersPage() {
                     required
                     value={formData.cpf}
                     onChange={handleChange}
-                    className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
                   />
                 </Form.Control>
               </Form.Field>
@@ -453,15 +468,14 @@ export default function UsersPage() {
               <Form.Field name="cargo" className="flex flex-col">
                   <Form.Label className="flex justify-between items-center">
                     <span className="text-xl pb-2 font-light">Cargo:</span>
-                    {error && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
+                    {errors.position && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                   </Form.Label>
                   <select
                     name="cargo"
                     id="cargo"
                     value={formData.cargo}
                     onChange={handleChange}
-                    required
-                    className="bg-white w-[230px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="" disabled>Selecione seu cargo</option>
                     <option value="analisVendas">Analista de Vendas</option>
@@ -478,22 +492,22 @@ export default function UsersPage() {
                     <option value="diretor">Diretor</option>
                   </select>
                 </Form.Field>
+                
             </div>
             
             {/* Linha Nivel de Acesso e Senha*/} 
-            <div className="flex gap-x-25 mb-10 items-center">
+            <div className="flex gap-x-15 mb-10 items-center">
               <Form.Field name="nivel" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center">
+                <Form.Label className="flex justify-between items-center gap-4">
                   <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
-                  {error && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
+                  {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                 </Form.Label>
                   <select
                     name="nivel"
                     id="nivel"
-                    required
                     value={formData.nivel}
                     onChange={handleChange}
-                    className="bg-white w-[240px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="" disabled>Selecione o nível</option>
                     <option value="funcionario">Funcionário</option>
@@ -503,14 +517,9 @@ export default function UsersPage() {
               </Form.Field>
 
               <Form.Field name="password" className="flex flex-col">
-                <Form.Label className="flex gap-13 items-center">
+                <Form.Label className="flex gap-25 items-center">
                   <span className="text-xl pb-2 font-light">Senha:</span>
-                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
-                   A senha é obrigatória* 
-                  </Form.Message>
-                  <Form.Message className="text-red-500 text-xs" match="tooShort">
-                    A senha deve ter pelo menos 8 caracteres* 
-                  </Form.Message>
+                  {errors.password && <span className="text-red-500 text-xs">A senha deve ter pelo menos 8 caracteres*</span>}
                 </Form.Label>
                 <div className="flex gap-4">
                   <div className="relative">
@@ -519,12 +528,10 @@ export default function UsersPage() {
                         type={isHidden ? "text" : "password"}
                         name="password"
                         id="password"
-                        placeholder="Gerada aleatoriamente"
-                        required
+                        placeholder="Digite ou Gere a senha"
                         value={formData.password}
                         onChange={handleChange}
-                        minLength={8}
-                        className="bg-white w-[240px] border border-separator rounded-lg p-2.5 shadow-xl"
+                        className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                     {/* Botão de Mostrar/Ocultar Senha */}
