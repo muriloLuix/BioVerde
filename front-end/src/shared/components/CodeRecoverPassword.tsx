@@ -46,7 +46,7 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
         }
       );
 
-      // console.log("Resposta do back-end:", response.data);
+      console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
         setSuccess(true);
