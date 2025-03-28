@@ -1,11 +1,17 @@
-import { Tabs, Form } from "radix-ui";
+import { Tabs, Form, Toast } from "radix-ui";
 import { useState } from "react";
-import { Eye, EyeOff, Search, PencilLine, Trash } from "lucide-react";
+import { Eye, EyeOff, Search, PencilLine, Trash, X, Loader2 } from "lucide-react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [message, setMessage] = useState("")
+  const [title, setTitle] = useState("")
+  const [errorMsg, setErrorMsg] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({
     position: false,
     level: false,
@@ -43,20 +49,34 @@ export default function UsersPage() {
       return; 
     }
 
+    setLoading(true);
+
     try {
+      setErrorMsg(false);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
         formData, 
         { headers: { "Content-Type": "application/json" },
         withCredentials: true
-      }
-      );
-
-      alert(response.data.message); 
+      });
       
+      
+      if (response.data.success) {
+        setTitle("Usuário cadastrado com sucesso!");
+        setMessage("O Login e a Senha do usuário foram enviados ao email dele.");
+  
+      } else {
+        setMessage(response.data.message);
+      };
 
     } catch {
-      alert("Erro ao cadastrar usuário!");
+      setTitle("Erro!");
+      setMessage("Erro ao cadastrar usuário!");
+      setErrorMsg(true)
+      
+    } finally {
+      setLoading(false);
+      setOpenModal(true);
     }
   };
 
@@ -498,7 +518,7 @@ export default function UsersPage() {
             {/* Linha Nivel de Acesso e Senha*/} 
             <div className="flex gap-x-15 mb-10 items-center">
               <Form.Field name="nivel" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center gap-4">
+                <Form.Label className="flex justify-between items-center gap-3">
                   <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
                   {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                 </Form.Label>
@@ -558,13 +578,54 @@ export default function UsersPage() {
             <div className="flex place-content-center mb-10 mt-5">
               <button
                 type="submit"
-                className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama "
+                className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
+                disabled={loading}
               >
-                Cadastrar Usuário
+                {loading ? (
+                  <Loader2 className="animate-spin h-6 w-6" />
+                ) : (
+                  "Cadastrar Usuário"
+                )}
               </button>
             </div>
             </Form.Submit>
           </Form.Root>
+
+          <Toast.Provider swipeDirection="right">
+            <AnimatePresence>
+              {openModal && (
+                <Toast.Root
+                  open={openModal}
+                  onOpenChange={setOpenModal}
+                  duration={5000}
+                  asChild
+                >
+                  <motion.div
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 100, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra ${errorMsg ? "bg-ErroModal" : "bg-verdePigmento" }`}
+                  >
+                    <div className="flex justify-between items-center pb-2">
+                      <Toast.Title className="font-bold text-lg">
+                        {title}
+                      </Toast.Title>
+                      <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
+                        <X size={25} />
+                      </Toast.Close>
+                    </div>
+                    <Toast.Description>
+                      {message}
+                    </Toast.Description>
+
+                  </motion.div>
+                </Toast.Root>
+              )}
+            </AnimatePresence>
+     
+            <Toast.Viewport className="fixed bottom-4 right-4" />
+          </Toast.Provider>
 
         {/* Fim aba de cadastro de usuários*/} 
         </Tabs.Content>
