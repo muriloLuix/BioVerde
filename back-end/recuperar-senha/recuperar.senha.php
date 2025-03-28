@@ -1,6 +1,7 @@
 <?php
 
 include_once "../cors.php";
+include_once '../log/log.php';
 
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 0); // 1 se estiver usando HTTPS
@@ -21,11 +22,6 @@ require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
@@ -40,6 +36,7 @@ if (empty($rawData)) {
 $data = json_decode($rawData, true);
 
 if (empty($data) || !isset($data["email"])) {
+    salvarLog($conn, "Usuário tentou recuperar senha sem informar o e-mail", "recuperar", "erro");
     echo json_encode(["success" => false, "message" => "E-mail não informado ou erro ao decodificar JSON"]);
     exit;
 }
@@ -132,6 +129,7 @@ if ($res->num_rows > 0) {
 
         $mail->send();
         
+        salvarLog($conn, "Usuário recuperou a senha para o e-mail: " . $email, "recuperar", "sucesso");
         echo json_encode([
             "success" => true, 
             "message" => "Código enviado para seu e-mail!", 
@@ -142,6 +140,7 @@ if ($res->num_rows > 0) {
         echo json_encode(["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo]);
     }
 } else {
+    salvarLog($conn, "Usuário tentou recuperar a senha para o e-mail:" . $email,  "recuperar", "erro");
     echo json_encode(["success" => false, "message" => "E-mail não cadastrado."]);
 }
 

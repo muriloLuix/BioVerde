@@ -2,6 +2,7 @@
 
 // Inclua o cors.php no início
 include_once "../cors.php";
+include_once '../log/log.php';
 
 // Configurações de sessão
 ini_set('session.cookie_httponly', 1);
@@ -78,6 +79,7 @@ $res->store_result();
 
 // Verifica se encontrou um registro com a mesma senha
 if ($res->num_rows > 0) {
+    salvarLog($conn, "Usuário tentou alterar a senha para a mesma senha", "login", "erro");
     echo json_encode(["success" => false, "message" => "A nova senha não pode ser igual à atual."]);
     exit;
 } else {
@@ -87,9 +89,11 @@ if ($res->num_rows > 0) {
     $res->execute();
     
     if (!$res->execute()) {
+        salvarLog($conn, "Erro ao atualizar a senha", "login", "erro");
         echo json_encode(["success" => false, "message" => "Erro ao atualizar a senha: " . $conn->error]);
         exit;
     } else {
+        salvarLog($conn, "Usuário alterou a senha", "login", "sucesso");
         echo json_encode(["success"=> true]);
         exit;
     }

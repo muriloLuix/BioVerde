@@ -2,6 +2,8 @@
 session_start();
 
 include_once "../cors.php";
+include_once '../log/log.php';
+
 
 echo json_encode(["debug" => "Email na sessão: " . ($_SESSION["email_recuperacao"] ?? "N/A")]);
 
@@ -122,6 +124,8 @@ if ($res->num_rows > 0) {
 
         $mail->AltBody = "Seu código de recuperação é: {$codigo}";
 
+        salvarLog($conn, "Usuário reenviou o código de recuperação para o e-mail: " . $email, "reenviar", "sucesso");
+
         if ($mail->send()) {
             echo json_encode([
                 "success" => true, 
@@ -138,6 +142,7 @@ if ($res->num_rows > 0) {
         echo json_encode(["success" => false, "message" => "Erro ao enviar e-mail."]);
     }
 } else {
+    salvarLog($conn, "Usuário tentou reenviar o código de recuperação para o e-mail: " . $email, "reenviar", "erro");
     error_log("E-mail não cadastrado: " . $email);
     echo json_encode(["success" => false, "message" => "E-mail não cadastrado."]);
 }

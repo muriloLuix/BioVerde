@@ -1,18 +1,13 @@
 <?php
 include_once "../cors.php";
-
-// Permitir requisições OPTIONS (necessário para CORS)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
+include_once '../log/log.php';
 include_once '../inc/ambiente.inc.php';
 
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
 
 if (!isset($data["codigo"])) {
+    salvarLog($conn, "Usuário tentou reenviar o código de recuperação para o e-mail: " . $email, "verificar_codigo", "erro");
     echo json_encode(["success" => false, "message" => "Código não fornecido."]);
     exit;
 }
@@ -27,9 +22,13 @@ $res->execute();
 $res->store_result();
 
 if ($res->num_rows > 0) {
+    salvarLog($conn, "Usuário teve o código: " . $codigo . " validado com sucesso", "verificar_codigo", "sucesso");
     echo json_encode(["success" => true, "message" => "Código válido!"]);
+    exit;
 } else {
+    salvarLog($conn, "Usuário teve o código: " . $codigo . " invalidado", "verificar_codigo", "erro");
     echo json_encode(["success" => false, "message" => "Código inválido."]);
+    exit;
 }
 
 $res->close();
