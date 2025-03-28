@@ -102,6 +102,9 @@ export default function Login() {
         </Form.Label>
         <Form.Control asChild>
           <Password
+            id="password"
+            name="password"
+            placeholder="Insira sua senha"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

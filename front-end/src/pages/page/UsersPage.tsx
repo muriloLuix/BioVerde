@@ -29,8 +29,14 @@ export default function UsersPage() {
     if (!formData.cargo || !formData.nivel) { setError(true); }
 
     try {
-      const response = await axios.post("http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", formData);
+      const response = await axios.post(
+      "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
+        formData, 
+        { headers: { "Content-Type": "application/json" } }
+      );
+
       alert(response.data.message); 
+      
 
     } catch {
       alert("Erro ao cadastrar usuário!");

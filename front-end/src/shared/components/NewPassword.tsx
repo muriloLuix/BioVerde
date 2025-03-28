@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
@@ -12,15 +12,9 @@ export default function NewPassword({ onNext }: StepProps) {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
-  const newPasswordInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-
-
-  useEffect(() => {
-    newPasswordInputRef.current?.focus();
-  }, []);
 
   const api = axios.create({
     baseURL: 'http://localhost/BioVerde/back-end/',
@@ -33,14 +27,12 @@ export default function NewPassword({ onNext }: StepProps) {
   const redefinirSenha = async () => {
     if (!senha || !confirmarSenha) {
       setMensagem("Por favor, insira a nova senha nos dois campos.");
-      newPasswordInputRef.current?.focus();
       return;
     } else if (senha.length < 8) {
       setMensagem("A senha deve ter pelo menos 8 caracteres");
       return;
     } else if (senha !== confirmarSenha) {
       setMensagem("As Senhas devem ser iguais.");
-      newPasswordInputRef.current?.focus();
       return;
     }
 
@@ -81,17 +73,18 @@ export default function NewPassword({ onNext }: StepProps) {
       </span>
       <p>Digite sua nova senha e confirme:</p>
       <Password
-        passwordId="new-password"
-        passwordInputRef={newPasswordInputRef}
-        passwordValue={senha}
-        passwordPlaceholder="Insira sua nova senha"
-        passwordFunction={(e) => setSenha(e.target.value)}
+        id="newPassword"
+        name="newPassword"
+        placeholder="Insira sua nova senha"
+        value={senha}
+        onChange={(e) => setSenha(e.target.value)}
       />
       <Password
-        passwordId="confirm-password"
-        passwordValue={confirmarSenha}
-        passwordPlaceholder="Confirme sua nova senha"
-        passwordFunction={(e) => setConfirmarSenha(e.target.value)}
+        id="confirmPassword"
+        name="confirmPassword"
+        placeholder="Confirme sua nova senha"
+        value={confirmarSenha}
+        onChange={(e) => setConfirmarSenha(e.target.value)}
       />
       {mensagem && (
         <p className="bg-corErro w-full p-3 text-center rounded-sm">

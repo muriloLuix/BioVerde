@@ -10,9 +10,6 @@ const Password =  ({...rest}: PasswordProps) => {
     <div className="relative">
       <input
         type={isHidden ? "text" : "password"}
-        id="password"
-        name="password"
-        placeholder="Insira sua senha"
         minLength={8}
         required
         className="p-2 rounded text-black bg-brancoSal w-full outline-hidden"
