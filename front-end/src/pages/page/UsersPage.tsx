@@ -1,17 +1,28 @@
 import { Tabs, Form, Toast } from "radix-ui";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Search, PencilLine, Trash, X, Loader2 } from "lucide-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface Cargo {
+  car_id: number;
+  car_nome: string;
+}
+
+interface NivelAcesso {
+  nivel_id: number;
+  nivel_nome: string;
+}
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [message, setMessage] = useState("")
-  const [title, setTitle] = useState("")
-  const [errorMsg, setErrorMsg] = useState(false)
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const [errorMsg, setErrorMsg] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [optionsLoading, setOptionsLoading] = useState(true);
   const [errors, setErrors] = useState({
     position: false,
     level: false,
@@ -26,7 +37,58 @@ export default function UsersPage() {
     nivel: "",
     password: "",
   });
-  
+  const [options, setOptions] = useState<{
+    cargos: Cargo[];
+    niveis: NivelAcesso[];
+  }>({
+    cargos: [],
+    niveis: [],
+  });
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setOptionsLoading(true);
+        const response = await axios.get(
+          "http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
+          { 
+            withCredentials: true,
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.data.success) {
+          setOptions({
+            cargos: response.data.cargos,
+            niveis: response.data.niveis,
+          });
+        } else {
+          setTitle("Erro!");
+          setMessage(response.data.message || "Erro ao carregar opções");
+          setErrorMsg(true);
+          setOpenModal(true);
+        }
+      } catch (error) {
+        setTitle("Erro!");
+        setMessage("Erro ao conectar com o servidor");
+        setErrorMsg(true);
+        setOpenModal(true);
+        
+        if (axios.isAxiosError(error)) {  
+          console.error("Erro na requisição:", error.response?.data || error.message);
+        } else {
+          console.error("Erro desconhecido:", error);
+        }
+      } finally {
+        setOptionsLoading(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,7 +98,8 @@ export default function UsersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.cargo ) { 
+    // Validações
+    if (!formData.cargo) { 
       setErrors((prevErrors) => ({ ...prevErrors, position: true })); 
       return; 
     }
@@ -56,30 +119,47 @@ export default function UsersPage() {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
         formData, 
-        { headers: { "Content-Type": "application/json" },
-        withCredentials: true
-      });
-      
+        { 
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
-        setTitle("Usuário cadastrado com sucesso!");
-        setMessage("O Login e a Senha do usuário foram enviados ao email dele.");
-  
+        setTitle("Sucesso!");
+        setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
+        setFormData({
+          name: "",
+          email: "",
+          tel: "",
+          cpf: "",
+          cargo: "",
+          nivel: "",
+          password: "",
+        });
       } else {
-        setMessage(response.data.message);
-      };
-
-    } catch {
+        setTitle("Erro!");
+        setMessage(response.data.message || "Erro ao cadastrar usuário");
+        setErrorMsg(true);
+      }
+    } catch (error) {
       setTitle("Erro!");
-      setMessage("Erro ao cadastrar usuário!");
-      setErrorMsg(true)
+      setErrorMsg(true);
       
+      if (axios.isAxiosError(error) && error.response) {
+        setMessage(error.response.data.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response.data);
+      } else {
+        setMessage("Erro ao conectar com o servidor");
+        console.error("Erro na requisição:", error);
+      }
     } finally {
       setLoading(false);
       setOpenModal(true);
     }
   };
-
 
   const generatePassword = () => {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -486,55 +566,64 @@ export default function UsersPage() {
               </Form.Field>
 
               <Form.Field name="cargo" className="flex flex-col">
-                  <Form.Label className="flex justify-between items-center">
-                    <span className="text-xl pb-2 font-light">Cargo:</span>
-                    {errors.position && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
-                  </Form.Label>
+                <Form.Label className="flex justify-between items-center">
+                  <span className="text-xl pb-2 font-light">Cargo:</span>
+                  {errors.position && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
+                </Form.Label>
+                {optionsLoading ? (
+                  <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
+                    <Loader2 className="animate-spin h-5 w-5" />
+                  </div>
+                ) : (
                   <select
                     name="cargo"
                     id="cargo"
                     value={formData.cargo}
                     onChange={handleChange}
                     className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    required
                   >
                     <option value="" disabled>Selecione seu cargo</option>
-                    <option value="analisVendas">Analista de Vendas</option>
-                    <option value="analisEstoque">Analista de Estoque</option>
-                    <option value="tecnicoAgro">Técnico em Agropecuária</option>
-                    <option value="engAgro">Engenheiro Agrônomo</option>
-                    <option value="engAlimentos">Engenheiro de Alimentos</option>
-                    <option value="desenvolvedor">Desenvolvedor</option>
-                    <option value="gerAdm">Gerente Administrativo</option>
-                    <option value="gerFin">Gerente Financeiro</option>
-                    <option value="gerComercial">Gerente Comercial</option>
-                    <option value="gerQualidade">Gerente Qualidade </option>
-                    <option value="coordenador">Coordenador</option>
-                    <option value="diretor">Diretor</option>
+                    {options.cargos.map((cargo) => (
+                      <option key={cargo.car_id} value={cargo.car_nome}>
+                        {cargo.car_nome}
+                      </option>
+                    ))}
                   </select>
-                </Form.Field>
+                )}
+              </Form.Field>
                 
             </div>
             
             {/* Linha Nivel de Acesso e Senha*/} 
             <div className="flex gap-x-15 mb-10 items-center">
-              <Form.Field name="nivel" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center gap-3">
-                  <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
-                  {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
-                </Form.Label>
-                  <select
-                    name="nivel"
-                    id="nivel"
-                    value={formData.nivel}
-                    onChange={handleChange}
-                    className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  >
-                    <option value="" disabled>Selecione o nível</option>
-                    <option value="funcionario">Funcionário</option>
-                    <option value="gerente">Gerente</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-              </Form.Field>
+            <Form.Field name="nivel" className="flex flex-col">
+              <Form.Label className="flex justify-between items-center gap-3">
+                <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
+                {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
+              </Form.Label>
+              {optionsLoading ? (
+                <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
+                  <Loader2 className="animate-spin h-5 w-5" />
+                </div>
+              ) : (
+                <select
+                  name="nivel"
+                  id="nivel"
+                  value={formData.nivel}
+                  onChange={handleChange}
+                  className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  required
+                >
+                  <option value="" disabled>Selecione seu nível de acesso</option>
+                  {options.niveis.map((nivel) => (
+                    <option key={nivel.nivel_id} value={nivel.nivel_nome}>
+                      {nivel.nivel_nome}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Form.Field>
 
               <Form.Field name="password" className="flex flex-col">
                 <Form.Label className="flex gap-25 items-center">

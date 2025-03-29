@@ -33,8 +33,7 @@ foreach ($requiredFields as $field) {
     }
 }
 
-// 1. Buscar o ID do cargo no banco de dados
-$stmt = $conn->prepare("SELECT car_id FROM cargos WHERE car_nome = ?");
+$stmt = $conn->prepare("SELECT car_id FROM cargo WHERE car_nome = ?");
 if (!$stmt) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar consulta de cargos: " . $conn->error]);
     exit();
@@ -53,7 +52,6 @@ $cargo = $result->fetch_assoc();
 $car_id = $cargo['car_id'];
 $stmt->close();
 
-// 2. Buscar o ID do nível de acesso no banco de dados
 $stmt = $conn->prepare("SELECT nivel_id FROM niveis_acesso WHERE nivel_nome = ?");
 if (!$stmt) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar consulta de níveis: " . $conn->error]);
@@ -73,7 +71,6 @@ $nivel = $result->fetch_assoc();
 $nivel_id = $nivel['nivel_id'];
 $stmt->close();
 
-// 3. Inserir o novo usuário
 $senha_hash = password_hash($data['password'], PASSWORD_DEFAULT);
 
 $stmt = $conn->prepare("INSERT INTO usuarios 

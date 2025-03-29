@@ -65,10 +65,7 @@ if (!isset($data["senha"])) {
 
 $senha = $conn->real_escape_string($data["senha"]);
 
-$senha = md5($senha);
-
-// QUANDO O CADASTRO DE USUARIO FOI CRIADO COM HASH, PODERÁ DESCOMENTAR O CÓDIGO ABAIXO
-// $senha = password_hash($senha, PASSWORD_DEFAULT);
+$senha = password_hash($senha, PASSWORD_DEFAULT);
 
 // Preparando a consulta SQL para buscar a senha armazenada no banco
 $sql = "SELECT user_senha FROM usuarios WHERE user_senha = ? AND user_email = ?";
