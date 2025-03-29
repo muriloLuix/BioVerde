@@ -14,6 +14,18 @@ interface NivelAcesso {
   nivel_nome: string;
 }
 
+interface Usuario {
+  user_id: number;
+  user_nome: string;
+  user_email: string;
+  user_telefone: string;
+  user_CPF: string;
+  car_nome: string;
+  nivel_nome: string;
+  user_dtcadastro: string;
+}
+
+
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
@@ -44,6 +56,8 @@ export default function UsersPage() {
     cargos: [],
     niveis: [],
   });
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(true);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -88,6 +102,50 @@ export default function UsersPage() {
     };
 
     fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    const fetchUsuarios = async () => {
+      try {
+        setLoadingUsuarios(true);
+        const response = await axios.get(
+          "http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
+          { 
+            withCredentials: true,
+            headers: {
+              'Accept': 'application/json'
+            }
+          }
+        );    
+        if (response.data.success) {
+          setUsuarios(response.data.usuarios);
+        } else {
+          setTitle("Erro!");
+          setMessage(response.data.message || "Erro ao carregar usuários");
+          setErrorMsg(true);
+          setOpenModal(true);
+        }
+      } catch (error) {
+        setTitle("Erro!");
+        setMessage("Erro ao conectar com o servidor");
+        setErrorMsg(true);
+        setOpenModal(true);
+        
+        if (axios.isAxiosError(error)) {  
+          console.error("Erro na requisição:", error.response?.data || error.message);
+          // Mostra mensagem mais específica se disponível
+          if (error.response?.data?.message) {
+            setMessage(error.response.data.message);
+          }
+        } else {
+          console.error("Erro desconhecido:", error);
+        }
+      } finally {
+        setLoadingUsuarios(false);
+      }
+    };
+  
+    fetchUsuarios();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -388,73 +446,51 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  {
-                    nome: "Fernando Kotinda",
-                    email: "fernando@email.com",
-                    telefone: "(11) 99999-9999",
-                    cpf: "123.456.789-00",
-                    cargo: "Gerente",
-                    nivelAcesso: "Administrador",
-                    dataCadastro: "01/01/2025",
-                  },
-                  {
-                    nome: "Carlos Bandeira",
-                    email: "carlos@email.com",
-                    telefone: "(21) 98888-8888",
-                    cpf: "987.654.321-00",
-                    cargo: "Coordenador",
-                    nivelAcesso: "Gerente",
-                    dataCadastro: "15/02/2025",
-                  },
-                  {
-                    nome: "Murilo Luiz",
-                    email: "nurilo@email.com",
-                    telefone: "(31) 97777-7777",
-                    cpf: "111.222.333-44",
-                    cargo: "Analista",
-                    nivelAcesso: "Funcionário",
-                    dataCadastro: "28/02/2025",
-                  },
-                  {
-                    nome: "Guilherme Santos",
-                    email: "guilherme@email.com",
-                    telefone: "(41) 96666-6666",
-                    cpf: "555.666.777-88",
-                    cargo: "Assistente",
-                    nivelAcesso: "Funcionário",
-                    dataCadastro: "10/03/2025",
-                  },
-                  
-                ].map((usuario, index) => (
-                  <tr
-                    key={usuario.cpf}
-                    className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                  >
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{index + 1}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nome}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.email}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.telefone}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cpf}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.cargo}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivelAcesso}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.dataCadastro}</td>
-                    <td className="border border-black px-4 py-4 whitespace-nowrap">
-                      <button className="mr-4 text-black cursor-pointer relative group">
-                        <PencilLine /> 
-                        <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                          Editar
-                        </div>
-                      </button>
-                      <button className="text-red-500 cursor-pointer relative group">
-                        <Trash />
-                        <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                          Excluir
-                        </div>
-                      </button>
+                {loadingUsuarios ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-4">
+                      <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                     </td>
                   </tr>
-                ))}
+                ) : usuarios.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-4">
+                      Nenhum usuário encontrado
+                    </td>
+                  </tr>
+                ) : (
+                  usuarios.map((usuario) => (
+                    <tr
+                      key={usuario.user_id}
+                      className={usuario.user_id % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+                    >
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_id}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_nome}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_email}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_telefone}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_CPF}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.car_nome}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivel_nome}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">
+                        {new Date(usuario.user_dtcadastro).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">
+                        <button className="mr-4 text-black cursor-pointer relative group">
+                          <PencilLine /> 
+                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                            Editar
+                          </div>
+                        </button>
+                        <button className="text-red-500 cursor-pointer relative group">
+                          <Trash />
+                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                            Excluir
+                          </div>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

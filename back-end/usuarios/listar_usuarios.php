@@ -1,8 +1,6 @@
 <?php
 session_start();
 
-include_once("../inc/ambiente.inc.php");
-include_once("../cors.php");
 include_once("funcoes.inc.php");
 
 header('Content-Type: application/json');
@@ -12,14 +10,16 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
+    // Buscar usuários
+    $usuarios = buscarUsuarios($conn);
     // Buscar cargos
     $cargos = buscarCargos($conn);
-
     // Buscar níveis de acesso
     $niveis = buscarNiveisAcesso($conn);
 
     echo json_encode([
         "success" => true,
+        "usuarios" => $usuarios,
         "cargos" => $cargos,
         "niveis" => $niveis
     ]);

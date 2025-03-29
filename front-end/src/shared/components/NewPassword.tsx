@@ -47,7 +47,9 @@ export default function NewPassword({ onNext }: StepProps) {
           }
         }
       );
-      
+
+      console.log("Resposta do back-end:", response.data); 
+       
       if (response.data.success) {
         setMensagem("")
         setOpen(true);
