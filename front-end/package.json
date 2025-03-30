@@ -22,6 +22,7 @@
     "classnames": "^2.5.1",
     "framer-motion": "^12.6.2",
     "lucide-react": "^0.479.0",
+    "primereact": "^10.9.3",
     "radix-ui": "^1.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

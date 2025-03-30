@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import { Eye, EyeOff, Search, PencilLine, Trash, X, Loader2 } from "lucide-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { InputMask, InputMaskChangeEvent } from 'primereact/inputmask';
+        
+        
 interface Cargo {
   car_id: number;
   car_nome: string;
@@ -25,14 +27,12 @@ interface Usuario {
   user_dtcadastro: string;
 }
 
-
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
   const [isHidden, setIsHidden] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [message, setMessage] = useState("");
-  const [title, setTitle] = useState("");
-  const [errorMsg, setErrorMsg] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState(false);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [errors, setErrors] = useState({
@@ -60,80 +60,50 @@ export default function UsersPage() {
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
 
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchData = async () => {
       try {
         setOptionsLoading(true);
-        const response = await axios.get(
-          "http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
-          { 
+        setLoadingUsuarios(true);
+  
+        const [optionsResponse, usuariosResponse] = await Promise.all([
+          axios.get("http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php", {
             withCredentials: true,
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
             }
-          }
-        );
-
-        if (response.data.success) {
-          setOptions({
-            cargos: response.data.cargos,
-            niveis: response.data.niveis,
-          });
-        } else {
-          setTitle("Erro!");
-          setMessage(response.data.message || "Erro ao carregar opções");
-          setErrorMsg(true);
-          setOpenModal(true);
-        }
-      } catch (error) {
-        setTitle("Erro!");
-        setMessage("Erro ao conectar com o servidor");
-        setErrorMsg(true);
-        setOpenModal(true);
-        
-        if (axios.isAxiosError(error)) {  
-          console.error("Erro na requisição:", error.response?.data || error.message);
-        } else {
-          console.error("Erro desconhecido:", error);
-        }
-      } finally {
-        setOptionsLoading(false);
-      }
-    };
-
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
-    const fetchUsuarios = async () => {
-      try {
-        setLoadingUsuarios(true);
-        const response = await axios.get(
-          "http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
-          { 
+          }),
+          axios.get("http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php", {
             withCredentials: true,
             headers: {
               'Accept': 'application/json'
             }
-          }
-        );    
-        if (response.data.success) {
-          setUsuarios(response.data.usuarios);
+          })
+        ]);
+  
+        if (optionsResponse.data.success) {
+          setOptions({
+            cargos: optionsResponse.data.cargos,
+            niveis: optionsResponse.data.niveis,
+          });
         } else {
-          setTitle("Erro!");
-          setMessage(response.data.message || "Erro ao carregar usuários");
-          setErrorMsg(true);
           setOpenModal(true);
+          setMessage(optionsResponse.data.message || "Erro ao carregar opções");
         }
+  
+        if (usuariosResponse.data.success) {
+          setUsuarios(usuariosResponse.data.usuarios);
+        } else {
+          setOpenModal(true);
+          setMessage(usuariosResponse.data.message || "Erro ao carregar usuários");
+        }
+  
       } catch (error) {
-        setTitle("Erro!");
-        setMessage("Erro ao conectar com o servidor");
-        setErrorMsg(true);
         setOpenModal(true);
-        
-        if (axios.isAxiosError(error)) {  
+        setMessage("Erro ao conectar com o servidor");
+  
+        if (axios.isAxiosError(error)) {
           console.error("Erro na requisição:", error.response?.data || error.message);
-          // Mostra mensagem mais específica se disponível
           if (error.response?.data?.message) {
             setMessage(error.response.data.message);
           }
@@ -141,15 +111,16 @@ export default function UsersPage() {
           console.error("Erro desconhecido:", error);
         }
       } finally {
+        setOptionsLoading(false);
         setLoadingUsuarios(false);
       }
     };
   
-    fetchUsuarios();
+    fetchData();
   }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | InputMaskChangeEvent ) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
     setErrors((prevErrors) => ({ ...prevErrors, position: false, level: false, password: false }));
   };
   
@@ -171,9 +142,9 @@ export default function UsersPage() {
     }
 
     setLoading(true);
+    setSuccessMsg(false);
 
     try {
-      setErrorMsg(false);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
         formData, 
@@ -186,7 +157,7 @@ export default function UsersPage() {
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
-        setTitle("Sucesso!");
+        setSuccessMsg(true);
         setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
         setFormData({
           name: "",
@@ -198,14 +169,9 @@ export default function UsersPage() {
           password: "",
         });
       } else {
-        setTitle("Erro!");
         setMessage(response.data.message || "Erro ao cadastrar usuário");
-        setErrorMsg(true);
       }
     } catch (error) {
-      setTitle("Erro!");
-      setErrorMsg(true);
-      
       if (axios.isAxiosError(error) && error.response) {
         setMessage(error.response.data.message || "Erro no servidor");
         console.error("Erro na resposta:", error.response.data);
@@ -564,19 +530,25 @@ export default function UsersPage() {
                   <Form.Message className="text-red-500 text-xs" match="valueMissing">
                     Campo obrigatório*
                   </Form.Message>
+                  <Form.Message className="text-red-500 text-xs" match="patternMismatch">
+                    Formato inválido. 
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
-                  <input
-                    type="tel"
-                    name="tel"
-                    id="tel"
-                    placeholder="(xx)xxxxx-xxxx"
-                    required
-                    autoComplete="tel"
-                    value={formData.tel}
-                    onChange={handleChange}
-                    className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
-                  />
+                    <InputMask
+                      type="tel"
+                      name="tel"
+                      id="tel"
+                      placeholder="(xx)xxxxx-xxxx"
+                      mask="(99) 9999?9-9999"
+                      autoClear={false}
+                      pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+                      required
+                      autoComplete="tel"
+                      value={formData.tel}
+                      onChange={handleChange}
+                      className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
+                    />
                 </Form.Control>
               </Form.Field>
 
@@ -586,13 +558,19 @@ export default function UsersPage() {
                   <Form.Message className="text-red-500 text-xs" match="valueMissing">
                     Campo obrigatório*
                   </Form.Message>
+                  <Form.Message className="text-red-500 text-xs" match="patternMismatch">
+                    Formato inválido. 
+                  </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
-                  <input
+                  <InputMask
                     type="text"
                     name="cpf"
                     id="cpf"
                     placeholder="Digite seu CPF"
+                    mask="999.999.999-99"
+                    autoClear={false}
+                    pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                     required
                     value={formData.cpf}
                     onChange={handleChange}
@@ -617,7 +595,6 @@ export default function UsersPage() {
                     value={formData.cargo}
                     onChange={handleChange}
                     className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    required
                   >
                     <option value="" disabled>Selecione seu cargo</option>
                     {options.cargos.map((cargo) => (
@@ -649,7 +626,6 @@ export default function UsersPage() {
                   value={formData.nivel}
                   onChange={handleChange}
                   className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  required
                 >
                   <option value="" disabled>Selecione seu nível de acesso</option>
                   {options.niveis.map((nivel) => (
@@ -730,11 +706,11 @@ export default function UsersPage() {
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: 100, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra ${errorMsg ? "bg-ErroModal" : "bg-verdePigmento" }`}
+                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra ${successMsg ? "bg-verdePigmento" : "bg-ErroModal" }`}
                   >
                     <div className="flex justify-between items-center pb-2">
                       <Toast.Title className="font-bold text-lg">
-                        {title}
+                        {successMsg ? "Sucesso!" : "Erro!" }
                       </Toast.Title>
                       <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
                         <X size={25} />

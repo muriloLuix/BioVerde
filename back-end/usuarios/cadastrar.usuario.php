@@ -1,9 +1,9 @@
 <?php 
 session_start();
 
-include_once("../inc/ambiente.inc.php");
+// include_once("../inc/ambiente.inc.php");
 include_once ("../cors.php");
-include_once ("../log/log.php");
+// include_once ("../log/log.php");
 include_once ("funcoes.inc.php");
 
 use PHPMailer\PHPMailer\PHPMailer;
