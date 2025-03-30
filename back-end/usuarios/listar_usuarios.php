@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-include_once("funcoes.inc.php");
+include_once "../inc/funcoes.inc.php";
 
 header('Content-Type: application/json');
 

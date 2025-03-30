@@ -1,18 +1,7 @@
 <?php 
 session_start();
 
-// include_once("../inc/ambiente.inc.php");
-include_once ("../cors.php");
-// include_once ("../log/log.php");
-include_once ("funcoes.inc.php");
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require '../../vendor/phpmailer/phpmailer/src/Exception.php';
-require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
-require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
-require '../../vendor/autoload.php';
+include_once "../inc/funcoes.inc.php";
 
 if (!isset($_SESSION["user_id"])) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);

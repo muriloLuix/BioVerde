@@ -1,7 +1,6 @@
 <?php 
 
-include_once "../cors.php";
-include_once "funcoes.inc.php";
+include_once "../inc/funcoes.inc.php";
 
 if (!function_exists('salvarLog')) {
     include_once '../log/log.php';
@@ -10,10 +9,7 @@ if (!function_exists('salvarLog')) {
 // ini_set('display_errors', 1);
 
 // Configurações de sessão
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0);
-ini_set('session.cookie_samesite', 'Lax');
-ini_set('session.use_strict_mode', 1);
+configurarSessaoSegura();
 
 // Verifique o cabeçalho X-Session-ID
 if (isset($_SERVER['HTTP_X_SESSION_ID'])) {

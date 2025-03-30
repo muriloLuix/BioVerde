@@ -1,9 +1,7 @@
 <?php
 session_start();
 
-// include_once("../inc/ambiente.inc.php");
-include_once("../cors.php");
-include_once("funcoes.inc.php");
+include_once "../inc/funcoes.inc.php";
 
 header('Content-Type: application/json');
 
