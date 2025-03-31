@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { AgChartProps, AgCharts } from "ag-charts-react";
-
 const Dashboard = () => {
   const cardsNames = [
     { title: "Produtos em estoque", color: "bg-blue-500", quantity: 45 },
@@ -49,20 +46,6 @@ const Dashboard = () => {
     },
   ];
 
-  const [chartOptions, setChartOptions] = useState<AgChartProps["options"]>({
-    data: [
-      { month: "Jan", avgTemp: 2.3, iceCreamSales: 162000 },
-      { month: "Mar", avgTemp: 6.3, iceCreamSales: 302000 },
-      { month: "May", avgTemp: 16.2, iceCreamSales: 800000 },
-      { month: "Jul", avgTemp: 22.8, iceCreamSales: 1254000 },
-      { month: "Sep", avgTemp: 14.5, iceCreamSales: 950000 },
-      { month: "Nov", avgTemp: 8.9, iceCreamSales: 200000 },
-    ],
-    series: [{ type: "bar", xKey: "month", yKey: "iceCreamSales" }],
-  });
-
-  console.log(typeof setChartOptions);
-
   return (
     <div className="h-screen w-full flex flex-wrap justify-evenly p-5">
       {cardsNames.map((card, index) => (
@@ -109,7 +92,7 @@ const Dashboard = () => {
 
       <div className="h-1/3 w-full rounded-lg p-4 box-border text-center bg-gray-300">
         <span className="font-bold text-xl">Previsão de demandas</span>
-        <AgCharts className="h-9/10 w-full rounded-lg" options={chartOptions} />
+        <strong>Grafico</strong>
       </div>
     </div>
   );
