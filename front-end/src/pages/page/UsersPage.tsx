@@ -1,11 +1,10 @@
-import { Tabs, Form, Toast } from "radix-ui";
 import { useState, useEffect } from "react";
+import { Tabs, Form, Toast } from "radix-ui";
 import { Eye, EyeOff, Search, PencilLine, Trash, X, Loader2 } from "lucide-react";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { InputMask, InputMaskChangeEvent } from 'primereact/inputmask';
-        
-        
+import axios from "axios";
+                
 interface Cargo {
   car_id: number;
   car_nome: string;
@@ -33,8 +32,8 @@ export default function UsersPage() {
   const [openModal, setOpenModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [optionsLoading, setOptionsLoading] = useState(true);
+  const [loading, setLoading] = useState(new Set());
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [errors, setErrors] = useState({
     position: false,
     level: false,
@@ -56,15 +55,14 @@ export default function UsersPage() {
     cargos: [],
     niveis: [],
   });
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [loadingUsuarios, setLoadingUsuarios] = useState(true);
+
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setOptionsLoading(true);
-        setLoadingUsuarios(true);
-  
+        
+        setLoading((prev) => new Set([...prev, "users", "options"]));
+
         const [optionsResponse, usuariosResponse] = await Promise.all([
           axios.get("http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php", {
             withCredentials: true,
@@ -111,8 +109,11 @@ export default function UsersPage() {
           console.error("Erro desconhecido:", error);
         }
       } finally {
-        setOptionsLoading(false);
-        setLoadingUsuarios(false);
+        setLoading((prev) => {
+          const newLoading = new Set(prev);
+          ["users", "options"].forEach((item) => newLoading.delete(item));
+          return newLoading;
+        });
       }
     };
   
@@ -141,7 +142,7 @@ export default function UsersPage() {
       return; 
     }
 
-    setLoading(true);
+    setLoading((prev) => new Set([...prev, "submit"]));
     setSuccessMsg(false);
 
     try {
@@ -180,8 +181,12 @@ export default function UsersPage() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setLoading(false);
       setOpenModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("submit");
+        return newLoading;
+      });
     }
   };
 
@@ -227,6 +232,8 @@ export default function UsersPage() {
             Cadastrar Usuários
           </Tabs.Trigger>
         </Tabs.List>
+
+
 
         {/* Aba de Lista de Usuários */}
         <Tabs.Content 
@@ -400,19 +407,16 @@ export default function UsersPage() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-verdePigmento text-white shadow-thead">
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">ID</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Nome</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Email</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Telefone</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">CPF</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Cargo</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Nível de Acesso</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Data de Cadastro</th>
-                  <th className="border border-black px-4 py-4 whitespace-nowrap">Ações</th>
+                  {[
+                    "ID", "Nome", "Email", "Telefone", "CPF", "Cargo", "Nível de Acesso",
+                    "Data de Cadastro", "Ações"
+                  ].map((header) => (
+                    <th key={header} className="border border-black px-4 py-4 whitespace-nowrap">{header}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {loadingUsuarios ? (
+                {loading.has("users") ? (
                   <tr>
                     <td colSpan={9} className="text-center py-4">
                       <Loader2 className="animate-spin h-8 w-8 mx-auto" />
@@ -430,11 +434,14 @@ export default function UsersPage() {
                       key={usuario.user_id}
                       className={usuario.user_id % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                     >
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_id}</td>
+                      {/* <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_id}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_nome}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_email}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_telefone}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_CPF}</td>
+                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_CPF}</td> */}
+                      {Object.values(usuario).slice(0, 5).map((value, idx) => (
+                        <td key={idx} className="border border-black px-4 py-4 whitespace-nowrap">{value}</td>
+                      ))}
                       <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.car_nome}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivel_nome}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">
@@ -486,7 +493,7 @@ export default function UsersPage() {
                     type="text"
                     name="name"
                     id="name"
-                    placeholder="Digite seu nome completo"
+                    placeholder="Digite o nome completo"
                     required
                     autoComplete="name"
                     value={formData.name}
@@ -511,7 +518,7 @@ export default function UsersPage() {
                     type="email"
                     name="email"
                     id="email"
-                    placeholder="Digite seu email"
+                    placeholder="Digite o email"
                     required
                     autoComplete="email"
                     value={formData.email}
@@ -531,7 +538,7 @@ export default function UsersPage() {
                     Campo obrigatório*
                   </Form.Message>
                   <Form.Message className="text-red-500 text-xs" match="patternMismatch">
-                    Formato inválido. 
+                    Formato inválido*
                   </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
@@ -559,7 +566,7 @@ export default function UsersPage() {
                     Campo obrigatório*
                   </Form.Message>
                   <Form.Message className="text-red-500 text-xs" match="patternMismatch">
-                    Formato inválido. 
+                    Formato inválido*
                   </Form.Message>
                 </Form.Label>
                 <Form.Control asChild>
@@ -584,7 +591,7 @@ export default function UsersPage() {
                   <span className="text-xl pb-2 font-light">Cargo:</span>
                   {errors.position && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                 </Form.Label>
-                {optionsLoading ? (
+                {loading.has("options") ? (
                   <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
                     <Loader2 className="animate-spin h-5 w-5" />
                   </div>
@@ -596,7 +603,7 @@ export default function UsersPage() {
                     onChange={handleChange}
                     className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
-                    <option value="" disabled>Selecione seu cargo</option>
+                    <option value="" disabled>Selecione o cargo</option>
                     {options.cargos.map((cargo) => (
                       <option key={cargo.car_id} value={cargo.car_nome}>
                         {cargo.car_nome}
@@ -615,7 +622,7 @@ export default function UsersPage() {
                 <span className="text-xl pb-2 font-light">Nível de Acesso:</span>
                 {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
               </Form.Label>
-              {optionsLoading ? (
+              {loading.has("options") ? (
                 <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
                   <Loader2 className="animate-spin h-5 w-5" />
                 </div>
@@ -627,7 +634,7 @@ export default function UsersPage() {
                   onChange={handleChange}
                   className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
                 >
-                  <option value="" disabled>Selecione seu nível de acesso</option>
+                  <option value="" disabled>Selecione o nível de acesso</option>
                   {options.niveis.map((nivel) => (
                     <option key={nivel.nivel_id} value={nivel.nivel_nome}>
                       {nivel.nivel_nome}
@@ -680,9 +687,9 @@ export default function UsersPage() {
               <button
                 type="submit"
                 className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
-                disabled={loading}
+                disabled={loading.size > 0}
               >
-                {loading ? (
+                {loading.has("submit") ? (
                   <Loader2 className="animate-spin h-6 w-6" />
                 ) : (
                   "Cadastrar Usuário"
