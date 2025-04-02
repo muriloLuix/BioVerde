@@ -8,9 +8,8 @@ const Email = ({ ...rest }: EmailProps) => {
           id="email"
           name="email"
           placeholder="E-mail"
-          required
-          {...rest}
           className="text-black bg-brancoSal p-2 w-full rounded outline-hidden"
+          {...rest}
       />
   );
 };

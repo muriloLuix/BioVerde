@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
 import { Tabs, Form, Toast } from "radix-ui";
-import { Eye, EyeOff, Search, PencilLine, Trash, X, Loader2 } from "lucide-react";
+import { Search, PencilLine, Trash, X, Loader2} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { InputMask, InputMaskChangeEvent } from 'primereact/inputmask';
+import { InputMaskChangeEvent } from 'primereact/inputmask';
 import axios from "axios";
+
+import NameField from "../../shared/components/usersComponents/NameField";
+import EmailField from "../../shared/components/usersComponents/EmailField";
+import { Email } from "../../shared";
+import PhoneField from "../../shared/components/usersComponents/PhoneField";
+import Phone from "../../shared/components/Phone";
+import CpfField from "../../shared/components/usersComponents/CpfField";
+import Cpf from "../../shared/components/Cpf";
+import { Password } from "../../shared";
                 
 interface Cargo {
   car_id: number;
@@ -28,7 +37,7 @@ interface Usuario {
 
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState("list");
-  const [isHidden, setIsHidden] = useState(false);
+  // const [isHidden, setIsHidden] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
@@ -200,7 +209,8 @@ export default function UsersPage() {
     setFormData({ ...formData, password: newPassword });
     setErrors((prevErrors) => ({ ...prevErrors, password: false }));  
   };
-  
+
+  console.log("Usuários:", JSON.stringify(usuarios, null, 2));
 
   return (
     <div className="px-6 font-[inter]">
@@ -405,6 +415,7 @@ export default function UsersPage() {
           {/* Tabela Lista de Usuários */}
           <div className="max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-15">
             <table className="w-full border-collapse">
+              {/* Tabela Cabeçalho */}
               <thead>
                 <tr className="bg-verdePigmento text-white shadow-thead">
                   {[
@@ -429,21 +440,15 @@ export default function UsersPage() {
                     </td>
                   </tr>
                 ) : (
+                  //Tabela Dados
                   usuarios.map((usuario) => (
                     <tr
                       key={usuario.user_id}
                       className={usuario.user_id % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                     >
-                      {/* <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_id}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_nome}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_email}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_telefone}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.user_CPF}</td> */}
-                      {Object.values(usuario).slice(0, 5).map((value, idx) => (
+                      {Object.values(usuario).slice(0, 7).map((value, idx) => (
                         <td key={idx} className="border border-black px-4 py-4 whitespace-nowrap">{value}</td>
                       ))}
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.car_nome}</td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">{usuario.nivel_nome}</td>
                       <td className="border border-black px-4 py-4 whitespace-nowrap">
                         {new Date(usuario.user_dtcadastro).toLocaleDateString('pt-BR')}
                       </td>
@@ -481,110 +486,41 @@ export default function UsersPage() {
 
             {/* Linha Nome e Email*/} 
             <div className="flex mb-10 justify-between">
-              <Form.Field name="name" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center">
-                  <span className="text-xl pb-2 font-light">Nome Completo:</span>
-                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
-                    Campo obrigatório*
-                  </Form.Message>
-                </Form.Label>
-                <Form.Control asChild>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    placeholder="Digite o nome completo"
-                    required
-                    autoComplete="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  />
-                </Form.Control>
-              </Form.Field>
-              
-              <Form.Field name="email" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center">
-                  <span className="text-xl pb-2 font-light">Email:</span>
-                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
-                    O e-mail é obrigatório* 
-                  </Form.Message>
-                  <Form.Message className="text-red-500 text-xs" match="typeMismatch">
-                    Insira um e-mail válido* 
-                  </Form.Message>
-                </Form.Label>
-                <Form.Control asChild>
-                  <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    placeholder="Digite o email"
-                    required
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  />
-                </Form.Control>
-              </Form.Field>
+              <NameField
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+
+              <EmailField>
+                <Email 
+                  placeholder="Digite o email"
+                  value={formData.email} 
+                  onChange={handleChange}
+                  required
+                  className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
+                />
+              </EmailField>
             </div>
             
             {/* Linha Telefone, CPF, e Cargo*/} 
             <div className="flex gap-x-15 mb-10 justify-between">
-              <Form.Field name="tel" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center">
-                  <span className="text-xl pb-2 font-light">Telefone:</span>
-                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
-                    Campo obrigatório*
-                  </Form.Message>
-                  <Form.Message className="text-red-500 text-xs" match="patternMismatch">
-                    Formato inválido*
-                  </Form.Message>
-                </Form.Label>
-                <Form.Control asChild>
-                    <InputMask
-                      type="tel"
-                      name="tel"
-                      id="tel"
-                      placeholder="(xx)xxxxx-xxxx"
-                      mask="(99) 9999?9-9999"
-                      autoClear={false}
-                      pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                      required
-                      autoComplete="tel"
-                      value={formData.tel}
-                      onChange={handleChange}
-                      className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                </Form.Control>
-              </Form.Field>
+              
+              <PhoneField>
+                <Phone
+                  required  
+                  phoneValue={formData.tel}
+                  setPhone={handleChange}
+                />
+              </PhoneField>
 
-              <Form.Field name="cpf" className="flex flex-col">
-                <Form.Label className="flex justify-between items-center">
-                  <span className="text-xl pb-2 font-light">CPF:</span>
-                  <Form.Message className="text-red-500 text-xs" match="valueMissing">
-                    Campo obrigatório*
-                  </Form.Message>
-                  <Form.Message className="text-red-500 text-xs" match="patternMismatch">
-                    Formato inválido*
-                  </Form.Message>
-                </Form.Label>
-                <Form.Control asChild>
-                  <InputMask
-                    type="text"
-                    name="cpf"
-                    id="cpf"
-                    placeholder="Digite seu CPF"
-                    mask="999.999.999-99"
-                    autoClear={false}
-                    pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                    required
-                    value={formData.cpf}
-                    onChange={handleChange}
-                    className="bg-white border w-[275px] border-separator rounded-lg p-2.5 shadow-xl"
-                  />
-                </Form.Control>
-              </Form.Field>
+              <CpfField>
+                <Cpf
+                  required  
+                  cpfValue={formData.cpf}
+                  setCpf={handleChange}
+                />
+              </CpfField>
 
               <Form.Field name="cargo" className="flex flex-col">
                 <Form.Label className="flex justify-between items-center">
@@ -592,7 +528,7 @@ export default function UsersPage() {
                   {errors.position && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
                 </Form.Label>
                 {loading.has("options") ? (
-                  <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
+                  <div className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
                     <Loader2 className="animate-spin h-5 w-5" />
                   </div>
                 ) : (
@@ -601,7 +537,7 @@ export default function UsersPage() {
                     id="cargo"
                     value={formData.cargo}
                     onChange={handleChange}
-                    className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="" disabled>Selecione o cargo</option>
                     {options.cargos.map((cargo) => (
@@ -623,7 +559,7 @@ export default function UsersPage() {
                 {errors.level && <span className="text-red-500 text-xs">Campo obrigatório*</span>}
               </Form.Label>
               {loading.has("options") ? (
-                <div className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
+                <div className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
                   <Loader2 className="animate-spin h-5 w-5" />
                 </div>
               ) : (
@@ -632,7 +568,7 @@ export default function UsersPage() {
                   id="nivel"
                   value={formData.nivel}
                   onChange={handleChange}
-                  className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
                 >
                   <option value="" disabled>Selecione o nível de acesso</option>
                   {options.niveis.map((nivel) => (
@@ -650,31 +586,16 @@ export default function UsersPage() {
                   {errors.password && <span className="text-red-500 text-xs">A senha deve ter pelo menos 8 caracteres*</span>}
                 </Form.Label>
                 <div className="flex gap-4">
-                  <div className="relative">
-                    <Form.Control asChild>
-                      <input
-                        type={isHidden ? "text" : "password"}
-                        name="password"
-                        id="password"
-                        placeholder="Digite ou Gere a senha"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                    {/* Botão de Mostrar/Ocultar Senha */}
-                    <button
-                      type="button"
-                      onClick={() => setIsHidden(!isHidden)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-                    >
-                      {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
+                  <Password
+                    placeholder="Digite ou Gere a senha"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="bg-white w-[275px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  />
                   {/* Botão de Gerar Senha Aleatoria */}
                   <button 
                     type="button"
-                    className="bg-verdeMedio p-3 rounded-2xl text-white cursor-pointer hover:bg-verdeEscuro"
+                    className="bg-verdeMedio p-2.5 rounded-2xl text-white cursor-pointer hover:bg-verdeEscuro"
                     onClick={generatePassword}
                   >
                     Gerar Senha
@@ -682,6 +603,7 @@ export default function UsersPage() {
                 </div>
               </Form.Field>
             </div>
+
             <Form.Submit asChild >
             <div className="flex place-content-center mb-10 mt-5">
               <button

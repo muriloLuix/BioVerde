@@ -156,7 +156,7 @@ function buscarNiveisAcesso($conn) {
 // listar_usuarios.php
 
 function buscarUsuarios($conn) {
-    $result = $conn->query("SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, u.car_id, u.nivel_id, u.user_dtcadastro, c.car_nome, n.nivel_nome FROM usuarios u INNER JOIN cargo c ON u.car_id = c.car_id INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id");
+    $result = $conn->query("SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, c.car_nome, n.nivel_nome, u.user_dtcadastro, u.car_id, u.nivel_id FROM usuarios u INNER JOIN cargo c ON u.car_id = c.car_id INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id");
     if (!$result) {
         throw new Exception("Erro ao buscar usuários: " . $conn->error);
     }
