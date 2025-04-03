@@ -24,6 +24,11 @@ interface NivelAcesso {
   nivel_nome: string;
 }
 
+interface Status{
+  sta_id: number;
+  sta_nome: string;
+}
+
 interface Usuario {
   user_id: number;
   user_nome: string;
@@ -33,7 +38,7 @@ interface Usuario {
   car_nome: string;
   nivel_nome: string;
   user_dtcadastro: string;
-  user_status: string;
+  sta_id?: number;
 }
 
 export default function UsersPage() {
@@ -45,6 +50,7 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState(new Set());
+  const [isLoading, setIsLoading] = useState(true);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [errors, setErrors] = useState({
     position: false,
@@ -52,6 +58,7 @@ export default function UsersPage() {
     password: false,
   });
   const [formData, setFormData] = useState({
+    user_id: 0,
     name: "",
     email: "",
     tel: "",
@@ -64,9 +71,11 @@ export default function UsersPage() {
   const [options, setOptions] = useState<{
     cargos: Cargo[];
     niveis: NivelAcesso[];
+    status: Status[];
   }>({
     cargos: [],
     niveis: [],
+    status: [] 
   });
   const [filters, setFilters] = useState({
     fname: "",
@@ -93,13 +102,14 @@ export default function UsersPage() {
   //função para puxar os dados do usuario que será editado
   const handleEditClick = (usuario: Usuario) => {
     setFormData({
+      user_id: usuario.user_id, 
       name: usuario.user_nome,
       email: usuario.user_email,
       tel: usuario.user_telefone, 
       cpf: usuario.user_CPF,
       cargo: usuario.car_nome,
       nivel: usuario.nivel_nome,
-      status: usuario.user_status,
+      status: usuario.sta_id?.toString() || usuario.user_status,
       password: "",
     });
     setOpenEditModal(true);
@@ -118,9 +128,8 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        
         setLoading((prev) => new Set([...prev, "users", "options"]));
-
+  
         const [optionsResponse, usuariosResponse] = await Promise.all([
           axios.get("http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php", {
             withCredentials: true,
@@ -141,6 +150,7 @@ export default function UsersPage() {
           setOptions({
             cargos: optionsResponse.data.cargos,
             niveis: optionsResponse.data.niveis,
+            status: optionsResponse.data.status || [] 
           });
         } else {
           setOpenModal(true);
@@ -182,51 +192,81 @@ export default function UsersPage() {
   //Submit de cadastrar usuários
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validações
-    if (!formData.cargo) { 
-      setErrors((prevErrors) => ({ ...prevErrors, position: true })); 
-      return; 
+    setErrors({
+      position: !formData.cargo,
+      level: !formData.nivel,
+      password: !formData.password || formData.password.length < 8
+    });
+  
+    // Verifica se há erros
+    if (!formData.cargo || !formData.nivel || !formData.password || formData.password.length < 8) {
+      setOpenModal(true);
+      setMessage("Por favor, preencha todos os campos obrigatórios corretamente.");
+      return;
     }
-    if (!formData.nivel) { 
-      setErrors((prevErrors) => ({ ...prevErrors, level: true })); 
-      return; 
-    }
-    if (!formData.password || formData.password.length < 8) { 
-      setErrors((prevErrors) => ({ ...prevErrors, password: true })); 
-      return; 
-    }
-
+  
     setLoading((prev) => new Set([...prev, "submit"]));
     setSuccessMsg(false);
-
+  
     try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        tel: formData.tel,
+        cpf: formData.cpf,
+        cargo: formData.cargo,
+        nivel: formData.nivel,
+        password: formData.password,
+        status: formData.status || "ativo" // Valor padrão se não informado
+      };
+  
+      console.log("Dados sendo enviados:", payload); // Para debug
+  
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
-        formData, 
+        payload, 
         { 
           headers: { "Content-Type": "application/json" },
           withCredentials: true
         }
       );
-
+  
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
-        setFormData((prev) => Object.fromEntries(Object.keys(prev).map((key) => [key, ""])) as typeof prev);
+        // Limpa o formulário
+        setFormData({
+          name: "",
+          email: "",
+          tel: "",
+          cpf: "",
+          cargo: "",
+          nivel: "",
+          password: "",
+          status: ""
+        });
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        setMessage(error.response.data.message || "Erro no servidor");
-        console.error("Erro na resposta:", error.response.data);
+      let errorMessage = "Erro ao conectar com o servidor";
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          errorMessage = error.response.data.message || "Erro no servidor";
+          console.error("Erro na resposta:", error.response.data);
+        } else {
+          console.error("Erro na requisição:", error.message);
+        }
       } else {
-        setMessage("Erro ao conectar com o servidor");
-        console.error("Erro na requisição:", error);
+        console.error("Erro desconhecido:", error);
       }
+      
+      setMessage(errorMessage);
     } finally {
       setOpenModal(true);
       setLoading((prev) => {
@@ -257,11 +297,14 @@ export default function UsersPage() {
         }
       );
 
+      console.log("Filtros enviados:", filters);
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
+        console.log("Query executada:", response.data.debug?.sql);
+        console.log("Valores usados:", response.data.debug?.valores);
         setUsuarios(response.data.usuarios);
-      } else {
+    }else {
         setMessage(response.data.message || "Nenhum usuário encontrado com esse filtro");
       }
     } catch (error) {
@@ -285,10 +328,10 @@ export default function UsersPage() {
   //submit para atualizar o usuário após a edição dele
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    setLoading((prev) => new Set([...prev, "uptadeUser"]));
+  
+    setLoading((prev) => new Set([...prev, "updateUser"]));
     setSuccessMsg(false);
-
+  
     try {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/editar.usuario.php", 
@@ -298,7 +341,7 @@ export default function UsersPage() {
           withCredentials: true
         }
       );
-
+  
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
@@ -309,9 +352,9 @@ export default function UsersPage() {
         setMessage(response.data.message || "Erro ao atualizar usuário.");
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        setMessage(error.response.data.message || "Erro no servidor");
-        console.error("Erro na resposta:", error.response.data);
+      if (axios.isAxiosError(error)) { // Corrigido aqui - faltava o parêntese de fechamento
+        setMessage(error.response?.data?.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response?.data);
       } else {
         setMessage("Erro ao conectar com o servidor");
         console.error("Erro na requisição:", error);
@@ -320,7 +363,7 @@ export default function UsersPage() {
       setOpenModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
-        newLoading.delete("uptadeUser");
+        newLoading.delete("updateUser");
         return newLoading;
       });
     }
@@ -818,21 +861,29 @@ export default function UsersPage() {
 
               <Form.Field name="status" className="flex flex-col">
                 <Form.Label asChild>
-                  <span className="text-xl pb-2 font-light">
-                  Status:
-                  </span>
+                  <span className="text-xl pb-2 font-light">Status:</span>
                 </Form.Label>
+                {loading.has("options") ? (
+                  <div className="bg-white w-[180px] h-[46px] flex items-center justify-center">
+                    <Loader2 className="animate-spin" />
+                  </div>
+                ) : (
                   <select
-                  name="status"
-                  id="status"
-                  required
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="bg-white w-[180px] h-[46px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    name="status"
+                    id="status"
+                    required
+                    value={formData.status}
+                    onChange={handleChange}
+                    className="bg-white w-[180px] h-[46px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
+                    <option value="" disabled>Selecione o status</option>
+                    {options.status?.map((status) => (
+                      <option key={status.sta_id} value={status.sta_id}>
+                        {status.sta_nome}
+                      </option>
+                    ))}
                   </select>
+                )}
               </Form.Field>
             </div>
 

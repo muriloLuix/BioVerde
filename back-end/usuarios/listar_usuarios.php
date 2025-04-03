@@ -17,6 +17,8 @@ try {
     // Buscar níveis de acesso
     $niveis = buscarNiveisAcesso($conn);
 
+    $status = buscarStatus($conn);
+
     echo json_encode([
         "success" => true,
         "usuarios" => $usuarios,

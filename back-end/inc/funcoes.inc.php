@@ -69,6 +69,22 @@ function verificarEmailCpf($conn, $email, $cpf) {
     return null;
 }
 
+function verificarStatus($conn, $status){
+    $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_nome = ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+    }
+    $stmt->bind_param("s", $status);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows === 0) {
+        return ["success" => false, "message" => "Status nao encontrado."];
+    }
+    $status = $result->fetch_assoc();
+    $stmt->close();
+    return $status['sta_id'];
+}
+
 
 function enviarEmailCadastro($email, $data) {
     $mail = new PHPMailer(true);
@@ -153,6 +169,19 @@ function buscarNiveisAcesso($conn) {
     return $niveis;
 }
 
+function buscarStatus($conn) {
+    $result = $conn->query("SELECT sta_id, sta_nome FROM status");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $status = [];
+    while ($row = $result->fetch_assoc()) {
+        $status[] = $row;
+    }
+
+    return $status;
+}
 // listar_usuarios.php
 
 function buscarUsuarios($conn) {
@@ -361,6 +390,165 @@ function configurarSessaoSegura() {
     ini_set('session.gc_maxlifetime', 1800);
 }
 
+// filtro.usuario.php
+
+/**
+ * Constrói a cláusula WHERE para filtros de usuários
+ */
+function construirFiltrosUsuarios($data) {
+    $mapaFiltros = [
+        "fname"  => "user_nome",   
+        "femail" => "user_email", 
+        "ftel"   => "user_telefone",
+        "fcpf"   => "user_CPF",
+        "fcargo" => "car_nome",
+        "fnivel" => "nivel_nome",
+        "fstatus" => "sta_nome"  
+    ];
+
+    $where = [];
+    $valores = [];
+    $tipos = "";
+
+    foreach ($mapaFiltros as $param => $coluna) {
+        if (!empty($data[$param])) {
+            if ($param === "fname") {
+                $where[] = "LOWER($coluna) LIKE LOWER(?)";
+                $valores[] = '%' . trim($data[$param]) . '%';
+                $tipos .= "s";
+            } else {
+                $where[] = "$coluna = ?";
+                $valores[] = trim($data[$param]);
+                $tipos .= "s";
+            }
+        }
+    }
+
+    return [
+        'where' => $where,
+        'valores' => $valores,
+        'tipos' => $tipos
+    ];
+}
+
+function buscarUsuariosComFiltros($conn, $filtros) {
+    $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, 
+                   c.car_nome, n.nivel_nome, s.sta_nome, u.user_dtcadastro 
+            FROM usuarios u 
+            INNER JOIN cargo c ON u.car_id = c.car_id 
+            INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
+            LEFT JOIN status s ON u.sta_id = s.sta_id"; 
+
+    if (!empty($filtros['where'])) {
+        $sql .= " WHERE " . implode(" AND ", $filtros['where']);
+    }
+
+    // Restante da função permanece igual
+    $stmt = $conn->prepare($sql);
+
+    if (!empty($filtros['valores'])) {
+        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $usuarios = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    return $usuarios;
+}
+
+// editar.usuario.php
+
+/**
+ * Verifica se o usuário existe
+ */
+function verificarUsuarioExiste($conn, $user_id) {
+    $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE user_id = ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $existe = $result->num_rows > 0;
+    $stmt->close();
+    return $existe;
+}
+
+/**
+ * Atualiza os dados do usuário
+ */
+function atualizarUsuario($conn, $user_id, $dados) {
+    // Campos básicos
+    $campos = [
+        'user_nome' => $dados['name'],
+        'user_email' => $dados['email'],
+        'user_telefone' => $dados['tel'],
+        'user_CPF' => $dados['cpf'],
+        'car_id' => verificarCargo($conn, $dados['cargo']),
+        'nivel_id' => verificarNivel($conn, $dados['nivel']),
+        'sta_id' => $dados['status'] ?? null // Status opcional
+    ];
+    
+    // Se houver senha, atualiza também
+    if (!empty($dados['password'])) {
+        $campos['user_senha'] = password_hash($dados['password'], PASSWORD_DEFAULT);
+    }
+    
+    // Prepara os campos para a query
+    $sets = [];
+    $tipos = '';
+    $valores = [];
+    
+    foreach ($campos as $campo => $valor) {
+        if ($valor !== null) {
+            $sets[] = "$campo = ?";
+            $tipos .= is_int($valor) ? 'i' : 's';
+            $valores[] = $valor;
+        }
+    }
+    
+    // Adiciona o user_id no final
+    $valores[] = $user_id;
+    $tipos .= 'i';
+    
+    $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE user_id = ?";
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
+    }
+    
+    $stmt->bind_param($tipos, ...$valores);
+    $stmt->execute();
+    
+    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
+        // Considera sucesso mesmo se nada foi alterado (valores iguais)
+        return ["success" => true];
+    } else {
+        return ["success" => false, "message" => "Nenhum registro atualizado."];
+    }
+}
+
+/**
+ * Verifica conflitos de email/CPF (excluindo o próprio usuário)
+ */
+function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id) {
+    $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE (user_email = ? OR user_CPF = ?) AND user_id != ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    $stmt->bind_param("ssi", $email, $cpf, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $conflito = $result->fetch_assoc();
+        return ["success" => false, "message" => "E-mail ou CPF já está em uso por outro usuário."];
+    }
+    return null;
+}
 
 ?>
 
