@@ -6,9 +6,9 @@ import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,          
-  Boxes,            
+  FileText,            
   Layers,           
-  Factory,              
+  Tag,              
   ShoppingCart,     
   Users,           
   Truck,           
@@ -27,13 +27,13 @@ export default function LayoutSideBar() {
     () => [
       { name: "Dashboards", icon: <LayoutDashboard/>, path: "/app/dashboard" },
       { name: "Controle de Estoque", icon: <Package />, path: "/app/controle-estoque" },
-      { name: "Estrutura de Produtos", icon: <Boxes />, path: "/app/estrutura-produtos" },
       { name: "Etapas de Produção", icon: <Layers />, path: "/app/etapas-producao" },
-      { name: "Consumo de Insumos", icon: <Factory />, path: "/app/consumo-insumos" },
       { name: "Pedidos", icon: <ShoppingCart />, path: "/app/pedidos" },
       { name: "Usuários", icon: <Users />, path: "/app/usuarios" },
       { name: "Fornecedores", icon: <Truck />, path: "/app/fornecedores" },
       { name: "Clientes", icon: <User />, path: "/app/clientes" },
+      { name: "Gerenciar Preços", icon: <Tag />, path: "/app/precos" },
+      { name: "Logs", icon: <FileText  />, path: "/app/logs" },
     ],
     []
   );
@@ -57,7 +57,7 @@ export default function LayoutSideBar() {
   return (
     <div className="flex h-full bg-brancoSal">
       {/* Sidebar */}
-      <aside className="w-64 z-1000 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col">
+      <aside className="w-64 z-50 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col">
         <Logo
           src="/logo-bioverde-branco.png"
           imgClassName="h-15 w-15 md:w-20 md:h-19 md:mr-1"

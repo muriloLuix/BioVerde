@@ -13,7 +13,7 @@ const Cpf = ({cpfValue, setCpf, required, ...rest }: CpfProps) => {
       type="text"
       name="cpf"
       id="cpf"
-      placeholder="Digite seu CPF"
+      placeholder="xxx.xxx.xxx-xx"
       mask="999.999.999-99"
       autoClear={false}
       pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"

@@ -11,7 +11,7 @@ const Name = ({ ...rest }: NameProps) => {
         <Form.Message className="text-red-500 text-xs" match="valueMissing">
         Campo obrigatório*
         </Form.Message>
-    </Form.Label>
+      </Form.Label>
         <Form.Control asChild>
             <input
             type="text"
