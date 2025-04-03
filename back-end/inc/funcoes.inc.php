@@ -185,7 +185,26 @@ function buscarStatus($conn) {
 // listar_usuarios.php
 
 function buscarUsuarios($conn) {
-    $result = $conn->query("SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, c.car_nome, n.nivel_nome, u.user_dtcadastro, u.car_id, u.nivel_id FROM usuarios u INNER JOIN cargo c ON u.car_id = c.car_id INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id");
+    $result = $conn->query("
+        SELECT 
+            u.user_id, 
+            u.user_nome, 
+            u.user_email, 
+            u.user_telefone, 
+            u.user_CPF, 
+            c.car_nome, 
+            n.nivel_nome, 
+            u.user_dtcadastro, 
+            u.car_id, 
+            u.nivel_id,
+            u.sta_id, 
+            s.sta_nome
+        FROM usuarios u 
+        INNER JOIN cargo c ON u.car_id = c.car_id 
+        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
+        LEFT JOIN status s ON u.sta_id = s.sta_id  -- JOIN com a tabela status
+    ");
+    
     if (!$result) {
         throw new Exception("Erro ao buscar usuários: " . $conn->error);
     }
@@ -328,10 +347,11 @@ function atualizarCodigoRecuperacao($conn, $email, $codigo) {
 // verificar-codigo.php
 
 function verificarCodigoRecuperacao($conn, $codigo) {
-    $sql = "SELECT user_email, codigo_recuperacao_expira_em 
-            FROM usuarios 
-            WHERE codigo_recuperacao = ? 
-            AND (codigo_recuperacao_expira_em IS NULL OR codigo_recuperacao_expira_em > NOW())";
+
+    $sql = " SELECT user_email, codigo_recuperacao_expira_em ";
+    $sql .= " FROM usuarios ";
+    $sql .= " WHERE codigo_recuperacao = ? ";
+    $sql .= " AND (codigo_recuperacao_expira_em IS NULL OR codigo_recuperacao_expira_em > NOW()) ";
     
     $res = $conn->prepare($sql);
     if (!$res) {
@@ -432,12 +452,13 @@ function construirFiltrosUsuarios($data) {
 }
 
 function buscarUsuariosComFiltros($conn, $filtros) {
-    $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, 
-                   c.car_nome, n.nivel_nome, s.sta_nome, u.user_dtcadastro 
-            FROM usuarios u 
-            INNER JOIN cargo c ON u.car_id = c.car_id 
-            INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
-            LEFT JOIN status s ON u.sta_id = s.sta_id"; 
+
+    $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF,";
+    $sql .= " c.car_nome, n.nivel_nome, s.sta_nome, u.user_dtcadastro";
+    $sql .= " FROM usuarios u";
+    $sql .= " INNER JOIN cargo c ON u.car_id = c.car_id";
+    $sql .= " INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id";
+    $sql .= " LEFT JOIN status s ON u.sta_id = s.sta_id";
 
     if (!empty($filtros['where'])) {
         $sql .= " WHERE " . implode(" AND ", $filtros['where']);
@@ -488,8 +509,9 @@ function atualizarUsuario($conn, $user_id, $dados) {
         'user_CPF' => $dados['cpf'],
         'car_id' => verificarCargo($conn, $dados['cargo']),
         'nivel_id' => verificarNivel($conn, $dados['nivel']),
-        'sta_id' => $dados['status'] ?? null // Status opcional
+        'sta_id' => $dados['sta_id'] ?? null
     ];
+    
     
     // Se houver senha, atualiza também
     if (!empty($dados['password'])) {
@@ -548,6 +570,37 @@ function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id) {
         return ["success" => false, "message" => "E-mail ou CPF já está em uso por outro usuário."];
     }
     return null;
+}
+
+/**
+ * Obtém o ID do status pelo nome
+ */
+function obterIdStatusPorNome($conn, $nomeStatus) {
+    if (empty($nomeStatus)) {
+        return null;
+    }
+
+    // Verifica se o parâmetro é numérico (ID) ou string (nome)
+    if (is_numeric($nomeStatus)) {
+        $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_id = ?");
+    } else {
+        $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_nome = ?");
+    }
+    
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    
+    $stmt->bind_param("s", $nomeStatus);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        return null; 
+    }
+    
+    $row = $result->fetch_assoc();
+    return $row['sta_id'];
 }
 
 ?>

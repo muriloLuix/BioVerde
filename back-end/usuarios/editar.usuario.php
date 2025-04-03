@@ -10,73 +10,93 @@ configurarSessaoSegura();
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
 
-// Verifica autenticação
-if (!isset($_SESSION["user_id"])) {
-    echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
-    exit();
-}
-
-// Verifica conexão com o banco
-if ($conn->connect_error) {
-    echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
-    exit();
-}
-
-// Processa os dados de entrada
-$rawData = file_get_contents("php://input");
-if (!$rawData) {
-    echo json_encode(["success" => false, "message" => "Erro ao receber os dados."]);
-    exit();
-}
-
-$data = json_decode($rawData, true);
-
-// Validação dos campos obrigatórios
-$requiredFields = ['user_id', 'name', 'email', 'tel', 'cpf', 'cargo', 'nivel'];
-$validacao = validarCampos($data, $requiredFields);
-if ($validacao) {
-    echo json_encode($validacao);
-    exit();
-}
-
-// Verifica se o usuário a ser editado existe
-if (!verificarUsuarioExiste($conn, $data['user_id'])) {
-    echo json_encode(["success" => false, "message" => "Usuário não encontrado."]);
-    exit();
-}
-
-// Verifica conflitos de email/CPF
-$conflito = verificarConflitosAtualizacao($conn, $data['email'], $data['cpf'], $data['user_id']);
-if ($conflito) {
-    echo json_encode($conflito);
-    exit();
-}
-
-// Verifica se cargo e nível existem
-$cargoId = verificarCargo($conn, $data['cargo']);
-if (isset($cargoId['success']) && !$cargoId['success']) {
-    echo json_encode($cargoId);
-    exit();
-}
-
-$nivelId = verificarNivel($conn, $data['nivel']);
-if (isset($nivelId['success']) && !$nivelId['success']) {
-    echo json_encode($nivelId);
-    exit();
-}
-
-// Atualiza os dados do usuário
-$resultado = atualizarUsuario($conn, $data['user_id'], $data);
-
-if ($resultado['success']) {
-    // Se foi solicitada alteração de senha e foi fornecida
-    if (!empty($data['password'])) {
-        // Pode adicionar lógica adicional aqui, como enviar email de notificação
+try {
+    // Verifica autenticação
+    if (!isset($_SESSION["user_id"])) {
+        throw new Exception("Usuário não autenticado!");
     }
-    
-    echo json_encode(["success" => true, "message" => "Usuário atualizado com sucesso!"]);
-} else {
-    echo json_encode($resultado);
-}
 
-$conn->close();
+    // Verifica conexão com o banco
+    if ($conn->connect_error) {
+        throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);
+    }
+
+    // Processa os dados de entrada
+    $rawData = file_get_contents("php://input");
+
+    if (!$rawData) {
+        throw new Exception("Erro ao receber os dados.");
+    }
+
+    $data = json_decode($rawData, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception("JSON inválido: " . json_last_error_msg());
+    }
+
+    // Remove senha se estiver vazia
+    if (isset($data['password']) && empty($data['password'])) {
+        unset($data['password']);
+    }
+
+    // Validação dos campos obrigatórios
+    $requiredFields = ['user_id', 'name', 'email', 'tel', 'cpf', 'cargo', 'nivel'];
+    $validacao = validarCampos($data, $requiredFields);
+    if ($validacao) {
+        throw new Exception($validacao['message']);
+    }
+
+    // Validações específicas
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        throw new Exception("Email inválido");
+    }
+
+    // Verifica se o usuário existe
+    if (!verificarUsuarioExiste($conn, $data['user_id'])) {
+        throw new Exception("Usuário não encontrado.");
+    }
+
+    // Verifica conflitos
+    $conflito = verificarConflitosAtualizacao($conn, $data['email'], $data['cpf'], $data['user_id']);
+    if ($conflito) {
+        throw new Exception($conflito['message']);
+    }
+
+    // Verifica cargo e nível
+    $cargoId = verificarCargo($conn, $data['cargo']);
+    if (isset($cargoId['success']) && !$cargoId['success']) {
+        throw new Exception($cargoId['message']);
+    }
+
+    $nivelId = verificarNivel($conn, $data['nivel']);
+    if (isset($nivelId['success']) && !$nivelId['success']) {
+        throw new Exception($nivelId['message']);
+    }
+
+    if (isset($data['status'])) {
+        $statusId = obterIdStatusPorNome($conn, $data['status']);
+        
+        // Se a função retornar array, é porque deu erro
+        if (is_array($statusId)) {
+            throw new Exception($statusId['message']);
+        }
+        
+        // Adiciona o ID do status aos dados com o nome correto que a função espera
+        $data['sta_id'] = $statusId;
+    }
+
+    // Atualiza usuário
+    $resultado = atualizarUsuario($conn, $data['user_id'], $data);
+    if (!$resultado['success']) {
+        throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
+    }
+
+    echo json_encode(["success" => true, "message" => "Usuário atualizado com sucesso!"]);
+
+} catch (Exception $e) {
+    error_log("Erro em editar.usuario.php: " . $e->getMessage());
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
+} finally {
+    if (isset($conn) && $conn) {
+        $conn->close();
+    }
+}

@@ -101,6 +101,10 @@ export default function UsersPage() {
 
   //função para puxar os dados do usuario que será editado
   const handleEditClick = (usuario: Usuario) => {
+    console.log('Dados completos do usuário:', usuario);
+    console.log('Status ID:', usuario.sta_id, 'Status Nome:', 
+      options.status?.find(s => s.sta_id === usuario.sta_id)?.sta_nome || 'Não encontrado');
+    
     setFormData({
       user_id: usuario.user_id, 
       name: usuario.user_nome,
@@ -109,7 +113,7 @@ export default function UsersPage() {
       cpf: usuario.user_CPF,
       cargo: usuario.car_nome,
       nivel: usuario.nivel_nome,
-      status: usuario.sta_id?.toString() || usuario.user_status,
+      status: usuario.sta_id?.toString() || "",
       password: "",
     });
     setOpenEditModal(true);
@@ -219,7 +223,7 @@ export default function UsersPage() {
         cargo: formData.cargo,
         nivel: formData.nivel,
         password: formData.password,
-        status: formData.status || "ativo" // Valor padrão se não informado
+        status: formData.status || "ativo" 
       };
   
       console.log("Dados sendo enviados:", payload); // Para debug
@@ -333,9 +337,13 @@ export default function UsersPage() {
     setSuccessMsg(false);
   
     try {
+      // Corrigido: Criar o objeto dataToSend corretamente
+      const { password, ...dataWithoutPassword } = formData;
+      const dataToSend = formData.user_id ? dataWithoutPassword : formData;
+  
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/editar.usuario.php", 
-        formData, 
+        dataToSend,
         { 
           headers: { "Content-Type": "application/json" },
           withCredentials: true
@@ -352,7 +360,7 @@ export default function UsersPage() {
         setMessage(response.data.message || "Erro ao atualizar usuário.");
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) { // Corrigido aqui - faltava o parêntese de fechamento
+      if (axios.isAxiosError(error)) {
         setMessage(error.response?.data?.message || "Erro no servidor");
         console.error("Erro na resposta:", error.response?.data);
       } else {
@@ -367,7 +375,7 @@ export default function UsersPage() {
         return newLoading;
       });
     }
-  };
+};
 
   //submit para excluir um usuário
   const handleDeleteUser = async (e: React.FormEvent) => {
@@ -442,7 +450,8 @@ export default function UsersPage() {
               activeTab === "list" ? "select animation-tab" : ""
             }`}
           >
-            Lista de Usuários
+            Lista de Usuáriosconsole.log('Dados do usuário para edição:', usuario);
+console.log('Status ID:', usuario.sta_id, 'Status:', usuario.user_status);
           </Tabs.Trigger>
 
           <Tabs.Trigger
@@ -1068,15 +1077,18 @@ export default function UsersPage() {
                     </span>
                     </Form.Label>
                     <select
-                    name="status"
-                    id="status"
-                    required
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="bg-white w-[180px] h-[46px] border border-separator rounded-lg p-2.5 shadow-xl"
+                      name="status"
+                      id="status"
+                      required
+                      value={formData.status} // Aqui deve ser o ID do status
+                      onChange={handleChange}
+                      className="bg-white w-[180px] h-[46px] border border-separator rounded-lg p-2.5 shadow-xl"
                     >
-                        <option value="ativo">Ativo</option>
-                        <option value="inativo">Inativo</option>
+                      {options.status?.map((status) => (
+                        <option key={status.sta_id} value={status.sta_id}> {/* Usar sta_id como value */}
+                          {status.sta_nome}
+                        </option>
+                      ))}
                     </select>
                 </Form.Field>
                     

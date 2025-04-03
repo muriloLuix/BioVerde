@@ -6,8 +6,6 @@ if (!function_exists('salvarLog')) {
     include_once '../log/log.php';
 }
 
-// ini_set('display_errors', 1);
-
 // Configurações de sessão
 configurarSessaoSegura();
 
