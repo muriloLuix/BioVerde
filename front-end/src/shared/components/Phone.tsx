@@ -6,7 +6,7 @@ type PhoneProps = {
     required?: boolean;
   };
 
-const Phone = ({phoneValue, setPhone, required, ...rest }: PhoneProps) => {
+const Phone = ({phoneValue, setPhone, required, ...rest}: PhoneProps) => {
   
   return (
     <InputMask
@@ -23,6 +23,7 @@ const Phone = ({phoneValue, setPhone, required, ...rest }: PhoneProps) => {
       required={required} 
       value={phoneValue}
       onChange={setPhone}
+      
     />
   );
 };

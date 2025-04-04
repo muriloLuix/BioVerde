@@ -194,11 +194,11 @@ function buscarUsuarios($conn) {
             u.user_CPF, 
             c.car_nome, 
             n.nivel_nome, 
+            s.sta_nome,
             u.user_dtcadastro, 
             u.car_id, 
             u.nivel_id,
-            u.sta_id, 
-            s.sta_nome
+            u.sta_id
         FROM usuarios u 
         INNER JOIN cargo c ON u.car_id = c.car_id 
         INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
