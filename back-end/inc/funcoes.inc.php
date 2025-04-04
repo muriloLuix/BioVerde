@@ -603,5 +603,93 @@ function obterIdStatusPorNome($conn, $nomeStatus) {
     return $row['sta_id'];
 }
 
+// excluir.usuario.php
+function excluirUsuario($conn, $user_id, $dados) {
+    $conn->begin_transaction();
+    
+    try {
+        // DEBUG: Log completo dos dados recebidos
+        error_log("Tentativa de exclusão - UserID: $user_id, Dados: " . print_r($dados, true));
+
+        // Converta user_id para inteiro explicitamente
+        $user_id = (int)$user_id;
+        if ($user_id <= 0) {
+            throw new Exception("ID do usuário inválido");
+        }
+
+        // 1. Primeiro insere o registro de exclusão
+        $sqlInsert = "INSERT INTO usuarios_excluidos (
+                        usuex_excluido, 
+                        usuex_exclusao, 
+                        usuex_motivo_exclusao
+                      ) VALUES (?, ?, ?)";
+        
+        $stmtInsert = $conn->prepare($sqlInsert);
+        if (!$stmtInsert) {
+            throw new Exception("Erro ao preparar INSERT: " . $conn->error);
+        }
+
+        // Verificação extra dos dados
+        if (empty($dados['dname']) || empty($dados['reason'])) {
+            throw new Exception("Dados incompletos para registro de exclusão");
+        }
+
+        // Use $user_id (já convertido para int) em vez de $dados['user_id']
+        $stmtInsert->bind_param('sis', 
+            $dados['dname'],
+            $user_id, 
+            $dados['reason']
+        );
+
+        // var_dump($dados['dname']);
+        // var_dump($user_id);
+        // var_dump($dados['reason']);
+
+        var_dump("Query de INSERT: INSERT INTO usuarios_excluidos (usuex_excluido, usuex_exclusao, usuex_motivo_exclusao) VALUES ('{$dados['dname']}', {$user_id}, '{$dados['reason']}')");
+
+        if (!$stmtInsert->execute()) {
+            throw new Exception("Falha no INSERT: " . $stmtInsert->error);
+        }
+
+        $insertedId = $stmtInsert->insert_id;
+        error_log("Registro de exclusão inserido com ID: $insertedId");
+
+        exit;
+        // 2. Agora exclui o usuário
+        $sqlDelete = "DELETE FROM usuarios WHERE user_id = ?";
+        $stmtDelete = $conn->prepare($sqlDelete);
+        if (!$stmtDelete) {
+            throw new Exception("Erro ao preparar DELETE: " . $conn->error);
+        }
+
+        $stmtDelete->bind_param('i', $user_id);
+        if (!$stmtDelete->execute()) {
+            throw new Exception("Falha no DELETE: " . $stmtDelete->error);
+        }
+
+        $deletedRows = $stmtDelete->affected_rows;
+        if ($deletedRows === 0) {
+            throw new Exception("Nenhum usuário foi excluído");
+        }
+
+        $conn->commit();
+        
+        return [
+            'success' => true,
+            'message' => 'Usuário excluído com sucesso',
+            'inserted_id' => $insertedId,
+            'deleted_rows' => $deletedRows
+        ];
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("ERRO NA EXCLUSÃO: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+    }
+}
+
 ?>
 

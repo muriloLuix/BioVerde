@@ -3,7 +3,6 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
-include_once "../inc/ambiente.inc.php";
 
 configurarSessaoSegura();
 

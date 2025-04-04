@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Tabs, Form, Toast, Dialog, AlertDialog } from "radix-ui";
 import { Search, PencilLine, Trash, X, Loader2, FilterX, Printer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -87,6 +87,7 @@ export default function UsersPage() {
     fdataCadastro: "",
   });
   const [deleteUser, setDeleteUser] = useState({
+    user_id: "",
     dname: "",
     reason: "",
   })
@@ -122,6 +123,7 @@ export default function UsersPage() {
   //função para puxar o nome do usuário que será excluido
   const handleDeleteClick = (usuario: Usuario) => {
     setDeleteUser({
+      user_id: usuario.user_id,
       dname: usuario.user_nome,
       reason: "",
     });
@@ -337,7 +339,6 @@ export default function UsersPage() {
     setSuccessMsg(false);
   
     try {
-      // Corrigido: Criar o objeto dataToSend corretamente
       const { password, ...dataWithoutPassword } = formData;
       const dataToSend = formData.user_id ? dataWithoutPassword : formData;
   
@@ -380,20 +381,25 @@ export default function UsersPage() {
   //submit para excluir um usuário
   const handleDeleteUser = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     setLoading((prev) => new Set([...prev, "deleteUser"]));
     setSuccessMsg(false);
-
+  
     try {
+      const dataToSend = {
+        user_id: Number(deleteUser.user_id),
+        dname: String(deleteUser.dname),
+        reason: String(deleteUser.reason)
+      };  
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/excluir.usuario.php", 
-        deleteUser, 
+        dataToSend,
         { 
           headers: { "Content-Type": "application/json" },
           withCredentials: true
         }
       );
-
+  
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
@@ -450,8 +456,7 @@ export default function UsersPage() {
               activeTab === "list" ? "select animation-tab" : ""
             }`}
           >
-            Lista de Usuáriosconsole.log('Dados do usuário para edição:', usuario);
-console.log('Status ID:', usuario.sta_id, 'Status:', usuario.user_status);
+            Lista de Usuários
           </Tabs.Trigger>
 
           <Tabs.Trigger

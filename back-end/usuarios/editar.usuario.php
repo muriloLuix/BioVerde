@@ -3,7 +3,6 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
-include_once "../inc/ambiente.inc.php";
 
 configurarSessaoSegura();
 
@@ -31,11 +30,6 @@ try {
     $data = json_decode($rawData, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception("JSON inválido: " . json_last_error_msg());
-    }
-
-    // Remove senha se estiver vazia
-    if (isset($data['password']) && empty($data['password'])) {
-        unset($data['password']);
     }
 
     // Validação dos campos obrigatórios
