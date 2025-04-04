@@ -10,3 +10,4 @@ export { default as CodeRecoverPassword } from "./components/CodeRecoverPassword
 export { default as NewPassword } from "./components/NewPassword";
 export { default as Sidebar } from "./components/Sidebar";
 export { default as Home } from "./components/Home";
+export { default as Modal } from "./components/Modal";
