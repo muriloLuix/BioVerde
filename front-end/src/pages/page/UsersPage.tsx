@@ -218,22 +218,10 @@ export default function UsersPage() {
     setSuccessMsg(false);
   
     try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        tel: formData.tel,
-        cpf: formData.cpf,
-        cargo: formData.cargo,
-        nivel: formData.nivel,
-        password: formData.password,
-        status: formData.status || "ativo" 
-      };
-  
-      console.log("Dados sendo enviados:", payload); // Para debug
-  
+
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php", 
-        payload, 
+        formData, 
         { 
           headers: { "Content-Type": "application/json" },
           withCredentials: true
