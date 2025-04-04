@@ -1,7 +1,7 @@
 <?php 
 session_start();
 include_once "../inc/funcoes.inc.php";
-configurarSessaoSegura();
+// configurarSessaoSegura();
 
 header_remove('X-Powered-By');
 header('Content-Type: application/json');

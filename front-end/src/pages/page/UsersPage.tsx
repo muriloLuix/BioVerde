@@ -289,9 +289,11 @@ export default function UsersPage() {
       
       if (response.data.success) {
         setUsuarios(response.data.usuarios);
-    }else {
+      } else {
+        setOpenModal(true);
         setMessage(response.data.message || "Nenhum usuário encontrado com esse filtro");
       }
+
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         setMessage(error.response.data.message || "Erro no servidor");
@@ -301,7 +303,6 @@ export default function UsersPage() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("filterSubmit");
@@ -1148,7 +1149,7 @@ export default function UsersPage() {
             <div className="flex justify-center items-center gap-5">
                 <Form.Submit asChild>
                   <button type="submit" className="bg-verdeMedio p-3 px-6 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro" disabled={loading.size > 0}>
-                    {loading.has("uptadeUser") ? (
+                    {loading.has("updateUser") ? (
                       <Loader2 className="animate-spin h-6 w-6" />
                     ) : (
                       "Editar"
