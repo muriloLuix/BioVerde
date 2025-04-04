@@ -285,12 +285,9 @@ export default function UsersPage() {
         }
       );
 
-      console.log("Filtros enviados:", filters);
       console.log("Resposta do back-end:", response.data);
       
       if (response.data.success) {
-        console.log("Query executada:", response.data.debug?.sql);
-        console.log("Valores usados:", response.data.debug?.valores);
         setUsuarios(response.data.usuarios);
     }else {
         setMessage(response.data.message || "Nenhum usuário encontrado com esse filtro");

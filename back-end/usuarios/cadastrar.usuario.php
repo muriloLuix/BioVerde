@@ -82,7 +82,7 @@ if ($stmt->execute()) {
     // Enviar email de confirmação
     $emailStatus = enviarEmailCadastro($data['email'], $data);
     if ($emailStatus === true) {
-        echo json_encode(["success" => true, "message" => "Usuário e senha cadastrados com sucesso!"]);
+        echo json_encode(["success" => true, "message" => "Usuário e senha cadastrados com sucesso!" . "Status: " . $data['status']]);
     } else {
         echo json_encode($emailStatus);
     }

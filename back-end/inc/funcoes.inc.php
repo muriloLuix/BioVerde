@@ -69,20 +69,23 @@ function verificarEmailCpf($conn, $email, $cpf) {
     return null;
 }
 
-function verificarStatus($conn, $status){
-    $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_nome = ?");
+function verificarStatus($conn, $status) {
+    $stmt = $conn->prepare("SELECT sta_id, sta_nome FROM status WHERE sta_id = ?");
     if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+        return null; // Retorna null em caso de erro na query
     }
+    
     $stmt->bind_param("s", $status);
     $stmt->execute();
     $result = $stmt->get_result();
+    
     if ($result->num_rows === 0) {
-        return ["success" => false, "message" => "Status nao encontrado."];
+        return null; // Retorna null quando status não existe
     }
-    $status = $result->fetch_assoc();
+    
+    $row = $result->fetch_assoc();
     $stmt->close();
-    return $status['sta_id'];
+    return $row['sta_id']; // Retorna apenas o ID
 }
 
 
