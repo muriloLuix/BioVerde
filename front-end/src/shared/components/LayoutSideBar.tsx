@@ -54,7 +54,7 @@ export default function LayoutSideBar() {
     navigate(item.path);
   };
 
-  return (
+  return (  
     <div className="flex h-full bg-brancoSal">
       {/* Sidebar */}
       <aside className="w-64 z-50 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col">
@@ -98,9 +98,9 @@ export default function LayoutSideBar() {
       </aside>
 
       {/* Conteúdo principal */}
-      <main className="flex-1 bg-brancoSal h-screen p-6 pl-[280px]">
+      <main className="flex-1 bg-brancoSal h-full p-6 pl-[280px]">
         <Outlet />
-      </main>
+      </main> 
     </div>
   );
 }

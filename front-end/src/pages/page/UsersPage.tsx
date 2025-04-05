@@ -599,11 +599,11 @@ export default function UsersPage() {
                   <select
                     name="fstatus"
                     id="fstatus"
-                    value={formData.status}
+                    value={filters.fstatus}
                     onChange={handleChange}
                     className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
-                    <option value="" disabled>Todos</option>
+                    <option value="">Todos</option>
                     {options.status?.map((status) => (
                       <option key={status.sta_id} value={status.sta_id}>
                         {status.sta_nome}
@@ -640,11 +640,13 @@ export default function UsersPage() {
                       className="bg-verdeMedio p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
                       disabled={loading.size > 0}
                     >
-                      <Search />
                       {loading.has("filterSubmit") ? (
                         <Loader2 className="animate-spin h-6 w-6" />
                       ) : (
-                        "Filtrar"
+                        <>
+                          <Search size={23}/>
+                          Filtrar
+                        </>
                       )}
                     </button>
                     <button
@@ -723,12 +725,14 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
-          <div className="min-w-[966px] max-w-[73vw]">
-            <button type="button" className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]">
-              <Printer />
-              Gerar Relatório
-            </button>
-          </div>
+          {usuarios.length !== 0 && (
+            <div className="min-w-[966px] max-w-[73vw]">
+              <button type="button" className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]">
+                <Printer />
+                Gerar Relatório
+              </button>
+            </div>
+          )}
 
          {/* Fim aba de Lista de Usuários */}         
         </Tabs.Content>
@@ -1148,7 +1152,7 @@ export default function UsersPage() {
 
             <div className="flex justify-center items-center gap-5">
                 <Form.Submit asChild>
-                  <button type="submit" className="bg-verdeMedio p-3 px-6 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro" disabled={loading.size > 0}>
+                  <button type="submit" className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro" disabled={loading.size > 0}>
                     {loading.has("updateUser") ? (
                       <Loader2 className="animate-spin h-6 w-6" />
                     ) : (
@@ -1259,7 +1263,7 @@ export default function UsersPage() {
             <AlertDialog.Action asChild>
             <button type="button"className="bg-red-700 py-2 px-3 w-[160px] h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800" onClick={handleDeleteUser} disabled={loading.size > 0} >
               {loading.has("deleteUser") ? (
-                <Loader2 className="animate-spin h-6 w-6" />
+                <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 "Sim, excluir usuário"
               )}
