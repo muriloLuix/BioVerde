@@ -93,7 +93,7 @@ export default function Sidebar() {
                 </Fragment>
               </NavigationMenu.Item>
             ) : (
-              <>
+              <Fragment>
                 <Separator.Root className="bg-separator h-0.25 w-9/10 m-auto" />
                 <NavigationMenu.Item
                   key={index}
@@ -109,7 +109,7 @@ export default function Sidebar() {
                     {tab.name}
                   </Fragment>
                 </NavigationMenu.Item>
-              </>
+              </Fragment>
             )
           )}
         </NavigationMenu.List>

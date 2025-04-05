@@ -11,3 +11,4 @@ export { default as NewPassword } from "./components/NewPassword";
 export { default as Sidebar } from "./components/Sidebar";
 export { default as Home } from "./components/Home";
 export { default as Modal } from "./components/Modal";
+export { default as ConfirmationModal } from "./components/ConfirmationModal";
