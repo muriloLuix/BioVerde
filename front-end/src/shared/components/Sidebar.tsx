@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import Logo from "./Logo";
-import { NavigationMenu, Separator } from "radix-ui";
+import { Avatar, NavigationMenu, Separator } from "radix-ui";
 
 export default function Sidebar() {
   const location = useLocation();
@@ -115,10 +115,14 @@ export default function Sidebar() {
         </NavigationMenu.List>
       </NavigationMenu.Root>
       <div className="bg-verdeEscuroConta h-1/10 w-full flex justify-around items-center p-2">
-        <User size={30} className="hover:cursor-pointer" />
-        <div>
-          <p className="text-sm font-[inter]">Nome Sobrenome</p>
-          <p className="text-sm font-[inter]">Admin</p>
+        <Avatar.Root className="inline-flex size-[45px] select-none items-center justify-center overflow-hidden rounded-full bg-blackA1 align-middle">
+          <Avatar.Fallback className="leading-1 flex size-full items-center justify-center bg-white text-black text-[15px] font-medium text-violet11 cursor-pointer">
+            AD
+          </Avatar.Fallback>
+        </Avatar.Root>
+        <div className="flex flex-col">
+          <span className="text-sm font-[inter]">Nome Sobrenome</span>
+          <span className="text-sm font-[inter]">Admin</span>
         </div>
         <Bell
           size={30}
