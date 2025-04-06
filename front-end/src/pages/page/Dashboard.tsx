@@ -4,7 +4,6 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -30,42 +29,56 @@ const Dashboard = () => {
       name: "Janeiro",
       Concluido: 4000,
       Pendente: 2400,
+      Desenvolvendo: 2000,
+      Estoque: 750,
       amt: 2400,
     },
     {
       name: "Fevereiro",
       Concluido: 3000,
       Pendente: 1398,
+      Desenvolvendo: 1200,
+      Estoque: 9000,
       amt: 2210,
     },
     {
       name: "Março",
       Concluido: 2000,
       Pendente: 9800,
+      Desenvolvendo: 900,
+      Estoque: 900,
       amt: 2290,
     },
     {
       name: "Abril",
-      Concluido: 2780,
+      Concluido: 6780,
       Pendente: 3908,
+      Desenvolvendo: 1000,
+      Estoque: 200,
       amt: 2000,
     },
     {
       name: "Maio",
       Concluido: 1890,
       Pendente: 4800,
+      Desenvolvendo: 1000,
+      Estoque: 2000,
       amt: 2181,
     },
     {
       name: "Junho",
       Concluido: 2390,
       Pendente: 3800,
+      Desenvolvendo: 1000,
+      Estoque: 5000,
       amt: 2500,
     },
     {
       name: "Julho",
-      Concluido: 3490,
+      Concluido: 6490,
       Pendente: 4300,
+      Desenvolvendo: 1000,
+      Estoque: 300,
       amt: 2100,
     },
   ];
@@ -88,20 +101,18 @@ const Dashboard = () => {
         </div>
       ))}
 
-      <div className="h-1/3 w-full rounded-lg p-4 box-border text-center border-1">
-        <span className="font-bold text-xl">Previsão de demandas</span>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          >
+      <div className="h-1/3 w-full rounded-lg p-4 box-border text-center shadow-xl bg-[#F5F5F5]">
+        <span className="font-bold text-xl">Previsão de demandas 2025</span>
+        <ResponsiveContainer width="100%" height="90%">
+          <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
             <Legend verticalAlign="top" height={36} />
-            <Line type="monotone" dataKey="Concluido" stroke="#8884d8" />
-            <Line type="monotone" dataKey="Pendente" stroke="#82ca9d" />
+            <Line type="monotone" dataKey="Concluido" stroke="#00FF00" />
+            <Line type="monotone" dataKey="Pendente" stroke="#FF0000	" />
+            <Line type="monotone" dataKey="Desenvolvendo" stroke="#FFFF00" />
+            <Line type="monotone" dataKey="Estoque" stroke="#0000FF" />
           </LineChart>
         </ResponsiveContainer>
       </div>
