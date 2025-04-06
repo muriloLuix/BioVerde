@@ -1,6 +1,7 @@
 export default function ManagePricesPage() {
-    return (
+  return (
+    <div className="h-full w-full">
       <h1>Gerenciamento de Preços</h1>
-    );
-  }
-  
+    </div>
+  );
+}
