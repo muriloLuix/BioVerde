@@ -150,7 +150,7 @@ export default function UsersPage() {
   //função para puxar o nome do usuário que será excluido
   const handleDeleteClick = (usuario: Usuario) => {
     setDeleteUser({
-      user_id: usuario.user_id.toString(),
+      user_id: usuario.user_id,
       dname: usuario.user_nome,
       reason: "",
     });
