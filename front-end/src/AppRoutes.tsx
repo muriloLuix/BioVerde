@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import { LayoutSideBar } from "./shared/index.tsx";
+import { Home } from "./shared/index.tsx";
 import {
   LoginPage,
   RecoverPassword,
@@ -15,7 +15,6 @@ import {
   Suppliers,
 } from "./pages/index.tsx";
 
-
 const AppRoutes = () => {
   return (
     <Router>
@@ -24,7 +23,7 @@ const AppRoutes = () => {
         <Route path="/recuperar-senha" element={<RecoverPassword />} />
 
         {/* Layout SideBar Fixo */}
-        <Route path="/app" element={<LayoutSideBar />}>
+        <Route path="/app" element={<Home />}>
           {/* Todos as rotas a partir daqui terão o sideBar */}
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="controle-estoque" element={<InventoryControl />} />
