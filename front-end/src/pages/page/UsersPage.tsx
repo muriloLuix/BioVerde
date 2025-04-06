@@ -8,6 +8,8 @@ import {
   Loader2,
   FilterX,
   Printer,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { InputMask, InputMaskChangeEvent } from "primereact/inputmask";
@@ -20,7 +22,6 @@ import PhoneField from "../../shared/components/usersComponents/PhoneField";
 import Phone from "../../shared/components/Phone";
 import CpfField from "../../shared/components/usersComponents/CpfField";
 import Cpf from "../../shared/components/Cpf";
-import { Password } from "../../shared";
 
 interface Cargo {
   car_id: number;
@@ -55,14 +56,17 @@ export default function UsersPage() {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState(new Set());
+  // const [isLoading, setIsLoading] = useState(true);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [errors, setErrors] = useState({
     position: false,
     level: false,
     password: false,
+    status: false,
   });
   const [formData, setFormData] = useState({
     user_id: 0,
@@ -94,7 +98,7 @@ export default function UsersPage() {
     fdataCadastro: "",
   });
   const [deleteUser, setDeleteUser] = useState({
-    user_id: "",
+    user_id: 0,
     dname: "",
     reason: "",
   });
@@ -109,12 +113,12 @@ export default function UsersPage() {
   ) => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
     setFilters({ ...filters, [event.target.name]: event.target.value });
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      position: false,
-      level: false,
-      password: false,
-    }));
+    setErrors(
+      (prevErrors) =>
+        Object.fromEntries(
+          Object.keys(prevErrors).map((key) => [key, false])
+        ) as typeof prevErrors
+    );
     setDeleteUser({ ...deleteUser, [event.target.name]: event.target.value });
   };
 
@@ -232,23 +236,16 @@ export default function UsersPage() {
     e.preventDefault();
 
     // Validações
-    setErrors({
+    const errors = {
       position: !formData.cargo,
       level: !formData.nivel,
       password: !formData.password || formData.password.length < 8,
-    });
+      status: !formData.status,
+    };
+    setErrors(errors);
 
-    // Verifica se há erros
-    if (
-      !formData.cargo ||
-      !formData.nivel ||
-      !formData.password ||
-      formData.password.length < 8
-    ) {
-      setOpenModal(true);
-      setMessage(
-        "Por favor, preencha todos os campos obrigatórios corretamente."
-      );
+    // Se algum erro for true, interrompe a execução
+    if (Object.values(errors).some((error) => error)) {
       return;
     }
 
@@ -256,22 +253,9 @@ export default function UsersPage() {
     setSuccessMsg(false);
 
     try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        tel: formData.tel,
-        cpf: formData.cpf,
-        cargo: formData.cargo,
-        nivel: formData.nivel,
-        password: formData.password,
-        status: formData.status || "ativo",
-      };
-
-      console.log("Dados sendo enviados:", payload); // Para debug
-
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php",
-        payload,
+        formData,
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
@@ -286,17 +270,15 @@ export default function UsersPage() {
           "Usuário cadastrado com sucesso! O login e senha foram enviados por email."
         );
         // Limpa o formulário
-        setFormData({
-          user_id: 0,
-          name: "",
-          email: "",
-          tel: "",
-          cpf: "",
-          cargo: "",
-          nivel: "",
-          password: "",
-          status: "",
-        });
+        setFormData(
+          (prev) =>
+            Object.fromEntries(
+              Object.entries(prev).map(([key, value]) => [
+                key,
+                typeof value === "number" ? 0 : "",
+              ])
+            ) as typeof prev
+        );
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
       }
@@ -329,8 +311,6 @@ export default function UsersPage() {
   const handleFilterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(filters);
-
     setLoading((prev) => new Set([...prev, "filterSubmit"]));
     setSuccessMsg(false);
 
@@ -344,14 +324,12 @@ export default function UsersPage() {
         }
       );
 
-      console.log("Filtros enviados:", filters);
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        console.log("Query executada:", response.data.debug?.sql);
-        console.log("Valores usados:", response.data.debug?.valores);
         setUsuarios(response.data.usuarios);
       } else {
+        setOpenModal(true);
         setMessage(
           response.data.message || "Nenhum usuário encontrado com esse filtro"
         );
@@ -365,7 +343,6 @@ export default function UsersPage() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("filterSubmit");
@@ -382,6 +359,7 @@ export default function UsersPage() {
     setSuccessMsg(false);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...dataWithoutPassword } = formData;
       const dataToSend = formData.user_id ? dataWithoutPassword : formData;
 
@@ -645,20 +623,29 @@ export default function UsersPage() {
                 </Form.Field>
 
                 <Form.Field name="fstatus" className="flex flex-col">
-                  <Form.Label asChild>
+                  <Form.Label className="flex justify-between items-center gap-3">
                     <span className="text-xl pb-2 font-light">Status:</span>
                   </Form.Label>
-                  <select
-                    name="fstatus"
-                    id="fstatus"
-                    value={filters.fstatus}
-                    onChange={handleChange}
-                    className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  >
-                    <option value="">Todos</option>
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
-                  </select>
+                  {loading.has("options") ? (
+                    <div className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
+                      <Loader2 className="animate-spin h-5 w-5" />
+                    </div>
+                  ) : (
+                    <select
+                      name="fstatus"
+                      id="fstatus"
+                      value={filters.fstatus}
+                      onChange={handleChange}
+                      className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    >
+                      <option value="">Todos</option>
+                      {options.status?.map((status) => (
+                        <option key={status.sta_id} value={status.sta_id}>
+                          {status.sta_nome}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </Form.Field>
               </div>
 
@@ -689,11 +676,13 @@ export default function UsersPage() {
                       className="bg-verdeMedio p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
                       disabled={loading.size > 0}
                     >
-                      <Search />
                       {loading.has("filterSubmit") ? (
                         <Loader2 className="animate-spin h-6 w-6" />
                       ) : (
-                        "Filtrar"
+                        <>
+                          <Search size={23} />
+                          Filtrar
+                        </>
                       )}
                     </button>
                     <button
@@ -719,7 +708,7 @@ export default function UsersPage() {
           </Form.Root>
 
           {/* Tabela Lista de Usuários */}
-          <div className="min-w-[1088px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
+          <div className="min-w-[966px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
             <table className="w-full border-collapse">
               {/* Tabela Cabeçalho */}
               <thead>
@@ -732,6 +721,7 @@ export default function UsersPage() {
                     "CPF",
                     "Cargo",
                     "Nível de Acesso",
+                    "Status",
                     "Data de Cadastro",
                     "Ações",
                   ].map((header) => (
@@ -765,7 +755,7 @@ export default function UsersPage() {
                       className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                     >
                       {Object.values(usuario)
-                        .slice(0, 7)
+                        .slice(0, 8)
                         .map((value, idx) => (
                           <td
                             key={idx}
@@ -805,15 +795,17 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
-          <div className="min-w-[1088px] max-w-[73vw]">
-            <button
-              type="button"
-              className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-            >
-              <Printer />
-              Gerar Relatório
-            </button>
-          </div>
+          {usuarios.length !== 0 && (
+            <div className="min-w-[966px] max-w-[73vw]">
+              <button
+                type="button"
+                className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+              >
+                <Printer />
+                Gerar Relatório
+              </button>
+            </div>
+          )}
 
           {/* Fim aba de Lista de Usuários */}
         </Tabs.Content>
@@ -931,7 +923,7 @@ export default function UsersPage() {
               </Form.Field>
 
               <Form.Field name="password" className="flex flex-col">
-                <Form.Label className="flex gap-25 items-center">
+                <Form.Label className="flex gap-16 items-center">
                   <span className="text-xl pb-2 font-light">Senha:</span>
                   {errors.password && (
                     <span className="text-red-500 text-xs">
@@ -940,12 +932,25 @@ export default function UsersPage() {
                   )}
                 </Form.Label>
                 <div className="flex gap-4">
-                  <Password
-                    placeholder="Digite ou Gere a senha"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="bg-white w-[243px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  />
+                  <div className="relative">
+                    <input
+                      type={isHidden ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      placeholder="Digite ou Gere a senha"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="bg-white w-[243px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    />
+                    {/* Botão de Mostrar/Ocultar Senha */}
+                    <button
+                      type="button"
+                      onClick={() => setIsHidden(!isHidden)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+                    >
+                      {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                   {/* Botão de Gerar Senha Aleatoria */}
                   <button
                     type="button"
@@ -958,21 +963,25 @@ export default function UsersPage() {
               </Form.Field>
 
               <Form.Field name="status" className="flex flex-col">
-                <Form.Label asChild>
+                <Form.Label className="flex justify-between items-center gap-3">
                   <span className="text-xl pb-2 font-light">Status:</span>
+                  {errors.status && (
+                    <span className="text-red-500 text-xs">
+                      Campo Obrigatório*
+                    </span>
+                  )}
                 </Form.Label>
                 {loading.has("options") ? (
-                  <div className="bg-white w-[180px] h-[46px] flex items-center justify-center">
-                    <Loader2 className="animate-spin" />
+                  <div className="bg-white w-[190px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
+                    <Loader2 className="animate-spin h-5 w-5" />
                   </div>
                 ) : (
                   <select
                     name="status"
                     id="status"
-                    required
                     value={formData.status}
                     onChange={handleChange}
-                    className="bg-white w-[180px] h-[46px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    className="bg-white w-[190px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >
                     <option value="" disabled>
                       Selecione o status
@@ -1267,10 +1276,10 @@ export default function UsersPage() {
                   <Form.Submit asChild>
                     <button
                       type="submit"
-                      className="bg-verdeMedio p-3 px-6 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+                      className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
                       disabled={loading.size > 0}
                     >
-                      {loading.has("uptadeUser") ? (
+                      {loading.has("updateUser") ? (
                         <Loader2 className="animate-spin h-6 w-6" />
                       ) : (
                         "Editar"
@@ -1415,7 +1424,7 @@ export default function UsersPage() {
                   disabled={loading.size > 0}
                 >
                   {loading.has("deleteUser") ? (
-                    <Loader2 className="animate-spin h-6 w-6" />
+                    <Loader2 className="animate-spin h-5 w-5" />
                   ) : (
                     "Sim, excluir usuário"
                   )}

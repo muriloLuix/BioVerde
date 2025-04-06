@@ -4,7 +4,7 @@ session_start();
 
 include_once "../inc/funcoes.inc.php";
 
-configurarSessaoSegura();
+// configurarSessaoSegura();
 
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
@@ -39,16 +39,8 @@ $usuarios = buscarUsuariosComFiltros($conn, $filtros);
 // Retorna a resposta
 echo json_encode([
     "success" => true,
-    "usuarios" => $usuarios,
-    "debug" => [
-        "sql" => "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, 
-                         c.car_nome, n.nivel_nome, u.user_dtcadastro 
-                  FROM usuarios u 
-                  INNER JOIN cargo c ON u.car_id = c.car_id 
-                  INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id" . 
-                 (!empty($filtros['where']) ? " WHERE " . implode(" AND ", $filtros['where']) : ""),
-        "valores" => $filtros['valores']
-    ]
+    "message" => "Filtro aplicado com sucesso!",
+    "usuarios" => $usuarios
 ]);
 
 $conn->close();
