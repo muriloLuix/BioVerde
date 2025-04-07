@@ -68,7 +68,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="h-screen w-1/7 bg-verdeEscuroForte text-white flex flex-col flex-start items-center">
+    <div className="h-screen w-1/5 bg-verdeEscuroForte text-white flex flex-col flex-start items-center">
       <Logo
         src="/logo-bioverde-branco.png"
         imgClassName="size-18"
@@ -80,7 +80,7 @@ export default function Sidebar() {
             tab.name !== "Usuários" && tab.name !== "Dashboard" ? (
               <NavigationMenu.Item
                 key={index}
-                className={`h-12 w-full flex items-center p-3 my-2 gap-2 font-[inter] rounded-md cursor-pointer ${
+                className={`h-12 w-full flex items-center p-3 my-2 gap-4 font-[inter] rounded-md cursor-pointer ${
                   activeItem === tab.name
                     ? "bg-brancoSal text-black"
                     : "text-cinzaClaro hover:bg-hoverMenu"
@@ -97,7 +97,7 @@ export default function Sidebar() {
                 <Separator.Root className="bg-separator h-0.25 w-9/10 m-auto" />
                 <NavigationMenu.Item
                   key={index}
-                  className={`h-12 w-full flex items-center p-3 my-2 gap-2 font-[inter] rounded-md cursor-pointer ${
+                  className={`h-12 w-full flex items-center p-3 my-2 gap-4 font-[inter] rounded-md cursor-pointer ${
                     activeItem === tab.name
                       ? "bg-brancoSal text-black"
                       : "text-cinzaClaro hover:bg-hoverMenu"
