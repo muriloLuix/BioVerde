@@ -2,7 +2,7 @@
 export default function InstructionsLogin() {
     return(
         <div>
-            <h3 className="font-[open_sans] text-base mb-3">Para acessar sua conta, siga os passos abaixo:</h3>
+            <h3 className="font-[open_sans] text-base my-3">Para acessar sua conta, siga os passos abaixo:</h3>
 
             <ul className="font-[open_sans] text-sm text-gray-800 list-decimal pl-4">
             <li className="mb-2">Digite seu e-mail ou nome de usuário no campo correspondente.</li>

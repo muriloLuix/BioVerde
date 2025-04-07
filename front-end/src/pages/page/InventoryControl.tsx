@@ -91,9 +91,9 @@ export default function InventoryControl() {
   ];
 
   return (
-    <div className="h-full w-full">
-      <div className="p-4 font-[inter]">
-        <h1 className="text-5xl font-semibold text-center p-2 m-auto">
+    <div className="flex-1 p-6 pl-[280px]">
+      <div className="px-6 font-[inter]">
+        <h1 className=" text-[40px] font-semibold text-center mb-3">
           Controle de Estoque
         </h1>
 
@@ -102,7 +102,7 @@ export default function InventoryControl() {
           className="h-full w-full"
           onValueChange={(value) => setActiveTab(value)}
         >
-          <Tabs.List className="flex  border-b border-verdePigmento relative">
+          <Tabs.List className="flex gap-5 mb-7 border-b border-verdePigmento relative">
             <Tabs.Trigger
               value="list"
               className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
@@ -123,7 +123,7 @@ export default function InventoryControl() {
           </Tabs.List>
 
           <Tabs.Content value="list" className="flex flex-col w-full">
-            <Form.Root className="flex flex-col">
+            <Form.Root className="flex flex-col gap-4">
               <h2 className="text-3xl">Filtros:</h2>
               <div className="flex flex-col gap-7">
                 <div className="flex gap-9 mb-2">
@@ -781,7 +781,7 @@ export default function InventoryControl() {
               </div>
 
               <Form.Submit asChild>
-                <div className="flex place-content-center mb-10 ">
+                <div className="flex place-content-center mb-5">
                   <button
                     type="submit"
                     className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama "

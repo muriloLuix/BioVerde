@@ -151,7 +151,7 @@ export default function Requests() {
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter] bg-brancoSal">
         <h1 className=" text-[40px] font-semibold text-center mb-3">Pedidos</h1>
 

@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="h-screen w-screen flex">
+    <div className="flex h-full bg-brancoSal">
       <Sidebar />
       <Outlet />
     </div>

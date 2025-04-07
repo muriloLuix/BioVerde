@@ -461,7 +461,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter]">
         <h1 className=" text-[40px] font-semibold text-center mb-3">
           Usuários
@@ -1002,7 +1002,7 @@ export default function UsersPage() {
               </div>
 
               <Form.Submit asChild>
-                <div className="flex place-content-center mb-10 mt-5">
+                <div className="flex place-content-center mb-5 mt-5">
                   <button
                     type="submit"
                     className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"

@@ -22,7 +22,10 @@ export default function Sidebar() {
 
   const menuItems = useMemo(
     () => [
-      { name: "Dashboard", icon: <LayoutDashboard />, path: "/app/dashboard" },
+      { name: "Dashboard", 
+        icon: <LayoutDashboard />,
+        path: "/app/dashboard" 
+      },
       {
         name: "Controle de Estoque",
         icon: <Package />,
@@ -68,19 +71,19 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="h-screen w-1/5 bg-verdeEscuroForte text-white flex flex-col flex-start items-center">
+    <div className="w-64 z-50 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col  ">
       <Logo
         src="/logo-bioverde-branco.png"
         imgClassName="size-18"
-        titleClassName="text-4xl text-center tracking-wide p-2"
+        titleClassName="text-4xl text-center tracking-wide p-2 pt-4"
       />
-      <NavigationMenu.Root className="h-full w-full">
+      <NavigationMenu.Root className="h-full w-full custom-scrollbar overflow-y-auto mb-10">
         <NavigationMenu.List className="h-full w-full p-2">
           {menuItems.map((tab, index) =>
             tab.name !== "Usuários" && tab.name !== "Dashboard" ? (
               <NavigationMenu.Item
                 key={index}
-                className={`h-12 w-full flex items-center p-3 my-2 gap-4 font-[inter] rounded-md cursor-pointer ${
+                className={`h-12 w-full flex items-center p-3 my-2 gap-4 font-[inter] rounded-md cursor-pointer  ${
                   activeItem === tab.name
                     ? "bg-brancoSal text-black"
                     : "text-cinzaClaro hover:bg-hoverMenu"
@@ -114,7 +117,7 @@ export default function Sidebar() {
           )}
         </NavigationMenu.List>
       </NavigationMenu.Root>
-      <div className="bg-verdeEscuroConta h-1/10 w-full flex justify-around items-center p-2">
+      <div className="bg-verdeEscuroConta gap-4 p-3 w-64 flex place-items-center sticky bottom-0 left-0 -m-5 ">
         <Avatar.Root className="inline-flex size-[45px] select-none items-center justify-center overflow-hidden rounded-full bg-blackA1 align-middle">
           <Avatar.Fallback className="leading-1 flex size-full items-center justify-center bg-white text-black text-[15px] font-medium text-violet11 cursor-pointer">
             AD

@@ -84,37 +84,39 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="h-screen w-full flex flex-wrap justify-evenly p-5">
-      {cardsNames.map((card, index) => (
-        <div
-          key={index}
-          className={`h-1/4 w-1/5 ${card.color} rounded-lg p-4 text-white shadow-2xl`}
-        >
-          <div className="h-1/4 w-full">
-            <span className="font-medium text-2xl block truncate">
-              {card.title}
-            </span>
+    <div className="pl-64">
+      <div className="h-screen w-full flex flex-wrap justify-evenly p-5">
+        {cardsNames.map((card, index) => (
+          <div
+            key={index}
+            className={`h-1/4 w-1/5 ${card.color} rounded-lg p-4 text-white shadow-2xl`}
+          >
+            <div className="h-1/4 w-full">
+              <span className="font-medium text-2xl block truncate">
+                {card.title}
+              </span>
+            </div>
+            <div className="h-3/4 w-full text-center flex items-center justify-center">
+              <span className="font-medium text-6xl">{card.quantity}</span>
+            </div>
           </div>
-          <div className="h-3/4 w-full text-center flex items-center justify-center">
-            <span className="font-medium text-6xl">{card.quantity}</span>
-          </div>
-        </div>
-      ))}
+        ))}
 
-      <div className="h-1/3 w-full rounded-lg p-4 box-border text-center shadow-xl bg-[#F5F5F5]">
-        <span className="font-bold text-xl">Previsão de demandas 2025</span>
-        <ResponsiveContainer width="100%" height="90%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Legend verticalAlign="top" height={36} />
-            <Line type="monotone" dataKey="Concluido" stroke="#00FF00" />
-            <Line type="monotone" dataKey="Pendente" stroke="#FF0000	" />
-            <Line type="monotone" dataKey="Desenvolvendo" stroke="#FFFF00" />
-            <Line type="monotone" dataKey="Estoque" stroke="#0000FF" />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="h-1/3 w-full rounded-lg p-4 box-border text-center shadow-xl bg-[#F5F5F5]">
+          <span className="font-bold text-xl">Previsão de demandas 2025</span>
+          <ResponsiveContainer width="100%" height="90%">
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Legend verticalAlign="top" height={36} />
+              <Line type="monotone" dataKey="Concluido" stroke="#00FF00" />
+              <Line type="monotone" dataKey="Pendente" stroke="#FF0000	" />
+              <Line type="monotone" dataKey="Desenvolvendo" stroke="#FFFF00" />
+              <Line type="monotone" dataKey="Estoque" stroke="#0000FF" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
