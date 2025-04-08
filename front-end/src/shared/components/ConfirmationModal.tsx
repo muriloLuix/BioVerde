@@ -1,27 +1,36 @@
-import { useState } from "react";
-import { AlertDialog, Separator } from "radix-ui";
+import { AlertDialog } from "radix-ui";
+import { Loader2 } from "lucide-react";
 
 type ConfirmationModalProps = {
-  confirmationChildren?: React.ReactNode;
-  confirmationButtonName: string;
+  openModal: boolean;
+  setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
+  confirmationText: string;
+  confirmationButtonName?: string;
   confirmationButtonClassname: string;
-  confirmationLeftButtonText?: string;
-  confirmationRightButtonText?: string;
-  confirmationModalWidth?: string;
+  confirmationLeftButtonText: string;
+  confirmationRightButtonText: string;
+  confirmationModalTitle?: string;
+  onCancel?: () => void;
+  onConfirm?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  loading?: Set<string>;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const ConfirmationModal = ({
-  confirmationChildren,
+  openModal,
+  setOpenModal,
+  confirmationText,
   confirmationButtonName,
   confirmationButtonClassname,
   confirmationLeftButtonText,
   confirmationRightButtonText,
-  ...rest
+  confirmationModalTitle,
+  onCancel,
+  onConfirm,
+  loading,
 }: ConfirmationModalProps) => {
-  const [open, setOpen] = useState(false);
 
   return (
-    <AlertDialog.Root open={open} onOpenChange={setOpen}>
+    <AlertDialog.Root open={openModal} onOpenChange={setOpenModal}>
       <AlertDialog.Trigger asChild>
         <button className={confirmationButtonClassname}>
           {confirmationButtonName}
@@ -30,45 +39,37 @@ const ConfirmationModal = ({
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
         <AlertDialog.Content
-          className={`fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 p-6 bg-white rounded-xl shadow-lg`}
+          className={`fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 p-6 bg-brancoSal rounded-xl shadow-lg`}
         >
           <AlertDialog.Title className="text-xl font-[inter] font-bold">
-            CONFIRMATION
+            {confirmationModalTitle}
           </AlertDialog.Title>
-          <Separator.Root
-            decorative
-            orientation="horizontal"
-            className="w-full h-[0.1px] bg-black"
-          />
-          <AlertDialog.Description className="py-4 px-2 gap-2 my-2">
-            {confirmationChildren ? (
-              confirmationChildren
-            ) : (
-              <>
-                <span>
-                  Are you sure you want to proceed with this action? This change
-                  can't be undone
-                </span>
-              </>
-            )}
+          <AlertDialog.Description className="py-3 px-2 my-2 text-gray-800">
+            {confirmationText}
           </AlertDialog.Description>
-          <div className="flex justify-end gap-3">
+          <div className="gap-3 flex justify-end">
             <AlertDialog.Cancel asChild>
-              <button className="px-4 py-2 bg-red-500 text-white font-[inter] rounded cursor-pointer hover:bg-red-600">
-                {confirmationLeftButtonText
-                  ? confirmationLeftButtonText
-                  : "Cancel"}
+              <button
+                type="button"
+                className=" py-2 px-3 h-10 rounded text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-300"
+                onClick={onCancel}
+              >
+                {confirmationLeftButtonText}
               </button>
             </AlertDialog.Cancel>
             <AlertDialog.Action asChild>
               <button
-                className="px-4 py-2 bg-green-500 text-white font-[inter] rounded cursor-pointer hover:bg-green-600"
-                {...rest}
+                type="button"
+                className="bg-red-700 py-2 px-3 w-[160px] h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
+                onClick={onConfirm}
+                disabled={!!loading?.size}
               >
-                {confirmationRightButtonText
-                  ? confirmationRightButtonText
-                  : "Confirm"}
-              </button>
+                {loading?.has("deleteUser") ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  confirmationRightButtonText
+                )}
+              </button> 
             </AlertDialog.Action>
           </div>
         </AlertDialog.Content>

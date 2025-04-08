@@ -71,7 +71,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-64 z-50 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col  ">
+    <div className="w-64 z-30 bg-verdeEscuroForte fixed top-0 left-0 text-white h-full flex flex-col  ">
       <Logo
         src="/logo-bioverde-branco.png"
         imgClassName="size-18"
