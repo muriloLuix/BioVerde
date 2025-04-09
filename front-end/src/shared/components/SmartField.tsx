@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 
 type InputPropsBase = {
   isSelect?: false;
+  isTextArea?: boolean;
   isLoading?: boolean;
   error?: string;
   placeholderOption?: string;
@@ -18,10 +19,11 @@ type InputPropsBase = {
 
 type InputProps =
   | (InputPropsBase & InputMaskProps & { withInputMask: true })
-  | (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement> & { withInputMask?: false });
+  | (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> & { withInputMask?: false });
 
 type SelectProps = {
   isSelect: true;
+  isTextArea?: false;
   isLoading?: boolean;
   error?: string;
   placeholderOption?: string;
@@ -37,6 +39,7 @@ type SmartFieldProps = InputProps | SelectProps;
 
 const SmartField: React.FC<SmartFieldProps> = ({
   isSelect,
+  isTextArea,
   withInputMask,
   required,
   fieldName,
@@ -98,20 +101,33 @@ const SmartField: React.FC<SmartFieldProps> = ({
           )
         ) : (
           <Form.Control asChild>
-            {withInputMask ? (
-              <InputMask
-                {...(rest as InputMaskProps)}
-                name={regex(fieldName)}
+            {isTextArea ? (
+              <textarea
+                {...(rest as React.InputHTMLAttributes<HTMLTextAreaElement>)}
                 id={regex(fieldName)}
+                name={regex(fieldName)}
                 required={required}
+                rows={3}
+                cols={50}
+                autoFocus
+                maxLength={500}
               />
             ) : (
-              <input
-                {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
-                name={regex(fieldName)}
-                id={regex(fieldName)}
-                required={required}
-              />
+              withInputMask ? (
+                <InputMask
+                  {...(rest as InputMaskProps)}
+                  name={regex(fieldName)}
+                  id={regex(fieldName)}
+                  required={required}
+                />
+              ) : (
+                <input
+                  {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+                  name={regex(fieldName)}
+                  id={regex(fieldName)}
+                  required={required}
+                />
+              )
             )}
           </Form.Control>
         )}

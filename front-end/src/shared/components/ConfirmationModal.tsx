@@ -13,7 +13,7 @@ type ConfirmationModalProps = {
   onCancel?: () => void;
   onConfirm?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   loading?: Set<string>;
-  isLoading: boolean;
+  isLoading?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const ConfirmationModal = ({
@@ -41,7 +41,7 @@ const ConfirmationModal = ({
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
         <AlertDialog.Content
-          className={`fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/3 p-6 bg-brancoSal rounded-xl shadow-lg`}
+          className={`fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-brancoSal rounded-xl shadow-lg`}
         >
           <AlertDialog.Title className="text-xl font-[inter] font-bold">
             {confirmationModalTitle}
@@ -62,7 +62,7 @@ const ConfirmationModal = ({
             <AlertDialog.Action asChild>
               <button
                 type="button"
-                className="bg-red-700 py-2 px-3 w-[160px] h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
+                className="bg-red-700 py-2 px-3  h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
                 onClick={onConfirm}
                 disabled={!!loading?.size}
               >

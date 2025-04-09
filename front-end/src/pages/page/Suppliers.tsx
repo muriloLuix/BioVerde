@@ -1,4 +1,4 @@
-import { Tabs, Form, Toast, Dialog } from "radix-ui";
+import { Tabs, Form, Toast } from "radix-ui";
 import { useState, useEffect } from "react";
 import { Search, PencilLine, Trash, Loader2, FilterX, Printer, X } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
@@ -7,6 +7,8 @@ import axios from "axios";
 
 import { SmartField } from "../../shared";
 import { ConfirmationModal } from "../../shared";
+import { Modal } from "../../shared";
+import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 
 interface Estado {
   estado_id: number;
@@ -36,6 +38,7 @@ interface Fornecedor {
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState("list");
+  const [cpfCnpjMask, setCpfCnpjMask] = useState("999.999.999-99");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -85,6 +88,7 @@ export default function Suppliers() {
     reason: "",
   });
 
+  console.log(deleteSupplier)
   //OnChange dos campos
   const handleChange = (
     event:
@@ -94,6 +98,9 @@ export default function Suppliers() {
       | InputMaskChangeEvent
   ) => {
     const { name, value } = event.target;
+
+    //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
+    switchCpfCnpjMask(name, value, setCpfCnpjMask);
 
     setFormData({ ...formData, [name]: value });
     setFilters({ ...filters, [name]: value });
@@ -175,11 +182,11 @@ export default function Suppliers() {
         }
 
         if (fornecedoresResponse.data.success) {
-          setFornecedores(fornecedoresResponse.data.usuarios);
+          setFornecedores(fornecedoresResponse.data.fornecedores);
         } else {
           setOpenModal(true);
           setMessage(
-            fornecedoresResponse.data.message || "Erro ao carregar usuários"
+            fornecedoresResponse.data.message || "Erro ao carregar fornecedores"
           );
         }
       } catch (error) {
@@ -305,7 +312,7 @@ export default function Suppliers() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        setFornecedores(response.data.usuarios);
+        setFornecedores(response.data.fornecedores);
       } else {
         setOpenModal(true);
         setMessage(
@@ -330,7 +337,7 @@ export default function Suppliers() {
   };
 
   // submit para atualizar o fornecedor após a edição dele
-  const handleUpdateUser = async (e: React.FormEvent) => {
+  const handleUpdateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading((prev) => new Set([...prev, "updateSupplier"]));
@@ -339,7 +346,7 @@ export default function Suppliers() {
     try {
 
       const response = await axios.post(
-        "http://localhost/BioVerde/back-end/usuarios/editar.usuario.php",
+        "http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
         formData,
         {
           headers: { "Content-Type": "application/json" },
@@ -383,7 +390,7 @@ export default function Suppliers() {
 
     try {
       const response = await axios.post(
-        "http://localhost/BioVerde/back-end/usuarios/excluir.usuario.php",
+        "http://localhost/BioVerde/back-end/fornecedores/excluir.fornecedor.php",
         deleteSupplier,
         {
           headers: { "Content-Type": "application/json" },
@@ -523,9 +530,9 @@ export default function Suppliers() {
                     isSelect
                     value={filters.fstatus}
                     onChange={handleChange}
+                    placeholderOption="Todos" 
                     className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl"
                   >  
-                    <option value="">Todos</option>
                     {options.status?.map((status) => (
                       <option key={status.sta_id} value={status.sta_id}>
                         {status.sta_nome}
@@ -573,10 +580,10 @@ export default function Suppliers() {
                     isSelect
                     value={filters.festado}
                     onChange={handleChange}
+                    placeholderOption="Todos" 
                     autoComplete="address-level1"
                     className="bg-white border w-[250px] border-separator rounded-lg p-2.5 shadow-xl"
                   > 
-                    <option value="">Todos</option>
                     <option value="AC">Acre</option>
                     <option value="AL">Alagoas</option>
                     <option value="AP">Amapá</option>
@@ -749,7 +756,7 @@ export default function Suppliers() {
               </div>
             )}
 
-            {/* Fim aba de Lista de Usuários */}
+            {/* Fim aba de Lista de Fornecedores */}
           </Tabs.Content>
 
           {/* Aba de Cadastro de Fornecedores */}
@@ -827,10 +834,9 @@ export default function Suppliers() {
                   withInputMask
                   required
                   type="text"
-                  mask="99.999.999/9999-99"
+                  mask={cpfCnpjMask}
                   autoClear={false}
-                  // pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-                  pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+                  pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
                   placeholder="Digite o CPF/CNPJ"
                   value={formData.cnpj}
                   onChange={handleChange}
@@ -1012,233 +1018,263 @@ export default function Suppliers() {
           </Toast.Provider>
         </Tabs.Root>
 
-                {/* Todo esse código abaixo será refatorado mais tarde! */}
+        {/* Todo esse código abaixo será refatorado mais tarde! */}
 
-        {/* Pop up de Edição */}
-        <Dialog.Root open={openEditModal} onOpenChange={setOpenEditModal}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black opacity-50 z-100" />
-            <Dialog.Content className="fixed bg-brancoSal p-6 rounded-lg shadow-md top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-101">
-              <Dialog.Title className="text-3xl mb-5">
-                Editar Usuário:
-              </Dialog.Title>
-              <Dialog.Description>
-                <Form.Root
-                  className="flex flex-col"
-                  onSubmit={handleUpdateUser}
-                >
-                  {/* Linha Nome e Email*/}
-                  <div className="flex mb-10 justify-between">
+        <Modal
+          openModal={openEditModal}
+          setOpenModal={setOpenEditModal}
+          buttonClassname="hidden" 
+          modalTitle="Editar Fornecedor:"
+          leftButtonText="Editar"
+          rightButtonText="Cancelar"
+          loading={loading}
+          isLoading={loading.has("updateSupplier")}
+          onCancel={() => setOpenEditModal(false)}
+          onSubmit={handleUpdateSupplier}
+        >
+          {/* Linha Nome e razão social*/}
+          <div className="flex gap-x-10 mb-7">
 
-                    <SmartField
-                      fieldName="name"
-                      fieldText="Nome Completo"
-                      required
-                      type="text"
-                      placeholder="Digite o nome completo"
-                      autoComplete="name"
-                      value={formData.nome_empresa}
-                      onChange={handleChange}
-                      className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
+            <SmartField
+              fieldName="nome_empresa"
+              fieldText="Nome da Empresa"
+              required
+              type="text"
+              placeholder="Digite o nome Fantasia da empresa"
+              autoComplete="name"
+              value={formData.nome_empresa}
+              onChange={handleChange}
+              className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
+            />
 
-                    <SmartField
-                      fieldName="email"
-                      fieldText="Email"
-                      required
-                      type="email"
-                      placeholder="Digite o email"
-                      autoComplete="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="razao_social"
+              fieldText="Razão Social"
+              fieldClassname="flex flex-col w-full"
+              required
+              type="text"
+              placeholder="Digite a Razão Social da Empresa"
+              autoComplete="name"
+              value={formData.razao_social}
+              onChange={handleChange}
+              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
+            />
 
-                  </div>
+          </div>
 
-                  {/* Linha Telefone, CPF, e status*/}
-                  <div className="flex gap-x-15 mb-10 justify-between">
+          {/* Linha Email, telefone e cnpj*/}
+          <div className="flex mb-7 gap-x-10">
 
-                    <SmartField
-                      fieldName="tel"
-                      fieldText="Telefone"
-                      withInputMask
-                      required
-                      type="tel"
-                      mask="(99) 9999?9-9999"
-                      autoClear={false}
-                      pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                      placeholder="(xx)xxxxx-xxxx"
-                      autoComplete="tel"
-                      value={formData.tel}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="email"
+              fieldText="Email"
+              required
+              type="email"
+              placeholder="Digite o email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
+            /> 
 
-                    <SmartField
-                      fieldName="cpf"
-                      fieldText="CPF"
-                      withInputMask
-                      required
-                      type="text"
-                      mask="999.999.999-99"
-                      autoClear={false}
-                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                      placeholder="xxx.xxx.xxx-xx"
-                      value={formData.cnpj}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="tel"
+              fieldText="Telefone"
+              withInputMask
+              required
+              type="tel"
+              mask="(99) 9999?9-9999"
+              autoClear={false}
+              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+              placeholder="(xx)xxxxx-xxxx"
+              autoComplete="tel"
+              value={formData.tel}
+              onChange={handleChange}
+              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+            /> 
 
-                    <SmartField
-                      fieldName="status"
-                      fieldText="Status"
-                      isSelect
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    > 
-                      {options.status?.map((status) => (
-                        <option key={status.sta_id} value={status.sta_id}>
-                          {status.sta_nome}
-                        </option>
-                      ))}
-                    </SmartField> 
+            <SmartField
+              fieldName="cnpj"
+              fieldText="CPF/CNPJ"
+              withInputMask
+              required
+              type="text"
+              mask="99.999.999/9999-99"
+              autoClear={false}
+              // pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
+              pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+              placeholder="Digite o CPF/CNPJ"
+              value={formData.cnpj}
+              onChange={handleChange}
+              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+            />  
+          </div>
 
-                  </div>
+          <div className="flex mb-7 gap-x-10 ">
 
-                  {/* Linha Cargo e Nivel de Acesso */}
-                  <div className="flex gap-x-15 mb-10 items-center justify-between">
+            <SmartField
+              fieldName="responsavel"
+              fieldText="Responsável"
+              fieldClassname="flex flex-col w-full"
+              required
+              type="text"
+              placeholder="Digite o responsável"
+              autoComplete="name"
+              value={formData.responsavel}
+              onChange={handleChange}
+              className="bg-white border w-[300px] border-separator rounded-lg p-2.5 shadow-xl"
+            />
 
+            <SmartField
+              fieldName="status"
+              fieldText="Status"
+              isSelect
+              value={formData.status}
+              onChange={handleChange}
+              isLoading={loading.has("options")}
+              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+            > 
+              {options.status?.map((status) => (
+                <option key={status.sta_id} value={status.sta_id}>
+                  {status.sta_nome}
+                </option>
+              ))}
+            </SmartField> 
 
-                  </div>
+            <SmartField
+              fieldName="cep"
+              fieldText="CEP"
+              withInputMask
+              required
+              type="text"
+              mask="99999-999"
+              autoClear={false}
+              pattern="^\d{5}-\d{3}$"
+              placeholder="Digite seu CEP"
+              autoComplete="postal-code"
+              value={formData.cep}
+              onChange={handleChange}
+              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+            />  
+          </div>
 
-                  <div className="flex justify-center items-center gap-5">
-                    <Form.Submit asChild>
-                      <button
-                        type="submit"
-                        className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-                        disabled={loading.size > 0}
-                      >
-                        {loading.has("updateUser") ? (
-                          <Loader2 className="animate-spin h-6 w-6" />
-                        ) : (
-                          "Editar"
-                        )}
-                      </button>
-                    </Form.Submit>
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        onClick={() => setOpenEditModal(false)}
-                        className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-                      >
-                        Cancelar
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </Form.Root>
-              </Dialog.Description>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+          {/* Linha Nivel de Acesso e Senha*/}
+          <div className="flex mb-9 gap-x-10 ">
 
-        {/* Pop up de Exclusão */}
-        <Dialog.Root open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black opacity-50 z-100" />
-            <Dialog.Content className="fixed bg-brancoSal p-6 rounded-lg shadow-md top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-101">
-              <Dialog.Title className="text-3xl mb-5">
-                Excluir Usuário:
-              </Dialog.Title>
-              <Dialog.Description>
-                <Form.Root className="flex flex-col">
-                  <div className="flex mb-10">
-                    <Form.Field name="dname" className="flex flex-col w-full">
-                      <Form.Label className="flex justify-between items-center">
-                        <span className="text-xl pb-2 font-light">
-                          Nome Completo:
-                        </span>
-                        <Form.Message
-                          className="text-red-500 text-xs"
-                          match="valueMissing"
-                        >
-                          Campo obrigatório*
-                        </Form.Message>
-                      </Form.Label>
-                      <Form.Control asChild>
-                        <input
-                          type="text"
-                          name="dname"
-                          id="dname"
-                          placeholder="Digite o nome completo"
-                          autoComplete="name"
-                          readOnly
-                          value={deleteSupplier.dnome_empresa}
-                          onChange={handleChange}
-                          className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                        />
-                      </Form.Control>
-                    </Form.Field>
-                  </div>
+            <SmartField
+              fieldName="endereco"
+              fieldText="Endereço"
+              required
+              type="text"
+              placeholder="Endereço Completo"
+              value={formData.endereco}
+              onChange={handleChange}
+              autoComplete="street-address"
+              className="bg-white border w-[300px] border-separator rounded-lg p-2.5 shadow-xl"
+            />
 
-                  <div className="flex mb-10 ">
-                    <Form.Field name="reason" className="w-full flex flex-col">
-                      <Form.Label asChild>
-                        <span className="text-xl pb-2 font-light">
-                          Motivo da exclusão:
-                        </span>
-                      </Form.Label>
-                      <Form.Control asChild>
-                        <textarea
-                          id="reason"
-                          name="reason"
-                          rows={3}
-                          cols={50}
-                          autoFocus
-                          placeholder="Digite o motivo da exclusão do usuário"
-                          maxLength={500}
-                          value={deleteSupplier.reason}
-                          onChange={handleChange}
-                          className="g-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
-                        ></textarea>
-                      </Form.Control>
-                    </Form.Field>
-                  </div>
+            <SmartField
+              fieldName="estado"
+              fieldText="Estado"
+              isSelect
+              value={formData.estado}
+              onChange={handleChange}
+              autoComplete="address-level1"
+              isLoading={loading.has("options")}
+              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+            > 
+              <option value="AC">Acre</option>
+              <option value="AL">Alagoas</option>
+              <option value="AP">Amapá</option>
+              <option value="AM">Amazonas</option>
+              <option value="BA">Bahia</option>
+              <option value="CE">Ceará</option>
+              <option value="DF">Distrito Federal</option>
+              <option value="ES">Espírito Santo</option>
+              <option value="GO">Goiás</option>
+              <option value="MA">Maranhão</option>
+              <option value="MT">Mato Grosso</option>
+              <option value="MS">Mato Grosso do Sul</option>
+              <option value="MG">Minas Gerais</option>
+              <option value="PA">Pará</option>
+              <option value="PB">Paraíba</option>
+              <option value="PR">Paraná</option>
+              <option value="PE">Pernambuco</option>
+              <option value="PI">Piauí</option>
+              <option value="RJ">Rio de Janeiro</option>
+              <option value="RN">Rio Grande do Norte</option>
+              <option value="RS">Rio Grande do Sul</option>
+              <option value="RO">Rondônia</option>
+              <option value="RR">Roraima</option>
+              <option value="SC">Santa Catarina</option>
+              <option value="SP">São Paulo</option>
+              <option value="SE">Sergipe</option>
+              <option value="TO">Tocantins</option>
+            </SmartField> 
 
-                  <div className="flex justify-center items-center gap-5">
-                    <button
-                      type="button"
-                      className="bg-red-700 p-3 px-6 rounded-xl text-white cursor-pointer text-center gap-2 hover:bg-red-800"
-                      onClick={() => {
-                        if (deleteSupplier.reason === "") {
-                          setOpenModal(true);
-                          setMessage("Por favor, Preencha o motivo da exclusão.");
-                        } else {
-                          setOpenConfirmModal(true);
-                          setOpenDeleteModal(false);  
-                        }
-                      }}
-                    >
-                      Excluir
-                    </button>
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        onClick={() => setOpenDeleteModal(false)}
-                        className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer text-center gap-2 hover:bg-gray-400"
-                      >
-                        Cancelar
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </Form.Root>
-              </Dialog.Description>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+            <SmartField
+              fieldName="cidade"
+              fieldText="Cidade"
+              required
+              type="text"
+              placeholder="Cidade"
+              value={formData.cidade}
+              onChange={handleChange}
+              autoComplete="address-level2"
+              className="bg-white border w-[220px] border-separator rounded-lg p-2.5 shadow-xl"
+            />
+          </div>
 
-        {/* Alert para confirmar exclusão do usuário */}
+        </Modal>
+
+        <Modal
+          openModal={openDeleteModal}
+          setOpenModal={setOpenDeleteModal}
+          buttonClassname="hidden"
+          modalTitle="Excluir Fornecedor:"
+          leftButtonText="Excluir"
+          rightButtonText="Cancelar"
+          onCancel={() => setOpenDeleteModal(false)}
+          onDelete={() => {
+            setOpenConfirmModal(true);
+            setOpenDeleteModal(false);  
+          }}
+        >
+          <div className="flex mb-10">
+
+            <SmartField
+              fieldName="dnome_empresa"
+              fieldText="Nome da Empresa"
+              fieldClassname="flex flex-col w-full"
+              type="text"
+              required
+              readOnly
+              value={deleteSupplier.dnome_empresa}
+              onChange={handleChange}
+              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
+            />
+
+          </div>
+
+          <div className="flex mb-10 ">
+
+            <SmartField
+              isTextArea
+              fieldName="reason"
+              required
+              fieldText="Motivo da Exclusão"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite o motivo da exclusão do fornecedor"
+              value={deleteSupplier.reason}
+              onChange={handleChange}
+              className="bg-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
+            />
+
+          </div>
+
+        </Modal>
+
+        {/* Alert para confirmar exclusão do fornecedor */}
         <ConfirmationModal
           openModal={openConfirmModal}
           setOpenModal={setOpenConfirmModal}
