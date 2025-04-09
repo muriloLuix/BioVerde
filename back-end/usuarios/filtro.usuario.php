@@ -1,10 +1,10 @@
 <?php 
 
+ini_set("display_errors", 1);
+
 session_start();
 
 include_once "../inc/funcoes.inc.php";
-
-// configurarSessaoSegura();
 
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
@@ -23,15 +23,22 @@ if ($conn->connect_error) {
 
 // Processa os dados de entrada
 $rawData = file_get_contents("php://input");
-if (!$rawData) {
-    echo json_encode(["success" => false, "message" => "Erro ao receber os dados."]);
-    exit();
-}
 
 $data = json_decode($rawData, true);
 
 // Obtém os filtros construídos
 $filtros = construirFiltrosUsuarios($data);
+
+// Garante que as colunas nos filtros estão qualificadas com o alias da tabela
+if (isset($filtros['where'])) {
+    $filtros['where'] = array_map(function($condition) {
+        // Substitui colunas ambíguas pelos aliases corretos
+        $condition = preg_replace('/\bsta_id\b/', 'u.sta_id', $condition);
+        $condition = preg_replace('/\bcar_id\b/', 'u.car_id', $condition);
+        $condition = preg_replace('/\bnivel_id\b/', 'u.nivel_id', $condition);
+        return $condition;
+    }, $filtros['where']);
+}
 
 // Busca os usuários com os filtros aplicados
 $usuarios = buscarUsuariosComFiltros($conn, $filtros);

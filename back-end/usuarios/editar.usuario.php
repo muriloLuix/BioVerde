@@ -84,8 +84,13 @@ try {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
     }
 
-    echo json_encode(["success" => true, "message" => "Usuário atualizado com sucesso!"]);
+    $usuarioAtualizado = buscarUsuarioPorId($conn, $data['user_id']);
 
+    echo json_encode([
+        "success" => true,
+        "message" => "Usuário atualizado com sucesso!",
+        "usuario" => $usuarioAtualizado 
+    ]);
 } catch (Exception $e) {
     error_log("Erro em editar.usuario.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);

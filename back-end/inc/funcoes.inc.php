@@ -258,6 +258,7 @@ function atualizarSenha($conn, $email, $novaSenha) {
 
 // recuperar.senha.php
 
+
 function gerarCodigoRecuperacao($tamanho = 6) {
     $alfabeto = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     $codigo = '';
@@ -426,7 +427,8 @@ function construirFiltrosUsuarios($data) {
         "fcpf"   => "user_CPF",
         "fcargo" => "car_nome",
         "fnivel" => "nivel_nome",
-        "fstatus" => "sta_nome"  
+        "fstatus" => "sta_id",
+        "fdataCadastro" => "user_dtcadastro"  
     ];
 
     $where = [];
@@ -455,19 +457,26 @@ function construirFiltrosUsuarios($data) {
 }
 
 function buscarUsuariosComFiltros($conn, $filtros) {
-
     $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF,";
-    $sql .= " c.car_nome, n.nivel_nome, s.sta_nome, u.user_dtcadastro";
+    $sql .= " c.car_nome, n.nivel_nome, u.sta_id, u.user_dtcadastro";
     $sql .= " FROM usuarios u";
     $sql .= " INNER JOIN cargo c ON u.car_id = c.car_id";
     $sql .= " INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id";
     $sql .= " LEFT JOIN status s ON u.sta_id = s.sta_id";
 
     if (!empty($filtros['where'])) {
-        $sql .= " WHERE " . implode(" AND ", $filtros['where']);
+        // Modificar as condições que envolvem user_dtcadastro
+        $modifiedWhere = [];
+        foreach ($filtros['where'] as $condition) {
+            if (strpos($condition, 'user_dtcadastro') !== false) {
+                // Substituir user_dtcadastro por DATE(user_dtcadastro)
+                $condition = preg_replace('/user_dtcadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(user_dtcadastro) $1', $condition);
+            }
+            $modifiedWhere[] = $condition;
+        }
+        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
     }
 
-    // Restante da função permanece igual
     $stmt = $conn->prepare($sql);
 
     if (!empty($filtros['valores'])) {
@@ -606,85 +615,96 @@ function obterIdStatusPorNome($conn, $nomeStatus) {
     return $row['sta_id'];
 }
 
+function buscarUsuarioPorId($conn, $user_id) {
+    $stmt = $conn->prepare("
+        SELECT 
+            u.user_id, 
+            u.user_nome, 
+            u.user_email, 
+            u.user_telefone, 
+            u.user_CPF, 
+            c.car_nome, 
+            n.nivel_nome, 
+            s.sta_nome,
+            u.user_dtcadastro, 
+            u.car_id, 
+            u.nivel_id,
+            u.sta_id
+        FROM usuarios u 
+        INNER JOIN cargo c ON u.car_id = c.car_id 
+        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
+        LEFT JOIN status s ON u.sta_id = s.sta_id
+        WHERE u.user_id = ?
+    ");
+    
+    if (!$stmt) {
+        return null;
+    }
+    
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
+
 // excluir.usuario.php
 
 // funcoes.inc.php
 
 function registrarExclusaoUsuario($conn, $user_id, $dados) {
-    try {
-        $stmt = $conn->prepare("INSERT INTO usuarios_excluidos (
-            usuex_excluido, 
-            usuex_exclusao, 
-            usuex_motivo_exclusao,
-            usuex_dtexclusao
-        ) VALUES (?, ?, ?, NOW())");
-        
-        if (!$stmt) {
-            throw new Exception("Erro ao preparar INSERT: " . $conn->error);
-        }
-
-        if (!$stmt->bind_param('sis', $dados['dname'], $user_id, $dados['reason'])) {
-            throw new Exception("Erro ao vincular parâmetros: " . $stmt->error);
-        }
-
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao executar INSERT: " . $stmt->error);
-        }
-
-        return [
-            'success' => true,
-            'insert_id' => $stmt->insert_id,
-            'debug' => [
-                'query' => "INSERT INTO usuarios_excluidos VALUES ('{$dados['dname']}', $user_id, '{$dados['reason']}', NOW())",
-                'affected_rows' => $stmt->affected_rows
-            ]
-        ];
-
-    } catch (Exception $e) {
-        error_log("ERRO NO REGISTRO DE EXCLUSÃO: " . $e->getMessage());
+    $stmt = $conn->prepare("INSERT INTO usuarios_excluidos (
+        usuex_excluido, 
+        usuex_exclusao, 
+        usuex_motivo_exclusao,
+        usuex_dtexclusao
+    ) VALUES (?, ?, ?, NOW())");
+    
+    if (!$stmt) {
         return [
             'success' => false,
-            'message' => $e->getMessage(),
-            'error' => $stmt->error ?? $conn->error ?? null
+            'message' => 'Falha ao preparar o registro de exclusão'
         ];
     }
+
+    $stmt->bind_param('sis', $dados['dname'], $user_id, $dados['reason']);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao registrar a exclusão'
+        ];
+    }
+
+    return ['success' => true, 'insert_id' => $stmt->insert_id];
 }
 
 function deletarUsuario($conn, $user_id) {
-    try {
-        $stmt = $conn->prepare("DELETE FROM usuarios WHERE user_id = ?");
-        if (!$stmt) {
-            throw new Exception("Erro ao preparar DELETE: " . $conn->error);
-        }
-
-        if (!$stmt->bind_param('i', $user_id)) {
-            throw new Exception("Erro ao vincular parâmetros: " . $stmt->error);
-        }
-
-        if (!$stmt->execute()) {
-            throw new Exception("Erro ao executar DELETE: " . $stmt->error);
-        }
-
-        if ($stmt->affected_rows === 0) {
-            throw new Exception("Nenhum usuário foi deletado");
-        }
-
-        return [
-            'success' => true,
-            'debug' => [
-                'query' => "DELETE FROM usuarios WHERE user_id = $user_id",
-                'affected_rows' => $stmt->affected_rows
-            ]
-        ];
-
-    } catch (Exception $e) {
-        error_log("ERRO NA EXCLUSÃO DO USUÁRIO: " . $e->getMessage());
+    $stmt = $conn->prepare("DELETE FROM usuarios WHERE user_id = ?");
+    
+    if (!$stmt) {
         return [
             'success' => false,
-            'message' => $e->getMessage(),
-            'error' => $stmt->error ?? $conn->error ?? null
+            'message' => 'Falha ao preparar a exclusão'
         ];
     }
+
+    $stmt->bind_param('i', $user_id);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao executar a exclusão'
+        ];
+    }
+
+    if ($stmt->affected_rows === 0) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum usuário encontrado com este ID'
+        ];
+    }
+
+    return ['success' => true];
 }
 
 ?>

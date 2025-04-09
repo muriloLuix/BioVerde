@@ -53,6 +53,9 @@ interface Usuario {
 }
 
 export default function UsersPage() {
+  const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+  const [relatorioContent, setRelatorioContent] = useState<string>("");
+  const [isLoadingRelatorio, setIsLoadingRelatorio] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -121,6 +124,30 @@ export default function UsersPage() {
           Object.keys(prevErrors).map((key) => [key, false])
         ) as typeof prevErrors
     );
+  };
+
+  const gerarRelatorio = async () => {
+    setIsLoadingRelatorio(true);
+    try {
+      const response = await axios.get(
+        "http://localhost/BioVerde/back-end/rel/usu.rel.php",
+        {
+          responseType: 'blob', 
+          withCredentials: true,
+        }
+      );
+  
+      // Cria uma URL para o blob recebido
+      const fileURL = URL.createObjectURL(new Blob([response.data]));
+      setRelatorioContent(fileURL);
+      setRelatorioModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+      setMessage("Erro ao gerar relatório");
+      setOpenModal(true);
+    } finally {
+      setIsLoadingRelatorio(false);
+    }
   };
 
   //função para puxar os dados do usuario que será editado
@@ -232,11 +259,64 @@ export default function UsersPage() {
     fetchData();
   }, []);
 
+  const refreshData = async () => {
+    try {
+      setLoading((prev) => new Set([...prev, "users", "options"]));
+  
+      const [optionsResponse, usuariosResponse] = await Promise.all([
+        axios.get(
+          "http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
+          { withCredentials: true }
+        ),
+      ]);
+  
+      if (optionsResponse.data.success && usuariosResponse.data.success) {
+        setOptions({
+          cargos: optionsResponse.data.cargos,
+          niveis: optionsResponse.data.niveis,
+          status: optionsResponse.data.status || [],
+        });
+        setUsuarios(usuariosResponse.data.usuarios);
+        return true;
+      } else {
+        const errorMessage = optionsResponse.data.message || 
+                           usuariosResponse.data.message || 
+                           "Erro ao carregar dados";
+        setMessage(errorMessage);
+        setOpenModal(true);
+        return false;
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      setMessage(errorMessage);
+      setOpenModal(true);
+      return false;
+    } finally {
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        ["users", "options"].forEach((item) => newLoading.delete(item));
+        return newLoading;
+      });
+    }
+  };
+  
+  // Atualize seu useEffect para usar a nova função
+  useEffect(() => {
+    refreshData();
+  }, []);
+
   //Submit de cadastrar usuários
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validações
+  
+    // Validações (mantenha seu código existente)
     const errors = {
       position: !formData.cargo,
       level: !formData.nivel,
@@ -244,15 +324,14 @@ export default function UsersPage() {
       status: !formData.status,
     };
     setErrors(errors);
-
-    // Se algum erro for true, interrompe a execução
+  
     if (Object.values(errors).some((error) => error)) {
       return;
     }
-
+  
     setLoading((prev) => new Set([...prev, "submit"]));
     setSuccessMsg(false);
-
+  
     try {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php",
@@ -262,41 +341,31 @@ export default function UsersPage() {
           withCredentials: true,
         }
       );
-
-      console.log("Resposta do back-end:", response.data);
-
+  
       if (response.data.success) {
         setSuccessMsg(true);
-        setMessage(
-          "Usuário cadastrado com sucesso! O login e senha foram enviados por email."
-        );
+        setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
+        
         // Limpa o formulário
-        setFormData(
-          (prev) =>
-            Object.fromEntries(
-              Object.entries(prev).map(([key, value]) => [
-                key,
-                typeof value === "number" ? 0 : "",
-              ])
-            ) as typeof prev
+        setFormData((prev) => 
+          Object.fromEntries(
+            Object.entries(prev).map(([key, value]) => [
+              key,
+              typeof value === "number" ? 0 : "",
+            ])
+          ) as typeof prev
         );
+        
+        // Atualiza os dados (usuários e opções)
+        await refreshData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
       }
     } catch (error) {
       let errorMessage = "Erro ao conectar com o servidor";
-
       if (axios.isAxiosError(error)) {
-        if (error.response) {
-          errorMessage = error.response.data.message || "Erro no servidor";
-          console.error("Erro na resposta:", error.response.data);
-        } else {
-          console.error("Erro na requisição:", error.message);
-        }
-      } else {
-        console.error("Erro desconhecido:", error);
+        errorMessage = error.response?.data?.message || error.message;
       }
-
       setMessage(errorMessage);
     } finally {
       setOpenModal(true);
@@ -373,12 +442,13 @@ export default function UsersPage() {
         }
       );
 
-      console.log("Resposta do back-end:", response.data);
-
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Usuário atualizado com sucesso!");
         setOpenEditModal(false);
+        
+        // Atualiza a lista de usuários após edição bem-sucedida
+        await refreshData(); // Usando a mesma função do cadastro
       } else {
         setMessage(response.data.message || "Erro ao atualizar usuário.");
       }
@@ -403,16 +473,17 @@ export default function UsersPage() {
   //submit para excluir um usuário
   const handleDeleteUser = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     setLoading((prev) => new Set([...prev, "deleteUser"]));
     setSuccessMsg(false);
-
+  
     try {
       const dataToSend = {
         user_id: Number(deleteUser.user_id),
         dname: String(deleteUser.dname),
         reason: String(deleteUser.reason),
       };
+  
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/usuarios/excluir.usuario.php",
         dataToSend,
@@ -421,24 +492,28 @@ export default function UsersPage() {
           withCredentials: true,
         }
       );
-
-      console.log("Resposta do back-end:", response.data);
-
+  
       if (response.data.success) {
         setSuccessMsg(true);
-        setMessage("Usuário Excluído com sucesso!");
+        setMessage("Usuário excluído com sucesso!");
         setOpenConfirmModal(false);
+        
+        setUsuarios(prevUsuarios => 
+          prevUsuarios.filter(user => user.user_id !== deleteUser.user_id)
+        );
+        
       } else {
         setMessage(response.data.message || "Erro ao excluir usuário.");
       }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        setMessage(error.response.data.message || "Erro no servidor");
-        console.error("Erro na resposta:", error.response.data);
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Erro no servidor";
+        console.error("Erro na resposta:", error.response?.data);
       } else {
-        setMessage("Erro ao conectar com o servidor");
         console.error("Erro na requisição:", error);
       }
+      setMessage(errorMessage);
     } finally {
       setOpenModal(true);
       setLoading((prev) => {
@@ -806,9 +881,17 @@ export default function UsersPage() {
                 <button
                   type="button"
                   className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+                  onClick={gerarRelatorio}
+                  disabled={isLoadingRelatorio}
                 >
-                  <Printer />
-                  Gerar Relatório
+                  {isLoadingRelatorio ? (
+                    <span className="animate-spin">↻</span>
+                  ) : (
+                    <>
+                      <Printer />
+                      Gerar Relatório
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -1060,6 +1143,52 @@ export default function UsersPage() {
         </Tabs.Root>
 
         {/* Todo esse código abaixo será refatorado mais tarde! */}
+
+        {/* Modal de Relatório */}
+        
+        {relatorioModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Relatório de Usuários</h2>
+                <button 
+                  onClick={() => setRelatorioModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-auto mb-4">
+                {relatorioContent ? (
+                  <iframe 
+                    src={relatorioContent} 
+                    className="w-full h-full min-h-[70vh] border"
+                    title="Relatório de Usuários"
+                  />
+                ) : (
+                  <p>Carregando relatório...</p>
+                )}
+              </div>
+              
+              <div className="flex justify-end gap-4">
+                <a
+                  href={relatorioContent}
+                  download="relatorio_usuarios.pdf"
+                  className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+                >
+                  Baixar Relatório
+                </a>
+                <button
+                  onClick={() => setRelatorioModalOpen(false)}
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pop up de Edição */}
         <Dialog.Root open={openEditModal} onOpenChange={setOpenEditModal}>
