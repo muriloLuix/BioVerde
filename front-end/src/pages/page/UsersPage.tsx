@@ -978,7 +978,7 @@ export default function UsersPage() {
                     )}
                   </Form.Label>
                   {loading.has("options") ? (
-                    <div className="bg-white w-[190px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
+                    <div className="bg-white w-[220px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
                       <Loader2 className="animate-spin h-5 w-5" />
                     </div>
                   ) : (
@@ -1324,6 +1324,7 @@ export default function UsersPage() {
           onCancel={() => setOpenConfirmModal(false)}
           onConfirm={handleDeleteUser}
           loading={loading}
+          isLoading={loading.has("deleteUser")}
           confirmationLeftButtonText="Cancelar"
           confirmationRightButtonText="Sim, excluir usuário"
         />

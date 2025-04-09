@@ -13,6 +13,7 @@ type ConfirmationModalProps = {
   onCancel?: () => void;
   onConfirm?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   loading?: Set<string>;
+  isLoading: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const ConfirmationModal = ({
@@ -26,6 +27,7 @@ const ConfirmationModal = ({
   confirmationModalTitle,
   onCancel,
   onConfirm,
+  isLoading,
   loading,
 }: ConfirmationModalProps) => {
 
@@ -64,7 +66,7 @@ const ConfirmationModal = ({
                 onClick={onConfirm}
                 disabled={!!loading?.size}
               >
-                {loading?.has("deleteUser") ? (
+                {isLoading ? (
                   <Loader2 className="animate-spin h-5 w-5" />
                 ) : (
                   confirmationRightButtonText
