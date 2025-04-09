@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 type InputPropsBase = {
   isSelect?: false;
   isTextArea?: boolean;
+  isNumEndereco?: boolean;
   isLoading?: boolean;
   error?: string;
   placeholderOption?: string;
@@ -24,6 +25,7 @@ type InputProps =
 type SelectProps = {
   isSelect: true;
   isTextArea?: false;
+  isNumEndereco?: boolean;
   isLoading?: boolean;
   error?: string;
   placeholderOption?: string;
@@ -40,6 +42,7 @@ type SmartFieldProps = InputProps | SelectProps;
 const SmartField: React.FC<SmartFieldProps> = ({
   isSelect,
   isTextArea,
+  isNumEndereco,
   withInputMask,
   required,
   fieldName,
@@ -68,7 +71,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
         ) : (
           <>
             <Form.Message className="text-red-500 text-xs" match="valueMissing">
-              Campo obrigatório*
+              {isNumEndereco ? "*" : "Campo obrigatório*"}
             </Form.Message>
             <Form.Message className="text-red-500 text-xs" match="typeMismatch">
               Insira um e-mail válido*

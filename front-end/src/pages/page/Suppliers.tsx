@@ -9,6 +9,7 @@ import { SmartField } from "../../shared";
 import { ConfirmationModal } from "../../shared";
 import { Modal } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
+import { cepApi } from "../../utils/cepApi";
 
 interface Estado {
   estado_id: number;
@@ -28,6 +29,7 @@ interface Fornecedor {
   fornecedor_telefone: string;
   fornecedor_CNPJ: string;
   fornecedor_endereco: string;
+  fornecedor_num_endereco: string;
   fornecedor_cidade: string;
   estado_nome: string;
   fornecedor_cep: string;
@@ -38,7 +40,7 @@ interface Fornecedor {
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState("list");
-  const [cpfCnpjMask, setCpfCnpjMask] = useState("999.999.999-99");
+  const [cpfCnpjMask, setCpfCnpjMask] = useState("");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -64,6 +66,7 @@ export default function Suppliers() {
     endereco: "",
     estado: "",
     cidade: "",
+    num_endereco: "",
   });
   const [options, setOptions] = useState<{
     estados: Estado[];
@@ -88,7 +91,6 @@ export default function Suppliers() {
     reason: "",
   });
 
-  console.log(deleteSupplier)
   //OnChange dos campos
   const handleChange = (
     event:
@@ -129,6 +131,7 @@ export default function Suppliers() {
       endereco: fornecedor.fornecedor_endereco,
       estado: fornecedor.estado_nome,
       cidade: fornecedor.fornecedor_cidade,
+      num_endereco: fornecedor.fornecedor_num_endereco,
     });
     setOpenEditModal(true);
   };
@@ -425,7 +428,12 @@ export default function Suppliers() {
     }
   };
 
-  return (
+  //Função para chamar a api de CEP
+  const handleCepBlur = () => {
+    cepApi(formData.cep, setFormData, setOpenModal, setMessage);
+  };
+
+  return (  
     <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter]">
         <h1 className=" text-[40px] font-semibold text-center mb-3">
@@ -890,6 +898,7 @@ export default function Suppliers() {
                   autoComplete="postal-code"
                   value={formData.cep}
                   onChange={handleChange}
+                  onBlur={handleCepBlur}
                   className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
                 />  
               </div>
@@ -897,17 +906,31 @@ export default function Suppliers() {
               {/* Linha Nivel de Acesso e Senha*/}
               <div className="flex mb-10 gap-x-15 ">
 
-                <SmartField
-                  fieldName="endereco"
-                  fieldText="Endereço"
-                  required
-                  type="text"
-                  placeholder="Endereço Completo"
-                  value={formData.endereco}
-                  onChange={handleChange}
-                  autoComplete="street-address"
-                  className="bg-white border w-[400px] border-separator rounded-lg p-2.5 shadow-xl"
-                />
+                <div className="flex w-full justify-between">
+                  <SmartField
+                    fieldName="endereco"
+                    fieldText="Endereço"
+                    required
+                    type="text"
+                    placeholder="Endereço Completo"
+                    value={formData.endereco}
+                    onChange={handleChange}
+                    autoComplete="street-address"
+                    className="bg-white border w-[290px] border-separator rounded-lg p-2.5 shadow-xl"
+                  />
+                  <SmartField
+                    fieldName="num_endereco"
+                    fieldText="Número"
+                    isNumEndereco
+                    required
+                    type="text"
+                    placeholder="Número"
+                    value={formData.num_endereco}
+                    onChange={handleChange}
+                    autoComplete="address-line1"
+                    className="bg-white border w-[90px] border-separator rounded-lg p-2.5 shadow-xl"
+                  />
+                </div>
 
                 <SmartField
                   fieldName="estado"
@@ -1154,6 +1177,7 @@ export default function Suppliers() {
               autoComplete="postal-code"
               value={formData.cep}
               onChange={handleChange}
+              onBlur={handleCepBlur}
               className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
             />  
           </div>
@@ -1161,17 +1185,31 @@ export default function Suppliers() {
           {/* Linha Nivel de Acesso e Senha*/}
           <div className="flex mb-9 gap-x-10 ">
 
-            <SmartField
-              fieldName="endereco"
-              fieldText="Endereço"
-              required
-              type="text"
-              placeholder="Endereço Completo"
-              value={formData.endereco}
-              onChange={handleChange}
-              autoComplete="street-address"
-              className="bg-white border w-[300px] border-separator rounded-lg p-2.5 shadow-xl"
-            />
+            <div className="flex w-full justify-between">
+              <SmartField
+                fieldName="endereco"
+                fieldText="Endereço"
+                required
+                type="text"
+                placeholder="Endereço Completo"
+                value={formData.endereco}
+                onChange={handleChange}
+                autoComplete="street-address"
+                className="bg-white border w-[190px] border-separator rounded-lg p-2.5 shadow-xl"
+              />
+              <SmartField
+                fieldName="num_endereco"
+                fieldText="Número"
+                isNumEndereco
+                required
+                type="text"
+                placeholder="Número"
+                value={formData.num_endereco}
+                onChange={handleChange}
+                autoComplete="address-line1"
+                className="bg-white border w-[90px] border-separator rounded-lg p-2.5 shadow-xl"
+              />
+            </div>
 
             <SmartField
               fieldName="estado"

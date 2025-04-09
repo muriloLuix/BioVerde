@@ -8,17 +8,17 @@ export function switchCpfCnpjMask(
     const onlyDigits = (value ?? "").replace(/\D/g, "");
   
     const newMask =
-      onlyDigits.length < 11
-        ? "999.999.999-99" // CPF
-        : "99.999.999/9999-99"; // CNPJ
+      onlyDigits.length > 11
+        ? "99.999.999/9999-99" // CNPJ
+        : "999.999.999-99?9"; // CPF
   
     setCpfCnpjMask(newMask);
   
-    if (onlyDigits.length === 11) {
+    if (onlyDigits.length === 12) {
       setTimeout(() => {
         const inputElement = document.querySelector<HTMLInputElement>('input[name="cnpj"]');
         if (inputElement) {
-          const pos = inputElement.value.length - 4;
+          const pos = inputElement.value.length - 2;
           inputElement.setSelectionRange(pos, pos);
         }
       }, 0);
