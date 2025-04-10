@@ -62,12 +62,12 @@ const ConfirmationModal = ({
             <AlertDialog.Action asChild>
               <button
                 type="button"
-                className="bg-red-700 py-2 px-3  h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
+                className="bg-red-700 py-2 px-3 w-[186px] h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
                 onClick={onConfirm}
                 disabled={!!loading?.size}
               >
                 {isLoading ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
+                  <Loader2 className="animate-spin h-6 w-6" />
                 ) : (
                   confirmationRightButtonText
                 )}

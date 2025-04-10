@@ -3,7 +3,7 @@ export function switchCpfCnpjMask(
     value: string | null | undefined,
     setCpfCnpjMask: (mask: string) => void
   ) {
-    if (name !== "cnpj") return;
+    if (name !== "cnpj" && name !== "fcnpj") return;
   
     const onlyDigits = (value ?? "").replace(/\D/g, "");
   
@@ -16,11 +16,12 @@ export function switchCpfCnpjMask(
   
     if (onlyDigits.length === 12) {
       setTimeout(() => {
-        const inputElement = document.querySelector<HTMLInputElement>('input[name="cnpj"]');
-        if (inputElement) {
+        const inputElements = document.querySelectorAll<HTMLInputElement>('input[name="cnpj"], input[name="fcnpj"]');
+        
+        inputElements.forEach((inputElement) => {
           const pos = inputElement.value.length - 2;
           inputElement.setSelectionRange(pos, pos);
-        }
+        });
       }, 0);
     }
   }

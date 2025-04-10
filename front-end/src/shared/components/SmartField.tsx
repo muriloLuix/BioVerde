@@ -1,43 +1,34 @@
+import { useState } from "react";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
 import { Form } from "radix-ui";
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, EyeOff, Eye } from "lucide-react";
 
 type InputPropsBase = {
-  isSelect?: false;
+  isSelect?: boolean;
   isTextArea?: boolean;
+  isPassword?: boolean;
   isNumEndereco?: boolean;
   isLoading?: boolean;
   error?: string;
+  inputWidth?: string;
   placeholderOption?: string;
   withInputMask?: boolean;
   required?: boolean;
   fieldName: string;
   fieldClassname?: string;
   fieldText: string;
-  childrenWithOptions?: React.ReactNode;
+  children?: React.ReactNode;
+  generatePassword?: () => void;
 };
 
 type InputProps =
-  | (InputPropsBase & InputMaskProps & { withInputMask: true })
-  | (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> & { withInputMask?: false });
+  | (InputPropsBase & InputMaskProps 
+    & { withInputMask: true })
+  | (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> 
+    & { withInputMask?: false });
 
-type SelectProps = {
-  isSelect: true;
-  isTextArea?: false;
-  isNumEndereco?: boolean;
-  isLoading?: boolean;
-  error?: string;
-  placeholderOption?: string;
-  withInputMask?: boolean;
-  required?: boolean;
-  fieldName: string;
-  fieldClassname?: string;
-  fieldText: string;
-  children: React.ReactNode;
-} & React.SelectHTMLAttributes<HTMLSelectElement>;
-
-type SmartFieldProps = InputProps | SelectProps;
+type SmartFieldProps = InputProps;
 
 const SmartField: React.FC<SmartFieldProps> = ({
   isSelect,
@@ -52,8 +43,13 @@ const SmartField: React.FC<SmartFieldProps> = ({
   isLoading,
   error,
   placeholderOption,
+  inputWidth,
+  isPassword,
+  generatePassword,
   ...rest
 }) => {
+  const [isHidden, setIsHidden] = useState(false);
+
   const regex = (text: string) =>
    text.trim().toLowerCase().replace(/\s+/g, "-");
 
@@ -64,7 +60,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
         className="flex justify-between items-center"
       >
         <span className="text-xl pb-2 font-light">{fieldText}:</span>
-        {isSelect ? (
+        {isSelect || isPassword ? (
             error && (
               <span className="text-red-500 text-xs">{error}</span>
             )
@@ -84,7 +80,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
       </Form.Label>
         {isSelect ? (
           isLoading ? (
-            <div className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl flex justify-center">
+            <div className={`bg-white ${inputWidth} border border-separator rounded-lg p-2.5 shadow-xl flex justify-center`}>
               <Loader2 className="animate-spin h-5 w-5" />
             </div>
           ) : (
@@ -93,6 +89,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
               name={regex(fieldName)}
               id={regex(fieldName)}
               required={required}
+              className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
             >
               {placeholderOption && (
                 <option value="" disabled>
@@ -102,6 +99,34 @@ const SmartField: React.FC<SmartFieldProps> = ({
               {children}
             </select>
           )
+        ) : isPassword ? (
+          <div className="flex gap-2">
+            <div className="relative">
+              <input
+                {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+                type={isHidden ? "text" : "password"}
+                id={regex(fieldName)}
+                name={regex(fieldName)}
+                className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
+              />
+              {/* Botão de Mostrar/Ocultar Senha */}
+              <button
+                type="button"
+                onClick={() => setIsHidden(!isHidden)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+              >
+                {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {/* Botão de Gerar Senha Aleatoria */}
+            <button
+              type="button"
+              className="bg-verdeMedio p-2.5 rounded-2xl whitespace-nowrap text-white cursor-pointer hover:bg-verdeEscuro"
+              onClick={generatePassword}
+            >
+              Gerar Senha
+            </button>
+          </div>
         ) : (
           <Form.Control asChild>
             {isTextArea ? (
@@ -112,8 +137,8 @@ const SmartField: React.FC<SmartFieldProps> = ({
                 required={required}
                 rows={3}
                 cols={50}
-                autoFocus
                 maxLength={500}
+                className="bg-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
               />
             ) : (
               withInputMask ? (
@@ -122,6 +147,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
                   name={regex(fieldName)}
                   id={regex(fieldName)}
                   required={required}
+                  className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
                 />
               ) : (
                 <input
@@ -129,6 +155,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
                   name={regex(fieldName)}
                   id={regex(fieldName)}
                   required={required}
+                  className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
                 />
               )
             )}

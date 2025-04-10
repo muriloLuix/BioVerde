@@ -51,7 +51,7 @@ const Modal = ({
         <Dialog.Content
           className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-xl shadow-lg`}
         >
-          <Dialog.Title className="text-2xl font-[inter] font-bold">
+          <Dialog.Title className="text-2xl font-[inter] font-semibold">
             {modalTitle}
           </Dialog.Title>
           <Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">

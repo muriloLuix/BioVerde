@@ -256,15 +256,7 @@ export default function Suppliers() {
           "Fornecedor cadastrado com sucesso!"
         );
         // Limpa o formulário
-        setFormData(
-          (prev) =>
-            Object.fromEntries(
-              Object.entries(prev).map(([key, value]) => [
-                key,
-                typeof value === "number" ? 0 : "",
-              ])
-            ) as typeof prev
-        );
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar fornecedor");
       }
@@ -297,7 +289,6 @@ export default function Suppliers() {
   const handleFilterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    alert("asdasd")
     console.log(filters)
     setLoading((prev) => new Set([...prev, "filterSubmit"]));
     setSuccessMsg(false);
@@ -433,6 +424,18 @@ export default function Suppliers() {
     cepApi(formData.cep, setFormData, setOpenModal, setMessage);
   };
 
+  //Limpar FormData
+  const clearFormData = () => {
+    setFormData((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([key, value]) => [
+          key,
+          typeof value === "number" ? 0 : "",
+        ])
+      ) as typeof prev
+    );
+  };
+
   return (  
     <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter]">
@@ -483,7 +486,7 @@ export default function Suppliers() {
                     autoComplete="name"
                     value={filters.fnome_empresa}
                     onChange={handleChange}
-                    className="bg-white w-[350px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[350px]"
                   />
 
                   <SmartField
@@ -491,14 +494,12 @@ export default function Suppliers() {
                     fieldText="CPF/CNPJ"
                     withInputMask
                     type="text"
-                    mask="99.999.999/9999-99"
+                    mask={cpfCnpjMask}
                     autoClear={false}
-                    // pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-                    pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
                     placeholder="Digite o CPF/CNPJ"
                     value={filters.fcnpj}
                     onChange={handleChange}
-                    className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[250px]"
                   />  
 
                   <SmartField
@@ -508,12 +509,11 @@ export default function Suppliers() {
                     type="tel"
                     mask="(99) 9999?9-9999"
                     autoClear={false}
-                    pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
                     placeholder="(xx)xxxxx-xxxx"
                     autoComplete="tel"
                     value={filters.ftel}
                     onChange={handleChange}
-                    className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[250px]"
                   /> 
                   
                 </div>
@@ -523,13 +523,12 @@ export default function Suppliers() {
                   <SmartField
                     fieldName="fresponsavel"
                     fieldText="Responsável"
-                    required
                     type="text"
                     placeholder="Digite o responsável"
                     autoComplete="name"
                     value={filters.fresponsavel}
                     onChange={handleChange}
-                    className="bg-white border w-[350px] border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[350px]"
                   />
 
                   <SmartField
@@ -538,9 +537,10 @@ export default function Suppliers() {
                     isSelect
                     value={filters.fstatus}
                     onChange={handleChange}
-                    placeholderOption="Todos" 
-                    className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    isLoading={loading.has("options")}
+                    inputWidth="w-[250px]"
                   >  
+                    <option value="">Todos</option>
                     {options.status?.map((status) => (
                       <option key={status.sta_id} value={status.sta_id}>
                         {status.sta_nome}
@@ -579,7 +579,7 @@ export default function Suppliers() {
                     autoComplete="address-level2"
                     value={filters.fcidade}
                     onChange={handleChange}
-                    className="bg-white w-[350px] border border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[350px]"
                   />
 
                   <SmartField
@@ -588,10 +588,11 @@ export default function Suppliers() {
                     isSelect
                     value={filters.festado}
                     onChange={handleChange}
-                    placeholderOption="Todos" 
+                    isLoading={loading.has("options")}
                     autoComplete="address-level1"
-                    className="bg-white border w-[250px] border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[250px]"
                   > 
+                    <option value="">Todos</option>
                     <option value="AC">Acre</option>
                     <option value="AL">Alagoas</option>
                     <option value="AP">Amapá</option>
@@ -787,7 +788,7 @@ export default function Suppliers() {
                   autoComplete="name"
                   value={formData.nome_empresa}
                   onChange={handleChange}
-                  className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[400px]"
                 />
 
                 <SmartField
@@ -800,7 +801,6 @@ export default function Suppliers() {
                   autoComplete="name"
                   value={formData.razao_social}
                   onChange={handleChange}
-                  className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
                 />
 
               </div>
@@ -817,7 +817,7 @@ export default function Suppliers() {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[400px]"
                 /> 
 
                 <SmartField
@@ -833,7 +833,7 @@ export default function Suppliers() {
                   autoComplete="tel"
                   value={formData.tel}
                   onChange={handleChange}
-                  className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 /> 
 
                 <SmartField
@@ -848,7 +848,7 @@ export default function Suppliers() {
                   placeholder="Digite o CPF/CNPJ"
                   value={formData.cnpj}
                   onChange={handleChange}
-                  className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 />  
               </div>
 
@@ -864,7 +864,7 @@ export default function Suppliers() {
                   autoComplete="name"
                   value={formData.responsavel}
                   onChange={handleChange}
-                  className="bg-white border w-[400px] border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[400px]"
                 />
 
                 <SmartField
@@ -876,7 +876,7 @@ export default function Suppliers() {
                   isLoading={loading.has("options")}
                   error={errors.status ? "Campo obrigatório*" : undefined}
                   placeholderOption="Selecione o status"
-                  className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 > 
                   {options.status?.map((status) => (
                     <option key={status.sta_id} value={status.sta_id}>
@@ -899,7 +899,7 @@ export default function Suppliers() {
                   value={formData.cep}
                   onChange={handleChange}
                   onBlur={handleCepBlur}
-                  className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 />  
               </div>
 
@@ -916,7 +916,7 @@ export default function Suppliers() {
                     value={formData.endereco}
                     onChange={handleChange}
                     autoComplete="street-address"
-                    className="bg-white border w-[290px] border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[290px]"
                   />
                   <SmartField
                     fieldName="num_endereco"
@@ -928,7 +928,7 @@ export default function Suppliers() {
                     value={formData.num_endereco}
                     onChange={handleChange}
                     autoComplete="address-line1"
-                    className="bg-white border w-[90px] border-separator rounded-lg p-2.5 shadow-xl"
+                    inputWidth="w-[90px]"
                   />
                 </div>
 
@@ -942,7 +942,7 @@ export default function Suppliers() {
                   isLoading={loading.has("options")}
                   error={errors.states ? "Campo obrigatório*" : undefined}
                   placeholderOption="Selecione o Estado"
-                  className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 > 
                   <option value="AC">Acre</option>
                   <option value="AL">Alagoas</option>
@@ -982,7 +982,7 @@ export default function Suppliers() {
                   value={formData.cidade}
                   onChange={handleChange}
                   autoComplete="address-level2"
-                  className="bg-white border w-[220px] border-separator rounded-lg p-2.5 shadow-xl"
+                  inputWidth="w-[220px]"
                 />
               </div>
 
@@ -1040,9 +1040,8 @@ export default function Suppliers() {
             <Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
           </Toast.Provider>
         </Tabs.Root>
-
-        {/* Todo esse código abaixo será refatorado mais tarde! */}
-
+        
+        {/* Modal de Edição */}
         <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
@@ -1052,7 +1051,7 @@ export default function Suppliers() {
           rightButtonText="Cancelar"
           loading={loading}
           isLoading={loading.has("updateSupplier")}
-          onCancel={() => setOpenEditModal(false)}
+          onCancel={() => {setOpenEditModal(false); clearFormData()}}
           onSubmit={handleUpdateSupplier}
         >
           {/* Linha Nome e razão social*/}
@@ -1067,7 +1066,7 @@ export default function Suppliers() {
               autoComplete="name"
               value={formData.nome_empresa}
               onChange={handleChange}
-              className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[300px]"
             />
 
             <SmartField
@@ -1080,7 +1079,6 @@ export default function Suppliers() {
               autoComplete="name"
               value={formData.razao_social}
               onChange={handleChange}
-              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
             />
 
           </div>
@@ -1097,7 +1095,7 @@ export default function Suppliers() {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[300px]"
             /> 
 
             <SmartField
@@ -1113,7 +1111,7 @@ export default function Suppliers() {
               autoComplete="tel"
               value={formData.tel}
               onChange={handleChange}
-              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             /> 
 
             <SmartField
@@ -1122,14 +1120,13 @@ export default function Suppliers() {
               withInputMask
               required
               type="text"
-              mask="99.999.999/9999-99"
+              mask={cpfCnpjMask}
               autoClear={false}
-              // pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-              pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+              pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
               placeholder="Digite o CPF/CNPJ"
               value={formData.cnpj}
               onChange={handleChange}
-              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             />  
           </div>
 
@@ -1145,7 +1142,7 @@ export default function Suppliers() {
               autoComplete="name"
               value={formData.responsavel}
               onChange={handleChange}
-              className="bg-white border w-[300px] border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[300px]"
             />
 
             <SmartField
@@ -1155,7 +1152,7 @@ export default function Suppliers() {
               value={formData.status}
               onChange={handleChange}
               isLoading={loading.has("options")}
-              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             > 
               {options.status?.map((status) => (
                 <option key={status.sta_id} value={status.sta_id}>
@@ -1178,7 +1175,7 @@ export default function Suppliers() {
               value={formData.cep}
               onChange={handleChange}
               onBlur={handleCepBlur}
-              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             />  
           </div>
 
@@ -1195,7 +1192,7 @@ export default function Suppliers() {
                 value={formData.endereco}
                 onChange={handleChange}
                 autoComplete="street-address"
-                className="bg-white border w-[190px] border-separator rounded-lg p-2.5 shadow-xl"
+                inputWidth="w-[190px]"
               />
               <SmartField
                 fieldName="num_endereco"
@@ -1207,7 +1204,7 @@ export default function Suppliers() {
                 value={formData.num_endereco}
                 onChange={handleChange}
                 autoComplete="address-line1"
-                className="bg-white border w-[90px] border-separator rounded-lg p-2.5 shadow-xl"
+                inputWidth="w-[90px]"
               />
             </div>
 
@@ -1219,7 +1216,7 @@ export default function Suppliers() {
               onChange={handleChange}
               autoComplete="address-level1"
               isLoading={loading.has("options")}
-              className="bg-white w-[220px] border border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             > 
               <option value="AC">Acre</option>
               <option value="AL">Alagoas</option>
@@ -1259,7 +1256,7 @@ export default function Suppliers() {
               value={formData.cidade}
               onChange={handleChange}
               autoComplete="address-level2"
-              className="bg-white border w-[220px] border-separator rounded-lg p-2.5 shadow-xl"
+              inputWidth="w-[220px]"
             />
           </div>
 
@@ -1285,11 +1282,11 @@ export default function Suppliers() {
               fieldText="Nome da Empresa"
               fieldClassname="flex flex-col w-full"
               type="text"
+              autoComplete="name"
               required
               readOnly
               value={deleteSupplier.dnome_empresa}
               onChange={handleChange}
-              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
             />
 
           </div>
@@ -1300,12 +1297,12 @@ export default function Suppliers() {
               isTextArea
               fieldName="reason"
               required
+              autoFocus
               fieldText="Motivo da Exclusão"
               fieldClassname="flex flex-col w-full"
               placeholder="Digite o motivo da exclusão do fornecedor"
               value={deleteSupplier.reason}
               onChange={handleChange}
-              className="bg-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
             />
 
           </div>

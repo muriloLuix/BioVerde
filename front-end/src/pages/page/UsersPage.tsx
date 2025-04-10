@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Tabs, Form, Toast, Dialog } from "radix-ui";
+import { Tabs, Form, Toast } from "radix-ui";
 import {
   Search,
   PencilLine,
@@ -8,22 +8,13 @@ import {
   Loader2,
   FilterX,
   Printer,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { InputMask, InputMaskChangeEvent } from "primereact/inputmask";
+import { InputMaskChangeEvent } from "primereact/inputmask";
 import axios from "axios";
-
-import NameField from "../../shared/components/usersComponents/NameField";
-import EmailField from "../../shared/components/usersComponents/EmailField";
-import { Email } from "../../shared";
-import PhoneField from "../../shared/components/usersComponents/PhoneField";
-import Phone from "../../shared/components/Phone";
-import CpfField from "../../shared/components/usersComponents/CpfField";
-import Cpf from "../../shared/components/Cpf";
 import { ConfirmationModal } from "../../shared";
 import { SmartField } from "../../shared";
+import { Modal } from "../../shared";
 
 interface Cargo {
   car_id: number;
@@ -55,13 +46,11 @@ interface Usuario {
 export default function UsersPage() {
   const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
   const [relatorioContent, setRelatorioContent] = useState<string>("");
-  const [isLoadingRelatorio, setIsLoadingRelatorio] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -115,9 +104,11 @@ export default function UsersPage() {
         >
       | InputMaskChangeEvent
   ) => {
-    setFormData({ ...formData, [event.target.name]: event.target.value });
-    setFilters({ ...filters, [event.target.name]: event.target.value });
-    setDeleteUser({ ...deleteUser, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+
+    setFormData({ ...formData, [name]: value });
+    setFilters({ ...filters, [name]: value });
+    setDeleteUser({ ...deleteUser, [name]: value });
     setErrors(
       (prevErrors) =>
         Object.fromEntries(
@@ -127,7 +118,9 @@ export default function UsersPage() {
   };
 
   const gerarRelatorio = async () => {
-    setIsLoadingRelatorio(true);
+
+    setLoading((prev) => new Set([...prev, "reports"]));
+
     try {
       const response = await axios.get(
         "http://localhost/BioVerde/back-end/rel/usu.rel.php",
@@ -146,7 +139,11 @@ export default function UsersPage() {
       setMessage("Erro ao gerar relatório");
       setOpenModal(true);
     } finally {
-      setIsLoadingRelatorio(false);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("reports");
+        return newLoading;
+      });
     }
   };
 
@@ -257,8 +254,10 @@ export default function UsersPage() {
     };
 
     fetchData();
+    refreshData();
   }, []);
 
+  //Função para Atualizar a Tabela após ação
   const refreshData = async () => {
     try {
       setLoading((prev) => new Set([...prev, "users", "options"]));
@@ -283,9 +282,10 @@ export default function UsersPage() {
         setUsuarios(usuariosResponse.data.usuarios);
         return true;
       } else {
-        const errorMessage = optionsResponse.data.message || 
-                           usuariosResponse.data.message || 
-                           "Erro ao carregar dados";
+        const errorMessage = 
+          optionsResponse.data.message  || 
+          usuariosResponse.data.message || 
+          "Erro ao carregar dados";
         setMessage(errorMessage);
         setOpenModal(true);
         return false;
@@ -307,16 +307,11 @@ export default function UsersPage() {
     }
   };
   
-  // Atualize seu useEffect para usar a nova função
-  useEffect(() => {
-    refreshData();
-  }, []);
-
   //Submit de cadastrar usuários
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    // Validações (mantenha seu código existente)
+    // Validações 
     const errors = {
       position: !formData.cargo,
       level: !formData.nivel,
@@ -345,16 +340,7 @@ export default function UsersPage() {
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
-        
-        // Limpa o formulário
-        setFormData((prev) => 
-          Object.fromEntries(
-            Object.entries(prev).map(([key, value]) => [
-              key,
-              typeof value === "number" ? 0 : "",
-            ])
-          ) as typeof prev
-        );
+        clearFormData();
         
         // Atualiza os dados (usuários e opções)
         await refreshData();
@@ -448,7 +434,7 @@ export default function UsersPage() {
         setOpenEditModal(false);
         
         // Atualiza a lista de usuários após edição bem-sucedida
-        await refreshData(); // Usando a mesma função do cadastro
+        await refreshData(); 
       } else {
         setMessage(response.data.message || "Erro ao atualizar usuário.");
       }
@@ -467,6 +453,7 @@ export default function UsersPage() {
         newLoading.delete("updateUser");
         return newLoading;
       });
+      clearFormData();
     }
   };
 
@@ -496,12 +483,11 @@ export default function UsersPage() {
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Usuário excluído com sucesso!");
-        setOpenConfirmModal(false);
-        
+        setOpenConfirmModal(false);       
         setUsuarios(prevUsuarios => 
           prevUsuarios.filter(user => user.user_id !== deleteUser.user_id)
         );
-        
+        await refreshData(); 
       } else {
         setMessage(response.data.message || "Erro ao excluir usuário.");
       }
@@ -534,6 +520,18 @@ export default function UsersPage() {
 
     setFormData({ ...formData, password: newPassword });
     setErrors((prevErrors) => ({ ...prevErrors, password: false }));
+  };
+
+  //Limpar FormData
+  const clearFormData = () => {
+    setFormData((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([key, value]) => [
+          key,
+          typeof value === "number" ? 0 : "",
+        ])
+      ) as typeof prev
+    );
   };
 
   return (
@@ -572,160 +570,109 @@ export default function UsersPage() {
           {/* Aba de Lista de Usuários */}
           <Tabs.Content value="list" className="flex flex-col w-full">
             {/* Filtro de Usuários */}
-            <Form.Root
-              onSubmit={handleFilterSubmit}
-              className="flex flex-col gap-4"
-            >
+            <Form.Root onSubmit={handleFilterSubmit} className="flex flex-col gap-4">
               <h2 className="text-3xl">Filtros:</h2>
               <div className="flex gap-7">
                 {/* Coluna Nome e Email */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="fname" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">
-                        Nome Completo:
-                      </span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="fname"
-                        id="fname"
-                        placeholder="Nome completo"
-                        autoComplete="name"
-                        value={filters.fname}
-                        onChange={handleChange}
-                        className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="fcargo" className="flex flex-col">
-                    <Form.Label className="flex justify-between items-center">
-                      <span className="text-xl pb-2 font-light">Cargo:</span>
-                    </Form.Label>
-                    {loading.has("options") ? (
-                      <div className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
-                        <Loader2 className="animate-spin h-5 w-5" />
-                      </div>
-                    ) : (
-                      <select
-                        name="fcargo"
-                        id="fcargo"
-                        value={filters.fcargo}
-                        onChange={handleChange}
-                        className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="">Todos</option>
-                        {options.cargos.map((cargo) => (
-                          <option key={cargo.car_id} value={cargo.car_nome}>
-                            {cargo.car_nome}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fname"
+                    fieldText="Nome Completo"
+                    type="text"
+                    placeholder="Nome completo"
+                    autoComplete="name"
+                    value={filters.fname}
+                    onChange={handleChange}
+                    inputWidth="w-[280px]"
+                  />
+
+                  <SmartField
+                    fieldName="fcargo"
+                    fieldText="Cargo"
+                    isSelect
+                    isLoading={loading.has("options")}
+                    value={filters.fcargo}
+                    onChange={handleChange}
+                    inputWidth="w-[280px]"
+                  >  
+                    <option value="">Todos</option>
+                    {options.cargos.map((cargo) => (
+                      <option key={cargo.car_id} value={cargo.car_nome}>
+                        {cargo.car_nome}
+                      </option>
+                    ))}
+                  </SmartField> 
                 </div>
 
                 {/* Coluna CPF e Cargo */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="fcpf" className="flex flex-col">
-                    <Form.Label className="flex justify-between items-center">
-                      <span className="text-xl pb-2 font-light">CPF:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <InputMask
-                        type="text"
-                        name="fcpf"
-                        id="fcpf"
-                        placeholder="xxx.xxx.xxx-xx"
-                        mask="999.999.999-99"
-                        autoClear={false}
-                        // pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                        className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                        value={filters.fcpf}
-                        onChange={handleChange}
-                      />
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="fnivel" className="flex flex-col">
-                    <Form.Label className="flex justify-between items-center gap-3">
-                      <span className="text-xl pb-2 font-light">
-                        Nível de Acesso:
-                      </span>
-                    </Form.Label>
-                    {loading.has("options") ? (
-                      <div className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
-                        <Loader2 className="animate-spin h-5 w-5" />
-                      </div>
-                    ) : (
-                      <select
-                        name="fnivel"
-                        id="fnivel"
-                        value={filters.fnivel}
-                        onChange={handleChange}
-                        className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="">Todos</option>
-                        {options.niveis.map((nivel) => (
-                          <option key={nivel.nivel_id} value={nivel.nivel_nome}>
-                            {nivel.nivel_nome}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fcpf"
+                    fieldText="CPF"
+                    withInputMask
+                    type="text"
+                    mask="999.999.999-99"
+                    autoClear={false}
+                    placeholder="Digite o CPF"
+                    value={filters.fcpf}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  />  
+
+                  <SmartField
+                    fieldName="fnivel"
+                    fieldText="Nível de Acesso"
+                    isSelect
+                    isLoading={loading.has("options")}
+                    value={filters.fnivel}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  >  
+                    <option value="">Todos</option>
+                    {options.niveis.map((nivel) => (
+                      <option key={nivel.nivel_id} value={nivel.nivel_nome}>
+                        {nivel.nivel_nome}
+                      </option>
+                    ))}
+                  </SmartField> 
+
                 </div>
 
                 {/* Coluna Telefone e Nivel de Acesso */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="ftel" className="flex flex-col">
-                    <Form.Label className="flex justify-between items-center">
-                      <span className="text-xl pb-2 font-light">Telefone:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <InputMask
-                        type="tel"
-                        name="ftel"
-                        id="ftel"
-                        placeholder="(xx)xxxxx-xxxx"
-                        mask="(99) 9999?9-9999"
-                        autoClear={false}
-                        // pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                        autoComplete="tel"
-                        className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                        value={filters.ftel}
-                        onChange={handleChange}
-                      />
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="fstatus" className="flex flex-col">
-                    <Form.Label className="flex justify-between items-center gap-3">
-                      <span className="text-xl pb-2 font-light">Status:</span>
-                    </Form.Label>
-                    {loading.has("options") ? (
-                      <div className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
-                        <Loader2 className="animate-spin h-5 w-5" />
-                      </div>
-                    ) : (
-                      <select
-                        name="fstatus"
-                        id="fstatus"
-                        value={filters.fstatus}
-                        onChange={handleChange}
-                        className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="">Todos</option>
-                        {options.status?.map((status) => (
-                          <option key={status.sta_id} value={status.sta_id}>
-                            {status.sta_nome}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </Form.Field>
+                  <SmartField
+                    fieldName="ftel"
+                    fieldText="Telefone"
+                    withInputMask
+                    type="text"
+                    mask="(99) 9999?9-9999"
+                    autoClear={false}
+                    placeholder="Digite o Telefone"
+                    autoComplete="tel"
+                    value={filters.ftel}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  />  
+
+                  <SmartField
+                    fieldName="fstatus"
+                    fieldText="Status"
+                    isSelect
+                    isLoading={loading.has("options")}
+                    value={filters.fstatus}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  >  
+                    <option value="">Todos</option>
+                    {options.status?.map((status) => (
+                      <option key={status.sta_id} value={status.sta_id}>
+                        {status.sta_nome}
+                      </option>
+                    ))}
+                  </SmartField> 
                 </div>
 
                 {/* Coluna Data de Cadastro e Botão Pesquisar */}
@@ -768,14 +715,11 @@ export default function UsersPage() {
                         type="button"
                         className="bg-verdeLimparFiltros p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-hoverLimparFiltros "
                         disabled={loading.size > 0}
-                        onClick={() =>
-                          setFilters(
-                            (prev) =>
-                              Object.fromEntries(
-                                Object.keys(prev).map((key) => [key, ""])
-                              ) as typeof prev
-                          )
-                        }
+                        onClick={async () => {
+                          setFilters((prev) =>
+                            Object.fromEntries(Object.keys(prev).map((key) => [key, ""])) as typeof prev
+                          );
+                        }}
                       >
                         <FilterX />
                         Limpar
@@ -882,10 +826,10 @@ export default function UsersPage() {
                   type="button"
                   className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
                   onClick={gerarRelatorio}
-                  disabled={isLoadingRelatorio}
+                  disabled={loading.size > 0}
                 >
-                  {isLoadingRelatorio ? (
-                    <span className="animate-spin">↻</span>
+                  {loading.has("reports") ? (
+                    <Loader2 className="animate-spin h-6 w-6" />
                   ) : (
                     <>
                       <Printer />
@@ -909,180 +853,135 @@ export default function UsersPage() {
 
               {/* Linha Nome e Email*/}
               <div className="flex mb-10 justify-between">
-                <NameField
+
+                <SmartField
+                  fieldName="name"
+                  fieldText="Nome Completo"
+                  type="text"
+                  placeholder="Digite o nome completo"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  inputWidth="w-[400px]"
                 />
 
-                <EmailField>
-                  <Email
-                    placeholder="Digite o email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="bg-white w-[400px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  />
-                </EmailField>
+                <SmartField
+                  fieldName="email"
+                  fieldText="Email"
+                  type="email"
+                  placeholder="Digite o email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  inputWidth="w-[400px]"
+                />
               </div>
 
               {/* Linha Telefone, CPF, e Cargo*/}
               <div className="flex gap-x-15 mb-10 justify-between">
-                <PhoneField>
-                  <Phone
-                    required
-                    phoneValue={formData.tel}
-                    setPhone={handleChange}
-                  />
-                </PhoneField>
 
-                <CpfField>
-                  <Cpf required cpfValue={formData.cpf} setCpf={handleChange} />
-                </CpfField>
+                <SmartField
+                  fieldName="tel"
+                  fieldText="Telefone"
+                  withInputMask
+                  type="tel"
+                  mask="(99) 9999?9-9999"
+                  autoClear={false}
+                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+                  required
+                  autoComplete="tel"
+                  placeholder="Digite o Telefone"
+                  value={formData.tel}
+                  onChange={handleChange}
+                  inputWidth="w-[275px]"
+                />  
 
-                <Form.Field name="cargo" className="flex flex-col">
-                  <Form.Label className="flex justify-between items-center">
-                    <span className="text-xl pb-2 font-light">Cargo:</span>
-                    {errors.position && (
-                      <span className="text-red-500 text-xs">
-                        Campo obrigatório*
-                      </span>
-                    )}
-                  </Form.Label>
-                  {loading.has("options") ? (
-                    <div className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
-                      <Loader2 className="animate-spin h-5 w-5" />
-                    </div>
-                  ) : (
-                    <select
-                      name="cargo"
-                      id="cargo"
-                      value={formData.cargo}
-                      onChange={handleChange}
-                      className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="" disabled>
-                        Selecione o cargo
+                <SmartField
+                  fieldName="cpf"
+                  fieldText="CPF"
+                  withInputMask
+                  type="text"
+                  mask="999.999.999-99"
+                  autoClear={false}
+                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                  required
+                  placeholder="Digite o CPF"
+                  value={formData.cpf}
+                  onChange={handleChange}
+                  inputWidth="w-[275px]"
+                />  
+
+                <SmartField
+                    fieldName="cargo"
+                    fieldText="Cargo"
+                    isSelect
+                    isLoading={loading.has("options")}
+                    error={errors.position ? "Campo obrigatório*" : undefined}
+                    value={formData.cargo}
+                    onChange={handleChange}
+                    placeholderOption="Selecione o cargo" 
+                    inputWidth="w-[275px]"
+                  >  
+                    {options.cargos.map((cargo) => (
+                      <option key={cargo.car_id} value={cargo.car_nome}>
+                        {cargo.car_nome}
                       </option>
-                      {options.cargos.map((cargo) => (
-                        <option key={cargo.car_id} value={cargo.car_nome}>
-                          {cargo.car_nome}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Form.Field>
+                    ))}
+                  </SmartField> 
               </div>
 
-              {/* Linha Nivel de Acesso e Senha*/}
+              {/* Linha Nivel de Acesso, Senha e Status*/}
               <div className="flex gap-x-15 mb-10 items-center">
-                <Form.Field name="nivel" className="flex flex-col">
-                  <Form.Label className="flex justify-between items-center gap-3">
-                    <span className="text-xl pb-2 font-light">
-                      Nível de Acesso:
-                    </span>
-                    {errors.level && (
-                      <span className="text-red-500 text-xs">
-                        Campo obrigatório*
-                      </span>
-                    )}
-                  </Form.Label>
-                  {loading.has("options") ? (
-                    <div className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl flex items-center justify-center">
-                      <Loader2 className="animate-spin h-5 w-5" />
-                    </div>
-                  ) : (
-                    <select
-                      name="nivel"
-                      id="nivel"
-                      value={formData.nivel}
-                      onChange={handleChange}
-                      className="bg-white w-[275px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="" disabled>
-                        Selecione o nível de acesso
-                      </option>
-                      {options.niveis.map((nivel) => (
-                        <option key={nivel.nivel_id} value={nivel.nivel_nome}>
-                          {nivel.nivel_nome}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Form.Field>
 
-                <Form.Field name="password" className="flex flex-col">
-                  <Form.Label className="flex gap-16 items-center">
-                    <span className="text-xl pb-2 font-light">Senha:</span>
-                    {errors.password && (
-                      <span className="text-red-500 text-xs">
-                        A senha deve ter pelo menos 8 caracteres*
-                      </span>
-                    )}
-                  </Form.Label>
-                  <div className="flex gap-4">
-                    <div className="relative">
-                      <input
-                        type={isHidden ? "text" : "password"}
-                        id="password"
-                        name="password"
-                        placeholder="Digite ou Gere a senha"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="bg-white w-[243px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                      {/* Botão de Mostrar/Ocultar Senha */}
-                      <button
-                        type="button"
-                        onClick={() => setIsHidden(!isHidden)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
-                      >
-                        {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
-                      </button>
-                    </div>
-                    {/* Botão de Gerar Senha Aleatoria */}
-                    <button
-                      type="button"
-                      className="bg-verdeMedio p-2.5 rounded-2xl whitespace-nowrap text-white cursor-pointer hover:bg-verdeEscuro"
-                      onClick={generatePassword}
-                    >
-                      Gerar Senha
-                    </button>
-                  </div>
-                </Form.Field>
+                <SmartField
+                  fieldName="nivel"
+                  fieldText="Nível de Acesso"
+                  isSelect
+                  isLoading={loading.has("options")}
+                  error={errors.level ? "Campo obrigatório*" : undefined}
+                  value={formData.nivel}
+                  onChange={handleChange}
+                  placeholderOption="Selecione o nível de acesso" 
+                  inputWidth="w-[275px]"
+                >  
+                  {options.niveis.map((nivel) => (
+                    <option key={nivel.nivel_id} value={nivel.nivel_nome}>
+                      {nivel.nivel_nome}
+                    </option>
+                  ))}
+                </SmartField> 
 
-                <Form.Field name="status" className="flex flex-col">
-                  <Form.Label className="flex justify-between items-center gap-3">
-                    <span className="text-xl pb-2 font-light">Status:</span>
-                    {errors.status && (
-                      <span className="text-red-500 text-xs">
-                        Campo Obrigatório*
-                      </span>
-                    )}
-                  </Form.Label>
-                  {loading.has("options") ? (
-                    <div className="bg-white w-[220px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl flex place-content-center">
-                      <Loader2 className="animate-spin h-5 w-5" />
-                    </div>
-                  ) : (
-                    <select
-                      name="status"
-                      id="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] h-[46.5px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="" disabled>
-                        Selecione o status
-                      </option>
-                      {options.status?.map((status) => (
-                        <option key={status.sta_id} value={status.sta_id}>
-                          {status.sta_nome}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Form.Field>
+                <SmartField
+                  isPassword
+                  fieldName="password"
+                  fieldText="Senha"
+                  placeholder="Digite ou Gere a senha"
+                  error={errors.password ? "A senha deve ter pelo menos 8 caracteres*" : undefined}
+                  value={formData.password}
+                  onChange={handleChange}
+                  inputWidth="w-[243px]"
+                  generatePassword={generatePassword}
+                />
+
+                <SmartField
+                  fieldName="status"
+                  fieldText="Status"
+                  isSelect
+                  isLoading={loading.has("options")}
+                  error={errors.status ? "Campo obrigatório*" : undefined}
+                  value={formData.status}
+                  onChange={handleChange}
+                  placeholderOption="Selecione o status" 
+                  inputWidth="w-[190px]"
+                >  
+                  {options.status?.map((status) => (
+                    <option key={status.sta_id} value={status.sta_id}>
+                      {status.sta_nome}
+                    </option>
+                  ))}
+                </SmartField> 
               </div>
 
               <Form.Submit asChild>
@@ -1190,258 +1089,182 @@ export default function UsersPage() {
           </div>
         )}
 
-        {/* Pop up de Edição */}
-        <Dialog.Root open={openEditModal} onOpenChange={setOpenEditModal}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black opacity-50 z-100" />
-            <Dialog.Content className="fixed bg-brancoSal p-6 rounded-lg shadow-md top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-101">
-              <Dialog.Title className="text-3xl mb-5">
-                Editar Usuário:
-              </Dialog.Title>
-              <Dialog.Description>
-                <Form.Root
-                  className="flex flex-col"
-                  onSubmit={handleUpdateUser}
-                >
-                  {/* Linha Nome e Email*/}
-                  <div className="flex mb-10 justify-between">
+        {/* Modal de Edição */}
+        <Modal
+          openModal={openEditModal}
+          setOpenModal={setOpenEditModal}
+          buttonClassname="hidden" 
+          modalTitle="Editar Usuário:"
+          leftButtonText="Editar"
+          rightButtonText="Cancelar"
+          loading={loading}
+          isLoading={loading.has("updateUser")}
+          onCancel={() => {setOpenEditModal(false); clearFormData()}}
+          onSubmit={handleUpdateUser}
+        >
+        {/* Linha Nome e Email*/} 
+          <div className="flex mb-10 justify-between">
 
-                    <SmartField
-                      fieldName="name"
-                      fieldText="Nome Completo"
-                      required
-                      type="text"
-                      placeholder="Digite o nome completo"
-                      autoComplete="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
+            <SmartField
+              fieldName="name"
+              fieldText="Nome Completo"
+              required
+              type="text"
+              placeholder="Digite o nome completo"
+              autoComplete="name"
+              value={formData.name}
+              onChange={handleChange}
+              inputWidth="w-[300px]"
+            />
 
-                    <SmartField
-                      fieldName="email"
-                      fieldText="Email"
-                      required
-                      type="email"
-                      placeholder="Digite o email"
-                      autoComplete="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="bg-white w-[300px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="email"
+              fieldText="Email"
+              required
+              type="email"
+              placeholder="Digite o email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              inputWidth="w-[300px]"
+            />  
 
-                  </div>
+          </div>
 
-                  {/* Linha Telefone, CPF, e status*/}
-                  <div className="flex gap-x-15 mb-10 justify-between">
+          {/* Linha Telefone, CPF, e status*/}
+          <div className="flex gap-x-15 mb-10 justify-between">
 
-                    <SmartField
-                      fieldName="tel"
-                      fieldText="Telefone"
-                      withInputMask
-                      required
-                      type="tel"
-                      mask="(99) 9999?9-9999"
-                      autoClear={false}
-                      pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                      placeholder="(xx)xxxxx-xxxx"
-                      autoComplete="tel"
-                      value={formData.tel}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="tel"
+              fieldText="Telefone"
+              withInputMask
+              required
+              type="tel"
+              mask="(99) 9999?9-9999"
+              autoClear={false}
+              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+              placeholder="Digite o Telefone"
+              autoComplete="tel"
+              value={formData.tel}
+              onChange={handleChange}
+              inputWidth="w-[190px]"
+            />  
 
-                    <SmartField
-                      fieldName="cpf"
-                      fieldText="CPF"
-                      withInputMask
-                      required
-                      type="text"
-                      mask="999.999.999-99"
-                      autoClear={false}
-                      pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                      placeholder="xxx.xxx.xxx-xx"
-                      value={formData.cpf}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    />  
+            <SmartField
+              fieldName="cpf"
+              fieldText="CPF"
+              withInputMask
+              required
+              type="text"
+              mask="999.999.999-99"
+              autoClear={false}
+              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+              placeholder="Digite o CPF"
+              value={formData.cpf}
+              onChange={handleChange}
+              inputWidth="w-[190px]"
+            />  
 
-                    <SmartField
-                      fieldName="status"
-                      fieldText="Status"
-                      isSelect
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="bg-white w-[190px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                    > 
-                      {options.status?.map((status) => (
-                        <option key={status.sta_id} value={status.sta_id}>
-                          {status.sta_nome}
-                        </option>
-                      ))}
-                    </SmartField> 
+            <SmartField
+              fieldName="status"
+              fieldText="Status"
+              isSelect
+              value={formData.status}
+              onChange={handleChange}
+              inputWidth="w-[190px]"
+            > 
+              {options.status?.map((status) => (
+                <option key={status.sta_id} value={status.sta_id}>
+                  {status.sta_nome}
+                </option>
+              ))}
+            </SmartField> 
 
-                  </div>
+          </div>
 
-                  {/* Linha Cargo e Nivel de Acesso */}
-                  <div className="flex gap-x-15 mb-10 items-center justify-between">
+          {/* Linha Cargo e Nivel de Acesso */}
+          <div className="flex gap-x-15 mb-10 items-center justify-between">
 
-                  <SmartField
-                    fieldName="cargo"
-                    fieldText="Cargo"
-                    isSelect
-                    value={formData.cargo}
-                    onChange={handleChange}
-                    className="bg-white w-[300px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  > 
-                    {options.cargos.map((cargo) => (
-                      <option key={cargo.car_id} value={cargo.car_nome}>
-                        {cargo.car_nome}
-                      </option>
-                    ))}
-                  </SmartField> 
+            <SmartField
+              fieldName="cargo"
+              fieldText="Cargo"
+              isSelect
+              value={formData.cargo}
+              onChange={handleChange}
+              inputWidth="w-[300px]"
+            > 
+              {options.cargos.map((cargo) => (
+                <option key={cargo.car_id} value={cargo.car_nome}>
+                  {cargo.car_nome}
+                </option>
+              ))}
+            </SmartField> 
 
-                  <SmartField
-                    fieldName="nivel"
-                    fieldText="Nível de Acesso"
-                    isSelect
-                    value={formData.nivel}
-                    onChange={handleChange}
-                    className="bg-white w-[300px] h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl"
-                  > 
-                    {options.niveis.map((nivel) => (
-                      <option key={nivel.nivel_id} value={nivel.nivel_nome}>
-                        {nivel.nivel_nome}
-                      </option>
-                    ))}
-                  </SmartField> 
+            <SmartField
+              fieldName="nivel"
+              fieldText="Nível de Acesso"
+              isSelect
+              value={formData.nivel}
+              onChange={handleChange}
+              inputWidth="w-[300px]"
+              > 
+              {options.niveis.map((nivel) => (
+                <option key={nivel.nivel_id} value={nivel.nivel_nome}>
+                  {nivel.nivel_nome}
+                </option>
+              ))}
+            </SmartField> 
 
-                  </div>
+          </div>
+        </Modal>
 
-                  <div className="flex justify-center items-center gap-5">
-                    <Form.Submit asChild>
-                      <button
-                        type="submit"
-                        className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-                        disabled={loading.size > 0}
-                      >
-                        {loading.has("updateUser") ? (
-                          <Loader2 className="animate-spin h-6 w-6" />
-                        ) : (
-                          "Editar"
-                        )}
-                      </button>
-                    </Form.Submit>
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        onClick={() => setOpenEditModal(false)}
-                        className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-                      >
-                        Cancelar
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </Form.Root>
-              </Dialog.Description>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+        {/* Modal de Exclusão */}
+        <Modal
+          openModal={openDeleteModal}
+          setOpenModal={setOpenDeleteModal}
+          buttonClassname="hidden"
+          modalTitle="Excluir Usuário:"
+          leftButtonText="Excluir"
+          rightButtonText="Cancelar"
+          onCancel={() => setOpenDeleteModal(false)}
+          onDelete={() => {
+            setOpenConfirmModal(true);
+            setOpenDeleteModal(false);  
+          }}
+        >
+          <div className="flex mb-10">
 
-        {/* Pop up de Exclusão */}
-        <Dialog.Root open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black opacity-50 z-100" />
-            <Dialog.Content className="fixed bg-brancoSal p-6 rounded-lg shadow-md top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-101">
-              <Dialog.Title className="text-3xl mb-5">
-                Excluir Usuário:
-              </Dialog.Title>
-              <Dialog.Description>
-                <Form.Root className="flex flex-col">
-                  <div className="flex mb-10">
-                    <Form.Field name="dname" className="flex flex-col w-full">
-                      <Form.Label className="flex justify-between items-center">
-                        <span className="text-xl pb-2 font-light">
-                          Nome Completo:
-                        </span>
-                        <Form.Message
-                          className="text-red-500 text-xs"
-                          match="valueMissing"
-                        >
-                          Campo obrigatório*
-                        </Form.Message>
-                      </Form.Label>
-                      <Form.Control asChild>
-                        <input
-                          type="text"
-                          name="dname"
-                          id="dname"
-                          placeholder="Digite o nome completo"
-                          autoComplete="name"
-                          readOnly
-                          value={deleteUser.dname}
-                          onChange={handleChange}
-                          className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                        />
-                      </Form.Control>
-                    </Form.Field>
-                  </div>
+            <SmartField
+              fieldName="dname"
+              fieldText="Nome Completo"
+              fieldClassname="flex flex-col w-full"
+              type="text"
+              autoComplete="name"
+              required
+              readOnly
+              value={deleteUser.dname}
+              onChange={handleChange}
+            />
 
-                  <div className="flex mb-10 ">
-                    <Form.Field name="reason" className="w-full flex flex-col">
-                      <Form.Label asChild>
-                        <span className="text-xl pb-2 font-light">
-                          Motivo da exclusão:
-                        </span>
-                      </Form.Label>
-                      <Form.Control asChild>
-                        <textarea
-                          id="reason"
-                          name="reason"
-                          rows={3}
-                          cols={50}
-                          autoFocus
-                          placeholder="Digite o motivo da exclusão do usuário"
-                          maxLength={500}
-                          value={deleteUser.reason}
-                          onChange={handleChange}
-                          className="g-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
-                        ></textarea>
-                      </Form.Control>
-                    </Form.Field>
-                  </div>
+          </div>
 
-                  <div className="flex justify-center items-center gap-5">
-                    <button
-                      type="button"
-                      className="bg-red-700 p-3 px-6 rounded-xl text-white cursor-pointer text-center gap-2 hover:bg-red-800"
-                      onClick={() => {
-                        if (deleteUser.reason === "") {
-                          setOpenModal(true);
-                          setMessage("Por favor, Preencha o motivo da exclusão.");
-                        } else {
-                          setOpenConfirmModal(true);
-                          setOpenDeleteModal(false);  
-                        }
-                      }}
-                    >
-                      Excluir
-                    </button>
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        onClick={() => setOpenDeleteModal(false)}
-                        className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer text-center gap-2 hover:bg-gray-400"
-                      >
-                        Cancelar
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </Form.Root>
-              </Dialog.Description>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+          <div className="flex mb-10 ">
+
+            <SmartField
+              isTextArea
+              fieldName="reason"
+              required
+              autoFocus
+              fieldText="Motivo da Exclusão"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite o motivo da exclusão do usuário"
+              value={deleteUser.reason}
+              onChange={handleChange}
+            />
+
+          </div>
+
+        </Modal>
 
         {/* Alert para confirmar exclusão do usuário */}
         <ConfirmationModal
