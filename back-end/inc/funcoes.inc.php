@@ -892,5 +892,66 @@ function buscarFornecedoresComFiltros($conn, $filtros) {
     return $usuarios;
 }
 
+// editar.fornecedor.php
+
+function verificarFornecedorExiste($conn, $fornecedor_id) {
+    $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_id = ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    $stmt->bind_param("i", $fornecedor_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $existe = $result->num_rows > 0;
+    $stmt->close();
+    return $existe;
+}
+
+function atualizarFornecedor($conn, $fornecedor_id, $dados) {
+    // Campos básicos
+    $campos = [
+        'user_nome' => $dados['name'],
+        'user_email' => $dados['email'],
+        'user_telefone' => $dados['tel'],
+        'user_CPF' => $dados['cpf'],
+        'sta_id' => $dados['sta_id'] ?? null
+    ];
+    
+    
+    // Prepara os campos para a query
+    $sets = [];
+    $tipos = '';
+    $valores = [];
+    
+    foreach ($campos as $campo => $valor) {
+        if ($valor !== null) {
+            $sets[] = "$campo = ?";
+            $tipos .= is_int($valor) ? 'i' : 's';
+            $valores[] = $valor;
+        }
+    }
+    
+    // Adiciona o fornecedor_id no final
+    $valores[] = $fornecedor_id;
+    $tipos .= 'i';
+    
+    $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE fornecedor_id = ?";
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
+    }
+    
+    $stmt->bind_param($tipos, ...$valores);
+    $stmt->execute();
+    
+    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
+        // Considera sucesso mesmo se nada foi alterado (valores iguais)
+        return ["success" => true];
+    } else {
+        return ["success" => false, "message" => "Nenhum registro atualizado."];
+    }
+}
+
 ?>
 
