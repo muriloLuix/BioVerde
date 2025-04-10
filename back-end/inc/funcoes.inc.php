@@ -707,5 +707,190 @@ function deletarUsuario($conn, $user_id) {
     return ['success' => true];
 }
 
+
+// cadastrar_fornecedores.php
+
+function verificarEmailCnpj($conn, $email, $cnpj) {
+    $stmt = $conn->prepare("SELECT fornecedor_email, fornecedor_CNPJ FROM fornecedores WHERE fornecedor_email = ? OR fornecedor_CNPJ = ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+    }
+    $stmt->bind_param("ss", $email, $cnpj);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
+    }
+    return null;
+}
+
+function enviarEmailFornecedor($email, $data) {
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'bioverdesistema@gmail.com';
+        $mail->Password   = 'gfdx wwpr cnfi emjt';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
+        $mail->addAddress($email);
+
+        $mail->isHTML(true);
+        $mail->CharSet = 'UTF-8';
+        $mail->Subject = 'Bio Verde - Cadastro no Sistema (Fornecedor)';
+        $mail->Body = "
+                <html>
+                <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
+                    <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
+                        <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
+                            <h1 style='color: #ffffff; font-size: 26px; margin: 0;'>Bem-vindo à Bio Verde</h1>
+                            <p style='color: #e0f2e9; font-size: 16px; margin: 10px 0 0;'>Seu cadastro foi concluído com sucesso!</p>
+                        </div>
+                        <div style='padding: 30px; color: #333333;'>
+                            <p style='font-size: 18px; line-height: 1.6;'>Olá,</p>
+                            <p style='font-size: 18px; line-height: 1.6;'>Agora você faz parte do nosso sistema!</p>
+                            <p style='font-size: 18px; line-height: 1.6;'>Em nome da BioVerde, gostariamos de agradecer pela confiança em nossos serviços.</p>
+                            <p style='font-size: 18px; line-height: 1.6;'>Seguem abaixo os dados cadastrados no sistema:</p>
+                            <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome da Empresa: </strong> " . $data['nome_empresa'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Razão Social: </strong> " . $data['razao_social'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>E-mail: </strong> " . $data['email'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cnpj'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Endereço: </strong> " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Cidade: </strong> " . $data['cidade'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Estado: </strong> " . $data['estado'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Cep: </strong> " . $data['cep'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Responsável: </strong> " . $data['responsavel'] . "</p>
+                            </div>
+                            <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Se precisar de ajuda, entre em contato com nosso suporte.</p>
+                            <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Atenciosamente,<br>Equipe Bio Verde</p>
+                        </div>
+                        <div style='background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 14px; color: #777777;'>
+                            <p style='margin: 0;'>Este é um e-mail automático. Não é necessário respondê-lo.</p>
+                            <p style='margin: 5px 0 0;'>&copy; <?php echo date('Y'); ?> Bio Verde. Todos os direitos reservados.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+        ";
+        $mail->AltBody = "Bem-vindo à Bio Verde!\n\nSeu cadastro foi concluído com sucesso.\n\nSeus dados de acesso:\nNome da Empresa: " . $data['nome_empresa'] . "\nRazão Social: " . $data['razao_social'] . "\nE-mail: " . $data['email'] . "\nCPF/CNPJ: " . $data['cnpj'] . "\nEndereço: " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "\nCidade: " . $data['cidade'] . "\nEstado: " . $data['estado'] . "\nCep: " . $data['cep'] . "\nResponsável: " . $data['responsavel'] . "\n\nPor segurança, recomendamos alterar sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Bio Verde\n\nEste é um e-mail automático. Não responda.";
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return ["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
+    }
+}
+
+// listar_fornecedores.php
+
+function buscarFornecedores($conn) {
+        
+    $result = $conn->query("
+        SELECT 
+            fornecedor_id,
+            fornecedor_nome,
+            fornecedor_razao_social,
+            fornecedor_email,
+            fornecedor_telefone,
+            fornecedor_CNPJ,
+            fornecedor_responsavel,
+            fornecedor_cep,
+            fornecedor_endereco,
+            fornecedor_estado,
+            fornecedor_cidade,
+            b.sta_nome,
+            fornecedor_dtcadastro
+        FROM fornecedores a
+        INNER JOIN status b ON a.fornecedor_status = b.sta_id
+        ");
+    
+    if (!$result) {
+        throw new Exception("Erro ao buscar usuários: " . $conn->error);
+    }
+
+    $fornecedores = [];
+    while ($row = $result->fetch_assoc()) {
+        $fornecedores[] = $row;
+    }
+
+    return $fornecedores;
+}
+
+// filtro.fornecedor.php
+
+function construirFiltrosFornecedores($data) {
+    $mapaFiltros = [
+        "fnome_empresa"  => "fornecedor_nome",   
+        "fresponsavel" => "fornecedor_responsavel", 
+        "fcnpj"   => "fornecedor_CNPJ",
+        "ftel"   => "fornecedor_telefone",
+        "fcidade" => "fornecedor_cidade",
+        "festado" => "fornecedor_estado",
+        "fdataCadastro" => "fornecedor_dtcadastro",
+        "fstatus" => "fornecedor_status",
+    ];
+
+    $where = [];
+    $valores = [];
+    $tipos = "";
+
+    foreach ($mapaFiltros as $param => $coluna) {
+        if (!empty($data[$param])) {
+            if ($param === "fname") {
+                $where[] = "LOWER($coluna) LIKE LOWER(?)";
+                $valores[] = '%' . trim($data[$param]) . '%';
+                $tipos .= "s";
+            } else {
+                $where[] = "$coluna = ?";
+                $valores[] = trim($data[$param]);
+                $tipos .= "s";
+            }
+        }
+    }
+
+    return [
+        'where' => $where,
+        'valores' => $valores,
+        'tipos' => $tipos
+    ];
+}
+
+function buscarFornecedoresComFiltros($conn, $filtros) {
+
+    $sql = "SELECT fornecedor_id, fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_responsavel,";
+    $sql .= " fornecedor_cep, fornecedor_endereco, fornecedor_estado, fornecedor_cidade, b.sta_nome, fornecedor_dtcadastro";
+    $sql .= " FROM fornecedores a";
+    $sql .= " LEFT JOIN status b ON a.fornecedor_status = b.sta_id";
+
+    if (!empty($filtros['where'])) {
+        // Modificar as condições que envolvem fornecedor_dtcadastro
+        $modifiedWhere = [];
+        foreach ($filtros['where'] as $condition) {
+            if (strpos($condition, 'fornecedor_dtcadastro') !== false) {
+                // Substituir fornecedor_dtcadastro por DATE(fornecedor_dtcadastro)
+                $condition = preg_replace('/fornecedor_dtcadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(fornecedor_dtcadastro) $1', $condition);
+            }
+            $modifiedWhere[] = $condition;
+        }
+        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    if (!empty($filtros['valores'])) {
+        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $usuarios = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    return $usuarios;
+}
+
 ?>
 

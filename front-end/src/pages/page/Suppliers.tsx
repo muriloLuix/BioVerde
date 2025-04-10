@@ -146,51 +146,42 @@ export default function Suppliers() {
     setOpenDeleteModal(true);
   };
 
-  //Carrega a lista de fornecedores e as opções nos selects ao renderizar a página
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading((prev) => new Set([...prev, "suppliers", "options"]));
-
+        setLoading((prev) => new Set([...prev, "users", "options"]));
+    
         const [optionsResponse, fornecedoresResponse] = await Promise.all([
-          axios.get(
-            "http://localhost/BioVerde/back-end/fornecedores/listar_opcoes.php",
-            {
-              withCredentials: true,
-              headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-          axios.get(
-            "http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
-            {
-              withCredentials: true,
-              headers: {
-                Accept: "application/json",
-              },
-            }
-          ),
+          axios.get("http://localhost/BioVerde/back-end/fornecedores/listar_opcoes.php", {
+            withCredentials: true,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }),
+          axios.get("http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php", {
+            withCredentials: true,
+            headers: {
+              Accept: "application/json",
+            },
+          }),
         ]);
-
+    
         if (optionsResponse.data.success) {
           setOptions({
-            estados: optionsResponse.data.estados,
+            estados: optionsResponse.data.estados || [],
             status: optionsResponse.data.status || [],
           });
         } else {
           setOpenModal(true);
           setMessage(optionsResponse.data.message || "Erro ao carregar opções");
         }
-
+    
         if (fornecedoresResponse.data.success) {
-          setFornecedores(fornecedoresResponse.data.fornecedores);
+          setFornecedores(fornecedoresResponse.data.fornecedores || []);
         } else {
           setOpenModal(true);
-          setMessage(
-            fornecedoresResponse.data.message || "Erro ao carregar fornecedores"
-          );
+          setMessage(fornecedoresResponse.data.message || "Erro ao carregar fornecedores");
         }
       } catch (error) {
         setOpenModal(true);
@@ -210,14 +201,50 @@ export default function Suppliers() {
       } finally {
         setLoading((prev) => {
           const newLoading = new Set(prev);
-          ["suppliers", "options"].forEach((item) => newLoading.delete(item));
+          ["users", "options"].forEach((item) => newLoading.delete(item));
           return newLoading;
         });
       }
     };
 
     fetchData();
+    refreshData();
   }, []);
+
+  //Função para Atualizar a Tabela após ação
+  const refreshData = async () => {
+    try {
+      setLoading((prev) => new Set([...prev, "users"]));
+  
+      const response = await axios.get(
+        "http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+        { withCredentials: true }
+      );
+  
+      if (response.data.success) {
+        setFornecedores(response.data.fornecedores || []);
+        return true;
+      } else {
+        setMessage(response.data.message || "Erro ao carregar fornecedores");
+        setOpenModal(true);
+        return false;
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      setMessage(errorMessage);
+      setOpenModal(true);
+      return false;
+    } finally {
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("users");
+        return newLoading;
+      });
+    }
+  };
 
   //Submit de cadastrar fornecedores
   const handleSubmit = async (e: React.FormEvent) => {
@@ -257,6 +284,8 @@ export default function Suppliers() {
         );
         // Limpa o formulário
         clearFormData();
+
+        await refreshData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar fornecedor");
       }
