@@ -803,6 +803,7 @@ function buscarFornecedores($conn) {
             fornecedor_estado,
             fornecedor_cidade,
             b.sta_nome,
+            b.sta_id,
             fornecedor_dtcadastro
         FROM fornecedores a
         INNER JOIN status b ON a.fornecedor_status = b.sta_id
@@ -911,11 +912,18 @@ function verificarFornecedorExiste($conn, $fornecedor_id) {
 function atualizarFornecedor($conn, $fornecedor_id, $dados) {
     // Campos básicos
     $campos = [
-        'user_nome' => $dados['name'],
-        'user_email' => $dados['email'],
-        'user_telefone' => $dados['tel'],
-        'user_CPF' => $dados['cpf'],
-        'sta_id' => $dados['sta_id'] ?? null
+        'fornecedor_nome' => $dados['nome_empresa'],
+        'fornecedor_razao_social' => $dados['razao_social'],
+        'fornecedor_email' => $dados['email'],
+        'fornecedor_telefone' => $dados['tel'],
+        'fornecedor_CNPJ' => $dados['cnpj'],
+        'fornecedor_status' => $dados['status'] ?? null,
+        'fornecedor_responsavel' => $dados['responsavel'],
+        'fornecedor_cep' => $dados['cep'],
+        'fornecedor_endereco' => $dados['endereco'],
+        'fornecedor_num_endereco' => $dados['num_endereco'],
+        'fornecedor_cidade' => $dados['cidade'],
+        'fornecedor_estado' => $dados['estado']
     ];
     
     
@@ -936,7 +944,7 @@ function atualizarFornecedor($conn, $fornecedor_id, $dados) {
     $valores[] = $fornecedor_id;
     $tipos .= 'i';
     
-    $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE fornecedor_id = ?";
+    $sql = "UPDATE fornecedores SET " . implode(', ', $sets) . " WHERE fornecedor_id = ?";
     $stmt = $conn->prepare($sql);
     
     if (!$stmt) {
@@ -952,6 +960,64 @@ function atualizarFornecedor($conn, $fornecedor_id, $dados) {
     } else {
         return ["success" => false, "message" => "Nenhum registro atualizado."];
     }
+}
+
+// excluir.fornecedor.php
+
+function registrarExclusaoFornecedor($conn, $user_id, $dados) {
+    $stmt = $conn->prepare("INSERT INTO fornecedores_excluidos (
+        forex_excluido, 
+        forex_exclusao, 
+        forex_motivo_exclusao,
+        forex_dtexclusao
+    ) VALUES (?, ?, ?, NOW())");
+    
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar o registro de exclusão'
+        ];
+    }
+
+    $stmt->bind_param('sis', $dados['dnome_empresa'], $user_id, $dados['reason']);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao registrar a exclusão'
+        ];
+    }
+
+    return ['success' => true, 'insert_id' => $stmt->insert_id];
+}
+
+function deletarFornecedor($conn, $fornecedor_id) {
+    $stmt = $conn->prepare("DELETE FROM fornecedores WHERE fornecedor_id = ?");
+    
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar a exclusão'
+        ];
+    }
+
+    $stmt->bind_param('i', $fornecedor_id);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao executar a exclusão'
+        ];
+    }
+
+    if ($stmt->affected_rows === 0) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum usuário encontrado com este ID'
+        ];
+    }
+
+    return ['success' => true];
 }
 
 ?>

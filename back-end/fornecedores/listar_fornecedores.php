@@ -13,9 +13,12 @@ try {
     // Buscar fornecedores
     $fornecedores = buscarFornecedores($conn);
 
+    $status = buscarStatus($conn);
+
     echo json_encode([
         "success" => true,
         "fornecedores" => $fornecedores,
+        "status"=> $status
     ]);
 
 } catch (Exception $e) {

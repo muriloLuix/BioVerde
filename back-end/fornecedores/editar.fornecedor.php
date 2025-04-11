@@ -1,5 +1,5 @@
 <?php 
-
+ini_set("display_errors",1);
 session_start();
 
 include_once "../inc/funcoes.inc.php";
@@ -32,8 +32,8 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    var_dump($data);
-    exit;
+    // var_dump($data);
+    // exit;
 
         // Validação dos campos obrigatórios
     $camposObrigatorios = ['fornecedor_id', 'nome_empresa', 'razao_social', 'email', 'tel', 'cnpj', 'responsavel', 'status', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];

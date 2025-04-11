@@ -13,7 +13,7 @@ import { cepApi } from "../../utils/cepApi";
 
 interface Estado {
   estado_id: number;
-  estado_nome: string;
+  fornecedor_estado: string;
 }
 
 interface Status {
@@ -31,7 +31,7 @@ interface Fornecedor {
   fornecedor_endereco: string;
   fornecedor_num_endereco: string;
   fornecedor_cidade: string;
-  estado_nome: string;
+  fornecedor_estado: string;
   fornecedor_cep: string;
   fornecedor_responsavel: string;
   fornecedor_dtcadastro: string;
@@ -129,7 +129,7 @@ export default function Suppliers() {
       status: fornecedor.sta_id?.toString() || "",
       cep: fornecedor.fornecedor_cep,
       endereco: fornecedor.fornecedor_endereco,
-      estado: fornecedor.estado_nome,
+      estado: fornecedor.fornecedor_estado,
       cidade: fornecedor.fornecedor_cidade,
       num_endereco: fornecedor.fornecedor_num_endereco,
     });
@@ -172,7 +172,7 @@ export default function Suppliers() {
           }),
         ]);
 
-        console.log("Resposta do back-end:", fornecedoresResponse.data);
+        // console.log("Resposta do back-end:", fornecedoresResponse.data);
         
     
         if (optionsResponse.data.success) {
@@ -370,6 +370,7 @@ export default function Suppliers() {
   // submit para atualizar o fornecedor após a edição dele
   const handleUpdateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Dados sendo enviados:", formData); // <-- Adicione esta linha
 
     setLoading((prev) => new Set([...prev, "updateSupplier"]));
     setSuccessMsg(false);
@@ -390,6 +391,7 @@ export default function Suppliers() {
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Fornecedor atualizado com sucesso!");
+        await refreshData();
         setOpenEditModal(false);
       } else {
         setMessage(response.data.message || "Erro ao atualizar fornecedor.");
@@ -434,6 +436,7 @@ export default function Suppliers() {
       if (response.data.success) {
         setSuccessMsg(true);
         setMessage("Fornecedor Excluído com sucesso!");
+        await refreshData();
         setOpenConfirmModal(false);
       } else {
         setMessage(response.data.message || "Erro ao excluir fornecedor.");
