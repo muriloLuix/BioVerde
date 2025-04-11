@@ -799,6 +799,7 @@ function buscarFornecedores($conn) {
             fornecedor_responsavel,
             fornecedor_cep,
             fornecedor_endereco,
+            fornecedor_num_endereco,
             fornecedor_estado,
             fornecedor_cidade,
             b.sta_nome,

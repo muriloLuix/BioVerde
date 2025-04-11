@@ -22,11 +22,17 @@ type InputPropsBase = {
   generatePassword?: () => void;
 };
 
+type TextAreaProps = {
+  isTextArea: true;
+  rows?: number;
+  cols?: number;
+  maxLength?: number;
+} & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+
 type InputProps =
-  | (InputPropsBase & InputMaskProps 
-    & { withInputMask: true })
-  | (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> 
-    & { withInputMask?: false });
+| (InputPropsBase & InputMaskProps & { withInputMask: true })
+| (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement> & { withInputMask?: false; isTextArea?: false })
+| (InputPropsBase & TextAreaProps & { withInputMask?: false });
 
 type SmartFieldProps = InputProps;
 
@@ -131,13 +137,13 @@ const SmartField: React.FC<SmartFieldProps> = ({
           <Form.Control asChild>
             {isTextArea ? (
               <textarea
+                rows={3}
+                cols={50}
+                maxLength={500}
                 {...(rest as React.InputHTMLAttributes<HTMLTextAreaElement>)}
                 id={regex(fieldName)}
                 name={regex(fieldName)}
                 required={required}
-                rows={3}
-                cols={50}
-                maxLength={500}
                 className="bg-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
               />
             ) : (

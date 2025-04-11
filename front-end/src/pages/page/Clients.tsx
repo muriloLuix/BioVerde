@@ -1,18 +1,508 @@
-import { Tabs, Form, Dialog } from "radix-ui";
-import { useState } from "react";
-import { Search, PencilLine, Trash, Eye } from "lucide-react";
+import { Tabs, Form, Dialog, Toast } from "radix-ui";
+import { useState, useEffect } from "react";
+import { Search, PencilLine, Trash, Loader2, Eye, FilterX, Printer, X } from "lucide-react";
+import { InputMaskChangeEvent } from "primereact/inputmask";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+
+import { SmartField } from "../../shared";
+import { ConfirmationModal } from "../../shared";
+import { Modal } from "../../shared";
+import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
+import { cepApi } from "../../utils/cepApi";
+
+interface Estado {
+  estado_id: number;
+  estado_nome: string;
+}
+
+interface Status {
+  sta_id: number;
+  sta_nome: string;
+}
+
+interface Cliente {
+  cliente_id: number;
+  cliente_nome: string;
+  cliente_email: string;
+  cliente_telefone: string;
+  cliente_cpf_cnpj: string;
+  cliente_status: string;
+  cliente_cep: string;
+  cliente_endereco: string;
+  cliente_num_endereco: string;
+  estado_nome: string;
+  cliente_cidade: string;
+  cliente_observacoes: string;
+  cliente_data_cadastro: string;
+  sta_id?: number;
+}
 
 export default function Clients() {
-  const [activeTab, setActiveTab] = useState("list");
 
   const [modalContent, setModalContent] = useState("");
   const [modalTitle, setModalTitle] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openModal = (title: string, content: string) => {
+  const openModalt = (title: string, content: string) => {
     setModalTitle(title);
     setModalContent(content);
     setIsModalOpen(true);
+  };
+
+  const [activeTab, setActiveTab] = useState("list");
+  const [cpfCnpjMask, setCpfCnpjMask] = useState("");
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [message, setMessage] = useState("");
+  const [successMsg, setSuccessMsg] = useState(false);
+  const [loading, setLoading] = useState<Set<string>>(new Set());
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [errors, setErrors] = useState({
+    status: false,
+    states: false,
+  });
+  const [formData, setFormData] = useState({
+    cliente_id: 0,
+    nome_cliente: "",
+    email: "",
+    tel: "",
+    cpf_cnpj: "",
+    status: "",
+    cep: "",
+    endereco: "",
+    num_endereco: "",
+    estado: "",
+    cidade: "",
+    obs: "",
+  });
+  const [options, setOptions] = useState<{
+    estados: Estado[];
+    status: Status[];
+  }>({
+    estados: [],
+    status: [],
+  });
+  const [filters, setFilters] = useState({
+    fnome_cliente: "",
+    fcpf_cnpj: "",
+    ftel: "",
+    fcidade: "",
+    festado: "",
+    fdataCadastro: "",
+    fstatus: "",
+  });
+  const [deleteClient, setDeleteClient] = useState({
+    cliente_id: 0,
+    dnome_cliente: "",
+    reason: "",
+  });
+
+  // const cli = [
+  //   {
+  //     id: 1,
+  //     nome: "André Maia",
+  //     email: "andre@email.com",
+  //     telefone: "(11)99999-9999",
+  //     cpf: "123.456.789-00",
+  //     cep: "01234-567",
+  //     tipo: "Pessoa Física",
+  //     cidade: "Curitiba",
+  //     status: "Ativo",
+  //     dataCadastro: "01/01/2025",
+  //     obs: "Observações do Cliente",
+  //   },
+  //   {
+  //     id: 2,
+  //     nome: "Empresa XYZ Ltda",
+  //     email: "contato@xyz.com",
+  //     telefone: "(21)3333-4444",
+  //     cpf: "00.000.000/0001-00",
+  //     cep: "20000-000",
+  //     tipo: "Pessoa Jurídica",
+  //     cidade: "Rio de Janeiro",
+  //     status: "Ativo",
+  //     dataCadastro: "15/02/2025",
+  //     obs: "Observações do Cliente",
+  //   },
+  // ]
+
+  //OnChange dos campos
+  const handleChange = (
+    event:
+      | React.ChangeEvent<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >
+      | InputMaskChangeEvent
+  ) => {
+    const { name, value } = event.target;
+
+    //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
+    switchCpfCnpjMask(name, value, setCpfCnpjMask);
+
+    setFormData({ ...formData, [name]: value });
+    setFilters({ ...filters, [name]: value });
+    setDeleteClient({ ...deleteClient, [name]: value });
+    setErrors(
+      (prevErrors) =>
+        Object.fromEntries(
+          Object.keys(prevErrors).map((key) => [key, false])
+        ) as typeof prevErrors
+    );
+  };
+
+  //função para puxar os dados do cliente que será editado
+  const handleEditClick = (cliente: Cliente) => {
+
+    setFormData({
+      cliente_id: cliente.cliente_id,
+      nome_cliente: cliente.cliente_nome,
+      email: cliente.cliente_email,
+      tel: cliente.cliente_telefone,
+      cpf_cnpj: cliente.cliente_cpf_cnpj,
+      status: cliente.sta_id?.toString() || "",
+      cep: cliente.cliente_cep,
+      endereco: cliente.cliente_endereco,
+      estado: cliente.estado_nome,
+      cidade: cliente.cliente_cidade,
+      num_endereco: cliente.cliente_num_endereco,
+      obs: cliente.cliente_observacoes,
+    });
+    setOpenEditModal(true);
+  };
+
+  //função para puxar o nome do cliente que será excluido
+  const handleDeleteClick = (cliente: Cliente) => {
+    setDeleteClient({
+      cliente_id: cliente.cliente_id,
+      dnome_cliente: cliente.cliente_nome,
+      reason: "",
+    });
+    setOpenDeleteModal(true);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading((prev) => new Set([...prev, "clients", "options"]));
+    
+        const [optionsResponse, clientesResponse] = await Promise.all([
+          axios.get("http://localhost/BioVerde/back-end/clientes/listar_opcoes.php", {
+            withCredentials: true,
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }),
+          axios.get("http://localhost/BioVerde/back-end/clientes/listar_clientes.php", {
+            withCredentials: true,
+            headers: {
+              Accept: "application/json",
+            },
+          }),
+        ]);
+
+        console.log("Resposta do back-end:", clientesResponse.data);
+        
+    
+        if (optionsResponse.data.success) {
+          setOptions({
+            estados: optionsResponse.data.estados || [],
+            status: optionsResponse.data.status || [],
+          });
+        } else {
+          setOpenModal(true);
+          setMessage(optionsResponse.data.message || "Erro ao carregar opções");
+        }
+    
+        if (clientesResponse.data.success) {
+          setClientes(clientesResponse.data.clientes || []);
+        } else {
+          setOpenModal(true);
+          setMessage(clientesResponse.data.message || "Erro ao carregar clientes");
+        }
+      } catch (error) {
+        setOpenModal(true);
+        setMessage("Erro ao conectar com o servidor");
+
+        if (axios.isAxiosError(error)) {
+          console.error(
+            "Erro na requisição:",
+            error.response?.data || error.message
+          );
+          if (error.response?.data?.message) {
+            setMessage(error.response.data.message);
+          }
+        } else {
+          console.error("Erro desconhecido:", error);
+        }
+      } finally {
+        setLoading((prev) => {
+          const newLoading = new Set(prev);
+          ["clients", "options"].forEach((item) => newLoading.delete(item));
+          return newLoading;
+        });
+      }
+    };
+
+    fetchData();
+    refreshData();
+  }, []);
+
+  //Função para Atualizar a Tabela após ação
+  const refreshData = async () => {
+    try {
+      setLoading((prev) => new Set([...prev, "clients"]));
+  
+      const response = await axios.get(
+        "http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+        { withCredentials: true }
+      );
+  
+      if (response.data.success) {
+        setClientes(response.data.clientes || []);
+        return true;
+      } else {
+        setMessage(response.data.message || "Erro ao carregar clientes");
+        setOpenModal(true);
+        return false;
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      setMessage(errorMessage);
+      setOpenModal(true);
+      return false;
+    } finally {
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("clients");
+        return newLoading;
+      });
+    }
+  };
+
+  //Submit de cadastrar clientes
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validações
+    const errors  = {
+      states: !formData.estado,
+      status: !formData.status,
+    };
+    setErrors(errors );
+
+    // Se algum erro for true, interrompe a execução
+    if (Object.values(errors).some((error) => error)) {
+      return;
+    }
+
+    setLoading((prev) => new Set([...prev, "submit"]));
+    setSuccessMsg(false);
+
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/clientes/cadastrar_clientes.php",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setSuccessMsg(true);
+        setMessage(
+          "cliente cadastrado com sucesso!"
+        );
+        // Limpa o formulário
+        clearFormData();
+
+        await refreshData();
+      } else {
+        setMessage(response.data.message || "Erro ao cadastrar cliente");
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          errorMessage = error.response.data.message || "Erro no servidor";
+          console.error("Erro na resposta:", error.response.data);
+        } else {
+          console.error("Erro na requisição:", error.message);
+        }
+      } else {
+        console.error("Erro desconhecido:", error);
+      }
+
+      setMessage(errorMessage);
+    } finally {
+      setOpenModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("submit");
+        return newLoading;
+      });
+    }
+  };
+
+  // submit de Filtrar clientes
+  const handleFilterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    console.log(filters)
+    setLoading((prev) => new Set([...prev, "filterSubmit"]));
+    setSuccessMsg(false);
+
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/clientes/filtro.cliente.php",
+        filters,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setClientes(response.data.clientes);
+      } else {
+        setOpenModal(true);
+        setMessage(
+          response.data.message || "Nenhum cliente encontrado com esse filtro"
+        );
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        setMessage(error.response.data.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response.data);
+      } else {
+        setMessage("Erro ao conectar com o servidor");
+        console.error("Erro na requisição:", error);
+      }
+    } finally {
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("filterSubmit");
+        return newLoading;
+      });
+    }
+  };
+
+  // submit para atualizar o cliente após a edição dele
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading((prev) => new Set([...prev, "updateClient"]));
+    setSuccessMsg(false);
+
+    try {
+
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setSuccessMsg(true);
+        setMessage("cliente atualizado com sucesso!");
+        setOpenEditModal(false);
+      } else {
+        setMessage(response.data.message || "Erro ao atualizar cliente.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setMessage(error.response?.data?.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response?.data);
+      } else {
+        setMessage("Erro ao conectar com o servidor");
+        console.error("Erro na requisição:", error);
+      }
+    } finally {
+      setOpenModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("updateClient");
+        return newLoading;
+      });
+    }
+  };
+
+  // submit para excluir um cliente
+  const handleDeleteClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading((prev) => new Set([...prev, "deleteClient"]));
+    setSuccessMsg(false);
+
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/clientes/excluir.cliente.php",
+        deleteClient,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        setSuccessMsg(true);
+        setMessage("Cliente Excluído com sucesso!");
+        setOpenConfirmModal(false);
+      } else {
+        setMessage(response.data.message || "Erro ao excluir cliente.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        setMessage(error.response.data.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response.data);
+      } else {
+        setMessage("Erro ao conectar com o servidor");
+        console.error("Erro na requisição:", error);
+      }
+    } finally {
+      setOpenModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("deleteClient");
+        return newLoading;
+      });
+    }
+  };
+
+  //Função para chamar a api de CEP
+  const handleCepBlur = () => {
+    cepApi(formData.cep, setFormData, setOpenModal, setMessage);
+  };
+
+  //Limpar FormData
+  const clearFormData = () => {
+    setFormData((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([key, value]) => [
+          key,
+          typeof value === "number" ? 0 : "",
+        ])
+      ) as typeof prev
+    );
   };
 
   return (
@@ -49,120 +539,133 @@ export default function Clients() {
           {/* Aba de Lista de Clientes */}
           <Tabs.Content value="list" className="flex flex-col w-full">
             {/* Filtro de Clientes */}
-            <Form.Root className="flex flex-col gap-4">
+            <Form.Root className="flex flex-col gap-4" onSubmit={handleFilterSubmit}>
               <h2 className="text-3xl">Filtros:</h2>
               <div className="flex gap-7">
-                {/* Coluna Nome e Telefone */}
+                
+                {/* Coluna Nome e Cidade */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="filter-name" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">
-                        Nome do Cliente:
-                      </span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="filter-name"
-                        id="filter-name"
-                        placeholder="Nome completo"
-                        autoComplete="name"
-                        className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="filter-telefone" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Telefone:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="tel"
-                        name="filter-telefone"
-                        id="filter-telefone"
-                        autoComplete="tel"
-                        placeholder="XXXXXXXX-XXXX"
-                        className="bg-white w-[280px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fnome_cliente"
+                    fieldText="Nome do cliente"
+                    type="text"
+                    placeholder="Nome completo do Cliente"
+                    autoComplete="name"
+                    value={filters.fnome_cliente}
+                    onChange={handleChange}
+                    inputWidth="w-[280px]"
+                  />
+
+                  <SmartField
+                    fieldName="fcidade"
+                    fieldText="Cidade"
+                    type="text"
+                    placeholder="Cidade"
+                    autoComplete="address-level2"
+                    value={filters.fcidade}
+                    onChange={handleChange}
+                    inputWidth="w-[280px]"
+                  />
+
                 </div>
 
-                {/* Coluna CPF e CEP */}
+                {/* Coluna CPF e Estado */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="filter-cpf" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">CPF/CNPJ:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="filter-cpf"
-                        id="filter-cpf"
-                        placeholder="Digite o CPF ou CNPJ"
-                        className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="filter-cep" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">CEP:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="filter-cep"
-                        id="filter-cep"
-                        placeholder="XXXXX-XXX"
-                        autoComplete="postal-code"
-                        className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fcpf_cnpj"
+                    fieldText="CPF/CNPJ"
+                    withInputMask
+                    type="text"
+                    mask={cpfCnpjMask}
+                    autoClear={false}
+                    placeholder="Digite o CPF/CNPJ"
+                    value={filters.fcpf_cnpj}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  />  
+
+                  <SmartField
+                    fieldName="festado"
+                    fieldText="Estado"
+                    isSelect
+                    value={filters.festado}
+                    onChange={handleChange}
+                    autoComplete="address-level1"
+                    isLoading={loading.has("options")}
+                    inputWidth="w-[200px]"
+                  > 
+                    <option value="">Todos</option>
+                    <option value="AC">Acre</option>
+                    <option value="AL">Alagoas</option>
+                    <option value="AP">Amapá</option>
+                    <option value="AM">Amazonas</option>
+                    <option value="BA">Bahia</option>
+                    <option value="CE">Ceará</option>
+                    <option value="DF">Distrito Federal</option>
+                    <option value="ES">Espírito Santo</option>
+                    <option value="GO">Goiás</option>
+                    <option value="MA">Maranhão</option>
+                    <option value="MT">Mato Grosso</option>
+                    <option value="MS">Mato Grosso do Sul</option>
+                    <option value="MG">Minas Gerais</option>
+                    <option value="PA">Pará</option>
+                    <option value="PB">Paraíba</option>
+                    <option value="PR">Paraná</option>
+                    <option value="PE">Pernambuco</option>
+                    <option value="PI">Piauí</option>
+                    <option value="RJ">Rio de Janeiro</option>
+                    <option value="RN">Rio Grande do Norte</option>
+                    <option value="RS">Rio Grande do Sul</option>
+                    <option value="RO">Rondônia</option>
+                    <option value="RR">Roraima</option>
+                    <option value="SC">Santa Catarina</option>
+                    <option value="SP">São Paulo</option>
+                    <option value="SE">Sergipe</option>
+                    <option value="TO">Tocantins</option>
+                  </SmartField>
                 </div>
 
-                {/* Coluna Tipo e Status */}
+                {/* Coluna Telefone e Status */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="filter-tipo" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Tipo:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <select
-                        name="filter-tipo"
-                        id="filter-tipo"
-                        className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="todos">Todos</option>
-                        <option value="pessoa_fisica">Pessoa Física</option>
-                        <option value="pessoa_juridica">Pessoa Jurídica</option>
-                      </select>
-                    </Form.Control>
-                  </Form.Field>
 
-                  <Form.Field name="filter-status" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Status:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <select
-                        name="filter-status"
-                        id="filter-status"
-                        className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="todos">Todos</option>
-                        <option value="ativo">Ativo</option>
-                        <option value="inativo">Inativo</option>
-                      </select>
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="ftel"
+                    fieldText="Telefone"
+                    withInputMask
+                    type="tel"
+                    mask="(99) 9999?9-9999"
+                    autoClear={false}
+                    placeholder="Digite o Telefone"
+                    autoComplete="tel"
+                    value={filters.ftel}
+                    onChange={handleChange}
+                    inputWidth="w-[200px]"
+                  /> 
+
+                  <SmartField
+                    fieldName="fstatus"
+                    fieldText="Status"
+                    isSelect
+                    value={filters.fstatus}
+                    onChange={handleChange}
+                    isLoading={loading.has("options")}
+                    inputWidth="w-[200px]"
+                  > 
+                    <option value="">Todos</option>
+                    {options.status?.map((status) => (
+                      <option key={status.sta_id} value={status.sta_id}>
+                        {status.sta_nome}
+                      </option>
+                    ))}
+                  </SmartField> 
+
                 </div>
 
-                {/* Coluna Data de Cadastro e Botão Pesquisar */}
+                {/* Coluna Data de Cadastro e Botão Filtrar */}
                 <div className="flex flex-col gap-7 mb-10 justify-between">
-                  <Form.Field name="data-cadastro" className="flex flex-col">
+                  <Form.Field name="fdataCadastro" className="flex flex-col">
                     <Form.Label asChild>
                       <span className="text-xl pb-2 font-light">
                         Data de Cadastro:
@@ -171,21 +674,45 @@ export default function Clients() {
                     <Form.Control asChild>
                       <input
                         type="date"
-                        name="data-cadastro"
-                        id="data-cadastro"
+                        name="fdataCadastro"
+                        id="fdataCadastro"
+                        value={filters.fdataCadastro}
+                        onChange={handleChange}
                         className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
                       />
                     </Form.Control>
                   </Form.Field>
 
                   <Form.Submit asChild>
-                    <div className="flex place-content-center mt-5">
+                    <div className="flex gap-4 mt-8">
                       <button
                         type="submit"
-                        className="bg-verdeMedio p-3 w-[70%] rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-verdeEscuro"
+                        className="bg-verdeMedio p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
+                        disabled={loading.size > 0}
                       >
-                        <Search />
-                        Pesquisar
+                        {loading.has("filterSubmit") ? (
+                          <Loader2 className="animate-spin h-6 w-6" />
+                        ) : (
+                          <>
+                            <Search size={23} />
+                            Filtrar
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-verdeLimparFiltros p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-hoverLimparFiltros "
+                        disabled={loading.size > 0}
+                        onClick={() =>
+                          setFilters((prev) =>
+                            Object.fromEntries(
+                              Object.keys(prev).map((key) => [key, ""])
+                            ) as typeof prev
+                          )
+                        }
+                      >
+                      <FilterX />
+                      Limpar
                       </button>
                     </div>
                   </Form.Submit>
@@ -194,141 +721,121 @@ export default function Clients() {
             </Form.Root>
 
             {/* Tabela Lista de Clientes */}
-            <div className="max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-15">
-              <table className="w-full border-collapse">
+            <div className="min-w-[966px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
+            <table className="w-full border-collapse">
+                {/* Tabela Cabeçalho */}
                 <thead>
                   <tr className="bg-verdePigmento text-white shadow-thead">
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      ID
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Nome
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      E-mail
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Telefone
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      CPF
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      CEP
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Tipo
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Cidade
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Status
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Data de Cadastro
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Observações
-                    </th>
-                    <th className="border border-black px-4 py-4 whitespace-nowrap">
-                      Ações
-                    </th>
+                    {[
+                      "ID",
+                      "Nome Cliente",
+                      "Email",
+                      "Telefone",
+                      "CPF/CNPJ",
+                      "CEP",
+                      "Endereço",
+                      "Nº",
+                      "Estado",
+                      "Cidade",
+                      "Status",
+                      "Observações",
+                      "Data de Cadastro",
+                      "Ações"
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className="border border-black px-4 py-4 whitespace-nowrap"
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    {
-                      id: 1,
-                      nome: "André Maia",
-                      email: "andre@email.com",
-                      telefone: "(11)99999-9999",
-                      cpf: "123.456.789-00",
-                      cep: "01234-567",
-                      tipo: "Pessoa Física",
-                      cidade: "Curitiba",
-                      status: "Ativo",
-                      dataCadastro: "01/01/2025",
-                      obs: "Observações do Cliente",
-                    },
-                    {
-                      id: 2,
-                      nome: "Empresa XYZ Ltda",
-                      email: "contato@xyz.com",
-                      telefone: "(21)3333-4444",
-                      cpf: "00.000.000/0001-00",
-                      cep: "20000-000",
-                      tipo: "Pessoa Jurídica",
-                      cidade: "Rio de Janeiro",
-                      status: "Ativo",
-                      dataCadastro: "15/02/2025",
-                      obs: "Observações do Cliente",
-                    },
-                  ].map((cliente, index) => (
-                    <tr
-                      key={cliente.id}
-                      className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                    >
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.id}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.nome}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.email}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.telefone}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.cpf}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.cep}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.tipo}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.cidade}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.status}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {cliente.dataCadastro}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button
-                          className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                          onClick={() => openModal("Observações", cliente.obs)}
-                        >
-                          <Eye />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Ver
-                          </div>
-                        </button>
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button className="mr-4 text-black cursor-pointer relative group">
-                          <PencilLine />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Editar
-                          </div>
-                        </button>
-                        <button className="text-red-500 cursor-pointer relative group">
-                          <Trash />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Excluir
-                          </div>
-                        </button>
+                  {loading.has("clients") ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-4">
+                        <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                       </td>
                     </tr>
-                  ))}
+                  ) : clientes.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-4">
+                        Nenhum cliente encontrado
+                      </td>
+                    </tr>
+                  ) : (
+                    //Tabela Dados
+                    clientes.map((cliente, index) => (
+                      <tr
+                        key={cliente.cliente_id}
+                        className={
+                          index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
+                        }
+                      >
+                        {Object.values(cliente)
+                          .slice(0, 12)
+                          .map((value, idx) => (
+                            <td
+                              key={idx}
+                              className="border border-black px-4 py-4 whitespace-nowrap"
+                            >
+                              {value}
+                            </td>
+                          ))}
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          <button
+                            className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            onClick={() => openModalt("Observações", formData.obs)}
+                          >
+                            <Eye />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Ver
+                            </div>
+                          </button>
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {new Date(cliente.cliente_data_cadastro).toLocaleDateString(
+                            "pt-BR"
+                          )}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          <button
+                            className="mr-4 text-black cursor-pointer relative group"
+                            onClick={() => handleEditClick(cliente)}
+                          >
+                            <PencilLine />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Editar
+                            </div>
+                          </button>
+                          <button
+                            className="text-red-500 cursor-pointer relative group"
+                            onClick={() => handleDeleteClick(cliente)}
+                          >
+                            <Trash />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Excluir
+                            </div>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+            {clientes.length !== 0 && (
+              <div className="min-w-[966px] max-w-[73vw]">
+                <button
+                  type="button"
+                  className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+                >
+                  <Printer />
+                  Gerar Relatório
+                </button>
+              </div>
+            )}
 
             {/* Modal (Pop-up) */}
             <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -359,243 +866,528 @@ export default function Clients() {
             value="register"
             className="flex items-center justify-center"
           >
-            <Form.Root className="flex flex-col w-full max-w-4xl">
+            <Form.Root className="flex flex-col w-full max-w-4xl" onSubmit={handleSubmit}>
               <h2 className="text-3xl mb-8">Cadastro de clientes:</h2>
 
-              <div className="grid grid-cols-2 gap-x-10 gap-y-6 mb-10">
-                <Form.Field name="nome" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">
-                      Nome do cliente:
-                    </span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="text"
-                      name="nome"
-                      id="nome"
-                      placeholder="Nome Completo"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+              <div className="flex mb-8 gap-x-8 justify-between">
+      
+                <SmartField
+                  fieldName="nome_cliente"
+                  fieldText="Nome do cliente"
+                  fieldClassname="flex flex-col flex-1"
+                  type="text"
+                  required
+                  placeholder="Digite o nome completo do Cliente"
+                  autoComplete="name"
+                  value={formData.nome_cliente}
+                  onChange={handleChange}
+                />
 
-                <Form.Field name="email" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">E-mail:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      placeholder="Digite o e-mail do cliente"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="email"
+                  fieldText="Email"
+                  fieldClassname="flex flex-col flex-1"
+                  required
+                  type="email"
+                  placeholder="Digite o e-mail do cliente"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                /> 
 
-                <Form.Field name="telefone" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Telefone:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="tel"
-                      name="telefone"
-                      id="telefone"
-                      placeholder="(XX)XXXXX-XXXX"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+              </div >
 
-                <Form.Field name="cep" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">CEP:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="text"
-                      name="cep"
-                      id="cep"
-                      placeholder="XXXXX-XXX"
-                      autoComplete="postal-code"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+              <div className="flex mb-8 justify-between">
 
-                <Form.Field name="cpf" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">CPF/CNPJ:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="text"
-                      name="cpf"
-                      id="cpf"
-                      placeholder="Digite seu CPF ou CNPJ"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="tel"
+                  fieldText="Telefone"
+                  withInputMask
+                  required
+                  type="tel"
+                  mask="(99) 9999?9-9999"
+                  autoClear={false}
+                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+                  placeholder="Digite o Telefone"
+                  autoComplete="tel"
+                  value={formData.tel}
+                  onChange={handleChange}
+                  inputWidth="w-[200px]"
+                /> 
 
-                <Form.Field name="estado" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Estado:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <select
-                      name="estado"
-                      id="estado"
-                      required
-                      autoComplete="address-level1"
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="">Selecionar</option>
-                      <option value="AC">Acre</option>
-                      <option value="AL">Alagoas</option>
-                      <option value="AP">Amapá</option>
-                      <option value="AM">Amazonas</option>
-                      <option value="BA">Bahia</option>
-                      <option value="CE">Ceará</option>
-                      <option value="DF">Distrito Federal</option>
-                      <option value="ES">Espírito Santo</option>
-                      <option value="GO">Goiás</option>
-                      <option value="MA">Maranhão</option>
-                      <option value="MT">Mato Grosso</option>
-                      <option value="MS">Mato Grosso do Sul</option>
-                      <option value="MG">Minas Gerais</option>
-                      <option value="PA">Pará</option>
-                      <option value="PB">Paraíba</option>
-                      <option value="PR">Paraná</option>
-                      <option value="PE">Pernambuco</option>
-                      <option value="PI">Piauí</option>
-                      <option value="RJ">Rio de Janeiro</option>
-                      <option value="RN">Rio Grande do Norte</option>
-                      <option value="RS">Rio Grande do Sul</option>
-                      <option value="RO">Rondônia</option>
-                      <option value="RR">Roraima</option>
-                      <option value="SC">Santa Catarina</option>
-                      <option value="SP">São Paulo</option>
-                      <option value="SE">Sergipe</option>
-                      <option value="TO">Tocantins</option>
-                    </select>
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="cpf_cnpj"
+                  fieldText="CPF/CNPJ"
+                  withInputMask
+                  required
+                  type="text"
+                  mask={cpfCnpjMask}
+                  autoClear={false}
+                  pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
+                  placeholder="Digite o CPF/CNPJ"
+                  value={formData.cpf_cnpj}
+                  onChange={handleChange}
+                  inputWidth="w-[200px]"
+                />  
 
-                <Form.Field name="tipo" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Tipo:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <select
-                      name="tipo"
-                      id="tipo"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="">Selecionar</option>
-                      <option value="pessoa_fisica">Pessoa Física</option>
-                      <option value="pessoa_juridica">Pessoa Jurídica</option>
-                    </select>
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="status"
+                  fieldText="Status"
+                  isSelect
+                  value={formData.status}
+                  onChange={handleChange}
+                  isLoading={loading.has("options")}
+                  error={errors.status ? "Campo obrigatório*" : undefined}
+                  placeholderOption="Selecione o status"
+                  inputWidth="w-[200px]"
+                > 
+                  {options.status?.map((status) => (
+                    <option key={status.sta_id} value={status.sta_id}>
+                      {status.sta_nome}
+                    </option>
+                  ))}
+                </SmartField> 
 
-                <Form.Field name="cidade" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Cidade:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="text"
-                      name="cidade"
-                      id="cidade"
-                      placeholder="Cidade"
-                      required
-                      autoComplete="address-level2"
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="cep"
+                  fieldText="CEP"
+                  withInputMask
+                  required
+                  type="text"
+                  mask="99999-999"
+                  autoClear={false}
+                  pattern="^\d{5}-\d{3}$"
+                  placeholder="Digite seu CEP"
+                  autoComplete="postal-code"
+                  value={formData.cep}
+                  onChange={handleChange}
+                  onBlur={handleCepBlur}
+                  inputWidth="w-[200px]"
+                /> 
 
-                <Form.Field name="endereco" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Endereço:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <input
-                      type="text"
-                      name="endereco"
-                      id="endereco"
-                      placeholder="Endereço completo"
-                      required
-                      autoComplete="street-address"
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    />
-                  </Form.Control>
-                </Form.Field>
+              </div>
+            
+              <div className="flex mb-8 justify-between">
 
-                <Form.Field name="status" className="flex flex-col">
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">Status:</span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <select
-                      name="status"
-                      id="status"
-                      required
-                      className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                    >
-                      <option value="">Selecionar</option>
-                      <option value="ativo">Ativo</option>
-                      <option value="inativo">Inativo</option>
-                    </select>
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="endereco"
+                  fieldText="Endereço"
+                  required
+                  type="text"
+                  placeholder="Endereço Completo"
+                  value={formData.endereco}
+                  onChange={handleChange}
+                  autoComplete="street-address"
+                  inputWidth="w-[310px]"
+                />
 
-                <Form.Field
-                  name="ClientObservation"
-                  className="w-full flex flex-col col-span-full"
-                >
-                  <Form.Label asChild>
-                    <span className="text-xl pb-2 font-light">
-                      Observações:
-                    </span>
-                  </Form.Label>
-                  <Form.Control asChild>
-                    <textarea
-                      id="ClientObservation"
-                      name="ClientObservation"
-                      rows={3}
-                      cols={50}
-                      placeholder="Digite as observações do cliente"
-                      maxLength={500}
-                      className="g-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
-                    ></textarea>
-                  </Form.Control>
-                </Form.Field>
+                <SmartField
+                  fieldName="num_endereco"
+                  fieldText="Número"
+                  isNumEndereco
+                  required
+                  type="text"
+                  placeholder="Número"
+                  value={formData.num_endereco}
+                  onChange={handleChange}
+                  autoComplete="address-line1"
+                  inputWidth="w-[90px]"
+                />
+
+                <SmartField
+                  fieldName="estado"
+                  fieldText="Estado"
+                  isSelect
+                  value={formData.estado}
+                  onChange={handleChange}
+                  autoComplete="address-level1"
+                  isLoading={loading.has("options")}
+                  error={errors.states ? "Campo obrigatório*" : undefined}
+                  placeholderOption="Selecione o Estado"
+                  inputWidth="w-[200px]"
+                > 
+                  <option value="AC">Acre</option>
+                  <option value="AL">Alagoas</option>
+                  <option value="AP">Amapá</option>
+                  <option value="AM">Amazonas</option>
+                  <option value="BA">Bahia</option>
+                  <option value="CE">Ceará</option>
+                  <option value="DF">Distrito Federal</option>
+                  <option value="ES">Espírito Santo</option>
+                  <option value="GO">Goiás</option>
+                  <option value="MA">Maranhão</option>
+                  <option value="MT">Mato Grosso</option>
+                  <option value="MS">Mato Grosso do Sul</option>
+                  <option value="MG">Minas Gerais</option>
+                  <option value="PA">Pará</option>
+                  <option value="PB">Paraíba</option>
+                  <option value="PR">Paraná</option>
+                  <option value="PE">Pernambuco</option>
+                  <option value="PI">Piauí</option>
+                  <option value="RJ">Rio de Janeiro</option>
+                  <option value="RN">Rio Grande do Norte</option>
+                  <option value="RS">Rio Grande do Sul</option>
+                  <option value="RO">Rondônia</option>
+                  <option value="RR">Roraima</option>
+                  <option value="SC">Santa Catarina</option>
+                  <option value="SP">São Paulo</option>
+                  <option value="SE">Sergipe</option>
+                  <option value="TO">Tocantins</option>
+                </SmartField>
+
+                <SmartField
+                  fieldName="cidade"
+                  fieldText="Cidade"
+                  required
+                  type="text"
+                  placeholder="Cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                  autoComplete="address-level2"
+                  inputWidth="w-[200px]"
+                />
+
+              </div>
+              
+              <div className="flex mb-10">
+
+                <SmartField
+                  isTextArea
+                  fieldName="obs"
+                  fieldText="Observações"
+                  fieldClassname="flex flex-col w-full"
+                  placeholder="Digite as observações do cliente"
+                  value={formData.obs}
+                  onChange={handleChange}
+                />
+
               </div>
 
               <Form.Submit asChild>
-                <div className="flex place-content-center mb-10 mt-0">
+                <div className="flex place-content-center mb-5">
                   <button
                     type="submit"
-                    className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra hover:bg-verdeGrama"
+                    className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
+                    disabled={loading.size > 0}
                   >
-                    Cadastrar Cliente
+                    {loading.has("submit") ? (
+                      <Loader2 className="animate-spin h-6 w-6" />
+                    ) : (
+                      "Cadastrar Cliente"
+                    )}
                   </button>
                 </div>
               </Form.Submit>
             </Form.Root>
           </Tabs.Content>
+
+          {/* Modal de Avisos */}
+          <Toast.Provider swipeDirection="right">
+            <AnimatePresence>
+              {openModal && (
+                <Toast.Root
+                  open={openModal}
+                  onOpenChange={setOpenModal}
+                  duration={5000}
+                  asChild
+                >
+                  <motion.div
+                    initial={{ x: 100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 100, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra z-102 ${
+                      successMsg ? "bg-verdePigmento" : "bg-ErroModal"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center pb-2">
+                      <Toast.Title className="font-bold text-lg">
+                        {successMsg ? "Sucesso!" : "Erro!"}
+                      </Toast.Title>
+                      <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
+                        <X size={25} />
+                      </Toast.Close>
+                    </div>
+                    <Toast.Description>{message}</Toast.Description>
+                  </motion.div>
+                </Toast.Root>
+              )}
+            </AnimatePresence>
+
+            <Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
+          </Toast.Provider>
         </Tabs.Root>
+
+        {/* Modal de Edição */}
+        <Modal
+          openModal={openEditModal}
+          setOpenModal={setOpenEditModal}
+          buttonClassname="hidden" 
+          modalTitle="Editar Cliente:"
+          leftButtonText="Editar"
+          rightButtonText="Cancelar"
+          loading={loading}
+          isLoading={loading.has("updateClient")}
+          onCancel={() => {setOpenEditModal(false); clearFormData()}}
+          onSubmit={handleUpdateClient}
+        >
+          <div className="flex mb-6 gap-x-8 justify-between">
+
+            <SmartField
+              fieldName="nome_cliente"
+              fieldText="Nome do cliente"
+              fieldClassname="flex flex-col flex-1"
+              type="text"
+              required
+              placeholder="Digite o nome completo do Cliente"
+              autoComplete="name"
+              value={formData.nome_cliente}
+              onChange={handleChange}
+            />
+
+            <SmartField
+              fieldName="email"
+              fieldText="Email"
+              fieldClassname="flex flex-col flex-1"
+              required
+              type="email"
+              placeholder="Digite o e-mail do cliente"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+            /> 
+
+          </div >
+
+          <div className="flex mb-6 justify-between">
+
+            <SmartField
+              fieldName="tel"
+              fieldText="Telefone"
+              withInputMask
+              required
+              type="tel"
+              mask="(99) 9999?9-9999"
+              autoClear={false}
+              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+              placeholder="Digite o Telefone"
+              autoComplete="tel"
+              value={formData.tel}
+              onChange={handleChange}
+              inputWidth="w-[200px]"
+            /> 
+
+            <SmartField
+              fieldName="cpf_cnpj"
+              fieldText="CPF/CNPJ"
+              withInputMask
+              required
+              type="text"
+              mask={cpfCnpjMask}
+              autoClear={false}
+              pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
+              placeholder="Digite o CPF/CNPJ"
+              value={formData.cpf_cnpj}
+              onChange={handleChange}
+              inputWidth="w-[200px]"
+            />  
+
+            <SmartField
+              fieldName="status"
+              fieldText="Status"
+              isSelect
+              value={formData.status}
+              onChange={handleChange}
+              isLoading={loading.has("options")}
+              error={errors.status ? "Campo obrigatório*" : undefined}
+              placeholderOption="Selecione o status"
+              inputWidth="w-[200px]"
+            > 
+              {options.status?.map((status) => (
+                <option key={status.sta_id} value={status.sta_id}>
+                  {status.sta_nome}
+                </option>
+              ))}
+            </SmartField> 
+
+            <SmartField
+              fieldName="cep"
+              fieldText="CEP"
+              withInputMask
+              required
+              type="text"
+              mask="99999-999"
+              autoClear={false}
+              pattern="^\d{5}-\d{3}$"
+              placeholder="Digite seu CEP"
+              autoComplete="postal-code"
+              value={formData.cep}
+              onChange={handleChange}
+              onBlur={handleCepBlur}
+              inputWidth="w-[200px]"
+            /> 
+
+          </div>
+
+          <div className="flex mb-6 justify-between">
+
+            <SmartField
+              fieldName="endereco"
+              fieldText="Endereço"
+              required
+              type="text"
+              placeholder="Endereço Completo"
+              value={formData.endereco}
+              onChange={handleChange}
+              autoComplete="street-address"
+              inputWidth="w-[310px]"
+            />
+
+            <SmartField
+              fieldName="num_endereco"
+              fieldText="Número"
+              isNumEndereco
+              required
+              type="text"
+              placeholder="Número"
+              value={formData.num_endereco}
+              onChange={handleChange}
+              autoComplete="address-line1"
+              inputWidth="w-[90px]"
+            />
+
+            <SmartField
+              fieldName="estado"
+              fieldText="Estado"
+              isSelect
+              value={formData.estado}
+              onChange={handleChange}
+              autoComplete="address-level1"
+              isLoading={loading.has("options")}
+              error={errors.states ? "Campo obrigatório*" : undefined}
+              placeholderOption="Selecione o Estado"
+              inputWidth="w-[200px]"
+            > 
+              <option value="AC">Acre</option>
+              <option value="AL">Alagoas</option>
+              <option value="AP">Amapá</option>
+              <option value="AM">Amazonas</option>
+              <option value="BA">Bahia</option>
+              <option value="CE">Ceará</option>
+              <option value="DF">Distrito Federal</option>
+              <option value="ES">Espírito Santo</option>
+              <option value="GO">Goiás</option>
+              <option value="MA">Maranhão</option>
+              <option value="MT">Mato Grosso</option>
+              <option value="MS">Mato Grosso do Sul</option>
+              <option value="MG">Minas Gerais</option>
+              <option value="PA">Pará</option>
+              <option value="PB">Paraíba</option>
+              <option value="PR">Paraná</option>
+              <option value="PE">Pernambuco</option>
+              <option value="PI">Piauí</option>
+              <option value="RJ">Rio de Janeiro</option>
+              <option value="RN">Rio Grande do Norte</option>
+              <option value="RS">Rio Grande do Sul</option>
+              <option value="RO">Rondônia</option>
+              <option value="RR">Roraima</option>
+              <option value="SC">Santa Catarina</option>
+              <option value="SP">São Paulo</option>
+              <option value="SE">Sergipe</option>
+              <option value="TO">Tocantins</option>
+            </SmartField>
+
+            <SmartField
+              fieldName="cidade"
+              fieldText="Cidade"
+              required
+              type="text"
+              placeholder="Cidade"
+              value={formData.cidade}
+              onChange={handleChange}
+              autoComplete="address-level2"
+              inputWidth="w-[200px]"
+            />
+
+          </div>
+
+          <div className="flex mb-6">
+
+            <SmartField
+              isTextArea
+              fieldName="obs"
+              fieldText="Observações"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite as observações do cliente"
+              value={formData.obs}
+              onChange={handleChange}
+              rows={2}
+            />
+
+          </div>
+        </Modal>
+
+        <Modal
+          openModal={openDeleteModal}
+          setOpenModal={setOpenDeleteModal}
+          buttonClassname="hidden"
+          modalTitle="Excluir Cliente:"
+          leftButtonText="Excluir"
+          rightButtonText="Cancelar"
+          onCancel={() => setOpenDeleteModal(false)}
+          onDelete={() => {
+            setOpenConfirmModal(true);
+            setOpenDeleteModal(false);  
+          }}
+        >
+          <div className="flex mb-10">
+
+            <SmartField
+              fieldName="dnome_cliente"
+              fieldText="Nome do Cliente"
+              fieldClassname="flex flex-col w-full"
+              type="text"
+              autoComplete="name"
+              required
+              readOnly
+              value={deleteClient.dnome_cliente}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          <div className="flex mb-10 ">
+
+            <SmartField
+              isTextArea
+              fieldName="reason"
+              required
+              autoFocus
+              fieldText="Motivo da Exclusão"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite o motivo da exclusão do cliente"
+              value={deleteClient.reason}
+              onChange={handleChange}
+            />
+
+          </div>
+
+        </Modal>
+
+        {/* Alert para confirmar exclusão do cliente */}
+        <ConfirmationModal
+          openModal={openConfirmModal}
+          setOpenModal={setOpenConfirmModal}
+          confirmationButtonClassname="hidden"
+          confirmationModalTitle="Tem certeza que deseja excluir o cliente?"
+          confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+          onCancel={() => setOpenConfirmModal(false)}
+          onConfirm={handleDeleteClient}
+          loading={loading}
+          isLoading={loading.has("deleteClient")}
+          confirmationLeftButtonText="Cancelar"
+          confirmationRightButtonText="Sim, excluir cliente"
+        />
       </div>
     </div>
   );

@@ -103,7 +103,7 @@ export default function Suppliers() {
 
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
-
+    
     setFormData({ ...formData, [name]: value });
     setFilters({ ...filters, [name]: value });
     setDeleteSupplier({ ...deleteSupplier, [name]: value });
@@ -146,10 +146,15 @@ export default function Suppliers() {
     setOpenDeleteModal(true);
   };
 
+  // Chama a função de mascasra quando o campo cnpj for atualizado
+  useEffect(() => {
+    switchCpfCnpjMask("cnpj", formData.cnpj, setCpfCnpjMask);
+  }, [formData.cnpj]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading((prev) => new Set([...prev, "users", "options"]));
+        setLoading((prev) => new Set([...prev, "suppliers", "options"]));
     
         const [optionsResponse, fornecedoresResponse] = await Promise.all([
           axios.get("http://localhost/BioVerde/back-end/fornecedores/listar_opcoes.php", {
@@ -166,6 +171,9 @@ export default function Suppliers() {
             },
           }),
         ]);
+
+        console.log("Resposta do back-end:", fornecedoresResponse.data);
+        
     
         if (optionsResponse.data.success) {
           setOptions({
@@ -201,7 +209,7 @@ export default function Suppliers() {
       } finally {
         setLoading((prev) => {
           const newLoading = new Set(prev);
-          ["users", "options"].forEach((item) => newLoading.delete(item));
+          ["suppliers", "options"].forEach((item) => newLoading.delete(item));
           return newLoading;
         });
       }
@@ -214,7 +222,7 @@ export default function Suppliers() {
   //Função para Atualizar a Tabela após ação
   const refreshData = async () => {
     try {
-      setLoading((prev) => new Set([...prev, "users"]));
+      setLoading((prev) => new Set([...prev, "suppliers"]));
   
       const response = await axios.get(
         "http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
@@ -240,7 +248,7 @@ export default function Suppliers() {
     } finally {
       setLoading((prev) => {
         const newLoading = new Set(prev);
-        newLoading.delete("users");
+        newLoading.delete("suppliers");
         return newLoading;
       });
     }
@@ -704,6 +712,7 @@ export default function Suppliers() {
                       "Responsável",
                       "CEP",
                       "Endereço",
+                      "Nº",
                       "Estado",
                       "Cidade",
                       "Status",
@@ -742,7 +751,7 @@ export default function Suppliers() {
                         }
                       >
                         {Object.values(fornecedor)
-                          .slice(0, 12)
+                          .slice(0, 13)
                           .map((value, idx) => (
                             <td
                               key={idx}

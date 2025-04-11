@@ -10,21 +10,12 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar usuários
+    // Buscar fornecedores
     $fornecedores = buscarFornecedores($conn);
-    // Buscar cargos
-    // $cargos = buscarCargos($conn);
-    // // Buscar níveis de acesso
-    // $niveis = buscarNiveisAcesso($conn);
-
-    // $status = buscarStatus($conn);
-
 
     echo json_encode([
         "success" => true,
         "fornecedores" => $fornecedores,
-        "cargos" => $cargos,
-        "niveis" => $niveis
     ]);
 
 } catch (Exception $e) {

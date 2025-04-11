@@ -1128,7 +1128,6 @@ export default function UsersPage() {
               onChange={handleChange}
               inputWidth="w-[300px]"
             />  
-
           </div>
 
           {/* Linha Telefone, CPF, e status*/}
