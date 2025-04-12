@@ -7,7 +7,6 @@ import {
   UsersPage,
   Dashboard,
   Clients,
-  ManagePrices,
   InventoryControl,
   ProductionSteps,
   Logs,
@@ -32,7 +31,6 @@ const AppRoutes = () => {
           <Route path="usuarios" element={<UsersPage />} />
           <Route path="fornecedores" element={<Suppliers />} />
           <Route path="clientes" element={<Clients />} />
-          <Route path="precos" element={<ManagePrices />} />
           <Route path="logs" element={<Logs />} />
         </Route>
       </Routes>

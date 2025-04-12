@@ -10,7 +10,7 @@ import {
   Users,
   Truck,
   User,
-  Bell,
+  LogOut,
 } from "lucide-react";
 
 import Logo from "./Logo";
@@ -22,10 +22,7 @@ export default function Sidebar() {
 
   const menuItems = useMemo(
     () => [
-      { name: "Dashboard", 
-        icon: <LayoutDashboard />,
-        path: "/app/dashboard" 
-      },
+      { name: "Dashboard", icon: <LayoutDashboard />, path: "/app/dashboard" },
       {
         name: "Controle de Estoque",
         icon: <Package />,
@@ -125,9 +122,9 @@ export default function Sidebar() {
         </Avatar.Root>
         <div className="flex flex-col">
           <span className="text-sm font-[inter]">Nome Sobrenome</span>
-          <span className="text-sm font-[inter]">Admin</span>
+          <span className="text-xs font-[inter]">Admin</span>
         </div>
-        <Bell
+        <LogOut
           size={30}
           className="p-1 rounded-2xl hover:cursor-pointer hover:text-cinzaClaro hover:bg-hoverMenu active:bg-brancoSal active:text-black"
         />

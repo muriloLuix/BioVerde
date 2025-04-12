@@ -1,4 +1,12 @@
 import {
+  Mail,
+  Package2,
+  PackageCheck,
+  PackageOpen,
+  PackageSearch,
+} from "lucide-react";
+import { Separator } from "radix-ui";
+import {
   CartesianGrid,
   Legend,
   Line,
@@ -10,16 +18,24 @@ import {
 
 const Dashboard = () => {
   const cardsNames = [
-    { title: "Produtos em estoque", color: "bg-blue-500", quantity: 45 },
     {
-      title: "Produtos em desenvolvimento",
-      color: "bg-yellow-300",
+      title: "EM ESTOQUE",
+      icon: <PackageSearch className="text-white" />,
+      quantity: 45,
+    },
+    {
+      title: "EM DESENVOLVIMENTO",
+      icon: <Package2 className="text-white" />,
       quantity: 12,
     },
-    { title: "Pedidos pendentes", color: "bg-red-500", quantity: 20 },
     {
-      title: "Pedidos concluídos (por mês)",
-      color: "bg-green-600",
+      title: "PENDENTES",
+      icon: <PackageOpen className="text-white" />,
+      quantity: 20,
+    },
+    {
+      title: "CONCLUÍDOS (P/MÊS)",
+      icon: <PackageCheck className="text-white" />,
       quantity: 5,
     },
   ];
@@ -31,7 +47,6 @@ const Dashboard = () => {
       Pendente: 2400,
       Desenvolvendo: 2000,
       Estoque: 750,
-      amt: 2400,
     },
     {
       name: "Fevereiro",
@@ -39,7 +54,6 @@ const Dashboard = () => {
       Pendente: 1398,
       Desenvolvendo: 1200,
       Estoque: 9000,
-      amt: 2210,
     },
     {
       name: "Março",
@@ -47,7 +61,6 @@ const Dashboard = () => {
       Pendente: 9800,
       Desenvolvendo: 900,
       Estoque: 900,
-      amt: 2290,
     },
     {
       name: "Abril",
@@ -55,7 +68,6 @@ const Dashboard = () => {
       Pendente: 3908,
       Desenvolvendo: 1000,
       Estoque: 200,
-      amt: 2000,
     },
     {
       name: "Maio",
@@ -63,7 +75,6 @@ const Dashboard = () => {
       Pendente: 4800,
       Desenvolvendo: 1000,
       Estoque: 2000,
-      amt: 2181,
     },
     {
       name: "Junho",
@@ -71,7 +82,6 @@ const Dashboard = () => {
       Pendente: 3800,
       Desenvolvendo: 1000,
       Estoque: 5000,
-      amt: 2500,
     },
     {
       name: "Julho",
@@ -79,41 +89,82 @@ const Dashboard = () => {
       Pendente: 4300,
       Desenvolvendo: 1000,
       Estoque: 300,
-      amt: 2100,
     },
+  ];
+
+  const messages = [
+    "Alerta! Escassez de Milho Verde no estoque",
+    "Atualização! Aveia está nos processos finais",
+    "URGENTE! Queijo está vencido",
+    "Alerta! Excesso de Batata no estoque",
   ];
 
   return (
     <div className="pl-64">
-      <div className="h-screen w-full flex flex-wrap justify-evenly p-5">
-        {cardsNames.map((card, index) => (
-          <div
-            key={index}
-            className={`h-1/4 w-1/5 ${card.color} rounded-lg p-4 text-white shadow-2xl`}
-          >
-            <div className="h-1/4 w-full">
-              <span className="font-medium text-2xl block truncate">
-                {card.title}
+      <div className="h-screen w-full flex flex-wrap items-start p-4">
+        <div className="h-3/12 w-full flex items-center justify-around p-2 shadow-2xl rounded-lg bg-verdeEscuroForte">
+          {cardsNames.map((card, index) => (
+            <>
+              <div key={index} className="h-full w-1/5 flex flex-col p-2">
+                <div className="h-1/4 w-full flex p-1 item-center justify-center gap-2 font-medium">
+                  {card.icon}
+                  <span className="text-white">{card.title}</span>
+                </div>
+                <div className="h-3/4 w-full flex items-center justify-center font-medium">
+                  <span className="text-5xl text-white">{card.quantity}</span>
+                </div>
+              </div>
+              {index < 3 ? (
+                <Separator.Root
+                  className="bg-white data-[orientation=vertical]:h-full data-[orientation=vertical]:w-0.25"
+                  decorative
+                  orientation="vertical"
+                />
+              ) : null}
+            </>
+          ))}
+        </div>
+
+        <div className="h-4/12 w-full flex items-center justify-around">
+          <div className="h-full w-5/11 p-3 bg-verdeEscuroForte rounded-lg overflow-auto">
+            <div className="h-1/5 w-full flex items-center p-2 gap-2">
+              <Mail className="text-white" />
+              <span className="text-lg font-semibold text-white">
+                NOTIFICAÇÕES
               </span>
             </div>
-            <div className="h-3/4 w-full text-center flex items-center justify-center">
-              <span className="font-medium text-6xl">{card.quantity}</span>
-            </div>
+            <Separator.Root className="h-0.25 w-full m-auto bg-white" />
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className="h-1/5 w-full my-1 flex items-center p-2 bg-verdeMedio hover:bg-verdeEscuro rounded-lg cursor-pointer"
+              >
+                <span className="text-sm text-white">{msg}</span>
+              </div>
+            ))}
           </div>
-        ))}
+          <div className="h-full w-5/11 flex items-center justify-center p-3 bg-verdeEscuroForte rounded-lg">
+            <strong>?</strong>
+          </div>
+        </div>
 
-        <div className="h-1/3 w-full rounded-lg p-4 box-border text-center shadow-xl bg-[#F5F5F5]">
-          <span className="font-bold text-xl">Previsão de demandas 2025</span>
+        <div className="h-4/12 w-full rounded-lg p-2 box-border text-center shadow-xl bg-verdeEscuroForte">
+          <span className="font-semibold text-xl text-white">
+            PREVISÃO 2025
+          </span>
           <ResponsiveContainer width="100%" height="90%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Legend verticalAlign="top" height={36} />
+            <LineChart
+              data={data}
+              style={{ fontSize: "1.1rem", fontWeight: "lighter" }}
+            >
+              <CartesianGrid strokeDasharray="3 3 3" />
+              <XAxis dataKey="name" tick={{ stroke: "white" }} />
+              <YAxis tick={{ stroke: "white" }} tickCount={4} />
+              <Legend verticalAlign="top" height={30} />
+              <Line type="monotone" dataKey="Estoque" stroke="#FFFF" />
+              <Line type="monotone" dataKey="Desenvolvendo" stroke="#1E90FF" />
+              <Line type="monotone" dataKey="Pendente" stroke="#FFFF00" />
               <Line type="monotone" dataKey="Concluido" stroke="#00FF00" />
-              <Line type="monotone" dataKey="Pendente" stroke="#FF0000	" />
-              <Line type="monotone" dataKey="Desenvolvendo" stroke="#FFFF00" />
-              <Line type="monotone" dataKey="Estoque" stroke="#0000FF" />
             </LineChart>
           </ResponsiveContainer>
         </div>
