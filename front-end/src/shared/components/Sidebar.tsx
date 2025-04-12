@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
-  HandCoins,
   Layers,
   Logs,
   ShoppingCart,
@@ -32,11 +31,6 @@ export default function Sidebar() {
         name: "Etapas de Produção",
         icon: <Layers />,
         path: "/app/etapas-producao",
-      },
-      {
-        name: "Preços",
-        icon: <HandCoins />,
-        path: "/app/precos",
       },
       { name: "Pedidos", icon: <ShoppingCart />, path: "/app/pedidos" },
       { name: "Usuários", icon: <Users />, path: "/app/usuarios" },
