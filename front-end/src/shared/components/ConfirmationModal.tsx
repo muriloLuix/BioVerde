@@ -6,15 +6,14 @@ type ConfirmationModalProps = {
   setOpenModal: React.Dispatch<React.SetStateAction<boolean>>;
   confirmationText: string;
   confirmationButtonName?: string;
-  confirmationButtonClassname: string;
+  confirmationButtonClassname?: string;
   confirmationLeftButtonText: string;
   confirmationRightButtonText: string;
   confirmationModalTitle?: string;
-  onCancel?: () => void;
   onConfirm?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   loading?: Set<string>;
   isLoading?: boolean;
-} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+};
 
 const ConfirmationModal = ({
   openModal,
@@ -25,7 +24,6 @@ const ConfirmationModal = ({
   confirmationLeftButtonText,
   confirmationRightButtonText,
   confirmationModalTitle,
-  onCancel,
   onConfirm,
   isLoading,
   loading,
@@ -34,7 +32,7 @@ const ConfirmationModal = ({
   return (
     <AlertDialog.Root open={openModal} onOpenChange={setOpenModal}>
       <AlertDialog.Trigger asChild>
-        <button className={confirmationButtonClassname}>
+        <button className={confirmationButtonClassname ? confirmationButtonClassname : "hidden"}>
           {confirmationButtonName}
         </button>
       </AlertDialog.Trigger>
@@ -54,7 +52,7 @@ const ConfirmationModal = ({
               <button
                 type="button"
                 className=" py-2 px-3 h-10 rounded text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-300"
-                onClick={onCancel}
+                aria-label="Close"
               >
                 {confirmationLeftButtonText}
               </button>

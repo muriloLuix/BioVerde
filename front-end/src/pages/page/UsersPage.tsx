@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
-import { Tabs, Form, Toast } from "radix-ui";
-import {
-  Search,
-  PencilLine,
-  Trash,
-  X,
-  Loader2,
-  FilterX,
-  Printer,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, Form } from "radix-ui";
+import {Search, PencilLine, Trash, Loader2, FilterX, Printer, X } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import axios from "axios";
 import { ConfirmationModal } from "../../shared";
 import { SmartField } from "../../shared";
 import { Modal } from "../../shared";
+import { NoticeModal } from "../../shared";
 
 interface Cargo {
   car_id: number;
@@ -50,7 +42,7 @@ export default function UsersPage() {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
+  const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -137,7 +129,7 @@ export default function UsersPage() {
     } catch (error) {
       console.error("Erro ao gerar relatório:", error);
       setMessage("Erro ao gerar relatório");
-      setOpenModal(true);
+      setOpenNoticeModal(true);
     } finally {
       setLoading((prev) => {
         const newLoading = new Set(prev);
@@ -217,20 +209,20 @@ export default function UsersPage() {
             status: optionsResponse.data.status || [],
           });
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(optionsResponse.data.message || "Erro ao carregar opções");
         }
 
         if (usuariosResponse.data.success) {
           setUsuarios(usuariosResponse.data.usuarios);
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(
             usuariosResponse.data.message || "Erro ao carregar usuários"
           );
         }
       } catch (error) {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage("Erro ao conectar com o servidor");
 
         if (axios.isAxiosError(error)) {
@@ -254,7 +246,6 @@ export default function UsersPage() {
     };
 
     fetchData();
-    refreshData();
   }, []);
 
   //Função para Atualizar a Tabela após ação
@@ -287,7 +278,7 @@ export default function UsersPage() {
           usuariosResponse.data.message || 
           "Erro ao carregar dados";
         setMessage(errorMessage);
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         return false;
       }
     } catch (error) {
@@ -296,7 +287,7 @@ export default function UsersPage() {
         errorMessage = error.response?.data?.message || error.message;
       }
       setMessage(errorMessage);
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       return false;
     } finally {
       setLoading((prev) => {
@@ -338,12 +329,10 @@ export default function UsersPage() {
       );
   
       if (response.data.success) {
+        await refreshData();
         setSuccessMsg(true);
         setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
         clearFormData();
-        
-        // Atualiza os dados (usuários e opções)
-        await refreshData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
       }
@@ -354,7 +343,7 @@ export default function UsersPage() {
       }
       setMessage(errorMessage);
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("submit");
@@ -385,7 +374,7 @@ export default function UsersPage() {
       if (response.data.success) {
         setUsuarios(response.data.usuarios);
       } else {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage(
           response.data.message || "Nenhum usuário encontrado com esse filtro"
         );
@@ -429,12 +418,11 @@ export default function UsersPage() {
       );
 
       if (response.data.success) {
+        await refreshData(); 
+        setOpenEditModal(false);
         setSuccessMsg(true);
         setMessage("Usuário atualizado com sucesso!");
-        setOpenEditModal(false);
-        
-        // Atualiza a lista de usuários após edição bem-sucedida
-        await refreshData(); 
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao atualizar usuário.");
       }
@@ -447,13 +435,12 @@ export default function UsersPage() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("updateUser");
         return newLoading;
       });
-      clearFormData();
     }
   };
 
@@ -481,13 +468,13 @@ export default function UsersPage() {
       );
   
       if (response.data.success) {
+        await refreshData(); 
+        setOpenConfirmModal(false);       
         setSuccessMsg(true);
         setMessage("Usuário excluído com sucesso!");
-        setOpenConfirmModal(false);       
         setUsuarios(prevUsuarios => 
           prevUsuarios.filter(user => user.user_id !== deleteUser.user_id)
         );
-        await refreshData(); 
       } else {
         setMessage(response.data.message || "Erro ao excluir usuário.");
       }
@@ -501,7 +488,7 @@ export default function UsersPage() {
       }
       setMessage(errorMessage);
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("deleteUser");
@@ -1004,47 +991,17 @@ export default function UsersPage() {
             {/* Fim aba de cadastro de usuários*/}
           </Tabs.Content>
 
-          {/* Modal de Avisos */}
-          <Toast.Provider swipeDirection="right">
-            <AnimatePresence>
-              {openModal && (
-                <Toast.Root
-                  open={openModal}
-                  onOpenChange={setOpenModal}
-                  duration={5000}
-                  asChild
-                >
-                  <motion.div
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: 100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra z-102 ${
-                      successMsg ? "bg-verdePigmento" : "bg-ErroModal"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center pb-2">
-                      <Toast.Title className="font-bold text-lg">
-                        {successMsg ? "Sucesso!" : "Erro!"}
-                      </Toast.Title>
-                      <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
-                        <X size={25} />
-                      </Toast.Close>
-                    </div>
-                    <Toast.Description>{message}</Toast.Description>
-                  </motion.div>
-                </Toast.Root>
-              )}
-            </AnimatePresence>
-
-            <Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
-          </Toast.Provider>
         </Tabs.Root>
 
-        {/* Todo esse código abaixo será refatorado mais tarde! */}
+        {/* Modal de Avisos */}
+        <NoticeModal
+          openModal={openNoticeModal}
+          setOpenModal={setOpenNoticeModal}
+          successMsg={successMsg}
+          message={message}
+        />
 
         {/* Modal de Relatório */}
-        
         {relatorioModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
@@ -1093,13 +1050,12 @@ export default function UsersPage() {
         <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
-          buttonClassname="hidden" 
           modalTitle="Editar Usuário:"
           leftButtonText="Editar"
           rightButtonText="Cancelar"
           loading={loading}
           isLoading={loading.has("updateUser")}
-          onCancel={() => {setOpenEditModal(false); clearFormData()}}
+          onCancel={() => clearFormData()}
           onSubmit={handleUpdateUser}
         >
         {/* Linha Nome e Email*/} 
@@ -1221,11 +1177,9 @@ export default function UsersPage() {
         <Modal
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
-          buttonClassname="hidden"
           modalTitle="Excluir Usuário:"
           leftButtonText="Excluir"
           rightButtonText="Cancelar"
-          onCancel={() => setOpenDeleteModal(false)}
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  
@@ -1269,10 +1223,8 @@ export default function UsersPage() {
         <ConfirmationModal
           openModal={openConfirmModal}
           setOpenModal={setOpenConfirmModal}
-          confirmationButtonClassname="hidden"
           confirmationModalTitle="Tem certeza que deseja excluir o usuário?"
           confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-          onCancel={() => setOpenConfirmModal(false)}
           onConfirm={handleDeleteUser}
           loading={loading}
           isLoading={loading.has("deleteUser")}

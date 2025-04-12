@@ -1,13 +1,13 @@
-import { Tabs, Form, Toast } from "radix-ui";
+import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
-import { Search, PencilLine, Trash, Loader2, FilterX, Printer, X } from "lucide-react";
+import { Search, PencilLine, Trash, Loader2, FilterX, Printer } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
-import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
 import { SmartField } from "../../shared";
 import { ConfirmationModal } from "../../shared";
 import { Modal } from "../../shared";
+import { NoticeModal } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
 
@@ -44,7 +44,7 @@ export default function Suppliers() {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
+  const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -146,7 +146,7 @@ export default function Suppliers() {
     setOpenDeleteModal(true);
   };
 
-  // Chama a função de mascasra quando o campo cnpj for atualizado
+  // Chama a função de mascara quando o campo cnpj for atualizado
   useEffect(() => {
     switchCpfCnpjMask("cnpj", formData.cnpj, setCpfCnpjMask);
   }, [formData.cnpj]);
@@ -174,25 +174,24 @@ export default function Suppliers() {
 
         // console.log("Resposta do back-end:", fornecedoresResponse.data);
         
-    
         if (optionsResponse.data.success) {
           setOptions({
             estados: optionsResponse.data.estados || [],
             status: optionsResponse.data.status || [],
           });
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(optionsResponse.data.message || "Erro ao carregar opções");
         }
     
         if (fornecedoresResponse.data.success) {
           setFornecedores(fornecedoresResponse.data.fornecedores || []);
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(fornecedoresResponse.data.message || "Erro ao carregar fornecedores");
         }
       } catch (error) {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage("Erro ao conectar com o servidor");
 
         if (axios.isAxiosError(error)) {
@@ -216,7 +215,6 @@ export default function Suppliers() {
     };
 
     fetchData();
-    refreshData();
   }, []);
 
   //Função para Atualizar a Tabela após ação
@@ -234,7 +232,7 @@ export default function Suppliers() {
         return true;
       } else {
         setMessage(response.data.message || "Erro ao carregar fornecedores");
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         return false;
       }
     } catch (error) {
@@ -243,7 +241,7 @@ export default function Suppliers() {
         errorMessage = error.response?.data?.message || error.message;
       }
       setMessage(errorMessage);
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       return false;
     } finally {
       setLoading((prev) => {
@@ -286,14 +284,10 @@ export default function Suppliers() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        setSuccessMsg(true);
-        setMessage(
-          "Fornecedor cadastrado com sucesso!"
-        );
-        // Limpa o formulário
-        clearFormData();
-
         await refreshData();
+        setSuccessMsg(true);
+        setMessage("Fornecedor cadastrado com sucesso!");
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar fornecedor");
       }
@@ -313,7 +307,7 @@ export default function Suppliers() {
 
       setMessage(errorMessage);
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("submit");
@@ -345,7 +339,7 @@ export default function Suppliers() {
       if (response.data.success) {
         setFornecedores(response.data.fornecedores);
       } else {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage(
           response.data.message || "Nenhum fornecedor encontrado com esse filtro"
         );
@@ -389,10 +383,11 @@ export default function Suppliers() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        setSuccessMsg(true);
-        setMessage("Fornecedor atualizado com sucesso!");
         await refreshData();
         setOpenEditModal(false);
+        setSuccessMsg(true);
+        setMessage("Fornecedor atualizado com sucesso!");
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao atualizar fornecedor.");
       }
@@ -405,7 +400,7 @@ export default function Suppliers() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("updateSupplier");
@@ -434,9 +429,9 @@ export default function Suppliers() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
+        await refreshData();
         setSuccessMsg(true);
         setMessage("Fornecedor Excluído com sucesso!");
-        await refreshData();
         setOpenConfirmModal(false);
       } else {
         setMessage(response.data.message || "Erro ao excluir fornecedor.");
@@ -450,7 +445,7 @@ export default function Suppliers() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("deleteSupplier");
@@ -461,7 +456,8 @@ export default function Suppliers() {
 
   //Função para chamar a api de CEP
   const handleCepBlur = () => {
-    cepApi(formData.cep, setFormData, setOpenModal, setMessage);
+    setSuccessMsg(false);
+    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
   };
 
   //Limpar FormData
@@ -1044,55 +1040,26 @@ export default function Suppliers() {
               </Form.Submit>
             </Form.Root>
           </Tabs.Content>
-
-          {/* Modal de Avisos */}
-          <Toast.Provider swipeDirection="right">
-            <AnimatePresence>
-              {openModal && (
-                <Toast.Root
-                  open={openModal}
-                  onOpenChange={setOpenModal}
-                  duration={5000}
-                  asChild
-                >
-                  <motion.div
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: 100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra z-102 ${
-                      successMsg ? "bg-verdePigmento" : "bg-ErroModal"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center pb-2">
-                      <Toast.Title className="font-bold text-lg">
-                        {successMsg ? "Sucesso!" : "Erro!"}
-                      </Toast.Title>
-                      <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
-                        <X size={25} />
-                      </Toast.Close>
-                    </div>
-                    <Toast.Description>{message}</Toast.Description>
-                  </motion.div>
-                </Toast.Root>
-              )}
-            </AnimatePresence>
-
-            <Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
-          </Toast.Provider>
         </Tabs.Root>
+
+        {/* Modal de Avisos */}
+        <NoticeModal
+          openModal={openNoticeModal}
+          setOpenModal={setOpenNoticeModal}
+          successMsg={successMsg}
+          message={message}
+        />
         
         {/* Modal de Edição */}
         <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
-          buttonClassname="hidden" 
           modalTitle="Editar Fornecedor:"
           leftButtonText="Editar"
           rightButtonText="Cancelar"
           loading={loading}
           isLoading={loading.has("updateSupplier")}
-          onCancel={() => {setOpenEditModal(false); clearFormData()}}
+          onCancel={() => clearFormData()}
           onSubmit={handleUpdateSupplier}
         >
           {/* Linha Nome e razão social*/}
@@ -1306,11 +1273,9 @@ export default function Suppliers() {
         <Modal
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
-          buttonClassname="hidden"
           modalTitle="Excluir Fornecedor:"
           leftButtonText="Excluir"
           rightButtonText="Cancelar"
-          onCancel={() => setOpenDeleteModal(false)}
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  
@@ -1354,10 +1319,8 @@ export default function Suppliers() {
         <ConfirmationModal
           openModal={openConfirmModal}
           setOpenModal={setOpenConfirmModal}
-          confirmationButtonClassname="hidden"
           confirmationModalTitle="Tem certeza que deseja excluir o fornecedor?"
           confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-          onCancel={() => setOpenConfirmModal(false)}
           onConfirm={handleDeleteSupplier}
           loading={loading}
           isLoading={loading.has("deleteSupplier")}

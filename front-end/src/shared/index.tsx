@@ -12,4 +12,5 @@ export { default as Sidebar } from "./components/Sidebar";
 export { default as Home } from "./components/Home";
 export { default as Modal } from "./components/Modal";
 export { default as ConfirmationModal } from "./components/ConfirmationModal";
+export { default as NoticeModal } from "./components/NoticeModal";
 export { default as SmartField } from "./components/SmartField";

@@ -1,15 +1,16 @@
-import { Tabs, Form, Dialog, Toast } from "radix-ui";
+import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
-import { Search, PencilLine, Trash, Loader2, Eye, FilterX, Printer, X } from "lucide-react";
+import { Search, PencilLine, Trash, Loader2, Eye, FilterX, Printer } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
-import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
 import { SmartField } from "../../shared";
 import { ConfirmationModal } from "../../shared";
+import { NoticeModal } from "../../shared";
 import { Modal } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
+
 
 interface Estado {
   estado_id: number;
@@ -39,23 +40,13 @@ interface Cliente {
 }
 
 export default function Clients() {
-
-  const [modalContent, setModalContent] = useState("");
-  const [modalTitle, setModalTitle] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModalt = (title: string, content: string) => {
-    setModalTitle(title);
-    setModalContent(content);
-    setIsModalOpen(true);
-  };
-
   const [activeTab, setActiveTab] = useState("list");
   const [cpfCnpjMask, setCpfCnpjMask] = useState("");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
+  const [openObsModal, setOpenObsModal] = useState(false);
+  const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -99,35 +90,6 @@ export default function Clients() {
     dnome_cliente: "",
     reason: "",
   });
-
-  // const cli = [
-  //   {
-  //     id: 1,
-  //     nome: "André Maia",
-  //     email: "andre@email.com",
-  //     telefone: "(11)99999-9999",
-  //     cpf: "123.456.789-00",
-  //     cep: "01234-567",
-  //     tipo: "Pessoa Física",
-  //     cidade: "Curitiba",
-  //     status: "Ativo",
-  //     dataCadastro: "01/01/2025",
-  //     obs: "Observações do Cliente",
-  //   },
-  //   {
-  //     id: 2,
-  //     nome: "Empresa XYZ Ltda",
-  //     email: "contato@xyz.com",
-  //     telefone: "(21)3333-4444",
-  //     cpf: "00.000.000/0001-00",
-  //     cep: "20000-000",
-  //     tipo: "Pessoa Jurídica",
-  //     cidade: "Rio de Janeiro",
-  //     status: "Ativo",
-  //     dataCadastro: "15/02/2025",
-  //     obs: "Observações do Cliente",
-  //   },
-  // ]
 
   //OnChange dos campos
   const handleChange = (
@@ -183,6 +145,11 @@ export default function Clients() {
     setOpenDeleteModal(true);
   };
 
+  // Chama a função de mascara quando o campo cnpj for atualizado
+  useEffect(() => {
+    switchCpfCnpjMask("cnpj", formData.cpf_cnpj, setCpfCnpjMask);
+  }, [formData.cpf_cnpj]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -213,18 +180,18 @@ export default function Clients() {
             status: optionsResponse.data.status || [],
           });
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(optionsResponse.data.message || "Erro ao carregar opções");
         }
     
         if (clientesResponse.data.success) {
           setClientes(clientesResponse.data.clientes || []);
         } else {
-          setOpenModal(true);
+          setOpenNoticeModal(true);
           setMessage(clientesResponse.data.message || "Erro ao carregar clientes");
         }
       } catch (error) {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage("Erro ao conectar com o servidor");
 
         if (axios.isAxiosError(error)) {
@@ -248,7 +215,6 @@ export default function Clients() {
     };
 
     fetchData();
-    refreshData();
   }, []);
 
   //Função para Atualizar a Tabela após ação
@@ -266,7 +232,7 @@ export default function Clients() {
         return true;
       } else {
         setMessage(response.data.message || "Erro ao carregar clientes");
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         return false;
       }
     } catch (error) {
@@ -275,7 +241,7 @@ export default function Clients() {
         errorMessage = error.response?.data?.message || error.message;
       }
       setMessage(errorMessage);
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       return false;
     } finally {
       setLoading((prev) => {
@@ -318,14 +284,10 @@ export default function Clients() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        setSuccessMsg(true);
-        setMessage(
-          "cliente cadastrado com sucesso!"
-        );
-        // Limpa o formulário
-        clearFormData();
-
         await refreshData();
+        setSuccessMsg(true);
+        setMessage("Cliente cadastrado com sucesso!");
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar cliente");
       }
@@ -345,7 +307,7 @@ export default function Clients() {
 
       setMessage(errorMessage);
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("submit");
@@ -377,7 +339,7 @@ export default function Clients() {
       if (response.data.success) {
         setClientes(response.data.clientes);
       } else {
-        setOpenModal(true);
+        setOpenNoticeModal(true);
         setMessage(
           response.data.message || "Nenhum cliente encontrado com esse filtro"
         );
@@ -420,9 +382,11 @@ export default function Clients() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        setSuccessMsg(true);
-        setMessage("cliente atualizado com sucesso!");
+        await refreshData();
         setOpenEditModal(false);
+        setSuccessMsg(true);
+        setMessage("Cliente atualizado com sucesso!");
+        clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao atualizar cliente.");
       }
@@ -435,7 +399,7 @@ export default function Clients() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("updateClient");
@@ -464,6 +428,7 @@ export default function Clients() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
+        await refreshData()
         setSuccessMsg(true);
         setMessage("Cliente Excluído com sucesso!");
         setOpenConfirmModal(false);
@@ -479,7 +444,7 @@ export default function Clients() {
         console.error("Erro na requisição:", error);
       }
     } finally {
-      setOpenModal(true);
+      setOpenNoticeModal(true);
       setLoading((prev) => {
         const newLoading = new Set(prev);
         newLoading.delete("deleteClient");
@@ -490,7 +455,7 @@ export default function Clients() {
 
   //Função para chamar a api de CEP
   const handleCepBlur = () => {
-    cepApi(formData.cep, setFormData, setOpenModal, setMessage);
+    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
   };
 
   //Limpar FormData
@@ -786,7 +751,7 @@ export default function Clients() {
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           <button
                             className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                            onClick={() => openModalt("Observações", formData.obs)}
+                            onClick={() => setOpenObsModal(true)}
                           >
                             <Eye />
                             <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
@@ -837,28 +802,16 @@ export default function Clients() {
               </div>
             )}
 
-            {/* Modal (Pop-up) */}
-            <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
-                <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg min-w-[300px]">
-                  <Dialog.Title className="text-xl font-bold mb-4">
-                    {modalTitle}
-                  </Dialog.Title>
-                  <Dialog.Description className="text-gray-700">
-                    {modalContent}
-                  </Dialog.Description>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      className="bg-verdeMedio text-white px-4 py-2 rounded-lg hover:bg-verdeEscuro cursor-pointer"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      Fechar
-                    </button>
-                  </div>
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
+            {/* Modal de Observações */}
+            <Modal
+              withExitButton
+              openModal={openObsModal}
+              setOpenModal={setOpenObsModal}
+              modalWidth="min-w-[300px] max-w-[500px]"
+              modalTitle="Observações"
+              obsText={formData.obs}
+            />
+
           </Tabs.Content>
 
           {/* Aba de Cadastro de Clientes */}
@@ -1080,55 +1033,26 @@ export default function Clients() {
               </Form.Submit>
             </Form.Root>
           </Tabs.Content>
-
-          {/* Modal de Avisos */}
-          <Toast.Provider swipeDirection="right">
-            <AnimatePresence>
-              {openModal && (
-                <Toast.Root
-                  open={openModal}
-                  onOpenChange={setOpenModal}
-                  duration={5000}
-                  asChild
-                >
-                  <motion.div
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: 100, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                    className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra z-102 ${
-                      successMsg ? "bg-verdePigmento" : "bg-ErroModal"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center pb-2">
-                      <Toast.Title className="font-bold text-lg">
-                        {successMsg ? "Sucesso!" : "Erro!"}
-                      </Toast.Title>
-                      <Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer">
-                        <X size={25} />
-                      </Toast.Close>
-                    </div>
-                    <Toast.Description>{message}</Toast.Description>
-                  </motion.div>
-                </Toast.Root>
-              )}
-            </AnimatePresence>
-
-            <Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
-          </Toast.Provider>
         </Tabs.Root>
+
+        {/* Modal de Avisos */}
+        <NoticeModal
+          openModal={openNoticeModal}
+          setOpenModal={setOpenNoticeModal}
+          successMsg={successMsg}
+          message={message}
+        />
 
         {/* Modal de Edição */}
         <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
-          buttonClassname="hidden" 
           modalTitle="Editar Cliente:"
           leftButtonText="Editar"
           rightButtonText="Cancelar"
           loading={loading}
           isLoading={loading.has("updateClient")}
-          onCancel={() => {setOpenEditModal(false); clearFormData()}}
+          onCancel={() => clearFormData()}
           onSubmit={handleUpdateClient}
         >
           <div className="flex mb-6 gap-x-8 justify-between">
@@ -1159,7 +1083,7 @@ export default function Clients() {
 
           </div >
 
-          <div className="flex mb-6 justify-between">
+          <div className="flex mb-6 gap-x-8 justify-between">
 
             <SmartField
               fieldName="tel"
@@ -1200,7 +1124,6 @@ export default function Clients() {
               onChange={handleChange}
               isLoading={loading.has("options")}
               error={errors.status ? "Campo obrigatório*" : undefined}
-              placeholderOption="Selecione o status"
               inputWidth="w-[200px]"
             > 
               {options.status?.map((status) => (
@@ -1265,7 +1188,6 @@ export default function Clients() {
               autoComplete="address-level1"
               isLoading={loading.has("options")}
               error={errors.states ? "Campo obrigatório*" : undefined}
-              placeholderOption="Selecione o Estado"
               inputWidth="w-[200px]"
             > 
               <option value="AC">Acre</option>
@@ -1330,11 +1252,9 @@ export default function Clients() {
         <Modal
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
-          buttonClassname="hidden"
           modalTitle="Excluir Cliente:"
           leftButtonText="Excluir"
           rightButtonText="Cancelar"
-          onCancel={() => setOpenDeleteModal(false)}
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  
@@ -1378,10 +1298,8 @@ export default function Clients() {
         <ConfirmationModal
           openModal={openConfirmModal}
           setOpenModal={setOpenConfirmModal}
-          confirmationButtonClassname="hidden"
           confirmationModalTitle="Tem certeza que deseja excluir o cliente?"
           confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-          onCancel={() => setOpenConfirmModal(false)}
           onConfirm={handleDeleteClient}
           loading={loading}
           isLoading={loading.has("deleteClient")}
