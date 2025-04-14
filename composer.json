@@ -1,6 +1,8 @@
 {
     "require": {
         "phpmailer/phpmailer": "^6.9",
-        "mpdf/mpdf": "^8.2"
+        "mpdf/mpdf": "^8.2",
+        "setasign/fpdf": "^1.8",
+        "tecnickcom/tcpdf": "^6.7"
     }
 }
