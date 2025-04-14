@@ -48,6 +48,7 @@ export default function Clients() {
   const [openObsModal, setOpenObsModal] = useState(false);
   const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
+  const [currentObs, setCurrentObs] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -90,6 +91,11 @@ export default function Clients() {
     dnome_cliente: "",
     reason: "",
   });
+
+  const handleObsClick = (cliente: Cliente) => {
+    setCurrentObs(cliente.cliente_observacoes);
+    setOpenObsModal(true);
+  };
 
   //OnChange dos campos
   const handleChange = (
@@ -739,7 +745,7 @@ export default function Clients() {
                         }
                       >
                         {Object.values(cliente)
-                          .slice(0, 12)
+                          .slice(0, 11)
                           .map((value, idx) => (
                             <td
                               key={idx}
@@ -751,7 +757,7 @@ export default function Clients() {
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           <button
                             className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                            onClick={() => setOpenObsModal(true)}
+                            onClick={() => handleObsClick(cliente)}
                           >
                             <Eye />
                             <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
@@ -803,14 +809,14 @@ export default function Clients() {
             )}
 
             {/* Modal de Observações */}
-            <Modal
-              withExitButton
-              openModal={openObsModal}
-              setOpenModal={setOpenObsModal}
-              modalWidth="min-w-[300px] max-w-[500px]"
-              modalTitle="Observações"
-              obsText={formData.obs}
-            />
+                      <Modal
+            withExitButton
+            openModal={openObsModal}
+            setOpenModal={setOpenObsModal}
+            modalWidth="min-w-[300px] max-w-[500px]"
+            modalTitle="Observações"
+            obsText={currentObs}  // Alterado para usar currentObs
+/>
 
           </Tabs.Content>
 

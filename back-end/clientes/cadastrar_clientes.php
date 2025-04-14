@@ -1,4 +1,6 @@
 <?php 
+ 
+ini_set("display_errors",1);
 
 session_start();
 include_once("../inc/funcoes.inc.php");
@@ -23,7 +25,7 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos
-$camposObrigatorios = ['nome_empresa', 'razao_social', 'email', 'tel', 'cnpj', 'responsavel', 'status', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
+$camposObrigatorios = ['nome_cliente', 'email', 'tel', 'cpf_cnpj', 'status', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade', 'obs'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) { 
     echo json_encode($validacaoDosCampos);
@@ -31,7 +33,7 @@ if ($validacaoDosCampos !== null) {
 }
 
 // Verificar email e CNPJ
-$emailCpfError = verificarEmailCnpj($conn, $data['email'], $data['cnpj']);
+$emailCpfError = verificarEmailCnpjCpfCliente($conn, $data['email'], $data['cpf_cnpj']);
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();
@@ -48,31 +50,26 @@ if ($sta_id === null) {
     exit();
 }
 
-// Cadastro do fornecedor
-$stmt = $conn->prepare("INSERT INTO fornecedores (fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_endereco, fornecedor_num_endereco, fornecedor_cidade, fornecedor_estado, fornecedor_cep, fornecedor_responsavel, fornecedor_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-if (!$stmt) {
-    echo json_encode(["success" => false, "message" => "Erro ao preparar a query: " . $conn->error]);
-    exit();
-}
+// Cadastro do cliente
+$stmt = $conn->prepare("INSERT INTO clientes (cliente_nome, cliente_cpf_cnpj, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_cidade, cliente_estado, cliente_cep, status, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-$stmt->bind_param("sssssssssssi", 
-    $data['nome_empresa'], 
-    $data['razao_social'],
-    $data['email'], 
+$stmt->bind_param("sssssssssis", 
+    $data['nome_cliente'], 
+    $data['cpf_cnpj'],
     $data['tel'], 
-    $data['cnpj'], 
+    $data['email'], 
     $data['endereco'], 
     $data['num_endereco'], 
     $data['cidade'], 
     $data['estado'], 
     $data['cep'], 
-    $data['responsavel'], 
-    $sta_id
+    $sta_id,
+    $data['obs']
 );
 
 if ($stmt->execute()) {
 
-    $emailFornecedor = enviarEmailFornecedor($data['email'], $data);
+    $emailFornecedor = enviarEmailCliente($data['email'], $data);
     if ($emailFornecedor === true) {
         echo json_encode(["success" => true, "message" => "Fornecedor cadastrado com sucesso!"]);
     } else {
@@ -81,7 +78,3 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar fornecedor: " . $stmt->error]);
 }
-
-$stmt->close();
-$conn->close();
-?>
