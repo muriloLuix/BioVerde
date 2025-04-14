@@ -911,7 +911,7 @@ export default function Suppliers() {
                   value={formData.status}
                   onChange={handleChange}
                   isLoading={loading.has("options")}
-                  error={errors.status ? "Campo obrigatório*" : undefined}
+                  error={errors.status ? "*" : undefined}
                   placeholderOption="Selecione o status"
                   inputWidth="w-[220px]"
                 > 
@@ -958,7 +958,6 @@ export default function Suppliers() {
                   <SmartField
                     fieldName="num_endereco"
                     fieldText="Número"
-                    isNumEndereco
                     required
                     type="text"
                     placeholder="Número"
@@ -977,7 +976,7 @@ export default function Suppliers() {
                   onChange={handleChange}
                   autoComplete="address-level1"
                   isLoading={loading.has("options")}
-                  error={errors.states ? "Campo obrigatório*" : undefined}
+                  error={errors.states ? "*" : undefined}
                   placeholderOption="Selecione o Estado"
                   inputWidth="w-[220px]"
                 > 
@@ -1205,7 +1204,6 @@ export default function Suppliers() {
               <SmartField
                 fieldName="num_endereco"
                 fieldText="Número"
-                isNumEndereco
                 required
                 type="text"
                 placeholder="Número"

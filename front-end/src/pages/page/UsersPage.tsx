@@ -905,7 +905,7 @@ export default function UsersPage() {
                     fieldText="Cargo"
                     isSelect
                     isLoading={loading.has("options")}
-                    error={errors.position ? "Campo obrigatório*" : undefined}
+                    error={errors.position ? "*" : undefined}
                     value={formData.cargo}
                     onChange={handleChange}
                     placeholderOption="Selecione o cargo" 
@@ -927,7 +927,7 @@ export default function UsersPage() {
                   fieldText="Nível de Acesso"
                   isSelect
                   isLoading={loading.has("options")}
-                  error={errors.level ? "Campo obrigatório*" : undefined}
+                  error={errors.level ? "*" : undefined}
                   value={formData.nivel}
                   onChange={handleChange}
                   placeholderOption="Selecione o nível de acesso" 
@@ -957,7 +957,7 @@ export default function UsersPage() {
                   fieldText="Status"
                   isSelect
                   isLoading={loading.has("options")}
-                  error={errors.status ? "Campo obrigatório*" : undefined}
+                  error={errors.status ? "*" : undefined}
                   value={formData.status}
                   onChange={handleChange}
                   placeholderOption="Selecione o status" 

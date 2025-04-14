@@ -890,7 +890,7 @@ export default function Clients() {
                   value={formData.status}
                   onChange={handleChange}
                   isLoading={loading.has("options")}
-                  error={errors.status ? "Campo obrigatório*" : undefined}
+                  error={errors.status ? "*" : undefined}
                   placeholderOption="Selecione o status"
                   inputWidth="w-[200px]"
                 > 
@@ -937,7 +937,6 @@ export default function Clients() {
                 <SmartField
                   fieldName="num_endereco"
                   fieldText="Número"
-                  isNumEndereco
                   required
                   type="text"
                   placeholder="Número"
@@ -955,7 +954,7 @@ export default function Clients() {
                   onChange={handleChange}
                   autoComplete="address-level1"
                   isLoading={loading.has("options")}
-                  error={errors.states ? "Campo obrigatório*" : undefined}
+                  error={errors.states ? "*" : undefined}
                   placeholderOption="Selecione o Estado"
                   inputWidth="w-[200px]"
                 > 
@@ -1123,7 +1122,6 @@ export default function Clients() {
               value={formData.status}
               onChange={handleChange}
               isLoading={loading.has("options")}
-              error={errors.status ? "Campo obrigatório*" : undefined}
               inputWidth="w-[200px]"
             > 
               {options.status?.map((status) => (
@@ -1169,7 +1167,6 @@ export default function Clients() {
             <SmartField
               fieldName="num_endereco"
               fieldText="Número"
-              isNumEndereco
               required
               type="text"
               placeholder="Número"
@@ -1187,7 +1184,6 @@ export default function Clients() {
               onChange={handleChange}
               autoComplete="address-level1"
               isLoading={loading.has("options")}
-              error={errors.states ? "Campo obrigatório*" : undefined}
               inputWidth="w-[200px]"
             > 
               <option value="AC">Acre</option>

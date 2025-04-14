@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
+import { NumericFormat, NumericFormatProps } from 'react-number-format';
 import { Form } from "radix-ui";
 import React from "react";
 import { Loader2, EyeOff, Eye } from "lucide-react";
@@ -8,6 +9,8 @@ type InputPropsBase = {
   isSelect?: boolean;
   isTextArea?: boolean;
   isPassword?: boolean;
+  isPrice?: boolean;
+  isDate?: boolean;
   isNumEndereco?: boolean;
   isLoading?: boolean;
   error?: string;
@@ -22,24 +25,18 @@ type InputPropsBase = {
   generatePassword?: () => void;
 };
 
-type TextAreaProps = {
-  isTextArea: true;
-  rows?: number;
-  cols?: number;
-  maxLength?: number;
-} & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
-
 type InputProps =
-| (InputPropsBase & InputMaskProps & { withInputMask: true })
-| (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement> & { withInputMask?: false; isTextArea?: false })
-| (InputPropsBase & TextAreaProps & { withInputMask?: false });
+| (InputPropsBase & InputMaskProps)
+| (InputPropsBase & React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement>)
+| (InputPropsBase & React.TextareaHTMLAttributes<HTMLTextAreaElement>)
+| (InputPropsBase & NumericFormatProps);
 
 type SmartFieldProps = InputProps;
 
 const SmartField: React.FC<SmartFieldProps> = ({
   isSelect,
   isTextArea,
-  isNumEndereco,
+  isPrice,
   withInputMask,
   required,
   fieldName,
@@ -51,6 +48,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
   placeholderOption,
   inputWidth,
   isPassword,
+  isDate,
   generatePassword,
   ...rest
 }) => {
@@ -66,14 +64,14 @@ const SmartField: React.FC<SmartFieldProps> = ({
         className="flex justify-between items-center"
       >
         <span className="text-xl pb-2 font-light">{fieldText}:</span>
-        {isSelect || isPassword ? (
+        {isSelect || isPassword || isPrice ? (
             error && (
-              <span className="text-red-500 text-xs">{error}</span>
+              <span className={`text-red-500 ${error === "*" ? "text-base" : "text-xs"}`}>{error}</span>
             )
         ) : (
           <>
-            <Form.Message className="text-red-500 text-xs" match="valueMissing">
-              {isNumEndereco ? "*" : "Campo obrigatório*"}
+            <Form.Message className="text-red-500 text-base" match="valueMissing">
+              *
             </Form.Message>
             <Form.Message className="text-red-500 text-xs" match="typeMismatch">
               Insira um e-mail válido*
@@ -133,7 +131,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
               Gerar Senha
             </button>
           </div>
-        ) : (
+        ) :  (
           <Form.Control asChild>
             {isTextArea ? (
               <textarea
@@ -146,24 +144,45 @@ const SmartField: React.FC<SmartFieldProps> = ({
                 required={required}
                 className="bg-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
               />
+            ) : withInputMask ? (
+              <InputMask
+                {...(rest as InputMaskProps)}
+                name={regex(fieldName)}
+                id={regex(fieldName)}
+                required={required}
+                className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
+              />
+            ) : isPrice ? (
+              <NumericFormat
+                {...(rest as NumericFormatProps)}
+                name={regex(fieldName)}
+                id={regex(fieldName)}
+                required={required}
+                thousandSeparator="."
+                decimalSeparator=","
+                prefix="R$ "
+                decimalScale={2}
+                fixedDecimalScale
+                allowNegative={false}
+                className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 shadow-xl`}
+              />
+            ) : isDate ? (
+              <input
+                type="date"
+                {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+                name={regex(fieldName)}
+                id={regex(fieldName)}
+                required={required}
+                className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 shadow-xl`}
+              />
             ) : (
-              withInputMask ? (
-                <InputMask
-                  {...(rest as InputMaskProps)}
-                  name={regex(fieldName)}
-                  id={regex(fieldName)}
-                  required={required}
-                  className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
-                />
-              ) : (
-                <input
-                  {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
-                  name={regex(fieldName)}
-                  id={regex(fieldName)}
-                  required={required}
-                  className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
-                />
-              )
+              <input
+                {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+                name={regex(fieldName)}
+                id={regex(fieldName)}
+                required={required}
+                className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
+              />
             )}
           </Form.Control>
         )}
