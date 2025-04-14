@@ -51,6 +51,7 @@ if ($sta_id === null) {
 }
 
 // Cadastro do cliente
+
 $stmt = $conn->prepare("INSERT INTO clientes (cliente_nome, cliente_cpf_cnpj, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_cidade, cliente_estado, cliente_cep, status, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $stmt->bind_param("sssssssssis", 

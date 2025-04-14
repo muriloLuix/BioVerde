@@ -1,5 +1,7 @@
 <?php
 
+ini_set("display_errors",1);
+
 include("../cors.php");
 include("ambiente.inc.php");
 include("../log/log.php");
@@ -47,8 +49,7 @@ function verificarNivel($conn, $nivel) {
     $stmt->bind_param("s", $nivel);
     $stmt->execute();
     $result = $stmt->get_result();
-    if ($result->num_rows === 0) {
-        return ["success" => false, "message" => "Nível de acesso não encontrado."];
+    if ($result->num_rows === 0) {return ["success" => false, "message" => "Nível de acesso não encontrado."];
     }
     $nivel = $result->fetch_assoc();
     $stmt->close();
@@ -191,6 +192,8 @@ function buscarStatus($conn) {
 
     return $status;
 }
+
+
 // listar_usuarios.php
 
 function buscarUsuarios($conn) {
@@ -621,6 +624,14 @@ function obterIdStatusPorNome($conn, $nomeStatus) {
     return $row['sta_id'];
 }
 
+/**
+ * Busca um usuário pelo seu ID
+ * 
+ * @param mysqli $conn Conex o com o banco de dados
+ * @param int $user_id ID do usu rio a ser buscado
+ * 
+ * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
+ */
 function buscarUsuarioPorId($conn, $user_id) {
     $stmt = $conn->prepare("
         SELECT 
@@ -628,8 +639,7 @@ function buscarUsuarioPorId($conn, $user_id) {
             u.user_nome, 
             u.user_email, 
             u.user_telefone, 
-            u.user_CPF, 
-            c.car_nome, 
+            u.user_CPF, c.car_nome, 
             n.nivel_nome, 
             s.sta_nome,
             u.user_dtcadastro, 
@@ -892,7 +902,7 @@ function buscarFornecedoresComFiltros($conn, $filtros) {
         $modifiedWhere = [];
         foreach ($filtros['where'] as $condition) {
             if (strpos($condition, 'fornecedor_dtcadastro') !== false) {
-                // Substituir fornecedor_dtcadastro por DATE(fornecedor_dtcadastro)
+                // Substituir forneced por DATE(fornecedor_dtcadastro)
                 $condition = preg_replace('/fornecedor_dtcadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(fornecedor_dtcadastro) $1', $condition);
             }
             $modifiedWhere[] = $condition;
@@ -1040,7 +1050,7 @@ function deletarFornecedor($conn, $fornecedor_id) {
     return ['success' => true];
 }
 
-// cadastrar.cliente.php
+// cadastrar_clientes.php
 
 function verificarEmailCnpjCpfCliente($conn, $email, $cpf_cnpj) {
     $stmt = $conn->prepare("SELECT cliente_email, cliente_cpf_cnpj FROM clientes WHERE cliente_email = ? OR cliente_cpf_cnpj = ?");
@@ -1132,7 +1142,7 @@ function buscarClientes($conn) {
             cliente_numendereco,
             cliente_estado,
             cliente_cidade,
-            a.status,
+            b.sta_nome,
             cliente_observacoes,
             cliente_data_cadastro,
             pedido_id
@@ -1152,6 +1162,177 @@ function buscarClientes($conn) {
     return $fornecedores;
 }
 
+// filtro.cliente.php
+
+function construirFiltrosCliente($data) {
+    $mapaFiltros = [
+        "fnome_cliente"  => "cliente_nome",   
+        "fcpf_cnpj" => "cliente_cpf_cnpj", 
+        "ftel"   => "cliente_telefone",
+        "fcidade" => "cliente_cidade",
+        "festado" => "cliente_estado",
+        "fdataCadastro" => "cliente_data_cadastro",
+        "fstatus" => "status",
+    ];
+
+    $where = [];
+    $valores = [];
+    $tipos = "";
+
+    foreach ($mapaFiltros as $param => $coluna) {
+        if (!empty($data[$param])) {
+            // Verifica se o filtro é do tipo "like" (para nome, por exemplo)
+            if (in_array($param, ["fnome_cliente", "fcidade", "festado"])) {
+                $where[] = "LOWER($coluna) LIKE LOWER(?)";
+                $valores[] = '%' . trim($data[$param]) . '%';
+                $tipos .= "s";
+            } else {
+                $where[] = "$coluna = ?";
+                $valores[] = trim($data[$param]);
+                $tipos .= "s";
+            }
+        }
+    }
+
+    return [
+        'where' => $where,
+        'valores' => $valores,
+        'tipos' => $tipos
+    ];
+}
+
+
+function buscarClientesComFiltros($conn, $filtros) {
+
+    $sql = "SELECT cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade,";
+    $sql .= " status, cliente_data_cadastro, pedido_id, cliente_observacoes";
+    $sql .= " FROM clientes a";
+    $sql .= " LEFT JOIN status b ON a.status = b.sta_id";
+
+    if (!empty($filtros['where'])) {
+        // Modificar as condições que envolvem fornecedor_dtcadastro
+        $modifiedWhere = [];
+        foreach ($filtros['where'] as $condition) {
+            if (strpos($condition, 'cliente_data_cadastro') !== false) {
+                // Substituir cliente_data_cadastro por DATE(cliente_data_cadastro)
+                $condition = preg_replace('/cliente_data_cadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(cliente_data_cadastro) $1', $condition);
+            }
+            $modifiedWhere[] = $condition;
+        }
+        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    if (!empty($filtros['valores'])) {
+        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $clientes = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    return $clientes;
+}
+
+// editar.cliente.php
+
+function verificarClienteExiste($conn, $cliente_id) {
+    $stmt = $conn->prepare("SELECT cliente_id FROM clientes WHERE cliente_id = ?");
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    $stmt->bind_param("i", $cliente_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $existe = $result->num_rows > 0;
+    $stmt->close();
+    return $existe;
+}
+
+function atualizarCliente($conn, $cliente_id, $dados) {
+    // Campos básicos
+    $campos = [
+        'cliente_nome' => $dados['nome_cliente'],
+        'cliente_email' => $dados['email'],
+        'cliente_telefone' => $dados['tel'],
+        'cliente_cpf_cnpj' => $dados['cnpj'],
+        'status' => $dados['status'] ?? null,
+        'cliente_cep' => $dados['cep'],
+        'cliente_endereco' => $dados['endereco'],
+        'cliente_numendereco' => $dados['num_endereco'],
+        'cliente_estado' => $dados['estado'],
+        'cliente_cidade' => $dados['cidade'],
+        'obs' => $dados['obs'],
+    ];
+    
+    
+    // Prepara os campos para a query
+    $sets = [];
+    $tipos = '';
+    $valores = [];
+    
+    foreach ($campos as $campo => $valor) {
+        if ($valor !== null) {
+            $sets[] = "$campo = ?";
+            $tipos .= is_int($valor) ? 'i' : 's';
+            $valores[] = $valor;
+        }
+    }
+    
+    // Adiciona o fornecedor_id no final
+    $valores[] = $cliente_id;
+    $tipos .= 'i';
+    
+    $sql = "UPDATE clientes SET " . implode(', ', $sets) . " WHERE cliente_id = ?";
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
+    }
+    
+    $stmt->bind_param($tipos, ...$valores);
+    $stmt->execute();
+    
+    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
+        // Considera sucesso mesmo se nada foi alterado (valores iguais)
+        return ["success" => true];
+    } else {
+        return ["success" => false, "message" => "Nenhum registro atualizado."];
+    }
+}
+
+function buscarClientePorId($conn, $user_id) {
+    $stmt = $conn->prepare("
+        SELECT 
+            cliente_id,
+            cliente_nome,
+            cliente_email,
+            cliente_telefone,
+            cliente_cpf_cnpj,
+            status,
+            cliente_data_cadastro,
+            cliente_cep,
+            cliente_endereco,
+            cliente_numendereco,
+            cliente_estado,
+            cliente_cidade,
+            cliente_obs
+        FROM clientes u 
+        LEFT JOIN status s ON u.sta_id = s.sta_id
+        WHERE u.user_id = ?
+    ");
+    
+    if (!$stmt) {
+        return null;
+    }
+    
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc();
+}
 
 ?>
 

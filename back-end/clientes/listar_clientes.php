@@ -12,7 +12,7 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar fornecedores
+    // Buscar Clientes
     $clientes = buscarClientes($conn);
 
     $status = buscarStatus($conn);

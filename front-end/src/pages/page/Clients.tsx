@@ -31,7 +31,7 @@ interface Cliente {
   cliente_status: string;
   cliente_cep: string;
   cliente_endereco: string;
-  cliente_num_endereco: string;
+  cliente_numendereco: string;
   estado_nome: string;
   cliente_cidade: string;
   cliente_observacoes: string;
@@ -135,7 +135,7 @@ export default function Clients() {
       endereco: cliente.cliente_endereco,
       estado: cliente.estado_nome,
       cidade: cliente.cliente_cidade,
-      num_endereco: cliente.cliente_num_endereco,
+      num_endereco: cliente.cliente_numendereco,
       obs: cliente.cliente_observacoes,
     });
     setOpenEditModal(true);
