@@ -539,7 +539,7 @@ export default function InventoryControl() {
           <Tabs.Content value="list" className="flex flex-col w-full">
             <Form.Root className="flex flex-col gap-4" onSubmit={handleFilterSubmit}>
               <h2 className="text-3xl">Filtros:</h2>
-              <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-8 max-w-[996px]">
                 <div className="flex justify-between">
 
                   <SmartField

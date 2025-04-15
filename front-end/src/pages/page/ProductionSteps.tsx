@@ -1,97 +1,66 @@
-import { Tabs, Form, Select, Dialog } from "radix-ui";
+import { Tabs, Form } from "radix-ui";
 import { useState } from "react";
-import {
-  Plus,
-  ChevronDown,
-  Check,
-  PencilLine,
-  Eye,
-  Trash,
-  Search,
-} from "lucide-react";
+import { Plus, PencilLine, Trash, Eye, Search, Loader2 } from "lucide-react";
+import axios from "axios";
 
-interface Step {
-  name: string;
-  code: string;
-  order: number;
-  responsible: string;
-  status: string;
-  material: string;
-  time: string;
-  obs: string;
-}
+import { SmartField } from "../../shared";
+// import { ConfirmationModal } from "../../shared";
+import { Modal } from "../../shared";
+import { NoticeModal } from "../../shared";
+
+// interface Etapa {
+//   etapa_id: number;
+//   etapa_ordem: number;
+//   produto_nome: string;
+//   etapa_nome: string;
+//   etapa_responsavel: string;
+//   etapa_tempo: string;
+//   etapa_observacoes: string;
+// }
 
 export default function ProductionSteps() {
   const [activeTab, setActiveTab] = useState("list");
   const [activeProductTab, setActiveProductTab] = useState("1");
-
-  const [modalContent, setModalContent] = useState("");
-  const [modalTitle, setModalTitle] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = (title: string, content: string) => {
-    setModalTitle(title);
-    setModalContent(content);
-    setIsModalOpen(true);
-  };
-
   const [showStepForm, setShowStepForm] = useState<boolean>(false);
-  const [steps, setSteps] = useState<Step[]>([]);
-  const [newStep, setNewStep] = useState<Step>({
-    name: "",
-    code: `ETP-${steps.length + 1}`,
-    order: 0,
-    responsible: "",
-    status: "pendente",
-    material: "",
-    time: "",
+  // const [openEditModal, setOpenEditModal] = useState(false);
+  // const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  // const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openObsModal, setOpenObsModal] = useState(false);
+  // const [currentObs, setCurrentObs] = useState("");
+  const [openNoticeModal, setOpenNoticeModal] = useState(false);
+  const [message, setMessage] = useState("");
+  const [successMsg, setSuccessMsg] = useState(false);
+  const [loading, setLoading] = useState<Set<string>>(new Set());
+  // const [etapas, setEtapas] = useState<Etapa[]>([]);
+  const [formData, setFormData] = useState({
+    produto_nome: "",
+    id: 0,
+    ordem: 0,
+    nome_etapa: "",
+    tempo: "",
+    insumos: "",
+    responsavel: "",
     obs: "",
   });
+  const [stepData, setStepData] = useState<typeof formData[]>([]);  
+  const [deleteStep, setDeleteStep] = useState({
+    step_id: 0,
+    dnome_cliente: "",
+    reason: "",
+  });
 
-  const handleStepChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // const handleObsClick = (etapa: Etapa) => {
+  //   setCurrentObs(etapa.etapa_observacoes);
+  //   setOpenObsModal(true);
+  // };
+
+  const handleChange = (
+    event: | React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = event.target;
 
-    setNewStep((prev) => ({
-      ...prev,
-      [name === "stepName"
-        ? "name"
-        : name === "stepCode"
-        ? "code"
-        : name === "stepOrder"
-        ? "order"
-        : name === "stepResponsible"
-        ? "responsible"
-        : name === "stepMaterial"
-        ? "material"
-        : name === "stepEstimatedTime"
-        ? "time"
-        : name === "stepObservations"
-        ? "obs"
-        : name]: name === "requestOrder" ? Number(value) : value,
-    }));
-  };
-
-  const handleStatusChange = (value: string) => {
-    setNewStep((prev) => ({ ...prev, status: value }));
-  };
-
-  const handleSaveStep = () => {
-    if (newStep.name && newStep.order > 0 && newStep.responsible) {
-      setSteps([...steps, { ...newStep, code: `ETP-${steps.length + 1}` }]);
-      setShowStepForm(false);
-      setNewStep({
-        name: "",
-        code: `ETP-${steps.length + 2}`,
-        order: 0,
-        responsible: "",
-        status: "pendente",
-        material: "",
-        time: "",
-        obs: "",
-      });
-    }
+    setFormData({ ...formData, [name]: value });
+    setDeleteStep({ ...deleteStep, [name]: value });
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -102,6 +71,86 @@ export default function ProductionSteps() {
       });
     }
   };
+
+  console.log(stepData)
+
+  //Função ap cadastrar uma etapa de um produto
+  const handleSaveStep = () => {
+    const newStep = {
+      ...formData,
+      id: Date.now(), // id temporário
+      ordem: stepData.length + 1,
+    };
+  
+    setStepData([...stepData, newStep]);
+  
+    setFormData({
+      produto_nome: formData.produto_nome,
+      id: 0,
+      ordem: 0,
+      nome_etapa: "",
+      tempo: "",
+      insumos: "",
+      responsavel: "",
+      obs: "",
+    });
+  
+    setShowStepForm(false); 
+  };
+  
+
+  //Submit de cadastrar a etapa de produção completa
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading((prev) => new Set([...prev, "submit"]));
+    setSuccessMsg(false);
+
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/etapas/cadastrar_etapas.php",
+        formData,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Resposta do back-end:", response.data);
+
+      if (response.data.success) {
+        // await refreshData();
+        setSuccessMsg(true);
+        setMessage("Etapa cadastrado com sucesso!");
+        // clearFormData();
+      } else {
+        setMessage(response.data.message || "Erro ao cadastrar etapa");
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          errorMessage = error.response.data.message || "Erro no servidor";
+          console.error("Erro na resposta:", error.response.data);
+        } else {
+          console.error("Erro na requisição:", error.message);
+        }
+      } else {
+        console.error("Erro desconhecido:", error);
+      }
+
+      setMessage(errorMessage);
+    } finally {
+      setOpenNoticeModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("submit");
+        return newLoading;
+      });
+    }
+  };
+  
 
   const [search, setSearch] = useState("");
   const products = [
@@ -115,7 +164,6 @@ export default function ProductionSteps() {
       order: 1,
       name: "Preparação",
       code: "PR001",
-      status: "Em andamento",
       time: "2h",
       material: "Adubo orgânico",
       responsible: "João",
@@ -125,7 +173,6 @@ export default function ProductionSteps() {
       order: 2,
       name: "Colheita",
       code: "CL002",
-      status: "Pendente",
       time: "3h",
       material: "Tesoura agrícola",
       responsible: "Maria",
@@ -135,7 +182,6 @@ export default function ProductionSteps() {
       order: 3,
       name: "Seleção",
       code: "SL003",
-      status: "Não iniciado",
       time: "1h30",
       material: "Balde e peneira",
       responsible: "Carlos",
@@ -145,7 +191,6 @@ export default function ProductionSteps() {
       order: 4,
       name: "Embalagem",
       code: "EM004",
-      status: "Não iniciado",
       time: "2h",
       material: "Caixas biodegradáveis",
       responsible: "Ana",
@@ -155,7 +200,6 @@ export default function ProductionSteps() {
       order: 5,
       name: "Transporte",
       code: "TR005",
-      status: "Não iniciado",
       time: "4h",
       material: "Caminhão refrigerado",
       responsible: "Roberto",
@@ -197,12 +241,16 @@ export default function ProductionSteps() {
             </Tabs.Trigger>
           </Tabs.List>
 
-          {activeTab === "list" && (
+          {/* Cadastrar Etapa */}
+          <Tabs.Content
+            value="list"
+            className="flex flex-col w-full"
+          >
             <div className="flex items-center justify-center">
-              <div className="flex flex-col w-full">
-                <div className="flex w-full max-w-[1100px] h-[68vh] mb-10">
+              <div className="flex flex-col">
+                <div className="flex w-full max-h-[60vh] mb-10">
                   {/* NavBar Estrutura de produtos */}
-                  <div className="w-1/4 bg-gray-200 rounded-xl sombra">
+                  <div className="max-w-[1100px] bg-gray-200 rounded-xl sombra">
                     <div className="bg-green-800 p-4 rounded-t-xl">
                       <h2 className="text-white text-center text-lg font-semibold">
                         Etapas de Produção
@@ -243,6 +291,7 @@ export default function ProductionSteps() {
                         ))}
                     </div>
                   </div>
+
                   <div className="w-3/4 px-15">
                     {products.map(
                       (product) =>
@@ -260,12 +309,10 @@ export default function ProductionSteps() {
                                       "Ordem",
                                       "Nome da Etapa",
                                       "Código",
-                                      "Status",
                                       "Tempo Estimado",
                                       "Insumos Utilizados",
                                       "Responsável",
-                                      "Data Início",
-                                      "Data Conclusão",
+                                      "Data de Cadastro",
                                       "Observações",
                                       "Ações",
                                     ].map((header) => (
@@ -298,9 +345,6 @@ export default function ProductionSteps() {
                                         {step.code}
                                       </td>
                                       <td className="border border-black px-4 py-2 whitespace-nowrap">
-                                        {step.status}
-                                      </td>
-                                      <td className="border border-black px-4 py-2 whitespace-nowrap">
                                         {step.time}
                                       </td>
                                       <td className="border border-black px-4 py-2 whitespace-nowrap">
@@ -311,9 +355,6 @@ export default function ProductionSteps() {
                                       </td>
                                       <td className="border border-black px-4 py-2 whitespace-nowrap">
                                         {new Date().toLocaleDateString("pt-BR")}
-                                      </td>
-                                      <td className="border border-black px-4 py-2 whitespace-nowrap">
-                                        27/03/2025
                                       </td>
                                       <td className="border border-black px-4 py-2 text-center">
                                         <button
@@ -351,363 +392,213 @@ export default function ProductionSteps() {
                         )
                     )}
                   </div>
+
                 </div>
               </div>
             </div>
-          )}
-
-          {activeTab === "register" && (
+          </Tabs.Content>
+          
+          {/* Cadastro de etapa */}
+          <Tabs.Content
+            value="register"
+            className="flex items-center justify-center"
+          >
             <div className="flex items-center justify-center">
-              <Form.Root className="flex flex-col mb-10">
+              <Form.Root className="flex flex-col mb-10" onSubmit={handleSubmit}>
                 <h2 className="text-3xl mb-8">Cadastrar Etapa de Produção</h2>
-                <div className="flex gap-10 mb-8">
-                  <Form.Field name="stepProduct" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">
-                        Produto Final:
-                      </span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="stepProduct"
-                        id="stepProduct"
-                        placeholder="Nome do Produto"
-                        required
-                        className="bg-white w-[500px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                <div className="flex mb-8">
+
+                  <SmartField
+                    fieldName="produto_nome"
+                    fieldText="Produto Final"
+                    type="text"
+                    required
+                    placeholder="Nome do Produto final a ser produzido"
+                    value={formData.produto_nome}
+                    onChange={handleChange}
+                    inputWidth="w-[500px]"
+                  />
+
                 </div>
                 <div>
                   <div>
                     <h3 className="text-xl font-semibold mb-5">
                       Etapas de produção:
                     </h3>
-                    {steps.length !== 0 && (
+                    {stepData.length !== 0 && (
                       <div className="max-w-[60vw] overflow-x-auto max-h-[300px] overflow-y-auto mb-10">
                         <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-verdePigmento text-white shadow-thead">
-                              {[
-                                "Ordem",
-                                "Nome da Etapa",
-                                "Código",
-                                "Status",
-                                "Tempo Estimado",
-                                "Insumos Utilizados",
-                                "Responsável",
-                                "Data Início",
-                                "Data Conclusão",
-                                "Observações",
-                                "Ações",
-                              ].map((header) => (
-                                <th
-                                  key={header}
-                                  className="border border-black px-2 py-2 whitespace-nowrap"
-                                >
-                                  {header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {steps.map((step, index) => (
-                              <tr
-                                key={step.order}
-                                className={
-                                  index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-                                }
+                        {/* Tabela Cabeçalho */}
+                        <thead>
+                          <tr className="bg-verdePigmento text-white shadow-thead">
+                            {[
+                              "Ordem",
+                              "Nome da Etapa",
+                              "Tempo Estimado",
+                              "Insumos Utilizados",
+                              "Responsável",
+                              "Observações",
+                              "Ações",
+                            ].map((header) => (
+                              <th
+                                key={header}
+                                className="border border-black px-4 py-4 whitespace-nowrap"
                               >
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.order}
-                                </td>
-                                <td className="border border-black px-2 py-2 whitespace-nowrap">
-                                  {step.name}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.code}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.status}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.time}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.material}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {step.responsible}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {new Date().toLocaleDateString("pt-BR")}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  {"27/03/2025"}
-                                </td>
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  <button
-                                    className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                                    onClick={() =>
-                                      openModal("Observações", step.obs)
-                                    }
-                                  >
-                                    <Eye />
-                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                      Ver
-                                    </div>
-                                  </button>
-                                </td>
-
-                                {/* Ações */}
-                                <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                  <button className="mr-4 text-black cursor-pointer relative group">
-                                    <PencilLine />
-                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                      Editar
-                                    </div>
-                                  </button>
-                                  <button className="text-red-500 cursor-pointer relative group">
-                                    <Trash />
-                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                      Excluir
-                                    </div>
-                                  </button>
-                                </td>
-                              </tr>
+                                {header}
+                              </th>
                             ))}
-                          </tbody>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Tabela Dados */}
+                          {stepData.map((step, index) => (
+                            <tr
+                              key={step.id}
+                              className={
+                                index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
+                              }
+                            >
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{step.ordem}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{step.nome_etapa}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{step.tempo}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{step.insumos}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{step.responsavel}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                <button
+                                  className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                  // onClick={() => handleObsClick(step)}
+                                  onClick={() => setOpenObsModal(true)}
+                                >
+                                  <Eye />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Ver
+                                  </div>
+                                </button>
+                              </td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                <button
+                                  className="mr-4 text-black cursor-pointer relative group"
+                                  // onClick={() => handleEditClick(step)}
+                                >
+                                  <PencilLine />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Editar
+                                  </div>
+                                </button>
+                                <button
+                                  className="text-red-500 cursor-pointer relative group"
+                                  // onClick={() => handleDeleteClick(step)}
+                                >
+                                  <Trash />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Excluir
+                                  </div>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
                         </table>
                       </div>
                     )}
+                    {/* Modal de Observações */}
+                    <Modal
+                      withExitButton
+                      openModal={openObsModal}
+                      setOpenModal={setOpenObsModal}
+                      modalWidth="min-w-[300px] max-w-[500px]"
+                      modalTitle="Observações"
+                      obsText={formData.obs}
+                    />
                   </div>
                   {showStepForm ? (
                     <div className="bg-gray-100 p-5 rounded-md shadow-xl mb-10">
                       <div className="flex gap-10 mb-8">
-                        <Form.Field
-                          name="stepName"
-                          className="flex flex-col w-full"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Nome da Etapa:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="text"
-                              name="stepName"
-                              id="stepName"
-                              placeholder="Nome da Etapa"
-                              value={newStep.name}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border w-[400px] border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
-                        <Form.Field
-                          name="stepCode"
-                          className="flex flex-col w-full"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Código:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="text"
-                              name="stepCode"
-                              id="stepCode"
-                              placeholder="Código"
-                              value={newStep.code}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
-                        <Form.Field
-                          name="stepOrder"
-                          className="flex flex-col w-full"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Ordem Etapa:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="number"
-                              name="stepOrder"
-                              id="stepOrder"
-                              placeholder="Ordem da Etapa"
-                              value={newStep.order}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border w-[200px] border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
-                      </div>
-                      <div className="flex gap-10 mb-8">
-                        <Form.Field
-                          name="stepResponsible"
-                          className="flex flex-col w-full"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Responsável:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="text"
-                              name="stepResponsible"
-                              id="stepResponsible"
-                              placeholder="Nome do Responsável"
-                              value={newStep.responsible}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
-                        <Form.Field name="stepStatus" className="flex flex-col">
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Status:
-                            </span>
-                          </Form.Label>
-                          <Select.Root
-                            value={newStep.status}
-                            onValueChange={handleStatusChange}
-                          >
-                            <Form.Control asChild>
-                              <Select.Trigger className="bg-white w-[250px] border border-separator rounded-lg p-2.5 shadow-xl flex justify-between items-center cursor-pointer">
-                                <Select.Value placeholder="Selecione um status" />
-                                <Select.Icon className="ml-2">
-                                  <ChevronDown className="w-4 h-4 text-gray-600" />
-                                </Select.Icon>
-                              </Select.Trigger>
-                            </Form.Control>
-                            <Select.Portal>
-                              <Select.Content className="bg-white border border-separator rounded-lg shadow-xl w-[250px]">
-                                <Select.Viewport className="p-2">
-                                  {[
-                                    { value: "pendente", label: "Pendente" },
-                                    {
-                                      value: "andamento",
-                                      label: "Em andamento",
-                                    },
-                                    { value: "concluido", label: "Concluído" },
-                                  ].map((status) => (
-                                    <Select.Item
-                                      key={status.value}
-                                      value={status.value}
-                                      className="p-2 flex items-center justify-between cursor-pointer hover:bg-gray-200 rounded-md"
-                                    >
-                                      <Select.ItemText>
-                                        {status.label}
-                                      </Select.ItemText>
-                                      <Select.ItemIndicator>
-                                        <Check className="w-4 h-4 text-green-500" />
-                                      </Select.ItemIndicator>
-                                    </Select.Item>
-                                  ))}
-                                </Select.Viewport>
-                              </Select.Content>
-                            </Select.Portal>
-                          </Select.Root>
-                        </Form.Field>
-                      </div>
-                      <div className="flex gap-10 mb-8">
-                        <Form.Field
-                          name="stepMaterial"
-                          className="flex flex-col w-full"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Insumos Utilizados:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="text"
-                              name="stepMaterial"
-                              id="stepMaterial"
-                              placeholder="Insumos Utilizados"
-                              value={newStep.material}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
-                        <Form.Field
-                          name="stepEstimatedTime"
-                          className="flex flex-col"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Tempo Estimado:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              type="text"
-                              name="stepEstimatedTime"
-                              id="stepEstimatedTime"
-                              placeholder="Tempo Estimado"
-                              value={newStep.time}
-                              onChange={handleStepChange}
-                              required
-                              className="bg-white border w-[250px] border-separator rounded-lg p-2.5 shadow-xl"
-                            />
-                          </Form.Control>
-                        </Form.Field>
+
+                        <SmartField
+                          fieldName="nome_etapa"
+                          fieldText="Nome da Etapa"
+                          fieldClassname="flex flex-col w-full"
+                          type="text"
+                          required
+                          placeholder="Digite o Nome da Etapa"
+                          value={formData.nome_etapa}
+                          onChange={handleChange}
+                          inputWidth="w-[700px]"
+                        />
+
                       </div>
 
                       <div className="flex gap-10 mb-8">
-                        <Form.Field
-                          name="stepObservations"
-                          className="w-full flex flex-col"
-                        >
-                          <Form.Label asChild>
-                            <span className="text-xl pb-2 font-light">
-                              Observações:
-                            </span>
-                          </Form.Label>
-                          <Form.Control asChild>
-                            <input
-                              id="stepObservations"
-                              name="stepObservations"
-                              // rows={3}
-                              // cols={50}
-                              value={newStep.obs}
-                              onChange={handleStepChange}
-                              placeholder="Digite as observações da Etapa"
-                              maxLength={500}
-                              className="g-white border resize-none border-separator rounded-lg p-2.5 shadow-xl"
-                            ></input>
-                          </Form.Control>
-                        </Form.Field>
+
+                        <SmartField
+                          fieldName="responsavel"
+                          fieldText="Responsável"
+                          fieldClassname="flex flex-col w-full"
+                          type="text"
+                          required
+                          placeholder="Digite o Nome do Responsável"
+                          value={formData.responsavel}
+                          onChange={handleChange}
+                        />
+
+                        <SmartField
+                          fieldName="tempo"
+                          fieldText="Tempo Estimado"
+                          type="text"
+                          required
+                          placeholder="Tempo Estimado da etapa"
+                          value={formData.tempo}
+                          onChange={handleChange}
+                          inputWidth="w-[250px]"
+                        />
+
+                      </div>
+
+                      <div className="flex mb-8">
+
+                        <SmartField
+                          fieldName="insumos"
+                          fieldText="Insumos Utilizados"
+                          fieldClassname="flex flex-col w-full"
+                          type="text"
+                          required
+                          placeholder="Insumos Utilizados na etapa"
+                          value={formData.insumos}
+                          onChange={handleChange}
+                        />
+                      
+                      </div>
+
+                      <div className="flex mb-8">
+
+                        <SmartField
+                          isTextArea
+                          fieldName="obs"
+                          fieldText="Observações"
+                          fieldClassname="flex flex-col w-full"
+                          placeholder="Digite as observações da Etapa"
+                          value={formData.obs}
+                          onChange={handleChange}
+                          rows={2}
+                        />
+
                       </div>
 
                       <div className="flex justify-center items-center gap-5">
+
                         <button
                           type="button"
+                          className="bg-verdeMedio p-3 px-7 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
                           onClick={handleSaveStep}
-                          className="bg-verdeMedio p-3 px-7 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
                         >
                           Salvar
                         </button>
+
                         <button
                           type="button"
                           onClick={() => setShowStepForm(false)}
-                          className="bg-red-700 p-3 px-7 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-red-800"
+                          className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
                         >
                           Cancelar
                         </button>
@@ -727,14 +618,18 @@ export default function ProductionSteps() {
                           <Plus /> Adicionar Etapa
                         </button>
                       </div>
-                      {steps.length !== 0 && (
+                      {stepData.length !== 0 && (
                         <Form.Submit asChild>
                           <div className="flex place-content-center mt-10 ">
                             <button
                               type="submit"
                               className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama "
                             >
-                              Cadastrar Etapas de Produção
+                              {loading.has("submit") ? (
+                                <Loader2 className="animate-spin h-6 w-6" />
+                              ) : (
+                                "Cadastrar Etapas de Produção"
+                              )}
                             </button>
                           </div>
                         </Form.Submit>
@@ -742,32 +637,19 @@ export default function ProductionSteps() {
                     </div>
                   )}
                 </div>
-                {/* Modal (Pop-up) */}
-                <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <Dialog.Portal>
-                    <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
-                    <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg min-w-[300px]">
-                      <Dialog.Title className="text-xl font-bold mb-4">
-                        {modalTitle}
-                      </Dialog.Title>
-                      <Dialog.Description className="text-gray-700">
-                        {modalContent}
-                      </Dialog.Description>
-                      <div className="mt-4 flex justify-end">
-                        <button
-                          className="bg-verdeMedio text-white px-4 py-2 rounded-lg hover:bg-verdeEscuro cursor-pointer"
-                          onClick={() => setIsModalOpen(false)}
-                        >
-                          Fechar
-                        </button>
-                      </div>
-                    </Dialog.Content>
-                  </Dialog.Portal>
-                </Dialog.Root>
               </Form.Root>
             </div>
-          )}
+          </Tabs.Content>
         </Tabs.Root>
+
+        {/* Modal de Avisos */}
+        <NoticeModal
+          openModal={openNoticeModal}
+          setOpenModal={setOpenNoticeModal}
+          successMsg={successMsg}
+          message={message}
+        />
+
       </div>
     </div>
   );

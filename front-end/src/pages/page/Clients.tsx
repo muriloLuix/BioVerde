@@ -809,14 +809,14 @@ export default function Clients() {
             )}
 
             {/* Modal de Observações */}
-                      <Modal
-            withExitButton
-            openModal={openObsModal}
-            setOpenModal={setOpenObsModal}
-            modalWidth="min-w-[300px] max-w-[500px]"
-            modalTitle="Observações"
-            obsText={currentObs}  // Alterado para usar currentObs
-/>
+            <Modal
+              withExitButton
+              openModal={openObsModal}
+              setOpenModal={setOpenObsModal}
+              modalWidth="min-w-[300px] max-w-[500px]"
+              modalTitle="Observações"
+              obsText={currentObs}  
+            />
 
           </Tabs.Content>
 
