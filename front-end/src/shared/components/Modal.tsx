@@ -55,7 +55,10 @@ const Modal = ({
           <Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
             {withExitButton ? (
               <>
-              <p className="text-gray-800 break-words">{obsText}</p>
+                {obsText 
+                  ? <p className="text-gray-800 break-words">{obsText}</p> 
+                  : <p className="text-gray-800 break-words">Não há nenhuma observação.</p>
+                }
               <Dialog.Close asChild>
                 <div className="mt-4 flex justify-end"> 
                   <button
