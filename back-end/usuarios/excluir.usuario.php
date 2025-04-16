@@ -50,7 +50,7 @@ try {
     }
 
     // 2. Deleta o usuário
-    $exclusao = deletarUsuario($conn, $user_id);
+    $exclusao = deleteData($conn, $user_id, 'usuarios', 'user_id');
     if (!$exclusao['success']) {
         throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
     }

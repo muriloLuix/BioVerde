@@ -694,36 +694,6 @@ function registrarExclusaoUsuario($conn, $user_id, $dados) {
     return ['success' => true, 'insert_id' => $stmt->insert_id];
 }
 
-function deletarUsuario($conn, $user_id) {
-    $stmt = $conn->prepare("DELETE FROM usuarios WHERE user_id = ?");
-    
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar a exclusão'
-        ];
-    }
-
-    $stmt->bind_param('i', $user_id);
-    
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao executar a exclusão'
-        ];
-    }
-
-    if ($stmt->affected_rows === 0) {
-        return [
-            'success' => false,
-            'message' => 'Nenhum usuário encontrado com este ID'
-        ];
-    }
-
-    return ['success' => true];
-}
-
-
 // cadastrar_fornecedores.php
 
 
@@ -1020,35 +990,6 @@ function registrarExclusaoFornecedor($conn, $user_id, $dados) {
     }
 
     return ['success' => true, 'insert_id' => $stmt->insert_id];
-}
-
-function deletarFornecedor($conn, $fornecedor_id) {
-    $stmt = $conn->prepare("DELETE FROM fornecedores WHERE fornecedor_id = ?");
-    
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar a exclusão'
-        ];
-    }
-
-    $stmt->bind_param('i', $fornecedor_id);
-    
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao executar a exclusão'
-        ];
-    }
-
-    if ($stmt->affected_rows === 0) {
-        return [
-            'success' => false,
-            'message' => 'Nenhum usuário encontrado com este ID'
-        ];
-    }
-
-    return ['success' => true];
 }
 
 // cadastrar_clientes.php
@@ -1391,6 +1332,35 @@ function deletarCliente($conn, $cliente_id) {
 
     $stmt->bind_param('i', $cliente_id);
     
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao executar a exclusão'
+        ];
+    }
+
+    if ($stmt->affected_rows === 0) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum usuário encontrado com este ID'
+        ];
+    }
+
+    return ['success' => true];
+}
+
+function deleteData($conn, $id, $tabela, $pk){
+    $stmt = $conn->prepare('DELETE FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
+
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar a exclusão'
+        ];
+    }
+
+    $stmt->bind_param('i', $id);
+
     if (!$stmt->execute()) {
         return [
             'success' => false,

@@ -52,7 +52,7 @@ try {
     }
 
     // 2. Deleta o usuário
-    $exclusao = deletarFornecedor($conn, $fornecedor_id);
+    $exclusao = deleteData($conn, $fornecedor_id, 'fornecedores', "fornecedor_id");
     if (!$exclusao['success']) {
         throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
     }
