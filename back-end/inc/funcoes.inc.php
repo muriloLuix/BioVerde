@@ -871,7 +871,7 @@ function construirFiltrosFornecedores($data) {
 
     foreach ($mapaFiltros as $param => $coluna) {
         if (!empty($data[$param])) {
-            if ($param === "fname") {
+            if ($param === "fnome_empresa") {
                 $where[] = "LOWER($coluna) LIKE LOWER(?)";
                 $valores[] = '%' . trim($data[$param]) . '%';
                 $tipos .= "s";
@@ -889,6 +889,7 @@ function construirFiltrosFornecedores($data) {
         'tipos' => $tipos
     ];
 }
+
 
 function buscarFornecedoresComFiltros($conn, $filtros) {
 
@@ -1205,7 +1206,7 @@ function construirFiltrosCliente($data) {
 function buscarClientesComFiltros($conn, $filtros) {
 
     $sql = "SELECT cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade,";
-    $sql .= " status, cliente_data_cadastro, pedido_id, cliente_observacoes";
+    $sql .= " b.sta_nome, cliente_data_cadastro, pedido_id, cliente_observacoes";
     $sql .= " FROM clientes a";
     $sql .= " LEFT JOIN status b ON a.status = b.sta_id";
 
@@ -1257,14 +1258,14 @@ function atualizarCliente($conn, $cliente_id, $dados) {
         'cliente_nome' => $dados['nome_cliente'],
         'cliente_email' => $dados['email'],
         'cliente_telefone' => $dados['tel'],
-        'cliente_cpf_cnpj' => $dados['cnpj'],
+        'cliente_cpf_cnpj' => $dados['cpf_cnpj'],
         'status' => $dados['status'] ?? null,
         'cliente_cep' => $dados['cep'],
         'cliente_endereco' => $dados['endereco'],
         'cliente_numendereco' => $dados['num_endereco'],
         'cliente_estado' => $dados['estado'],
         'cliente_cidade' => $dados['cidade'],
-        'obs' => $dados['obs'],
+        'cliente_observacoes' => $dados['obs'],
     ];
     
     
@@ -1303,35 +1304,108 @@ function atualizarCliente($conn, $cliente_id, $dados) {
     }
 }
 
-function buscarClientePorId($conn, $user_id) {
+function buscarClientePorId($conn, $cliente_id) {
     $stmt = $conn->prepare("
         SELECT 
-            cliente_id,
-            cliente_nome,
-            cliente_email,
-            cliente_telefone,
-            cliente_cpf_cnpj,
-            status,
-            cliente_data_cadastro,
-            cliente_cep,
-            cliente_endereco,
-            cliente_numendereco,
-            cliente_estado,
-            cliente_cidade,
-            cliente_obs
-        FROM clientes u 
-        LEFT JOIN status s ON u.sta_id = s.sta_id
-        WHERE u.user_id = ?
+            c.cliente_id,
+            c.cliente_nome,
+            c.cliente_email,
+            c.cliente_telefone,
+            c.cliente_cpf_cnpj,
+            c.status,              
+            s.sta_id,             
+            s.sta_nome,            
+            c.cliente_cep,
+            c.cliente_endereco,
+            c.cliente_numendereco,
+            c.cliente_estado,
+            c.cliente_cidade,
+            c.cliente_observacoes,
+            c.cliente_data_cadastro
+        FROM clientes c
+        LEFT JOIN status s ON c.status = s.sta_id
+        WHERE c.cliente_id = ?
     ");
     
     if (!$stmt) {
+        error_log("Erro ao preparar consulta: " . $conn->error);
         return null;
     }
     
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
+    $stmt->bind_param("i", $cliente_id);
+    
+    if (!$stmt->execute()) {
+        error_log("Erro ao executar consulta: " . $stmt->error);
+        $stmt->close();
+        return null;
+    }
+    
     $result = $stmt->get_result();
-    return $result->fetch_assoc();
+    $dados = $result->fetch_assoc();
+    $stmt->close();
+    
+    // Log para depuração
+    error_log("Dados do cliente retornados: " . print_r($dados, true));
+    
+    return $dados;
+}
+
+// excluir.cliente.php
+
+function registrarExclusaoCliente($conn, $user_id, $dados) {
+    $stmt = $conn->prepare("INSERT INTO clientes_excluidos (
+        cliex_excluido, 
+        cliex_exclusao, 
+        cliex_motivo_exclusao,
+        cliex_dtexclusao
+    ) VALUES (?, ?, ?, NOW())");
+    
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar o registro de exclusão'
+        ];
+    }
+
+    $stmt->bind_param('sis', $dados['dnome_cliente'], $user_id, $dados['reason']);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao registrar a exclusão'
+        ];
+    }
+
+    return ['success' => true, 'insert_id' => $stmt->insert_id];
+}
+
+function deletarCliente($conn, $cliente_id) {
+    $stmt = $conn->prepare("DELETE FROM clientes WHERE cliente_id = ?");
+    
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar a exclusão'
+        ];
+    }
+
+    $stmt->bind_param('i', $cliente_id);
+    
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao executar a exclusão'
+        ];
+    }
+
+    if ($stmt->affected_rows === 0) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum usuário encontrado com este ID'
+        ];
+    }
+
+    return ['success' => true];
 }
 
 ?>

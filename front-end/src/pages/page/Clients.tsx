@@ -28,15 +28,16 @@ interface Cliente {
   cliente_email: string;
   cliente_telefone: string;
   cliente_cpf_cnpj: string;
-  cliente_status: string;
   cliente_cep: string;
   cliente_endereco: string;
   cliente_numendereco: string;
-  estado_nome: string;
+  cliente_estado: string;
   cliente_cidade: string;
   cliente_observacoes: string;
   cliente_data_cadastro: string;
-  sta_id?: number;
+  sta_nome?: string;  
+  sta_id?: number;   
+  status?: string;
 }
 
 export default function Clients() {
@@ -124,16 +125,22 @@ export default function Clients() {
   //função para puxar os dados do cliente que será editado
   const handleEditClick = (cliente: Cliente) => {
 
+    console.log("Dados completos do usuário:", cliente);
+    console.log("Valor do status vindo do banco:", cliente.status);
+    console.log("Valor do sta_id vindo do banco:", cliente.sta_id);
+
+    const statusId = options.status?.find(s => s.sta_nome === cliente.sta_nome)?.sta_id;
+
     setFormData({
       cliente_id: cliente.cliente_id,
       nome_cliente: cliente.cliente_nome,
       email: cliente.cliente_email,
       tel: cliente.cliente_telefone,
       cpf_cnpj: cliente.cliente_cpf_cnpj,
-      status: cliente.sta_id?.toString() || "",
+      status: statusId?.toString() || "", 
       cep: cliente.cliente_cep,
       endereco: cliente.cliente_endereco,
-      estado: cliente.estado_nome,
+      estado: cliente.cliente_estado, 
       cidade: cliente.cliente_cidade,
       num_endereco: cliente.cliente_numendereco,
       obs: cliente.cliente_observacoes,
