@@ -1,10 +1,17 @@
 <?php
 
-ini_set("display_errors",1);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 include("../cors.php");
 include("ambiente.inc.php");
 include("../log/log.php");
+require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2));
+$dotenv->load();
+
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -14,9 +21,19 @@ require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
 
-// cadastrar.usuario.php
+/********************************* FUNÇÕES AUXILIARES *************************************/
 
-function validarCampos($data, $requiredFields) {
+/**
+ * Valida se todos os campos obrigatórios estão presentes em um array de dados.
+ * 
+ * @param array $data Array de dados a ser validado.
+ * @param array $requiredFields Array com os campos obrigatórios que devem ser verificados.
+ * 
+ * @return array|null Retorna um array com chave 'success' e 'message' caso haja um erro,
+ *         ou null caso todos os campos sejam válidos.
+ */
+function validarCampos($data, $requiredFields)
+{
     foreach ($requiredFields as $field) {
         if (!isset($data[$field]) || empty($data[$field])) {
             return ["success" => false, "message" => "O campo " . $field . " é obrigatório."];
@@ -25,7 +42,17 @@ function validarCampos($data, $requiredFields) {
     return null;
 }
 
-function verificarCargo($conn, $cargo) {
+/**
+ * Verifica se um cargo existe na base de dados e retorna seu ID.
+ * 
+ * @param mysqli $conn Conex o com o banco de dados.
+ * @param string $cargo Nome do cargo a ser verificado.
+ * 
+ * @return array|integer Retorna um array com chave 'success' e 'message' caso 
+ *         haja um erro, ou o ID do cargo como inteiro caso ele seja encontrado.
+ */
+function verificarCargo($conn, $cargo)
+{
     $stmt = $conn->prepare("SELECT car_id FROM cargo WHERE car_nome = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta de cargos: " . $conn->error];
@@ -41,7 +68,18 @@ function verificarCargo($conn, $cargo) {
     return $cargo['car_id'];
 }
 
-function verificarNivel($conn, $nivel) {
+/**
+ * Verifica se um nível de acesso existe no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ * @param string $nivel Nome do nível de acesso a ser verificado.
+ *
+ * @return int|stdClass Se o nível existir, retorna o ID do nível.
+ *                       Se o nível não existir, retorna um objeto com as propriedades
+ *                       "success" => false e "message" => string com a mensagem de erro.
+ */
+function verificarNivel($conn, $nivel)
+{
     $stmt = $conn->prepare("SELECT nivel_id FROM niveis_acesso WHERE nivel_nome = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta de níveis: " . $conn->error];
@@ -49,14 +87,23 @@ function verificarNivel($conn, $nivel) {
     $stmt->bind_param("s", $nivel);
     $stmt->execute();
     $result = $stmt->get_result();
-    if ($result->num_rows === 0) {return ["success" => false, "message" => "Nível de acesso não encontrado."];
+    if ($result->num_rows === 0) {
+        return ["success" => false, "message" => "Nível de acesso não encontrado."];
     }
     $nivel = $result->fetch_assoc();
     $stmt->close();
     return $nivel['nivel_id'];
 }
 
-function verificarEmailCpf($conn, $email, $cpf) {
+/**
+ * Verifica se o e-mail ou o CPF/CNPJ ja  existe no cadastro de usuarios
+ * @param mysqli $conn conexao ao banco de dados
+ * @param string $email e-mail do usuario
+ * @param string $cpf CPF/CNPJ do usuario
+ * @return array|null retorna um array com a chave "success" como false e "message" com a mensagem de erro ou null se nao houver conflito
+ */
+function verificarEmailCpf($conn, $email, $cpf)
+{
     $stmt = $conn->prepare("SELECT user_email, user_CPF FROM usuarios WHERE user_email = ? OR user_CPF = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
@@ -76,82 +123,228 @@ function verificarEmailCpf($conn, $email, $cpf) {
  * @param string $status nome do status a ser verificado
  * @return int|null retorna o ID do status ou null se houver erro na query ou se o status não existir
  */
-function verificarStatus($conn, $status) {
+function verificarStatus($conn, $status)
+{
     $stmt = $conn->prepare("SELECT sta_id, sta_nome FROM status WHERE sta_id = ?");
     if (!$stmt) {
         return null; // Retorna null em caso de erro na query
     }
-    
+
     $stmt->bind_param("s", $status);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
         return null; // Retorna null quando status não existe
     }
-    
+
     $row = $result->fetch_assoc();
     $stmt->close();
     return $row['sta_id']; // Retorna apenas o ID
 }
 
 
-function enviarEmailCadastro($email, $data) {
+/**
+ * Registra a exclusão de um registro em uma tabela de log de exclusões.
+ * @param object $conn Conexão com o banco de dados.
+ * @param string $table Nome da tabela onde será feita a inserção.
+ * @param array $fields Array associativo com chaves e valores a serem inseridos.
+ * 
+ * @return array Retorna um array com uma chave 'success' booleana e, se houver erro,
+ *               uma chave 'message' com a descrição do erro. Caso a inserção seja
+ *               bem-sucedida, retorna também a chave 'insert_id' com o ID do registro
+ *               inserido.
+ */
+function registerDeletion($conn, $table, $fields)
+{
+    if (!is_array($fields) || empty($fields)) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum dado fornecido para registrar exclusão.'
+        ];
+    }
+
+    $columns = array_keys($fields);
+    $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+
+    // Query final sem adicionar manualmente o campo de data
+    $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES ({$placeholders})";
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Erro ao preparar a query: ' . $conn->error
+        ];
+    }
+
+    $types = '';
+    $values = [];
+
+    foreach ($fields as $value) {
+        if (is_int($value)) {
+            $types .= 'i';
+        } elseif (is_double($value)) {
+            $types .= 'd';
+        } else {
+            $types .= 's';
+        }
+        $values[] = $value;
+    }
+
+    $stmt->bind_param($types, ...$values);
+
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Erro ao executar a exclusão: ' . $stmt->error
+        ];
+    }
+
+    return ['success' => true, 'insert_id' => $stmt->insert_id];
+}
+
+/**
+ * Exclui um registro de uma tabela
+ *
+ * @param mysqli $conn      conexão com o banco de dados
+ * @param int    $id        ID do registro a ser excluido
+ * @param string $tabela    nome da tabela que contem o registro
+ * @param string $pk        nome da chave primaria da tabela
+ *
+ * @return array            resposta com um sucesso boolean e uma mensagem de erro
+ */
+function deleteData($conn, $id, $tabela, $pk)
+{
+    $stmt = $conn->prepare('DELETE FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
+
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao preparar a exclusão'
+        ];
+    }
+
+    $stmt->bind_param('i', $id);
+
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Falha ao executar a exclusão'
+        ];
+    }
+
+    if ($stmt->affected_rows === 0) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum usuário encontrado com este ID'
+        ];
+    }
+
+    return ['success' => true];
+}
+
+
+/**
+ * Envia um e-mail com base nos parâmetros informados
+ *
+ * @param array|null $from      informações de quem está enviando o e-mail
+ *                               deve conter "email" e "name" (opcional)
+ * @param string     $to        e-mail do destinatário
+ * @param string     $subject   assunto do e-mail
+ * @param string     $htmlMessage conteúdo do e-mail em HTML
+ * @param string     $plainMessage conteúdo do e-mail em texto puro (opcional)
+ *
+ * @return array               resposta com um sucesso boolean e uma mensagem de erro
+ */
+function sendEmail($from = null, $to, $subject, $htmlMessage, $plainMessage = '')
+{
     $mail = new PHPMailer(true);
+
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'bioverdesistema@gmail.com';
-        $mail->Password   = 'gfdx wwpr cnfi emjt';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Host = $_ENV['MAIL_HOST'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $_ENV['MAIL_USERNAME'];
+        $mail->Password = $_ENV['MAIL_PASSWORD'];
+        $mail->SMTPSecure = $_ENV['MAIL_ENCRYPTION'];
+        $mail->Port = $_ENV['MAIL_PORT'];
 
-        $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
-        $mail->addAddress($email);
+        $fromEmail = $from['email'] ?? $_ENV['MAIL_FROM_EMAIL'];
+        $fromName = $from['name'] ?? $_ENV['MAIL_FROM_NAME'];
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($to);
 
         $mail->isHTML(true);
         $mail->CharSet = 'UTF-8';
-        $mail->Subject = 'Bio Verde - Cadastro no Sistema';
-        $mail->Body = "
-            <html>
-            <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
-                <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
-                    <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
-                        <h1 style='color: #ffffff; font-size: 26px; margin: 0;'>Bem-vindo à Bio Verde</h1>
-                        <p style='color: #e0f2e9; font-size: 16px; margin: 10px 0 0;'>Seu cadastro foi concluído com sucesso!</p>
-                    </div>
-                    <div style='padding: 30px; color: #333333;'>
-                        <p style='font-size: 18px; line-height: 1.6;'>Olá,</p>
-                        <p style='font-size: 18px; line-height: 1.6;'>Agora você faz parte do nosso sistema! Seguem abaixo seus dados de acesso:</p>
-                        <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                            <p style='color: #2e7d32; font-size: 18px;'><strong>Email:</strong> ".$data['email']."</p>
-                            <p style='color: #2e7d32; font-size: 18px;'><strong>Senha:</strong> ".$data['password']."</p>
-                        </div>
-                        <p style='font-size: 18px; line-height: 1.6;'>Por questões de segurança, recomendamos que você altere sua senha ao acessar o sistema pela primeira vez.</p>
-                        <p style='font-size: 18px; line-height: 1.6;'>Sua senha está protegida por criptografia de ponta a ponta, garantindo total privacidade e segurança.</p>
-                        <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Se precisar de ajuda, entre em contato com nosso suporte.</p>
-                        <p style='font-size: 16px; color: #777777; margin-top: 20px;'>Atenciosamente,<br>Equipe Bio Verde</p>
-                    </div>
-                    <div style='background-color: #f5f5f5; padding: 20px; text-align: center; font-size: 14px; color: #777777;'>
-                        <p style='margin: 0;'>Este é um e-mail automático. Não é necessário respondê-lo.</p>
-                        <p style='margin: 5px 0 0;'>&copy; " . date('Y') . " Bio Verde. Todos os direitos reservados.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        ";
-        $mail->AltBody = "Bem-vindo à Bio Verde!\n\nSeu cadastro foi concluído com sucesso.\n\nSeus dados de acesso:\nEmail: ".$data['email']."\nSenha: ".$data['password']."\n\nPor segurança, recomendamos alterar sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Bio Verde\n\nEste é um e-mail automático. Não responda.";
+        $mail->Subject = $subject;
+        $mail->Body = $htmlMessage;
+        $mail->AltBody = $plainMessage ?: strip_tags($htmlMessage);
+
         $mail->send();
-        return true;
+        return ['success' => true];
     } catch (Exception $e) {
-        return ["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
+        return ['success' => false, 'message' => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
     }
 }
 
-// listar_usuarios.php e listar_opcoes.php
+/**
+ * Envia um e-mail para o usuário com seus dados de acesso
+ *
+ * @param string $email e-mail do usuário
+ * @param array $data dados do usuário, deve conter "email" e "password"
+ *
+ * @return array resposta com um sucesso boolean e uma mensagem de erro
+ */
+function enviarEmailCadastro($email, $data)
+{
+    $html = "
+        <html>
+        <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
+            <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
+                <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
+                    <h1 style='color: #ffffff; font-size: 26px; margin: 0;'>Bem-vindo à Bio Verde</h1>
+                    <p style='color: #e0f2e9; font-size: 16px; margin: 10px 0 0;'>Seu cadastro foi concluído com sucesso!</p>
+                </div>
+                <div style='padding: 30px; color: #333333;'>
+                    <p style='font-size: 18px; line-height: 1.6;'>Olá,</p>
+                    <p style='font-size: 18px; line-height: 1.6;'>Agora você faz parte do nosso sistema! Seguem abaixo seus dados de acesso:</p>
+                    <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
+                        <p style='color: #2e7d32; font-size: 18px;'><strong>Email:</strong> " . $data['email'] . "</p>
+                        <p style='color: #2e7d32; font-size: 18px;'><strong>Senha:</strong> " . $data['password'] . "</p>
+                    </div>
+                    <p style='font-size: 16px; line-height: 1.6;'>Guarde essas informações com segurança. Em caso de dúvidas, entre em contato conosco.</p>
+                    <p style='font-size: 16px; line-height: 1.6;'>Atenciosamente,<br><strong>Equipe Bio Verde</strong></p>
+                </div>
+                <div style='background-color: #c8e6c9; padding: 20px; text-align: center; font-size: 14px; color: #2e7d32;'>
+                    Este é um e-mail automático, por favor não responda.
+                </div>
+            </div>
+        </body>
+        </html>
+    ";
 
-function buscarCargos($conn) {
+    return sendEmail(
+        null,
+        $email,
+        'Bio Verde - Cadastro realizado com sucesso!',
+        $html
+    );
+}
+
+/**
+ * Busca todos os cargos registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os cargos, onde cada cargo
+ *         é representado por um array com as chaves 'car_id' e 'car_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os cargos.
+ */
+function buscarCargos($conn)
+{
     $result = $conn->query("SELECT car_id, car_nome FROM cargo");
     if (!$result) {
         throw new Exception("Erro ao buscar cargos: " . $conn->error);
@@ -165,7 +358,18 @@ function buscarCargos($conn) {
     return $cargos;
 }
 
-function buscarNiveisAcesso($conn) {
+/**
+ * Busca todos os níveis de acesso registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os níveis de acesso, onde cada nível
+ *         é representado por um array com as chaves 'nivel_id' e 'nivel_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os níveis de acesso.
+ */
+function buscarNiveisAcesso($conn)
+{
     $result = $conn->query("SELECT nivel_id, nivel_nome FROM niveis_acesso");
     if (!$result) {
         throw new Exception("Erro ao buscar níveis de acesso: " . $conn->error);
@@ -179,7 +383,18 @@ function buscarNiveisAcesso($conn) {
     return $niveis;
 }
 
-function buscarStatus($conn) {
+/**
+ * Busca todos os status registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os status, onde cada status
+ *         é representado por um array com as chaves 'sta_id' e 'sta_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os status.
+ */
+function buscarStatus($conn)
+{
     $result = $conn->query("SELECT sta_id, sta_nome FROM status");
     if (!$result) {
         throw new Exception("Erro ao buscar status: " . $conn->error);
@@ -193,109 +408,9 @@ function buscarStatus($conn) {
     return $status;
 }
 
-
-// listar_usuarios.php
-
-function buscarUsuarios($conn) {
-    $result = $conn->query("
-        SELECT 
-            u.user_id, 
-            u.user_nome, 
-            u.user_email, 
-            u.user_telefone, 
-            u.user_CPF, 
-            c.car_nome, 
-            n.nivel_nome, 
-            s.sta_nome,
-            u.user_dtcadastro, 
-            u.car_id, 
-            u.nivel_id,
-            u.sta_id
-        FROM usuarios u 
-        INNER JOIN cargo c ON u.car_id = c.car_id 
-        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
-        LEFT JOIN status s ON u.sta_id = s.sta_id  -- JOIN com a tabela status
-    ");
-    
-    if (!$result) {
-        throw new Exception("Erro ao buscar usuários: " . $conn->error);
-    }
-
-    $usuarios = [];
-    while ($row = $result->fetch_assoc()) {
-        $usuarios[] = $row;
-    }
-
-    return $usuarios;
-}
-
-// nova.senha.php
-
-function verificarSenhaAtual($conn, $email, $novaSenha) {
-    $sql = "SELECT user_senha FROM usuarios WHERE user_email = ?";
-    $res = $conn->prepare($sql);
-    $res->bind_param("s", $email);
-    $res->execute();
-    $res->store_result();
-    
-    if ($res->num_rows > 0) {
-        $res->bind_result($senhaArmazenada);
-        $res->fetch();
-        
-        // Verificar se a nova senha é igual à atual
-        if (password_verify($novaSenha, $senhaArmazenada)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function atualizarSenha($conn, $email, $novaSenha) {
-    $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
-    
-    $sql = "UPDATE usuarios SET user_senha = ? WHERE user_email = ?";
-    $res = $conn->prepare($sql);
-    $res->bind_param("ss", $senhaHash, $email);
-    $res->execute();
-    
-    if ($res->affected_rows > 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-// recuperar.senha.php
-
-
-function gerarCodigoRecuperacao($tamanho = 6) {
-    $alfabeto = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $codigo = '';
-    for ($i = 0; $i < $tamanho; $i++) {
-        $codigo .= $alfabeto[rand(0, strlen($alfabeto) - 1)];
-    }
-    return $codigo;
-}
-
-function enviarEmailRecuperacao($email, $codigo) {
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'bioverdesistema@gmail.com';
-        $mail->Password   = 'gfdx wwpr cnfi emjt';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
-        $mail->addAddress($email);
-
-        $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
-        $mail->Subject = 'Bio Verde - Código de Recuperação';
-        $mail->Body = "
-        <html>
+function enviarEmailRecuperacao($email, $codigo)
+{
+    $html = "        <html>
         <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
             <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
                 <div style='background: linear-gradient(135deg, #2e7d32, #4caf50); padding: 30px; text-align: center;'>
@@ -319,18 +434,110 @@ function enviarEmailRecuperacao($email, $codigo) {
                 </div>
             </div>
         </body>
-        </html>
-        ";
+        </html>"
 
-        $mail->AltBody = "Seu código de recuperação é: {$codigo}";
-        $mail->send();
+    ;
+
+    return sendEmail(
+        null,
+        $email,
+        'Bio Verde - Recuperação de senha!',
+        $html
+    );
+}
+
+/******************************************************************************/
+
+// listar_usuarios.php
+
+function buscarUsuarios($conn)
+{
+    $result = $conn->query("
+        SELECT 
+            u.user_id, 
+            u.user_nome, 
+            u.user_email, 
+            u.user_telefone, 
+            u.user_CPF, 
+            c.car_nome, 
+            n.nivel_nome, 
+            s.sta_nome,
+            u.user_dtcadastro, 
+            u.car_id, 
+            u.nivel_id,
+            u.sta_id
+        FROM usuarios u 
+        INNER JOIN cargo c ON u.car_id = c.car_id 
+        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
+        LEFT JOIN status s ON u.sta_id = s.sta_id  -- JOIN com a tabela status
+    ");
+
+    if (!$result) {
+        throw new Exception("Erro ao buscar usuários: " . $conn->error);
+    }
+
+    $usuarios = [];
+    while ($row = $result->fetch_assoc()) {
+        $usuarios[] = $row;
+    }
+
+    return $usuarios;
+}
+
+// nova.senha.php
+
+function verificarSenhaAtual($conn, $email, $novaSenha)
+{
+    $sql = "SELECT user_senha FROM usuarios WHERE user_email = ?";
+    $res = $conn->prepare($sql);
+    $res->bind_param("s", $email);
+    $res->execute();
+    $res->store_result();
+
+    if ($res->num_rows > 0) {
+        $res->bind_result($senhaArmazenada);
+        $res->fetch();
+
+        // Verificar se a nova senha é igual à atual
+        if (password_verify($novaSenha, $senhaArmazenada)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function atualizarSenha($conn, $email, $novaSenha)
+{
+    $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
+
+    $sql = "UPDATE usuarios SET user_senha = ? WHERE user_email = ?";
+    $res = $conn->prepare($sql);
+    $res->bind_param("ss", $senhaHash, $email);
+    $res->execute();
+
+    if ($res->affected_rows > 0) {
         return true;
-    } catch (Exception $e) {
-        return ["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
+    } else {
+        return false;
     }
 }
 
-function verificarEmailExiste($conn, $email) {
+// recuperar.senha.php
+
+
+function gerarCodigoRecuperacao($tamanho = 6)
+{
+    $alfabeto = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $codigo = '';
+    for ($i = 0; $i < $tamanho; $i++) {
+        $codigo .= $alfabeto[rand(0, strlen($alfabeto) - 1)];
+    }
+    return $codigo;
+}
+
+
+function verificarEmailExiste($conn, $email)
+{
     $sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
     $res = $conn->prepare($sql);
     if (!$res) {
@@ -344,7 +551,8 @@ function verificarEmailExiste($conn, $email) {
     return $existe;
 }
 
-function atualizarCodigoRecuperacao($conn, $email, $codigo) {
+function atualizarCodigoRecuperacao($conn, $email, $codigo)
+{
     $update_sql = "UPDATE usuarios SET codigo_recuperacao = ? WHERE user_email = ?";
     $update_stmt = $conn->prepare($update_sql);
     if (!$update_stmt) {
@@ -359,52 +567,54 @@ function atualizarCodigoRecuperacao($conn, $email, $codigo) {
 
 // verificar-codigo.php
 
-function verificarCodigoRecuperacao($conn, $codigo) {
+function verificarCodigoRecuperacao($conn, $codigo)
+{
 
     $sql = " SELECT user_email, codigo_recuperacao_expira_em ";
     $sql .= " FROM usuarios ";
     $sql .= " WHERE codigo_recuperacao = ? ";
     $sql .= " AND (codigo_recuperacao_expira_em IS NULL OR codigo_recuperacao_expira_em > NOW()) ";
-    
+
     $res = $conn->prepare($sql);
     if (!$res) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    
+
     $res->bind_param("s", $codigo);
     $res->execute();
     $res->store_result();
-    
+
     $valido = $res->num_rows > 0;
     $res->close();
-    
+
     return $valido;
 }
 
 // login.php
 
-function verificarCredenciais($conn, $email, $password) {
+function verificarCredenciais($conn, $email, $password)
+{
     $sql = "SELECT user_id, user_nome, user_senha FROM usuarios WHERE user_email = ?";
     $stmt = $conn->prepare($sql);
-    
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    
+
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
     if ($res->num_rows === 0) {
         return ["success" => false, "message" => "Usuário não encontrado"];
     }
-    
+
     $userData = $res->fetch_assoc();
-    
+
     if (!password_verify($password, $userData["user_senha"])) {
         return ["success" => false, "message" => "Senha incorreta"];
     }
-    
+
     return [
         "success" => true,
         "user" => [
@@ -414,12 +624,13 @@ function verificarCredenciais($conn, $email, $password) {
     ];
 }
 
-function configurarSessaoSegura() {
+function configurarSessaoSegura()
+{
     ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 0); 
+    ini_set('session.cookie_secure', 0);
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_lifetime', 0); 
+    ini_set('session.cookie_lifetime', 0);
     ini_set('session.gc_maxlifetime', 1800);
 }
 
@@ -428,16 +639,17 @@ function configurarSessaoSegura() {
 /**
  * Constrói a cláusula WHERE para filtros de usuários
  */
-function construirFiltrosUsuarios($data) {
+function construirFiltrosUsuarios($data)
+{
     $mapaFiltros = [
-        "fname"  => "user_nome",   
-        "femail" => "user_email", 
-        "ftel"   => "user_telefone",
-        "fcpf"   => "user_CPF",
+        "fname" => "user_nome",
+        "femail" => "user_email",
+        "ftel" => "user_telefone",
+        "fcpf" => "user_CPF",
         "fcargo" => "car_nome",
         "fnivel" => "nivel_nome",
         "fstatus" => "sta_id",
-        "fdataCadastro" => "user_dtcadastro"  
+        "fdataCadastro" => "user_dtcadastro"
     ];
 
     $where = [];
@@ -465,7 +677,8 @@ function construirFiltrosUsuarios($data) {
     ];
 }
 
-function buscarUsuariosComFiltros($conn, $filtros) {
+function buscarUsuariosComFiltros($conn, $filtros)
+{
     $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF,";
     $sql .= " c.car_nome, n.nivel_nome, u.sta_id, u.user_dtcadastro";
     $sql .= " FROM usuarios u";
@@ -505,7 +718,8 @@ function buscarUsuariosComFiltros($conn, $filtros) {
 /**
  * Verifica se o usuário existe
  */
-function verificarUsuarioExiste($conn, $user_id) {
+function verificarUsuarioExiste($conn, $user_id)
+{
     $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE user_id = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
@@ -521,7 +735,8 @@ function verificarUsuarioExiste($conn, $user_id) {
 /**
  * Atualiza os dados do usuário
  */
-function atualizarUsuario($conn, $user_id, $dados) {
+function atualizarUsuario($conn, $user_id, $dados)
+{
     // Campos básicos
     $campos = [
         'user_nome' => $dados['name'],
@@ -532,18 +747,18 @@ function atualizarUsuario($conn, $user_id, $dados) {
         'nivel_id' => verificarNivel($conn, $dados['nivel']),
         'sta_id' => $dados['sta_id'] ?? null
     ];
-    
-    
+
+
     // Se houver senha, atualiza também
     if (!empty($dados['password'])) {
         $campos['user_senha'] = password_hash($dados['password'], PASSWORD_DEFAULT);
     }
-    
+
     // Prepara os campos para a query
     $sets = [];
     $tipos = '';
     $valores = [];
-    
+
     foreach ($campos as $campo => $valor) {
         if ($valor !== null) {
             $sets[] = "$campo = ?";
@@ -551,21 +766,21 @@ function atualizarUsuario($conn, $user_id, $dados) {
             $valores[] = $valor;
         }
     }
-    
+
     // Adiciona o user_id no final
     $valores[] = $user_id;
     $tipos .= 'i';
-    
+
     $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE user_id = ?";
     $stmt = $conn->prepare($sql);
-    
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
     }
-    
+
     $stmt->bind_param($tipos, ...$valores);
     $stmt->execute();
-    
+
     if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
         // Considera sucesso mesmo se nada foi alterado (valores iguais)
         return ["success" => true];
@@ -577,7 +792,8 @@ function atualizarUsuario($conn, $user_id, $dados) {
 /**
  * Verifica conflitos de email/CPF (excluindo o próprio usuário)
  */
-function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id) {
+function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id)
+{
     $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE (user_email = ? OR user_CPF = ?) AND user_id != ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
@@ -585,7 +801,7 @@ function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id) {
     $stmt->bind_param("ssi", $email, $cpf, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $conflito = $result->fetch_assoc();
         return ["success" => false, "message" => "E-mail ou CPF já está em uso por outro usuário."];
@@ -596,7 +812,8 @@ function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id) {
 /**
  * Obtém o ID do status pelo nome
  */
-function obterIdStatusPorNome($conn, $nomeStatus) {
+function obterIdStatusPorNome($conn, $nomeStatus)
+{
     if (empty($nomeStatus)) {
         return null;
     }
@@ -607,19 +824,19 @@ function obterIdStatusPorNome($conn, $nomeStatus) {
     } else {
         $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_nome = ?");
     }
-    
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    
+
     $stmt->bind_param("s", $nomeStatus);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows === 0) {
-        return null; 
+        return null;
     }
-    
+
     $row = $result->fetch_assoc();
     return $row['sta_id'];
 }
@@ -632,7 +849,8 @@ function obterIdStatusPorNome($conn, $nomeStatus) {
  * 
  * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
  */
-function buscarUsuarioPorId($conn, $user_id) {
+function buscarUsuarioPorId($conn, $user_id)
+{
     $stmt = $conn->prepare("
         SELECT 
             u.user_id, 
@@ -652,11 +870,11 @@ function buscarUsuarioPorId($conn, $user_id) {
         LEFT JOIN status s ON u.sta_id = s.sta_id
         WHERE u.user_id = ?
     ");
-    
+
     if (!$stmt) {
         return null;
     }
-    
+
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -667,14 +885,15 @@ function buscarUsuarioPorId($conn, $user_id) {
 
 // funcoes.inc.php
 
-function registrarExclusaoUsuario($conn, $user_id, $dados) {
+function registrarExclusaoUsuario($conn, $user_id, $dados)
+{
     $stmt = $conn->prepare("INSERT INTO usuarios_excluidos (
         usuex_excluido, 
         usuex_exclusao, 
         usuex_motivo_exclusao,
         usuex_dtexclusao
     ) VALUES (?, ?, ?, NOW())");
-    
+
     if (!$stmt) {
         return [
             'success' => false,
@@ -683,7 +902,7 @@ function registrarExclusaoUsuario($conn, $user_id, $dados) {
     }
 
     $stmt->bind_param('sis', $dados['dname'], $user_id, $dados['reason']);
-    
+
     if (!$stmt->execute()) {
         return [
             'success' => false,
@@ -704,7 +923,8 @@ function registrarExclusaoUsuario($conn, $user_id, $dados) {
  * @param string $cnpj CPF/CNPJ do fornecedor
  * @return array|null retorna um array com a chave "success" como false e "message" com a mensagem de erro ou null se n o houver conflito
  */
-function verificarEmailCnpj($conn, $email, $cnpj) {
+function verificarEmailCnpj($conn, $email, $cnpj)
+{
     $stmt = $conn->prepare("SELECT fornecedor_email, fornecedor_CNPJ FROM fornecedores WHERE fornecedor_email = ? OR fornecedor_CNPJ = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
@@ -724,16 +944,17 @@ function verificarEmailCnpj($conn, $email, $cnpj) {
  * @param array $data dados do fornecedor
  * @return bool|array retorna true se o e-mail for enviado com sucesso ou um array com a chave "success" como false e "message" com a mensagem de erro
  */
-function enviarEmailFornecedor($email, $data) {
+function enviarEmailFornecedor($email, $data)
+{
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'bioverdesistema@gmail.com';
-        $mail->Password   = 'gfdx wwpr cnfi emjt';
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'bioverdesistema@gmail.com';
+        $mail->Password = 'gfdx wwpr cnfi emjt';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Port = 587;
 
         $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
         $mail->addAddress($email);
@@ -786,8 +1007,9 @@ function enviarEmailFornecedor($email, $data) {
 
 // listar_fornecedores.php
 
-function buscarFornecedores($conn) {
-        
+function buscarFornecedores($conn)
+{
+
     $result = $conn->query("
         SELECT 
             fornecedor_id,
@@ -808,7 +1030,7 @@ function buscarFornecedores($conn) {
         FROM fornecedores a
         INNER JOIN status b ON a.fornecedor_status = b.sta_id
         ");
-    
+
     if (!$result) {
         throw new Exception("Erro ao buscar usuários: " . $conn->error);
     }
@@ -823,12 +1045,13 @@ function buscarFornecedores($conn) {
 
 // filtro.fornecedor.php
 
-function construirFiltrosFornecedores($data) {
+function construirFiltrosFornecedores($data)
+{
     $mapaFiltros = [
-        "fnome_empresa"  => "fornecedor_nome",   
-        "fresponsavel" => "fornecedor_responsavel", 
-        "fcnpj"   => "fornecedor_CNPJ",
-        "ftel"   => "fornecedor_telefone",
+        "fnome_empresa" => "fornecedor_nome",
+        "fresponsavel" => "fornecedor_responsavel",
+        "fcnpj" => "fornecedor_CNPJ",
+        "ftel" => "fornecedor_telefone",
         "fcidade" => "fornecedor_cidade",
         "festado" => "fornecedor_estado",
         "fdataCadastro" => "fornecedor_dtcadastro",
@@ -861,7 +1084,8 @@ function construirFiltrosFornecedores($data) {
 }
 
 
-function buscarFornecedoresComFiltros($conn, $filtros) {
+function buscarFornecedoresComFiltros($conn, $filtros)
+{
 
     $sql = "SELECT fornecedor_id, fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_responsavel,";
     $sql .= " fornecedor_cep, fornecedor_endereco, fornecedor_estado, fornecedor_cidade, b.sta_nome, fornecedor_dtcadastro";
@@ -897,7 +1121,8 @@ function buscarFornecedoresComFiltros($conn, $filtros) {
 
 // editar.fornecedor.php
 
-function verificarFornecedorExiste($conn, $fornecedor_id) {
+function verificarFornecedorExiste($conn, $fornecedor_id)
+{
     $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_id = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
@@ -910,7 +1135,8 @@ function verificarFornecedorExiste($conn, $fornecedor_id) {
     return $existe;
 }
 
-function atualizarFornecedor($conn, $fornecedor_id, $dados) {
+function atualizarFornecedor($conn, $fornecedor_id, $dados)
+{
     // Campos básicos
     $campos = [
         'fornecedor_nome' => $dados['nome_empresa'],
@@ -926,13 +1152,13 @@ function atualizarFornecedor($conn, $fornecedor_id, $dados) {
         'fornecedor_cidade' => $dados['cidade'],
         'fornecedor_estado' => $dados['estado']
     ];
-    
-    
+
+
     // Prepara os campos para a query
     $sets = [];
     $tipos = '';
     $valores = [];
-    
+
     foreach ($campos as $campo => $valor) {
         if ($valor !== null) {
             $sets[] = "$campo = ?";
@@ -940,21 +1166,21 @@ function atualizarFornecedor($conn, $fornecedor_id, $dados) {
             $valores[] = $valor;
         }
     }
-    
+
     // Adiciona o fornecedor_id no final
     $valores[] = $fornecedor_id;
     $tipos .= 'i';
-    
+
     $sql = "UPDATE fornecedores SET " . implode(', ', $sets) . " WHERE fornecedor_id = ?";
     $stmt = $conn->prepare($sql);
-    
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
     }
-    
+
     $stmt->bind_param($tipos, ...$valores);
     $stmt->execute();
-    
+
     if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
         // Considera sucesso mesmo se nada foi alterado (valores iguais)
         return ["success" => true];
@@ -965,14 +1191,15 @@ function atualizarFornecedor($conn, $fornecedor_id, $dados) {
 
 // excluir.fornecedor.php
 
-function registrarExclusaoFornecedor($conn, $user_id, $dados) {
+function registrarExclusaoFornecedor($conn, $user_id, $dados)
+{
     $stmt = $conn->prepare("INSERT INTO fornecedores_excluidos (
         forex_excluido, 
         forex_exclusao, 
         forex_motivo_exclusao,
         forex_dtexclusao
     ) VALUES (?, ?, ?, NOW())");
-    
+
     if (!$stmt) {
         return [
             'success' => false,
@@ -981,7 +1208,7 @@ function registrarExclusaoFornecedor($conn, $user_id, $dados) {
     }
 
     $stmt->bind_param('sis', $dados['dnome_empresa'], $user_id, $dados['reason']);
-    
+
     if (!$stmt->execute()) {
         return [
             'success' => false,
@@ -994,7 +1221,8 @@ function registrarExclusaoFornecedor($conn, $user_id, $dados) {
 
 // cadastrar_clientes.php
 
-function verificarEmailCnpjCpfCliente($conn, $email, $cpf_cnpj) {
+function verificarEmailCnpjCpfCliente($conn, $email, $cpf_cnpj)
+{
     $stmt = $conn->prepare("SELECT cliente_email, cliente_cpf_cnpj FROM clientes WHERE cliente_email = ? OR cliente_cpf_cnpj = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
@@ -1008,16 +1236,17 @@ function verificarEmailCnpjCpfCliente($conn, $email, $cpf_cnpj) {
     return null;
 }
 
-function enviarEmailCliente($email, $data) {
+function enviarEmailCliente($email, $data)
+{
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'bioverdesistema@gmail.com';
-        $mail->Password   = 'gfdx wwpr cnfi emjt';
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'bioverdesistema@gmail.com';
+        $mail->Password = 'gfdx wwpr cnfi emjt';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Port = 587;
 
         $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
         $mail->addAddress($email);
@@ -1070,8 +1299,9 @@ function enviarEmailCliente($email, $data) {
 
 // listar_clientes.php
 
-function buscarClientes($conn) {
-        
+function buscarClientes($conn)
+{
+
     $result = $conn->query("
         SELECT 
             cliente_id,
@@ -1091,7 +1321,7 @@ function buscarClientes($conn) {
         FROM clientes a
         INNER JOIN status b ON a.status = b.sta_id;
         ");
-    
+
     if (!$result) {
         throw new Exception("Erro ao buscar usuários: " . $conn->error);
     }
@@ -1106,11 +1336,12 @@ function buscarClientes($conn) {
 
 // filtro.cliente.php
 
-function construirFiltrosCliente($data) {
+function construirFiltrosCliente($data)
+{
     $mapaFiltros = [
-        "fnome_cliente"  => "cliente_nome",   
-        "fcpf_cnpj" => "cliente_cpf_cnpj", 
-        "ftel"   => "cliente_telefone",
+        "fnome_cliente" => "cliente_nome",
+        "fcpf_cnpj" => "cliente_cpf_cnpj",
+        "ftel" => "cliente_telefone",
         "fcidade" => "cliente_cidade",
         "festado" => "cliente_estado",
         "fdataCadastro" => "cliente_data_cadastro",
@@ -1144,7 +1375,8 @@ function construirFiltrosCliente($data) {
 }
 
 
-function buscarClientesComFiltros($conn, $filtros) {
+function buscarClientesComFiltros($conn, $filtros)
+{
 
     $sql = "SELECT cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade,";
     $sql .= " b.sta_nome, cliente_data_cadastro, pedido_id, cliente_observacoes";
@@ -1180,7 +1412,8 @@ function buscarClientesComFiltros($conn, $filtros) {
 
 // editar.cliente.php
 
-function verificarClienteExiste($conn, $cliente_id) {
+function verificarClienteExiste($conn, $cliente_id)
+{
     $stmt = $conn->prepare("SELECT cliente_id FROM clientes WHERE cliente_id = ?");
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
@@ -1193,7 +1426,8 @@ function verificarClienteExiste($conn, $cliente_id) {
     return $existe;
 }
 
-function atualizarCliente($conn, $cliente_id, $dados) {
+function atualizarCliente($conn, $cliente_id, $dados)
+{
     // Campos básicos
     $campos = [
         'cliente_nome' => $dados['nome_cliente'],
@@ -1208,13 +1442,13 @@ function atualizarCliente($conn, $cliente_id, $dados) {
         'cliente_cidade' => $dados['cidade'],
         'cliente_observacoes' => $dados['obs'],
     ];
-    
-    
+
+
     // Prepara os campos para a query
     $sets = [];
     $tipos = '';
     $valores = [];
-    
+
     foreach ($campos as $campo => $valor) {
         if ($valor !== null) {
             $sets[] = "$campo = ?";
@@ -1222,21 +1456,21 @@ function atualizarCliente($conn, $cliente_id, $dados) {
             $valores[] = $valor;
         }
     }
-    
+
     // Adiciona o fornecedor_id no final
     $valores[] = $cliente_id;
     $tipos .= 'i';
-    
+
     $sql = "UPDATE clientes SET " . implode(', ', $sets) . " WHERE cliente_id = ?";
     $stmt = $conn->prepare($sql);
-    
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
     }
-    
+
     $stmt->bind_param($tipos, ...$valores);
     $stmt->execute();
-    
+
     if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
         // Considera sucesso mesmo se nada foi alterado (valores iguais)
         return ["success" => true];
@@ -1245,7 +1479,8 @@ function atualizarCliente($conn, $cliente_id, $dados) {
     }
 }
 
-function buscarClientePorId($conn, $cliente_id) {
+function buscarClientePorId($conn, $cliente_id)
+{
     $stmt = $conn->prepare("
         SELECT 
             c.cliente_id,
@@ -1267,116 +1502,30 @@ function buscarClientePorId($conn, $cliente_id) {
         LEFT JOIN status s ON c.status = s.sta_id
         WHERE c.cliente_id = ?
     ");
-    
+
     if (!$stmt) {
         error_log("Erro ao preparar consulta: " . $conn->error);
         return null;
     }
-    
+
     $stmt->bind_param("i", $cliente_id);
-    
+
     if (!$stmt->execute()) {
         error_log("Erro ao executar consulta: " . $stmt->error);
         $stmt->close();
         return null;
     }
-    
+
     $result = $stmt->get_result();
     $dados = $result->fetch_assoc();
     $stmt->close();
-    
+
     // Log para depuração
     error_log("Dados do cliente retornados: " . print_r($dados, true));
-    
+
     return $dados;
 }
 
 // excluir.cliente.php
 
-function registrarExclusaoCliente($conn, $user_id, $dados) {
-    $stmt = $conn->prepare("INSERT INTO clientes_excluidos (
-        cliex_excluido, 
-        cliex_exclusao, 
-        cliex_motivo_exclusao,
-        cliex_dtexclusao
-    ) VALUES (?, ?, ?, NOW())");
-    
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar o registro de exclusão'
-        ];
-    }
-
-    $stmt->bind_param('sis', $dados['dnome_cliente'], $user_id, $dados['reason']);
-    
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao registrar a exclusão'
-        ];
-    }
-
-    return ['success' => true, 'insert_id' => $stmt->insert_id];
-}
-
-function deletarCliente($conn, $cliente_id) {
-    $stmt = $conn->prepare("DELETE FROM clientes WHERE cliente_id = ?");
-    
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar a exclusão'
-        ];
-    }
-
-    $stmt->bind_param('i', $cliente_id);
-    
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao executar a exclusão'
-        ];
-    }
-
-    if ($stmt->affected_rows === 0) {
-        return [
-            'success' => false,
-            'message' => 'Nenhum usuário encontrado com este ID'
-        ];
-    }
-
-    return ['success' => true];
-}
-
-function deleteData($conn, $id, $tabela, $pk){
-    $stmt = $conn->prepare('DELETE FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
-
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar a exclusão'
-        ];
-    }
-
-    $stmt->bind_param('i', $id);
-
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao executar a exclusão'
-        ];
-    }
-
-    if ($stmt->affected_rows === 0) {
-        return [
-            'success' => false,
-            'message' => 'Nenhum usuário encontrado com este ID'
-        ];
-    }
-
-    return ['success' => true];
-}
-
 ?>
-

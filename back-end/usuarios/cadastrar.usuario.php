@@ -1,4 +1,6 @@
 <?php 
+ini_set("display_errors",1);
+
 session_start();
 
 include_once "../inc/funcoes.inc.php";
@@ -80,7 +82,10 @@ $stmt->bind_param("sssssiii",
 
 if ($stmt->execute()) {
     // Enviar email de confirmação
+
     $emailStatus = enviarEmailCadastro($data['email'], $data);
+
+
     if ($emailStatus === true) {
         echo json_encode(["success" => true, "message" => "Usuário e senha cadastrados com sucesso!" . "Status: " . $data['status']]);
     } else {

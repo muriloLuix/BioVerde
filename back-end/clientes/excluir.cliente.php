@@ -45,8 +45,14 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
+    $camposExclusao = [
+        'cliex_excluido' => $data['dnome_cliente'],
+        'cliex_exclusao' => $user_id,
+        'cliex_motivo_exclusao' => $data['reason'],
+    ];
+
     // 1. Registra a exclusão
-    $registro = registrarExclusaoCliente($conn, $user_id, $data);
+    $registro = registerDeletion($conn, 'clientes_excluidos', $camposExclusao);
     if (!$registro['success']) {
         throw new Exception($registro['message'] ?? "Falha ao registrar a exclusão.");
     }

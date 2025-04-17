@@ -45,8 +45,14 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
+    $camposExclusao = [
+        'forex_excluido' => $data['dnome_empresa'],
+        'forex_exclusao' => $user_id,
+        'forex_motivo_exclusao' => $data['reason'],
+    ];
+
     // 1. Registra a exclusão
-    $registro = registrarExclusaoFornecedor($conn, $user_id, $data);
+    $registro = registerDeletion($conn, 'fornecedores_excluidos', $camposExclusao);
     if (!$registro['success']) {
         throw new Exception($registro['message'] ?? "Falha ao registrar a exclusão.");
     }

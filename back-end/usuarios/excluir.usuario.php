@@ -43,8 +43,14 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
+    $camposExclusao = [
+        'usuex_excluido' => $data['dname'],
+        'usuex_exclusao' => $user_id,
+        'usuex_motivo_exclusao' => $data['reason'],
+    ];
+
     // 1. Registra a exclusão
-    $registro = registrarExclusaoUsuario($conn, $user_id, $data);
+    $registro = registerDeletion($conn, 'usuarios_excluidos', $camposExclusao);
     if (!$registro['success']) {
         throw new Exception($registro['message'] ?? "Falha ao registrar a exclusão.");
     }
