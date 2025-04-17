@@ -98,6 +98,8 @@ export default function Clients() {
     setOpenObsModal(true);
   };
 
+  console.log(formData)
+
   //OnChange dos campos
   const handleChange = (
     event:

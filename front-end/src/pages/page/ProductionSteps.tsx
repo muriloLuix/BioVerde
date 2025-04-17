@@ -5,14 +5,9 @@ import { Plus, PencilLine, Trash, Eye, Search, Loader2 } from "lucide-react";
 import axios from "axios";
 
 import { SmartField } from "../../shared";
-// import { ConfirmationModal } from "../../shared";
+import { ConfirmationModal } from "../../shared";
 import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
-
-type ProductsWithSteps = {
-  produto_nome: string;
-  etapas: Etapa[];
-};  
 
 type FormData = {
   produto_nome: string;
@@ -23,25 +18,32 @@ type FormData = {
   insumos: string;
   responsavel: string;
   obs: string;
+  dtCadastro: string;
 };
+
+type ProductsWithSteps = {
+  produto_nome: string;
+  etapas: Etapa[];
+};  
 
 type Etapa = Omit<FormData, "produto_nome">;
 
 export default function ProductionSteps() {
   const [activeTab, setActiveTab] = useState("list");
+  const [showStepForm, setShowStepForm] = useState<boolean>(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openNoticeModal, setOpenNoticeModal] = useState(false);
+  const [openObsModal, setOpenObsModal] = useState(false);
+  const [keepProduct, setKeepProduct] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
+  const [search, setSearch] = useState("");
+  const [currentObs, setCurrentObs] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState<Set<string>>(new Set());
   const [productsWithSteps, setProductsWithSteps] = useState<ProductsWithSteps[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductsWithSteps | null>(null);
-  const [search, setSearch] = useState("");
-  const [showStepForm, setShowStepForm] = useState<boolean>(false);
-  // const [openEditModal, setOpenEditModal] = useState(false);
-  // const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  // const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [openObsModal, setOpenObsModal] = useState(false);
-  const [currentObs, setCurrentObs] = useState("");
-  const [openNoticeModal, setOpenNoticeModal] = useState(false);
-  const [message, setMessage] = useState("");
-  const [successMsg, setSuccessMsg] = useState(false);
-  const [loading, setLoading] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState<FormData>({
     produto_nome: "",
     id: 0,
@@ -51,332 +53,108 @@ export default function ProductionSteps() {
     insumos: "",
     responsavel: "",
     obs: "",
+    dtCadastro: "",
   });
   const [stepData, setStepData] = useState<Etapa[]>([]);
   const [deleteStep, setDeleteStep] = useState({
     step_id: 0,
-    dnome_cliente: "",
+    dproduct: "",
+    dstep: "",
     reason: "",
   });
 
-  console.log(formData)
-  console.log(stepData)
-
-  //função para puxar os dados do usuario que será editado
-  // const handleEditClick = (etapa: Etapa) => {
-  //   console.log("Dados completos da etapa:", etapa); 
-
-  //   setFormData({
-  //     user_id: usuario.user_id,
-  //     name: usuario.user_nome,
-  //     email: usuario.user_email,
-  //     tel: usuario.user_telefone,
-  //     cpf: usuario.user_CPF,
-  //     cargo: usuario.car_nome,
-  //     nivel: usuario.nivel_nome,
-  //     status: usuario.sta_id?.toString() || "",
-  //     password: "",
-  //   });
-  //   setOpenEditModal(true);
-  // };
-
-  // //função para puxar o nome do usuário que será excluido
-  // const handleDeleteClick = (usuario: Usuario) => {
-  //   setDeleteUser({
-  //     user_id: usuario.user_id,
-  //     dname: usuario.user_nome,
-  //     reason: "",
-  //   });
-  //   setOpenDeleteModal(true);
-  // };
-
-  //  //submit para atualizar o usuário após a edição dele
-  //  const handleUpdateUser = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-
-  //   setLoading((prev) => new Set([...prev, "updateUser"]));
-  //   setSuccessMsg(false);
-
-  //   try {
-  //     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  //     const { password, ...dataWithoutPassword } = formData;
-  //     const dataToSend = formData.user_id ? dataWithoutPassword : formData;
-
-  //     const response = await axios.post(
-  //       "http://localhost/BioVerde/back-end/usuarios/editar.usuario.php",
-  //       dataToSend,
-  //       {
-  //         headers: { "Content-Type": "application/json" },
-  //         withCredentials: true,
-  //       }
-  //     );
-
-  //     if (response.data.success) {
-  //       await refreshData(); 
-  //       setOpenEditModal(false);
-  //       setSuccessMsg(true);
-  //       setMessage("Usuário atualizado com sucesso!");
-  //       clearFormData();
-  //     } else {
-  //       setMessage(response.data.message || "Erro ao atualizar usuário.");
-  //     }
-  //   } catch (error) {
-  //     if (axios.isAxiosError(error)) {
-  //       setMessage(error.response?.data?.message || "Erro no servidor");
-  //       console.error("Erro na resposta:", error.response?.data);
-  //     } else {
-  //       setMessage("Erro ao conectar com o servidor");
-  //       console.error("Erro na requisição:", error);
-  //     }
-  //   } finally {
-  //     setOpenNoticeModal(true);
-  //     setLoading((prev) => {
-  //       const newLoading = new Set(prev);
-  //       newLoading.delete("updateUser");
-  //       return newLoading;
-  //     });
-  //   }
-  // };
-
-  // //submit para excluir um usuário
-  // const handleDeleteUser = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  
-  //   setLoading((prev) => new Set([...prev, "deleteUser"]));
-  //   setSuccessMsg(false);
-  
-  //   try {
-  //     const dataToSend = {
-  //       user_id: Number(deleteUser.user_id),
-  //       dname: String(deleteUser.dname),
-  //       reason: String(deleteUser.reason),
-  //     };
-  
-  //     const response = await axios.post(
-  //       "http://localhost/BioVerde/back-end/usuarios/excluir.usuario.php",
-  //       dataToSend,
-  //       {
-  //         headers: { "Content-Type": "application/json" },
-  //         withCredentials: true,
-  //       }
-  //     );
-  
-  //     if (response.data.success) {
-  //       await refreshData(); 
-  //       setOpenConfirmModal(false);       
-  //       setSuccessMsg(true);
-  //       setMessage("Usuário excluído com sucesso!");
-  //       setUsuarios(prevUsuarios => 
-  //         prevUsuarios.filter(user => user.user_id !== deleteUser.user_id)
-  //       );
-  //     } else {
-  //       setMessage(response.data.message || "Erro ao excluir usuário.");
-  //     }
-  //   } catch (error) {
-  //     let errorMessage = "Erro ao conectar com o servidor";
-  //     if (axios.isAxiosError(error)) {
-  //       errorMessage = error.response?.data?.message || "Erro no servidor";
-  //       console.error("Erro na resposta:", error.response?.data);
-  //     } else {
-  //       console.error("Erro na requisição:", error);
-  //     }
-  //     setMessage(errorMessage);
-  //   } finally {
-  //     setOpenNoticeModal(true);
-  //     setLoading((prev) => {
-  //       const newLoading = new Set(prev);
-  //       newLoading.delete("deleteUser");
-  //       return newLoading;
-  //     });
-  //   }
-  // };
-
-  // const handleObsClick = (etapa: Etapa) => {
-  //   setCurrentObs(etapa.etapa_observacoes);
-  //   setOpenObsModal(true);
-  // };
-
-  // useEffect(() => {
-  //   const fetchProdutos = async () => {
-  //     try {
-  //       const res = await axios.get("/api/produtos-com-etapas"); // ou o endpoint real
-  //       setProductsWithSteps(res.data);
-  //     } catch (error) {
-  //       console.error("Erro ao buscar produtos:", error);
-  //     }
-  //   };
-  
-  //   fetchProdutos();
-  // }, []);
-
-  const prod = {
-    "produto_nome": "Suco Orgânico",
-    "etapas": [
-      {
-        "id": 1,
-        "ordem": 1,
-        "nome_etapa": "Corte das frutas",
-        "tempo": "20min",
-        "insumos": "Facas, tábua, frutas",
-        "responsavel": "Carlos",
-        "obs": "Cuidado com o corte"
-      },
-      {
-        "id": 2,
-        "ordem": 2,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 3,
-        "ordem": 3,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 4,
-        "ordem": 4,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 5,
-        "ordem": 5,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 6,
-        "ordem": 6,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 7,
-        "ordem": 7,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 8,
-        "ordem": 8,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-
-    ]
-  }
-  const prod1 = {
-    "produto_nome": "Limão Orgânico",
-    "etapas": [
-      {
-        "id": 1,
-        "ordem": 1,
-        "nome_etapa": "Corte das frutas",
-        "tempo": "20min",
-        "insumos": "Facas, tábua, frutas",
-        "responsavel": "Carlos",
-        "obs": "Cuidado com o corte"
-      },
-      {
-        "id": 2,
-        "ordem": 2,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 3,
-        "ordem": 3,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 4,
-        "ordem": 4,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 5,
-        "ordem": 5,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-    ]
-  }
-  const prod2 = {
-    "produto_nome": "Banana Orgânico",
-    "etapas": [
-      {
-        "id": 1,
-        "ordem": 1,
-        "nome_etapa": "Corte das frutas",
-        "tempo": "20min",
-        "insumos": "Facas, tábua, frutas",
-        "responsavel": "Carlos",
-        "obs": "Cuidado com o corte"
-      },
-      {
-        "id": 2,
-        "ordem": 2,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-      {
-        "id": 3,
-        "ordem": 3,
-        "nome_etapa": "Bater no liquidificador",
-        "tempo": "10min",
-        "insumos": "Liquidificador",
-        "responsavel": "Ana",
-        "obs": "Verificar consistência"
-      },
-    ]
-  }
-  
+  // Carrega os produtos e suas etapas cadastradas
   useEffect(() => {
-    setProductsWithSteps([prod, prod1, prod2]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchData = async () => {
+
+      try {
+        setLoading((prev) => new Set([...prev, "steps", "options"]));
+
+        const stepsResponse = await axios.get("http://localhost/BioVerde/back-end/etapas/listar_etapas.php", {
+          withCredentials: true,
+          headers: {
+            Accept: "application/json",
+          },
+        }); 
+
+        console.log("Resposta do back-end:", stepsResponse.data);
+    
+        if (stepsResponse.data.success) {
+          setProductsWithSteps(stepsResponse.data.clientes || []);
+        } else {
+          setOpenNoticeModal(true);
+          setMessage(stepsResponse.data.message || "Erro ao carregar etapas");
+        }
+      } catch (error) {
+        setOpenNoticeModal(true);
+        setMessage("Erro ao conectar com o servidor");
+
+        if (axios.isAxiosError(error)) {
+          console.error(
+            "Erro na requisição:",
+            error.response?.data || error.message
+          );
+          if (error.response?.data?.message) {
+            setMessage(error.response.data.message);
+          }
+        } else {
+          console.error("Erro desconhecido:", error);
+        }
+      } finally {
+        setLoading((prev) => {
+          const newLoading = new Set(prev);
+          newLoading.delete("steps");
+          return newLoading;
+        });
+      }
+    };
+
+    fetchData();
   }, []);
 
+  // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
+  useEffect(() => {
+    if (productsWithSteps.length > 0) {
+      setSelectedProduct(productsWithSteps[0]);
+    }
+  }, [productsWithSteps]);
 
+  //Função para Atualizar a Tabela após ação
+  const refreshData = async () => {
+    try {
+      setLoading((prev) => new Set([...prev, "steps"]));
+  
+      const response = await axios.get(
+        "http://localhost/BioVerde/back-end/etapas/listar_etapas.php",
+        { withCredentials: true }
+      );
+  
+      if (response.data.success) {
+        setProductsWithSteps(response.data.etapas || []);
+        return true;
+      } else {
+        setMessage(response.data.message || "Erro ao carregar etapas");
+        setOpenNoticeModal(true);
+        return false;
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      setMessage(errorMessage);
+      setOpenNoticeModal(true);
+      return false;
+    } finally {
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("steps");
+        return newLoading;
+      });
+    }
+  };
 
+  //OnChange dos campos
   const handleChange = (
     event: | React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -384,6 +162,37 @@ export default function ProductionSteps() {
 
     setFormData({ ...formData, [name]: value });
     setDeleteStep({ ...deleteStep, [name]: value });
+  };
+
+  //função para puxar os dados da etapa que será editada
+  const handleEditClick = (etapa: Etapa, nome_produto: string) => {
+    console.log("Dados completos da etapa:", etapa); 
+
+    setFormData({
+
+      produto_nome: nome_produto,
+      id: etapa.id,
+      ordem: etapa.ordem,
+      nome_etapa: etapa.nome_etapa,
+      tempo: etapa.tempo,
+      insumos: etapa.insumos,
+      responsavel: etapa.responsavel,
+      obs: etapa.obs,
+      dtCadastro: etapa.dtCadastro,
+
+    });
+    setOpenEditModal(true);
+  };
+
+  //função para puxar o nome da etapa que será excluida
+  const handleDeleteClick = (etapa: Etapa, nome_produto: string) => {
+    setDeleteStep({
+      step_id: etapa.id,
+      dproduct: nome_produto,
+      dstep: etapa.nome_etapa,
+      reason: "",
+    });
+    setOpenDeleteModal(true);
   };
 
   //Função de define qual será o submir que será enviado  
@@ -413,18 +222,7 @@ export default function ProductionSteps() {
     };
   
     setStepData([...stepData, newStep]);
-  
-    setFormData({
-      produto_nome: formData.produto_nome,
-      id: 0,
-      ordem: 0,
-      nome_etapa: "",
-      tempo: "",
-      insumos: "",
-      responsavel: "",
-      obs: "",
-    });
-  
+    clearFormData(keepProduct)
     setShowStepForm(false); 
   };
   
@@ -449,10 +247,10 @@ export default function ProductionSteps() {
       console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
-        // await refreshData(); 
+        await refreshData(); 
         setSuccessMsg(true);
         setMessage("Etapa cadastrada com sucesso!");
-        clearFormData(); //Limpa o formData
+        clearFormData(keepProduct); //Limpa o formData
         setStepData([]);
       } else {
         setMessage(response.data.message || "Erro ao cadastrar etapa");
@@ -482,16 +280,121 @@ export default function ProductionSteps() {
     }
   };
 
+  //submit para atualizar a etapa após a edição dela
+  const handleUpdateStep = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading((prev) => new Set([...prev, "updateStep"]));
+    setSuccessMsg(false);
+
+    try {
+
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/etapa/editar.etapa.php",
+        {
+          produto_nome: formData.produto_nome,
+          etapas: stepData,
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        await refreshData(); 
+        setOpenEditModal(false);
+        setSuccessMsg(true);
+        setMessage("Etapa atualizada com sucesso!");
+        clearFormData(keepProduct);
+      } else {
+        setMessage(response.data.message || "Erro ao atualizar etapa.");
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setMessage(error.response?.data?.message || "Erro no servidor");
+        console.error("Erro na resposta:", error.response?.data);
+      } else {
+        setMessage("Erro ao conectar com o servidor");
+        console.error("Erro na requisição:", error);
+      }
+    } finally {
+      setOpenNoticeModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("updateStep");
+        return newLoading;
+      });
+    }
+  };
+
+  //submit para excluir um etapa
+  const handleDeleteStep = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    setLoading((prev) => new Set([...prev, "deleteStep"]));
+    setSuccessMsg(false);
+  
+    try {
+
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/etapas/excluir.etapas.php",
+        deleteStep,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+  
+      if (response.data.success) {
+        await refreshData(); 
+        setOpenConfirmModal(false);       
+        setSuccessMsg(true);
+        setMessage("Etapa excluída com sucesso!");
+      } else {
+        setMessage(response.data.message || "Erro ao excluir etapa.");
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || "Erro no servidor";
+        console.error("Erro na resposta:", error.response?.data);
+      } else {
+        console.error("Erro na requisição:", error);
+      }
+      setMessage(errorMessage);
+    } finally {
+      setOpenNoticeModal(true);
+      setLoading((prev) => {
+        const newLoading = new Set(prev);
+        newLoading.delete("deleteStep");
+        return newLoading;
+      });
+    }
+  };
+
   //Limpar FormData
-  const clearFormData = () => {
-    setFormData((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).map(([key, value]) => [
-          key,
-          typeof value === "number" ? 0 : "",
-        ])
-      ) as typeof prev
-    );
+  const clearFormData = (keepProduct: boolean) => {
+    if(keepProduct) {
+      setFormData({
+        produto_nome: formData.produto_nome,
+        id: 0,
+        ordem: 0,
+        nome_etapa: "",
+        tempo: "",
+        insumos: "",
+        responsavel: "",
+        obs: "",
+        dtCadastro: "",
+      });
+    } else {
+      setFormData((prev) =>
+        Object.fromEntries(
+          Object.entries(prev).map(([key, value]) => [
+            key,
+            typeof value === "number" ? 0 : "",
+          ])
+        ) as typeof prev
+      );
+    }
   };
 
   //Scrolla a pagina para baixo quando clicar em "Adicionar Etapa"
@@ -503,7 +406,7 @@ export default function ProductionSteps() {
       });
     }
   };
-  
+
   return (
     <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter] bg-brancoSal">
@@ -565,117 +468,133 @@ export default function ProductionSteps() {
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar-products">
+                  {loading.has("steps") ? (
+                    <div className="flex justify-center items-center h-full">
+                      <Loader2 className="animate-spin h-8 w-8 mx-auto" />
+                    </div>
+                  ) : productsWithSteps.length === 0 ? (
+                    <div className="flex justify-center items-center h-full">
+                      <p className="text-center text-gray-700">Nenhum Produto Cadastrado</p>
+                    </div>
+                  ) : (
                     <ul className="flex flex-col gap-2 m-4">
                       {productsWithSteps
-                        .filter((produto) =>
-                          produto.produto_nome
-                            .toLowerCase()
-                            .includes(search.toLowerCase())
-                        )
-                        .map((produto, index) => (
-                          <li
-                            key={index}
-                            className={`break-words px-4 py-2 text-black font-medium cursor-pointer hover:bg-gray-300 rounded-lg ${
-                              selectedProduct?.produto_nome === produto.produto_nome ? "bg-gray-300" : ""
-                            }`}
-                            onClick={() => setSelectedProduct(produto)}
-                          >
-                            {produto.produto_nome}
-                          </li>
-                        ))}
+                      .filter((produto) =>
+                        produto.produto_nome.toLowerCase().includes(search.toLowerCase())
+                      )
+                      .map((produto, index) => (
+                        <li
+                          key={index}
+                          className={`break-words px-4 py-2 text-black font-medium cursor-pointer hover:bg-gray-300 rounded-lg ${
+                            selectedProduct?.produto_nome === produto.produto_nome ? "bg-gray-300" : ""
+                          }`}
+                          onClick={() => setSelectedProduct(produto)}
+                        >
+                          {produto.produto_nome}
+                        </li>
+                      ))}
                     </ul>
+                  )}
                   </div>
                 </div>
 
                 {/* Tabela de Etapas */}
                 <div className="max-w-[50vw]">
-                {selectedProduct ? (
-                  <>
-                    <h2 className="text-2xl mb-4">
-                    <strong>Produto Final:</strong> {selectedProduct.produto_nome}
-                    </h2>
-                    <div className="max-h-[62vh] overflow-x-auto overflow-y-auto">
-                    <table className="w-full border-collapse">
-                      {/* Tabela Cabeçalho */}
-                      <thead>
-                        <tr className="bg-verdePigmento text-white shadow-thead">
-                          {[
-                            "Ordem",
-                            "Nome da Etapa",
-                            "Tempo Estimado",
-                            "Insumos Utilizados",
-                            "Responsável",
-                            "Observações",
-                            "Ações",
-                          ].map((header) => (
-                            <th
-                              key={header}
-                              className="border border-black px-4 py-4 whitespace-nowrap"
-                            >
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Tabela Dados */}
-                        {selectedProduct.etapas.map((etapa, index) => (
-                          <tr
-                            key={etapa.id}
-                            className={
-                              index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-                            }
-                          >
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.ordem}</td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.nome_etapa}</td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.tempo}</td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.insumos}</td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.responsavel}</td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">
-                              <button
-                                type="button"
-                                className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                                onClick={() => {setCurrentObs(etapa.obs); setOpenObsModal(true)}}
-                              >
-                                <Eye />
-                                <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                  Ver
-                                </div>
-                              </button>
-                            </td>
-                            <td className="border border-black px-4 py-4 whitespace-nowrap">
-                              <button
-                                type="button"
-                                className="mr-4 text-black cursor-pointer relative group"
-                                // onClick={() => handleEditClick(step)}
-                              >
-                                <PencilLine />
-                                <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                  Editar
-                                </div>
-                              </button>
-                              <button
-                                type="button"
-                                className="text-red-500 cursor-pointer relative group"
-                                // onClick={() => handleDeleteClick(step)}
-                              >
-                                <Trash />
-                                <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                  Excluir
-                                </div>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {loading.has("steps") ? (
+                    <div className="flex justify-center items-center h-full w-[50vw]">
+                      <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                     </div>
-                  </>
-                ) : (
-                  <p className="text-gray-600 flex justify-center items-center h-full text-lg w-[680px]">
+                  ) : selectedProduct ? ( 
+                    <>
+                      <h2 className="text-2xl mb-4">
+                      <strong>Produto Final:</strong> {selectedProduct.produto_nome}
+                      </h2>
+                      <div className="max-h-[62vh] overflow-x-auto overflow-y-auto">
+                      <table className="w-full border-collapse">
+                        { /* Tabela Cabeçalho */ }
+                        <thead>
+                          <tr className="bg-verdePigmento text-white shadow-thead">
+                            {[
+                              "Ordem",
+                              "Nome da Etapa",
+                              "Tempo Estimado",
+                              "Insumos Utilizados",
+                              "Responsável",
+                              "Data de Cadastro",
+                              "Observações",
+                              "Ações",
+                            ].map((header) => (
+                              <th
+                                key={header}
+                                className="border border-black px-4 py-4 whitespace-nowrap"
+                              >
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Tabela Dados */}
+                          {selectedProduct.etapas.map((etapa, index) => (
+                            <tr
+                              key={etapa.id}
+                              className={
+                                index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
+                              }
+                            >
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.ordem}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.nome_etapa}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.tempo}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.insumos}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.responsavel}</td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                {new Date(etapa.dtCadastro).toLocaleDateString("pt-BR")}
+                              </td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                  onClick={() => {setCurrentObs(etapa.obs); setOpenObsModal(true)}}
+                                >
+                                  <Eye />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Ver
+                                  </div>
+                                </button>
+                              </td>
+                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  className="mr-4 text-black cursor-pointer relative group"
+                                  onClick={() => {handleEditClick(etapa, selectedProduct.produto_nome); setKeepProduct(false)}}
+                                >
+                                  <PencilLine />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Editar
+                                  </div>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="text-red-500 cursor-pointer relative group"
+                                  onClick={() => handleDeleteClick(etapa, selectedProduct.produto_nome)}
+                                >
+                                  <Trash />
+                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                    Excluir
+                                  </div>
+                                </button>
+                              </td>
+                            </tr>
+                          ))} 
+                        </tbody>
+                      </table>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-gray-600 flex justify-center items-center h-full text-lg w-[680px]">
                     Selecione um produto na lista para ver suas etapas
-                  </p>
-                )}
+                    </p>
+                  )}
                 </div>
 
               </div>
@@ -723,7 +642,7 @@ export default function ProductionSteps() {
                               "Insumos Utilizados",
                               "Responsável",
                               "Observações",
-                              "Ações",
+                              // "Ações",
                             ].map((header) => (
                               <th
                                 key={header}
@@ -760,11 +679,11 @@ export default function ProductionSteps() {
                                   </div>
                                 </button>
                               </td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">
+                              {/* <td className="border border-black px-4 py-4 whitespace-nowrap">
                                 <button
                                   type="button"
                                   className="mr-4 text-black cursor-pointer relative group"
-                                  // onClick={() => handleEditClick(step)}
+                                  onClick={() => {handleEditClick(step, formData.produto_nome); setKeepProduct(true)}}
                                 >
                                   <PencilLine />
                                   <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
@@ -774,14 +693,14 @@ export default function ProductionSteps() {
                                 <button
                                   type="button"
                                   className="text-red-500 cursor-pointer relative group"
-                                  // onClick={() => handleDeleteClick(step)}
+                                  onClick={() => handleDeleteClick(step, formData.produto_nome)}
                                 >
                                   <Trash />
                                   <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
                                     Excluir
                                   </div>
                                 </button>
-                              </td>
+                              </td> */}
                             </tr>
                           ))}
                         </tbody>
@@ -889,6 +808,7 @@ export default function ProductionSteps() {
                           type="button"
                           onClick={() => {
                             setShowStepForm(true);
+                            setKeepProduct(true);
                             setTimeout(() => handleOpenChange(true), 100);
                           }}
                           className="bg-verdeMedio p-3 rounded-2xl text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-verdeEscuro"
@@ -903,6 +823,7 @@ export default function ProductionSteps() {
                               type="submit"
                               name="submitForm"
                               className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra w-[278.72px]  hover:bg-verdeGrama "
+                              onClick={() => setKeepProduct(false)}
                             >
                               {loading.has("submit") ? (
                                 <Loader2 className="animate-spin h-6 w-6" />
@@ -940,137 +861,105 @@ export default function ProductionSteps() {
         />
 
         {/* Modal de Edição */}
-        {/* <Modal
+        <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
-          modalTitle="Editar Usuário:"
+          modalTitle="Editar Etapa:"
           leftButtonText="Editar"
           rightButtonText="Cancelar"
           loading={loading}
-          isLoading={loading.has("updateUser")}
-          onCancel={() => clearFormData()}
-          onSubmit={handleUpdateUser}
-        > */}
-        {/* Linha Nome e Email*/} 
-          {/* <div className="flex mb-10 justify-between">
+          isLoading={loading.has("updateStep")}
+          onCancel={() => clearFormData(keepProduct)}
+          onSubmit={handleUpdateStep}
+        >
+          <div className="flex gap-10 mb-6 justify-between w-2xl">
+            {!keepProduct && (
+              <SmartField
+                fieldName="produto_nome"
+                fieldText="Produto Final"
+                fieldClassname="flex flex-col flex-1"
+                type="text"
+                required
+                placeholder="Nome do Produto final a ser produzido"
+                value={formData.produto_nome}
+                onChange={handleChange}
+              />
+            )}
+            <SmartField
+              fieldName="nome_etapa"
+              fieldText="Nome da Etapa"
+              fieldClassname="flex flex-col flex-1"
+              type="text"
+              required
+              placeholder="Digite o Nome da Etapa"
+              value={formData.nome_etapa}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div className="flex gap-10 mb-6 justify-between">
 
             <SmartField
-              fieldName="name"
-              fieldText="Nome Completo"
-              required
+              fieldName="responsavel"
+              fieldText="Responsável"
+              fieldClassname="flex flex-col flex-1"
               type="text"
-              placeholder="Digite o nome completo"
-              autoComplete="name"
-              value={formData.name}
+              required
+              placeholder="Digite o Nome do Responsável"
+              value={formData.responsavel}
               onChange={handleChange}
-              inputWidth="w-[300px]"
             />
 
             <SmartField
-              fieldName="email"
-              fieldText="Email"
-              required
-              type="email"
-              placeholder="Digite o email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              inputWidth="w-[300px]"
-            />  
-          </div> */}
-
-          {/* Linha Telefone, CPF, e status*/}
-          {/* <div className="flex gap-x-15 mb-10 justify-between">
-
-            <SmartField
-              fieldName="tel"
-              fieldText="Telefone"
-              withInputMask
-              required
-              type="tel"
-              mask="(99) 9999?9-9999"
-              autoClear={false}
-              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-              placeholder="Digite o Telefone"
-              autoComplete="tel"
-              value={formData.tel}
-              onChange={handleChange}
-              inputWidth="w-[190px]"
-            />  
-
-            <SmartField
-              fieldName="cpf"
-              fieldText="CPF"
-              withInputMask
-              required
+              fieldName="tempo"
+              fieldText="Tempo Estimado"
+              fieldClassname="flex flex-col flex-1"
               type="text"
-              mask="999.999.999-99"
-              autoClear={false}
-              pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-              placeholder="Digite o CPF"
-              value={formData.cpf}
+              required
+              placeholder="Tempo Estimado da etapa"
+              value={formData.tempo}
               onChange={handleChange}
-              inputWidth="w-[190px]"
-            />  
-
-            <SmartField
-              fieldName="status"
-              fieldText="Status"
-              isSelect
-              value={formData.status}
-              onChange={handleChange}
-              inputWidth="w-[190px]"
-            > 
-              {options.status?.map((status) => (
-                <option key={status.sta_id} value={status.sta_id}>
-                  {status.sta_nome}
-                </option>
-              ))}
-            </SmartField> 
-
-          </div> */}
-
-          {/* Linha Cargo e Nivel de Acesso */}
-          {/* <div className="flex gap-x-15 mb-10 items-center justify-between">
-
-            <SmartField
-              fieldName="cargo"
-              fieldText="Cargo"
-              isSelect
-              value={formData.cargo}
-              onChange={handleChange}
-              inputWidth="w-[300px]"
-            > 
-              {options.cargos.map((cargo) => (
-                <option key={cargo.car_id} value={cargo.car_nome}>
-                  {cargo.car_nome}
-                </option>
-              ))}
-            </SmartField> 
-
-            <SmartField
-              fieldName="nivel"
-              fieldText="Nível de Acesso"
-              isSelect
-              value={formData.nivel}
-              onChange={handleChange}
-              inputWidth="w-[300px]"
-              > 
-              {options.niveis.map((nivel) => (
-                <option key={nivel.nivel_id} value={nivel.nivel_nome}>
-                  {nivel.nivel_nome}
-                </option>
-              ))}
-            </SmartField> 
+            />
 
           </div>
-        </Modal> */}
+
+          <div className="flex mb-6">
+
+            <SmartField
+              fieldName="insumos"
+              fieldText="Insumos Utilizados"
+              fieldClassname="flex flex-col w-full"
+              type="text"
+              required
+              placeholder="Insumos Utilizados na etapa"
+              value={formData.insumos}
+              onChange={handleChange}
+            />
+          
+          </div>
+
+          <div className="flex mb-8">
+
+            <SmartField
+              isTextArea
+              fieldName="obs"
+              fieldText="Observações"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite as observações da Etapa"
+              value={formData.obs}
+              onChange={handleChange}
+              rows={2}
+            />
+
+          </div>
+
+        </Modal>
 
         {/* Modal de Exclusão */}
-        {/* <Modal
+        <Modal
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
-          modalTitle="Excluir Usuário:"
+          modalTitle="Excluir Etapa:"
           leftButtonText="Excluir"
           rightButtonText="Cancelar"
           onDelete={() => {
@@ -1078,23 +967,35 @@ export default function ProductionSteps() {
             setOpenDeleteModal(false);  
           }}
         >
-          <div className="flex mb-10">
+          <div className="flex mb-8">
 
             <SmartField
-              fieldName="dname"
-              fieldText="Nome Completo"
+              fieldName="dproduct"
+              fieldText="Produto Final"
               fieldClassname="flex flex-col w-full"
               type="text"
-              autoComplete="name"
-              required
               readOnly
-              value={deleteUser.dname}
+              value={deleteStep.dproduct}
               onChange={handleChange}
             />
 
           </div>
 
-          <div className="flex mb-10 ">
+          <div className="flex mb-8">
+
+            <SmartField
+              fieldName="dstep"
+              fieldText="Nome da Etapa"
+              fieldClassname="flex flex-col w-full"
+              type="text"
+              readOnly
+              value={deleteStep.dstep}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          <div className="flex mb-8 ">
 
             <SmartField
               isTextArea
@@ -1103,27 +1004,27 @@ export default function ProductionSteps() {
               autoFocus
               fieldText="Motivo da Exclusão"
               fieldClassname="flex flex-col w-full"
-              placeholder="Digite o motivo da exclusão do usuário"
-              value={deleteUser.reason}
+              placeholder="Digite o motivo da exclusão da etapa"
+              value={deleteStep.reason}
               onChange={handleChange}
             />
 
           </div>
 
-        </Modal> */}
+        </Modal>
 
-        {/* Alert para confirmar exclusão do usuário */}
-        {/* <ConfirmationModal
+        {/* Alert para confirmar exclusão da etapa */}
+        <ConfirmationModal
           openModal={openConfirmModal}
           setOpenModal={setOpenConfirmModal}
-          confirmationModalTitle="Tem certeza que deseja excluir o usuário?"
+          confirmationModalTitle="Tem certeza que deseja excluir a etapa?"
           confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-          onConfirm={handleDeleteUser}
+          onConfirm={handleDeleteStep}
           loading={loading}
-          isLoading={loading.has("deleteUser")}
+          isLoading={loading.has("deleteStep")}
           confirmationLeftButtonText="Cancelar"
-          confirmationRightButtonText="Sim, excluir usuário"
-        /> */}
+          confirmationRightButtonText="Sim, excluir etapa"
+        />
 
       </div>
     </div>
