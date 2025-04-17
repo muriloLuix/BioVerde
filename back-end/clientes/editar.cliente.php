@@ -30,8 +30,8 @@ try {
     }
 
     // Verifica se o cliente existe
-    if (!verificarClienteExiste($conn, $data['cliente_id'])) {
-        throw new Exception("Cliente não encontrado.");
+    if(!verifyExist($conn, $data['cliente_id'], 'cliente_id', 'clientes')) {
+        throw new Exception('Cliente não encontrado');
     }
 
     // Validação dos campos obrigatórios (sem status pois vamos tratá-lo separadamente)
@@ -59,7 +59,20 @@ try {
     }
 
     // Atualiza cliente
-    $resultado = atualizarCliente($conn, $data['cliente_id'], $data);
+    $camposAtualizados = [
+        'cliente_nome' => $data['nome_cliente'],
+        'cliente_email' => $data['email'],
+        'cliente_telefone' => $data['tel'],
+        'cliente_cpf_cnpj' => $data['cpf_cnpj'],
+        'cliente_cep' => $data['cep'],
+        'cliente_endereco' => $data['endereco'],
+        'cliente_numendereco' => $data['num_endereco'],
+        'cliente_estado' => $data['estado'],
+        'cliente_cidade' => $data['cidade'],
+        'status' => $data['sta_id'] ?? null
+    ];
+
+    $resultado = updateData($conn, "clientes", $camposAtualizados, $data['cliente_id'], "cliente_id");
     if (!$resultado['success']) {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar cliente");
     }

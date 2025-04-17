@@ -11,8 +11,6 @@ require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2));
 $dotenv->load();
 
-
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -93,28 +91,6 @@ function verificarNivel($conn, $nivel)
     $nivel = $result->fetch_assoc();
     $stmt->close();
     return $nivel['nivel_id'];
-}
-
-/**
- * Verifica se o e-mail ou o CPF/CNPJ ja  existe no cadastro de usuarios
- * @param mysqli $conn conexao ao banco de dados
- * @param string $email e-mail do usuario
- * @param string $cpf CPF/CNPJ do usuario
- * @return array|null retorna um array com a chave "success" como false e "message" com a mensagem de erro ou null se nao houver conflito
- */
-function verificarEmailCpf($conn, $email, $cpf)
-{
-    $stmt = $conn->prepare("SELECT user_email, user_CPF FROM usuarios WHERE user_email = ? OR user_CPF = ?");
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
-    }
-    $stmt->bind_param("ss", $email, $cpf);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "E-mail ou CPF já existe."];
-    }
-    return null;
 }
 
 /**
@@ -446,6 +422,73 @@ function enviarEmailRecuperacao($email, $codigo)
     );
 }
 
+/**
+ * Atualiza um registro em uma tabela do banco de dados.
+ *
+ * @param mysqli $conn Conexao com o banco de dados.
+ * @param string $table Nome da tabela que deseja atualizar.
+ * @param array $fields Array com os campos e valores a serem atualizados.
+ *                       A chave do array deve ser o nome do campo e o valor
+ *                       deve ser o valor a ser atualizado.
+ * @param int|string $id ID do registro a ser atualizado.
+ * @param string $idField Nome do campo que cont m o ID do registro.
+ *
+ * @return array Retorna um array com as chaves 'success' e 'message'.
+ *               Se a atualização for bem-sucedida, 'success' ser  true e
+ *               'message' ser  uma string vazia. Caso contrario, 'success'
+ *               ser  false e 'message' conter a descrição do erro.
+ */
+function updateData($conn, $table, $fields, $id, $idField)
+{
+    if (!is_array($fields) || empty($fields)) {
+        return [
+            'success' => false,
+            'message' => 'Nenhum dado fornecido para atualização.'
+        ];
+    }
+
+    $setClause = implode(', ', array_map(fn($key) => "$key = ?", array_keys($fields)));
+    $sql = "UPDATE {$table} SET {$setClause} WHERE {$idField} = ?";
+
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return [
+            'success' => false,
+            'message' => 'Erro ao preparar a query: ' . $conn->error
+        ];
+    }
+
+    $types = '';
+    $values = [];
+
+    foreach ($fields as $value) {
+        if (is_int($value)) {
+            $types .= 'i';
+        } elseif (is_double($value)) {
+            $types .= 'd';
+        } else {
+            $types .= 's';
+        }
+        $values[] = $value;
+    }
+
+    // Adiciona o ID ao final dos parâmetros
+    $types .= is_int($id) ? 'i' : 's';
+    $values[] = $id;
+
+    $stmt->bind_param($types, ...$values);
+
+    if (!$stmt->execute()) {
+        return [
+            'success' => false,
+            'message' => 'Erro ao atualizar cliente: ' . $stmt->error
+        ];
+    }
+
+    return ['success' => true];
+}
+
 /******************************************************************************/
 
 // listar_usuarios.php
@@ -716,80 +759,6 @@ function buscarUsuariosComFiltros($conn, $filtros)
 // editar.usuario.php
 
 /**
- * Verifica se o usuário existe
- */
-function verificarUsuarioExiste($conn, $user_id)
-{
-    $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE user_id = ?");
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
-    }
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $existe = $result->num_rows > 0;
-    $stmt->close();
-    return $existe;
-}
-
-/**
- * Atualiza os dados do usuário
- */
-function atualizarUsuario($conn, $user_id, $dados)
-{
-    // Campos básicos
-    $campos = [
-        'user_nome' => $dados['name'],
-        'user_email' => $dados['email'],
-        'user_telefone' => $dados['tel'],
-        'user_CPF' => $dados['cpf'],
-        'car_id' => verificarCargo($conn, $dados['cargo']),
-        'nivel_id' => verificarNivel($conn, $dados['nivel']),
-        'sta_id' => $dados['sta_id'] ?? null
-    ];
-
-
-    // Se houver senha, atualiza também
-    if (!empty($dados['password'])) {
-        $campos['user_senha'] = password_hash($dados['password'], PASSWORD_DEFAULT);
-    }
-
-    // Prepara os campos para a query
-    $sets = [];
-    $tipos = '';
-    $valores = [];
-
-    foreach ($campos as $campo => $valor) {
-        if ($valor !== null) {
-            $sets[] = "$campo = ?";
-            $tipos .= is_int($valor) ? 'i' : 's';
-            $valores[] = $valor;
-        }
-    }
-
-    // Adiciona o user_id no final
-    $valores[] = $user_id;
-    $tipos .= 'i';
-
-    $sql = "UPDATE usuarios SET " . implode(', ', $sets) . " WHERE user_id = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
-    }
-
-    $stmt->bind_param($tipos, ...$valores);
-    $stmt->execute();
-
-    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
-        // Considera sucesso mesmo se nada foi alterado (valores iguais)
-        return ["success" => true];
-    } else {
-        return ["success" => false, "message" => "Nenhum registro atualizado."];
-    }
-}
-
-/**
  * Verifica conflitos de email/CPF (excluindo o próprio usuário)
  */
 function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id)
@@ -917,28 +886,6 @@ function registrarExclusaoUsuario($conn, $user_id, $dados)
 
 
 /**
- * Verifica se o e-mail ou o CPF/CNPJ j  existe no cadastro de fornecedores
- * @param mysqli $conn conex o ao banco de dados
- * @param string $email e-mail do fornecedor
- * @param string $cnpj CPF/CNPJ do fornecedor
- * @return array|null retorna um array com a chave "success" como false e "message" com a mensagem de erro ou null se n o houver conflito
- */
-function verificarEmailCnpj($conn, $email, $cnpj)
-{
-    $stmt = $conn->prepare("SELECT fornecedor_email, fornecedor_CNPJ FROM fornecedores WHERE fornecedor_email = ? OR fornecedor_CNPJ = ?");
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
-    }
-    $stmt->bind_param("ss", $email, $cnpj);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
-    }
-    return null;
-}
-
-/**
  * Envia um e-mail de confirmação de cadastro de fornecedor
  * @param string $email e-mail do fornecedor
  * @param array $data dados do fornecedor
@@ -946,23 +893,7 @@ function verificarEmailCnpj($conn, $email, $cnpj)
  */
 function enviarEmailFornecedor($email, $data)
 {
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'bioverdesistema@gmail.com';
-        $mail->Password = 'gfdx wwpr cnfi emjt';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
-        $mail->addAddress($email);
-
-        $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
-        $mail->Subject = 'Bio Verde - Cadastro no Sistema (Fornecedor)';
-        $mail->Body = "
+        $html= "
                 <html>
                 <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
                     <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
@@ -997,12 +928,13 @@ function enviarEmailFornecedor($email, $data)
                 </body>
                 </html>
         ";
-        $mail->AltBody = "Bem-vindo à Bio Verde!\n\nSeu cadastro foi concluído com sucesso.\n\nSeus dados de acesso:\nNome da Empresa: " . $data['nome_empresa'] . "\nRazão Social: " . $data['razao_social'] . "\nE-mail: " . $data['email'] . "\nCPF/CNPJ: " . $data['cnpj'] . "\nEndereço: " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "\nCidade: " . $data['cidade'] . "\nEstado: " . $data['estado'] . "\nCep: " . $data['cep'] . "\nResponsável: " . $data['responsavel'] . "\n\nPor segurança, recomendamos alterar sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Bio Verde\n\nEste é um e-mail automático. Não responda.";
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        return ["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
-    }
+
+    return sendEmail(
+        null,
+        $email,
+        'Bio Verde - Cadastro de fornecedor realizado com sucesso!',
+        $html
+    );
 }
 
 // listar_fornecedores.php
@@ -1121,74 +1053,6 @@ function buscarFornecedoresComFiltros($conn, $filtros)
 
 // editar.fornecedor.php
 
-function verificarFornecedorExiste($conn, $fornecedor_id)
-{
-    $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_id = ?");
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
-    }
-    $stmt->bind_param("i", $fornecedor_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $existe = $result->num_rows > 0;
-    $stmt->close();
-    return $existe;
-}
-
-function atualizarFornecedor($conn, $fornecedor_id, $dados)
-{
-    // Campos básicos
-    $campos = [
-        'fornecedor_nome' => $dados['nome_empresa'],
-        'fornecedor_razao_social' => $dados['razao_social'],
-        'fornecedor_email' => $dados['email'],
-        'fornecedor_telefone' => $dados['tel'],
-        'fornecedor_CNPJ' => $dados['cnpj'],
-        'fornecedor_status' => $dados['status'] ?? null,
-        'fornecedor_responsavel' => $dados['responsavel'],
-        'fornecedor_cep' => $dados['cep'],
-        'fornecedor_endereco' => $dados['endereco'],
-        'fornecedor_num_endereco' => $dados['num_endereco'],
-        'fornecedor_cidade' => $dados['cidade'],
-        'fornecedor_estado' => $dados['estado']
-    ];
-
-
-    // Prepara os campos para a query
-    $sets = [];
-    $tipos = '';
-    $valores = [];
-
-    foreach ($campos as $campo => $valor) {
-        if ($valor !== null) {
-            $sets[] = "$campo = ?";
-            $tipos .= is_int($valor) ? 'i' : 's';
-            $valores[] = $valor;
-        }
-    }
-
-    // Adiciona o fornecedor_id no final
-    $valores[] = $fornecedor_id;
-    $tipos .= 'i';
-
-    $sql = "UPDATE fornecedores SET " . implode(', ', $sets) . " WHERE fornecedor_id = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
-    }
-
-    $stmt->bind_param($tipos, ...$valores);
-    $stmt->execute();
-
-    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
-        // Considera sucesso mesmo se nada foi alterado (valores iguais)
-        return ["success" => true];
-    } else {
-        return ["success" => false, "message" => "Nenhum registro atualizado."];
-    }
-}
-
 // excluir.fornecedor.php
 
 function registrarExclusaoFornecedor($conn, $user_id, $dados)
@@ -1221,40 +1085,31 @@ function registrarExclusaoFornecedor($conn, $user_id, $dados)
 
 // cadastrar_clientes.php
 
-function verificarEmailCnpjCpfCliente($conn, $email, $cpf_cnpj)
-{
-    $stmt = $conn->prepare("SELECT cliente_email, cliente_cpf_cnpj FROM clientes WHERE cliente_email = ? OR cliente_cpf_cnpj = ?");
+function verifyCredentials($conn, $valor1, $valor2, $tabela, $coluna1, $coluna2){
+
+    $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
+    $stmt = $conn->prepare($sql);
+
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
     }
-    $stmt->bind_param("ss", $email, $cpf_cnpj);
+
+    $stmt->bind_param('ss', $valor1, $valor2);
     $stmt->execute();
     $result = $stmt->get_result();
+
     if ($result->num_rows > 0) {
         return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
     }
+
     return null;
 }
 
+
 function enviarEmailCliente($email, $data)
 {
-    $mail = new PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'bioverdesistema@gmail.com';
-        $mail->Password = 'gfdx wwpr cnfi emjt';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
 
-        $mail->setFrom('bioverdesistema@gmail.com', 'Bio Verde');
-        $mail->addAddress($email);
-
-        $mail->isHTML(true);
-        $mail->CharSet = 'UTF-8';
-        $mail->Subject = 'Bio Verde - Cadastro realizado com sucesso!';
-        $mail->Body = "
+    $html = "
                 <html>
                 <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
                     <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
@@ -1289,12 +1144,13 @@ function enviarEmailCliente($email, $data)
                 </body>
                 </html>
         ";
-        $mail->AltBody = "Bem-vindo à Bio Verde!\n\nSeu cadastro foi concluído com sucesso.\n\nSeus dados de acesso:\nNome do Cliente: " . $data['nome_cliente'] . "\nCPF/CNPJ: " . $data['cpf_cnpj'] . "\nTelefone/Celular: " . $data['tel'] . "\nE-mail: " . $data['email'] . "\nEndereço: " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "\nCidade: " . $data['cidade'] . "\nEstado: " . $data['estado'] . "\nCep: " . $data['cep'] . "\n\nPor segurança, recomendamos alterar sua senha no primeiro acesso.\n\nAtenciosamente,\nEquipe Bio Verde\n\nEste é um e-mail automático. Não responda.";
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        return ["success" => false, "message" => "Erro ao enviar e-mail: " . $mail->ErrorInfo];
-    }
+
+    return sendEmail(
+        null,
+        $email,
+        'Bio Verde - Cadastro de cliente realizado com sucesso!',
+        $html
+    );
 }
 
 // listar_clientes.php
@@ -1412,71 +1268,17 @@ function buscarClientesComFiltros($conn, $filtros)
 
 // editar.cliente.php
 
-function verificarClienteExiste($conn, $cliente_id)
-{
-    $stmt = $conn->prepare("SELECT cliente_id FROM clientes WHERE cliente_id = ?");
+function verifyExist($conn, $id, $pk, $tabela){
+    $stmt = $conn->prepare('SELECT ' . $pk . ' FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    $stmt->bind_param("i", $cliente_id);
+    $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
     $existe = $result->num_rows > 0;
     $stmt->close();
     return $existe;
-}
-
-function atualizarCliente($conn, $cliente_id, $dados)
-{
-    // Campos básicos
-    $campos = [
-        'cliente_nome' => $dados['nome_cliente'],
-        'cliente_email' => $dados['email'],
-        'cliente_telefone' => $dados['tel'],
-        'cliente_cpf_cnpj' => $dados['cpf_cnpj'],
-        'status' => $dados['status'] ?? null,
-        'cliente_cep' => $dados['cep'],
-        'cliente_endereco' => $dados['endereco'],
-        'cliente_numendereco' => $dados['num_endereco'],
-        'cliente_estado' => $dados['estado'],
-        'cliente_cidade' => $dados['cidade'],
-        'cliente_observacoes' => $dados['obs'],
-    ];
-
-
-    // Prepara os campos para a query
-    $sets = [];
-    $tipos = '';
-    $valores = [];
-
-    foreach ($campos as $campo => $valor) {
-        if ($valor !== null) {
-            $sets[] = "$campo = ?";
-            $tipos .= is_int($valor) ? 'i' : 's';
-            $valores[] = $valor;
-        }
-    }
-
-    // Adiciona o fornecedor_id no final
-    $valores[] = $cliente_id;
-    $tipos .= 'i';
-
-    $sql = "UPDATE clientes SET " . implode(', ', $sets) . " WHERE cliente_id = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
-    }
-
-    $stmt->bind_param($tipos, ...$valores);
-    $stmt->execute();
-
-    if ($stmt->affected_rows > 0 || $stmt->affected_rows == 0) {
-        // Considera sucesso mesmo se nada foi alterado (valores iguais)
-        return ["success" => true];
-    } else {
-        return ["success" => false, "message" => "Nenhum registro atualizado."];
-    }
 }
 
 function buscarClientePorId($conn, $cliente_id)

@@ -46,8 +46,8 @@ try {
     }
 
     // Verifica se o usuário existe
-    if (!verificarUsuarioExiste($conn, $data['user_id'])) {
-        throw new Exception("Usuário não encontrado.");
+    if(!verifyExist($conn, $data["user_id"], "user_id", "usuarios")) {
+        throw new Exception("Usuário nao encontrado");
     }
 
     // Verifica conflitos
@@ -80,7 +80,18 @@ try {
     }
 
     // Atualiza usuário
-    $resultado = atualizarUsuario($conn, $data['user_id'], $data);
+
+    $camposAtualizados = [
+        'user_nome' => $data['name'],
+        'user_email' => $data['email'],
+        'user_telefone' => $data['tel'],
+        'user_CPF' => $data['cpf'],
+        'car_id' => verificarCargo($conn, $data['cargo']),
+        'nivel_id' => verificarNivel($conn, $data['nivel']),
+        'sta_id' => $data['sta_id'] ?? null
+    ];
+
+    $resultado = updateData($conn, 'usuarios', $camposAtualizados, $data['user_id'], 'user_id');
     if (!$resultado['success']) {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
     }
