@@ -5,7 +5,7 @@ export { default as Clients } from "./page/Clients";
 export { default as InventoryControl } from "./page/InventoryControl";
 export { default as Logs } from "./page/Logs";
 export { default as ProductionSteps } from "./page/ProductionSteps";
-export { default as Requests } from "./page/Requests";
+export { default as Orders } from "./page/Orders";
 export { default as Suppliers } from "./page/Suppliers";
 export { default as UsersPage } from "./page/UsersPage";
 

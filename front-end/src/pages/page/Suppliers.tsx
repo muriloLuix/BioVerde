@@ -94,9 +94,7 @@ export default function Suppliers() {
   //OnChange dos campos
   const handleChange = (
     event:
-      | React.ChangeEvent<
-          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-        >
+      | React.ChangeEvent< HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
       | InputMaskChangeEvent
   ) => {
     const { name, value } = event.target;
@@ -931,7 +929,7 @@ export default function Suppliers() {
                   mask="99999-999"
                   autoClear={false}
                   pattern="^\d{5}-\d{3}$"
-                  placeholder="Digite seu CEP"
+                  placeholder="Digite o CEP"
                   autoComplete="postal-code"
                   value={formData.cep}
                   onChange={handleChange}
@@ -1177,7 +1175,7 @@ export default function Suppliers() {
               mask="99999-999"
               autoClear={false}
               pattern="^\d{5}-\d{3}$"
-              placeholder="Digite seu CEP"
+              placeholder="Digite o CEP"
               autoComplete="postal-code"
               value={formData.cep}
               onChange={handleChange}

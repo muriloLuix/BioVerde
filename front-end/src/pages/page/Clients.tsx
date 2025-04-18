@@ -925,7 +925,7 @@ export default function Clients() {
                   mask="99999-999"
                   autoClear={false}
                   pattern="^\d{5}-\d{3}$"
-                  placeholder="Digite seu CEP"
+                  placeholder="Digite o CEP"
                   autoComplete="postal-code"
                   value={formData.cep}
                   onChange={handleChange}
@@ -1155,7 +1155,7 @@ export default function Clients() {
               mask="99999-999"
               autoClear={false}
               pattern="^\d{5}-\d{3}$"
-              placeholder="Digite seu CEP"
+              placeholder="Digite o CEP"
               autoComplete="postal-code"
               value={formData.cep}
               onChange={handleChange}

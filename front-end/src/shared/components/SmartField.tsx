@@ -79,6 +79,9 @@ const SmartField: React.FC<SmartFieldProps> = ({
             <Form.Message className="text-red-500 text-xs" match="patternMismatch">
               Formato inválido*
             </Form.Message>
+            <Form.Message className="text-red-500 text-xs" match="rangeUnderflow">
+              Valor inválido*
+            </Form.Message>
           </>
         )}
       </Form.Label>

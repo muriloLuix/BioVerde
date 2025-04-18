@@ -10,7 +10,7 @@ import {
   InventoryControl,
   ProductionSteps,
   Logs,
-  Requests,
+  Orders,
   Suppliers,
 } from "./pages/index.tsx";
 
@@ -27,7 +27,7 @@ const AppRoutes = () => {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="controle-estoque" element={<InventoryControl />} />
           <Route path="etapas-producao" element={<ProductionSteps />} />
-          <Route path="pedidos" element={<Requests />} />
+          <Route path="pedidos" element={<Orders />} />
           <Route path="usuarios" element={<UsersPage />} />
           <Route path="fornecedores" element={<Suppliers />} />
           <Route path="clientes" element={<Clients />} />
