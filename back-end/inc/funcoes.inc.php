@@ -489,43 +489,71 @@ function updateData($conn, $table, $fields, $id, $idField)
     return ['success' => true];
 }
 
+/**
+ * Verifica se um registro existe na base de dados.
+ * 
+ * @param mysqli $conn conexao com o banco de dados
+ * @param int $id ID do registro a ser verificado
+ * @param string $pk nome da chave primaria da tabela
+ * @param string $tabela nome da tabela que contem o registro
+ * 
+ * @return bool retorna true se o registro existir, false caso contrario
+ */
+function verifyExist($conn, $id, $pk, $tabela){
+    $stmt = $conn->prepare('SELECT ' . $pk . ' FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
+    }
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $existe = $result->num_rows > 0;
+    $stmt->close();
+    return $existe;
+}
+
+/**
+ * Busca dados em uma tabela do banco de dados.
+ * 
+ * @param mysqli $conn conex o com o banco de dados
+ * @param string $table nome da tabela que cont m os dados a serem buscados
+ * @param string $fields campos a serem buscados na tabela (separados por v rgula)
+ * @param array $inner par metros de inner join (opcional)
+ *                      - join_table: nome da tabela a ser feita a inner join
+ *                      - on: condicional da inner join
+ * 
+ * @return array retorna um array com os dados encontrados
+ * @throws Exception caso haja erro ao buscar os dados
+ */
+function search($conn, $table, $fields, $joins = []) {
+    $sql = "SELECT $fields FROM $table";
+
+    if (!empty($joins) && is_array($joins)) {
+        foreach ($joins as $join) {
+            if (isset($join['type'], $join['join_table'], $join['on'])) {
+                $sql .= " {$join['type']} JOIN {$join['join_table']} ON {$join['on']}";
+            }
+        }
+    }
+
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        throw new Exception("Erro ao buscar dados: " . $conn->error);
+    }
+
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        $data[] = $row;
+    }
+
+    return $data;
+}
+
+
 /******************************************************************************/
 
 // listar_usuarios.php
-
-function buscarUsuarios($conn)
-{
-    $result = $conn->query("
-        SELECT 
-            u.user_id, 
-            u.user_nome, 
-            u.user_email, 
-            u.user_telefone, 
-            u.user_CPF, 
-            c.car_nome, 
-            n.nivel_nome, 
-            s.sta_nome,
-            u.user_dtcadastro, 
-            u.car_id, 
-            u.nivel_id,
-            u.sta_id
-        FROM usuarios u 
-        INNER JOIN cargo c ON u.car_id = c.car_id 
-        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
-        LEFT JOIN status s ON u.sta_id = s.sta_id  -- JOIN com a tabela status
-    ");
-
-    if (!$result) {
-        throw new Exception("Erro ao buscar usuários: " . $conn->error);
-    }
-
-    $usuarios = [];
-    while ($row = $result->fetch_assoc()) {
-        $usuarios[] = $row;
-    }
-
-    return $usuarios;
-}
 
 // nova.senha.php
 
@@ -939,41 +967,6 @@ function enviarEmailFornecedor($email, $data)
 
 // listar_fornecedores.php
 
-function buscarFornecedores($conn)
-{
-
-    $result = $conn->query("
-        SELECT 
-            fornecedor_id,
-            fornecedor_nome,
-            fornecedor_razao_social,
-            fornecedor_email,
-            fornecedor_telefone,
-            fornecedor_CNPJ,
-            fornecedor_responsavel,
-            fornecedor_cep,
-            fornecedor_endereco,
-            fornecedor_num_endereco,
-            fornecedor_estado,
-            fornecedor_cidade,
-            b.sta_nome,
-            b.sta_id,
-            fornecedor_dtcadastro
-        FROM fornecedores a
-        INNER JOIN status b ON a.fornecedor_status = b.sta_id
-        ");
-
-    if (!$result) {
-        throw new Exception("Erro ao buscar usuários: " . $conn->error);
-    }
-
-    $fornecedores = [];
-    while ($row = $result->fetch_assoc()) {
-        $fornecedores[] = $row;
-    }
-
-    return $fornecedores;
-}
 
 // filtro.fornecedor.php
 
@@ -1152,44 +1145,6 @@ function enviarEmailCliente($email, $data)
         $html
     );
 }
-
-// listar_clientes.php
-
-function buscarClientes($conn)
-{
-
-    $result = $conn->query("
-        SELECT 
-            cliente_id,
-            cliente_nome,
-            cliente_email,
-            cliente_telefone,
-            cliente_cpf_cnpj,
-            cliente_cep,
-            cliente_endereco,
-            cliente_numendereco,
-            cliente_estado,
-            cliente_cidade,
-            b.sta_nome,
-            cliente_observacoes,
-            cliente_data_cadastro,
-            pedido_id
-        FROM clientes a
-        INNER JOIN status b ON a.status = b.sta_id;
-        ");
-
-    if (!$result) {
-        throw new Exception("Erro ao buscar usuários: " . $conn->error);
-    }
-
-    $fornecedores = [];
-    while ($row = $result->fetch_assoc()) {
-        $fornecedores[] = $row;
-    }
-
-    return $fornecedores;
-}
-
 // filtro.cliente.php
 
 function construirFiltrosCliente($data)
@@ -1267,19 +1222,6 @@ function buscarClientesComFiltros($conn, $filtros)
 }
 
 // editar.cliente.php
-
-function verifyExist($conn, $id, $pk, $tabela){
-    $stmt = $conn->prepare('SELECT ' . $pk . ' FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
-    }
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $existe = $result->num_rows > 0;
-    $stmt->close();
-    return $existe;
-}
 
 function buscarClientePorId($conn, $cliente_id)
 {

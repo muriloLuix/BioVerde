@@ -12,8 +12,32 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar Clientes
-    $clientes = buscarClientes($conn);
+    $cols = array(
+        "cliente_id",
+        "cliente_nome",
+        "cliente_email",
+        "cliente_telefone",
+        "cliente_cpf_cnpj",
+        "cliente_cep",
+        "cliente_endereco",
+        "cliente_numendereco",
+        "cliente_estado",
+        "cliente_cidade",
+        "b.sta_nome AS status",
+        "cliente_observacoes",
+        "cliente_data_cadastro"
+    );
+    
+    $joins = [
+        [
+            'type' => 'INNER',
+            'join_table' => 'status b',
+            'on' => 'a.status = b.sta_id',
+        ]
+    ];
+    
+    $clientes = search($conn, "clientes a", implode(",", $cols), $joins);
+    
 
     $status = buscarStatus($conn);
 
