@@ -33,12 +33,11 @@ if ($validacaoDosCampos !== null) {
 }
 
 // Verificar email e CNPJ
-$emailCpfError = verificarEmailCnpjCpfCliente($conn, $data['email'], $data['cpf_cnpj']);
+$emailCpfError = verifyCredentials($conn, $data['email'], $data['cpf_cnpj'], "clientes", "cliente_email", "cliente_cpf_cnpj");
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();
 }
-
 $sta_id = verificarStatus($conn, $data['status']);
 if ($sta_id === null) { 
     // Adicione mais informações de debug

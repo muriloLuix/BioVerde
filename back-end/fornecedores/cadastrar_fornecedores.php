@@ -31,7 +31,7 @@ if ($validacaoDosCampos !== null) {
 }
 
 // Verificar email e CNPJ
-$emailCpfError = verificarEmailCnpj($conn, $data['email'], $data['cnpj']);
+$emailCpfError = verifyCredentials($conn, $data['email'], $data['cnpj'], "clientes", "fornecedor_email", "fornecedor_CNPJ");
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();

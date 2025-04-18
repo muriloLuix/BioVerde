@@ -49,8 +49,8 @@ try {
     }
 
     // Verifica se o fornecedor existe
-    if (!verificarFornecedorExiste($conn, $data['fornecedor_id'])) {
-        throw new Exception("Fornecedor não encontrado.");
+    if(!verifyExist($conn, $data["fornecedor_id"], "fornecedor_id", "fornecedores")) {
+        throw new Exception("Fornecedor nao encontrado");
     }
     
     if (isset($data['status'])) {
@@ -66,7 +66,23 @@ try {
     }
 
     // Atualiza fornecedor
-    $resultado = atualizarFornecedor($conn, $data['fornecedor_id'], $data);
+
+    $camposAtualizados = [
+        'fornecedor_nome' => $data['nome_empresa'],
+        'fornecedor_razao_social' => $data['razao_social'],
+        'fornecedor_email' => $data['email'],
+        'fornecedor_telefone' => $data['tel'],
+        'fornecedor_CNPJ' => $data['cnpj'],
+        'fornecedor_status' => $data['status'] ?? null,
+        'fornecedor_responsavel' => $data['responsavel'],
+        'fornecedor_cep' => $data['cep'],
+        'fornecedor_endereco' => $data['endereco'],
+        'fornecedor_num_endereco' => $data['num_endereco'],
+        'fornecedor_cidade' => $data['cidade'],
+        'fornecedor_estado' => $data['estado']
+    ];
+
+    $resultado = updateData($conn, 'fornecedores', $camposAtualizados, $data['fornecedor_id'], 'fornecedor_id');
     if (!$resultado['success']) {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
     }
