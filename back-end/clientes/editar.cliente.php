@@ -77,12 +77,34 @@ try {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar cliente");
     }
 
-    $usuarioAtualizado = buscarClientePorId($conn, $data['cliente_id']);
+    $fields = "
+    c.cliente_id,
+    c.cliente_nome,
+    c.cliente_email,
+    c.cliente_telefone,
+    c.cliente_cpf_cnpj,
+    c.cliente_cep,
+    c.cliente_endereco,
+    c.cliente_numendereco,
+    c.cliente_estado,
+    c.cliente_cidade,
+    c.status,
+    c.cliente_observacoes,
+    c.cliente_data_cadastro,
+    s.sta_id
+";
+
+$joins = [
+    ['type' => 'LEFT', 'join_table' => 'status s', 'on' => 'c.status = s.sta_id']
+];
+
+$cliente = searchPersonPerID($conn, $data['cliente_id'], 'clientes c', $fields, $joins, 'c.cliente_id');
+
 
     echo json_encode([
         "success" => true,
         "message" => "Cliente atualizado com sucesso!",
-        "usuario" => $usuarioAtualizado
+        "usuario" => $cliente
     ]);
 
 } catch (Exception $e) {

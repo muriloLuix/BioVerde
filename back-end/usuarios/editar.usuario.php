@@ -1,5 +1,5 @@
-<?php 
-ini_set("display_errors",1);
+<?php
+ini_set("display_errors", 1);
 
 session_start();
 
@@ -46,7 +46,7 @@ try {
     }
 
     // Verifica se o usuário existe
-    if(!verifyExist($conn, $data["user_id"], "user_id", "usuarios")) {
+    if (!verifyExist($conn, $data["user_id"], "user_id", "usuarios")) {
         throw new Exception("Usuário nao encontrado");
     }
 
@@ -69,12 +69,12 @@ try {
 
     if (isset($data['status'])) {
         $statusId = obterIdStatusPorNome($conn, $data['status']);
-        
+
         // Se a função retornar array, é porque deu erro
         if (is_array($statusId)) {
             throw new Exception($statusId['message']);
         }
-        
+
         // Adiciona o ID do status aos dados com o nome correto que a função espera
         $data['sta_id'] = $statusId;
     }
@@ -96,12 +96,33 @@ try {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
     }
 
-    $usuarioAtualizado = buscarUsuarioPorId($conn, $data['user_id']);
+    $fields = "
+    u.user_id,
+    u.user_nome, 
+    u.user_email, 
+    u.user_telefone, 
+    u.user_CPF, 
+    c.car_nome, 
+    n.nivel_nome, 
+    s.sta_nome,
+    u.user_dtcadastro, 
+    u.car_id, 
+    u.nivel_id,
+    u.sta_id
+    ";
+
+    $joins = [
+        ['type' => 'INNER', 'join_table' => 'cargo c', 'on' => 'u.car_id = c.car_id'],
+        ['type' => 'INNER', 'join_table' => 'niveis_acesso n', 'on' => 'u.nivel_id = n.nivel_id'],
+        ['type' => 'LEFT', 'join_table' => 'status s', 'on' => 'u.sta_id = s.sta_id'],
+    ];
+
+    $usuarioAtualizado = searchPersonPerID($conn, $data['user_id'], 'usuarios u', $fields, $joins);
 
     echo json_encode([
         "success" => true,
         "message" => "Usuário atualizado com sucesso!",
-        "usuario" => $usuarioAtualizado 
+        "usuario" => $usuarioAtualizado
     ]);
 } catch (Exception $e) {
     error_log("Erro em editar.usuario.php: " . $e->getMessage());

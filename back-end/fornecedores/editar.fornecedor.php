@@ -87,12 +87,35 @@ try {
         throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
     }
 
-    $usuarioAtualizado = buscarUsuarioPorId($conn, $data['fornecedor_id']);
+    $fields = "
+    f.fornecedor_id,
+    f.fornecedor_nome,
+    f.fornecedor_email,
+    f.fornecedor_telefone,
+    f.fornecedor_CNPJ,
+    f.fornecedor_cep,
+    f.fornecedor_endereco,
+    f.fornecedor_num_endereco,
+    f.fornecedor_estado,
+    f.fornecedor_cidade,
+    f.fornecedor_responsavel,
+    f.fornecedor_status,
+    f.fornecedor_razao_social,
+    f.fornecedor_dtcadastro,
+    s.sta_id,
+    s.sta_nome
+    ";
+
+    $joins = [
+        ['type' => 'LEFT', 'join_table' => 'status s', 'on' => 'f.fornecedor_status = s.sta_id']
+    ];
+
+    $fornecedor = searchPersonPerID($conn, $data['fornecedor_id'], 'fornecedores f', $fields, $joins, 'f.fornecedor_id');
 
     echo json_encode([
         "success" => true,
         "message" => "Usuário atualizado com sucesso!",
-        "usuario" => $usuarioAtualizado 
+        "usuario" => $fornecedor 
     ]);
 
 

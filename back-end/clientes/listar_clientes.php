@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 
@@ -23,9 +24,11 @@ try {
         "cliente_numendereco",
         "cliente_estado",
         "cliente_cidade",
-        "b.sta_nome AS status",
+        "status",
         "cliente_observacoes",
-        "cliente_data_cadastro"
+        "cliente_data_cadastro",
+        "b.sta_id",
+        "b.sta_nome"
     );
     
     $joins = [

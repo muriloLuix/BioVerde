@@ -22,25 +22,37 @@ if ($conn->connect_error) {
 }
 
 // Processa os dados de entrada
-$rawData = file_get_contents("php://input");
+$mapaFiltrosCliente = [
+    "fnome_cliente"   => ['coluna' => 'cliente_nome',         'tipo' => 'like'],
+    "fcpf_cnpj"       => 'cliente_cpf_cnpj',
+    "ftel"            => 'cliente_telefone',
+    "fcidade"         => ['coluna' => 'cliente_cidade',       'tipo' => 'like'],
+    "festado"         => ['coluna' => 'cliente_estado',       'tipo' => 'like'],
+    "fdataCadastro"   => 'cliente_data_cadastro',
+    "fstatus"         => 'status',
+];
 
+$rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
 
-$filtros = construirFiltrosCliente($data);
+// Gera os filtros
+$filtros = buildFilters($data, $mapaFiltrosCliente);
 
-if (isset($filtros['where'])) {
-    $filtros['where'] = array_map(function($condition) {
-        // Substitui colunas ambíguas pelos aliases corretos
-        $condition = preg_replace('/\bsta_id\b/', 'u.sta_id', $condition);
-        $condition = preg_replace('/\bcar_id\b/', 'u.car_id', $condition);
-        $condition = preg_replace('/\bnivel_id\b/', 'u.nivel_id', $condition);
-        return $condition;
-    }, $filtros['where']);
-}
+// Define estrutura da busca
+$buscaCliente = [
+    'select' => "cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade, b.sta_nome, cliente_data_cadastro, pedido_id, cliente_observacoes",
+    'from' => "clientes a",
+    'joins' => [
+        "LEFT JOIN status b ON a.status = b.sta_id"
+    ],
+    'modificadores' => [
+        'cliente_data_cadastro' => 'DATE(cliente_data_cadastro)'
+    ]
+];
 
+// Busca os dados
+$clientes = findFilters($conn, $buscaCliente, $filtros);
 
-// Busca os usuários com os filtros aplicados
-$clientes = buscarClientesComFiltros($conn, $filtros);
 
 // Retorna a resposta
 echo json_encode([

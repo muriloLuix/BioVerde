@@ -417,6 +417,8 @@ export default function UsersPage() {
         }
       );
 
+      console.log("Resposta do back-end:", response.data);
+
       if (response.data.success) {
         await refreshData(); 
         setOpenEditModal(false);

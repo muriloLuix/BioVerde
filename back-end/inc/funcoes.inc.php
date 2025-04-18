@@ -705,85 +705,6 @@ function configurarSessaoSegura()
     ini_set('session.gc_maxlifetime', 1800);
 }
 
-// filtro.usuario.php
-
-/**
- * Constrói a cláusula WHERE para filtros de usuários
- */
-function construirFiltrosUsuarios($data)
-{
-    $mapaFiltros = [
-        "fname" => "user_nome",
-        "femail" => "user_email",
-        "ftel" => "user_telefone",
-        "fcpf" => "user_CPF",
-        "fcargo" => "car_nome",
-        "fnivel" => "nivel_nome",
-        "fstatus" => "sta_id",
-        "fdataCadastro" => "user_dtcadastro"
-    ];
-
-    $where = [];
-    $valores = [];
-    $tipos = "";
-
-    foreach ($mapaFiltros as $param => $coluna) {
-        if (!empty($data[$param])) {
-            if ($param === "fname") {
-                $where[] = "LOWER($coluna) LIKE LOWER(?)";
-                $valores[] = '%' . trim($data[$param]) . '%';
-                $tipos .= "s";
-            } else {
-                $where[] = "$coluna = ?";
-                $valores[] = trim($data[$param]);
-                $tipos .= "s";
-            }
-        }
-    }
-
-    return [
-        'where' => $where,
-        'valores' => $valores,
-        'tipos' => $tipos
-    ];
-}
-
-function buscarUsuariosComFiltros($conn, $filtros)
-{
-    $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF,";
-    $sql .= " c.car_nome, n.nivel_nome, u.sta_id, u.user_dtcadastro";
-    $sql .= " FROM usuarios u";
-    $sql .= " INNER JOIN cargo c ON u.car_id = c.car_id";
-    $sql .= " INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id";
-    $sql .= " LEFT JOIN status s ON u.sta_id = s.sta_id";
-
-    if (!empty($filtros['where'])) {
-        // Modificar as condições que envolvem user_dtcadastro
-        $modifiedWhere = [];
-        foreach ($filtros['where'] as $condition) {
-            if (strpos($condition, 'user_dtcadastro') !== false) {
-                // Substituir user_dtcadastro por DATE(user_dtcadastro)
-                $condition = preg_replace('/user_dtcadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(user_dtcadastro) $1', $condition);
-            }
-            $modifiedWhere[] = $condition;
-        }
-        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
-    }
-
-    $stmt = $conn->prepare($sql);
-
-    if (!empty($filtros['valores'])) {
-        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $usuarios = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    return $usuarios;
-}
-
 // editar.usuario.php
 
 /**
@@ -846,68 +767,32 @@ function obterIdStatusPorNome($conn, $nomeStatus)
  * 
  * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
  */
-function buscarUsuarioPorId($conn, $user_id)
-{
-    $stmt = $conn->prepare("
-        SELECT 
-            u.user_id, 
-            u.user_nome, 
-            u.user_email, 
-            u.user_telefone, 
-            u.user_CPF, c.car_nome, 
-            n.nivel_nome, 
-            s.sta_nome,
-            u.user_dtcadastro, 
-            u.car_id, 
-            u.nivel_id,
-            u.sta_id
-        FROM usuarios u 
-        INNER JOIN cargo c ON u.car_id = c.car_id 
-        INNER JOIN niveis_acesso n ON u.nivel_id = n.nivel_id
-        LEFT JOIN status s ON u.sta_id = s.sta_id
-        WHERE u.user_id = ?
-    ");
+function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field = 'user_id') {
+    $sql = "SELECT $fields FROM $table";
 
-    if (!$stmt) {
-        return null;
+    if (!empty($joins) && is_array($joins)) {
+        foreach ($joins as $join) {
+            if (isset($join['type'], $join['join_table'], $join['on'])) {
+                $sql .= " {$join['type']} JOIN {$join['join_table']} ON {$join['on']}";
+            }
+        }
     }
 
-    $stmt->bind_param("i", $user_id);
+    $sql .= " WHERE $id_field = ?";
+
+    // 👇 Depurar a query montada
+    // echo $sql;
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro no prepare: " . $conn->error];
+    }
+
+    $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
+
     return $result->fetch_assoc();
-}
-
-// excluir.usuario.php
-
-// funcoes.inc.php
-
-function registrarExclusaoUsuario($conn, $user_id, $dados)
-{
-    $stmt = $conn->prepare("INSERT INTO usuarios_excluidos (
-        usuex_excluido, 
-        usuex_exclusao, 
-        usuex_motivo_exclusao,
-        usuex_dtexclusao
-    ) VALUES (?, ?, ?, NOW())");
-
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar o registro de exclusão'
-        ];
-    }
-
-    $stmt->bind_param('sis', $dados['dname'], $user_id, $dados['reason']);
-
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao registrar a exclusão'
-        ];
-    }
-
-    return ['success' => true, 'insert_id' => $stmt->insert_id];
 }
 
 // cadastrar_fornecedores.php
@@ -965,120 +850,9 @@ function enviarEmailFornecedor($email, $data)
     );
 }
 
-// listar_fornecedores.php
-
-
-// filtro.fornecedor.php
-
-function construirFiltrosFornecedores($data)
-{
-    $mapaFiltros = [
-        "fnome_empresa" => "fornecedor_nome",
-        "fresponsavel" => "fornecedor_responsavel",
-        "fcnpj" => "fornecedor_CNPJ",
-        "ftel" => "fornecedor_telefone",
-        "fcidade" => "fornecedor_cidade",
-        "festado" => "fornecedor_estado",
-        "fdataCadastro" => "fornecedor_dtcadastro",
-        "fstatus" => "fornecedor_status",
-    ];
-
-    $where = [];
-    $valores = [];
-    $tipos = "";
-
-    foreach ($mapaFiltros as $param => $coluna) {
-        if (!empty($data[$param])) {
-            if ($param === "fnome_empresa") {
-                $where[] = "LOWER($coluna) LIKE LOWER(?)";
-                $valores[] = '%' . trim($data[$param]) . '%';
-                $tipos .= "s";
-            } else {
-                $where[] = "$coluna = ?";
-                $valores[] = trim($data[$param]);
-                $tipos .= "s";
-            }
-        }
-    }
-
-    return [
-        'where' => $where,
-        'valores' => $valores,
-        'tipos' => $tipos
-    ];
-}
-
-
-function buscarFornecedoresComFiltros($conn, $filtros)
-{
-
-    $sql = "SELECT fornecedor_id, fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_responsavel,";
-    $sql .= " fornecedor_cep, fornecedor_endereco, fornecedor_estado, fornecedor_cidade, b.sta_nome, fornecedor_dtcadastro";
-    $sql .= " FROM fornecedores a";
-    $sql .= " LEFT JOIN status b ON a.fornecedor_status = b.sta_id";
-
-    if (!empty($filtros['where'])) {
-        // Modificar as condições que envolvem fornecedor_dtcadastro
-        $modifiedWhere = [];
-        foreach ($filtros['where'] as $condition) {
-            if (strpos($condition, 'fornecedor_dtcadastro') !== false) {
-                // Substituir forneced por DATE(fornecedor_dtcadastro)
-                $condition = preg_replace('/fornecedor_dtcadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(fornecedor_dtcadastro) $1', $condition);
-            }
-            $modifiedWhere[] = $condition;
-        }
-        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
-    }
-
-    $stmt = $conn->prepare($sql);
-
-    if (!empty($filtros['valores'])) {
-        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $usuarios = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    return $usuarios;
-}
-
-// editar.fornecedor.php
-
-// excluir.fornecedor.php
-
-function registrarExclusaoFornecedor($conn, $user_id, $dados)
-{
-    $stmt = $conn->prepare("INSERT INTO fornecedores_excluidos (
-        forex_excluido, 
-        forex_exclusao, 
-        forex_motivo_exclusao,
-        forex_dtexclusao
-    ) VALUES (?, ?, ?, NOW())");
-
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao preparar o registro de exclusão'
-        ];
-    }
-
-    $stmt->bind_param('sis', $dados['dnome_empresa'], $user_id, $dados['reason']);
-
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Falha ao registrar a exclusão'
-        ];
-    }
-
-    return ['success' => true, 'insert_id' => $stmt->insert_id];
-}
-
 // cadastrar_clientes.php
 
-function verifyCredentials($conn, $valor1, $valor2, $tabela, $coluna1, $coluna2){
+function verifyCredentials($conn, $valor1, $valor2 = null, $tabela, $coluna1, $coluna2= null){
 
     $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
     $stmt = $conn->prepare($sql);
@@ -1147,34 +921,31 @@ function enviarEmailCliente($email, $data)
 }
 // filtro.cliente.php
 
-function construirFiltrosCliente($data)
+function buildFilters(array $data, array $mapaFiltros)
 {
-    $mapaFiltros = [
-        "fnome_cliente" => "cliente_nome",
-        "fcpf_cnpj" => "cliente_cpf_cnpj",
-        "ftel" => "cliente_telefone",
-        "fcidade" => "cliente_cidade",
-        "festado" => "cliente_estado",
-        "fdataCadastro" => "cliente_data_cadastro",
-        "fstatus" => "status",
-    ];
-
     $where = [];
     $valores = [];
     $tipos = "";
 
-    foreach ($mapaFiltros as $param => $coluna) {
+    foreach ($mapaFiltros as $param => $config) {
+        // Suporte para config como string (modo simples) ou array (modo avançado)
+        if (is_string($config)) {
+            $coluna = $config;
+            $tipoFiltro = 'igual'; // padrão
+        } else {
+            $coluna = $config['coluna'];
+            $tipoFiltro = $config['tipo'] ?? 'igual'; // igual ou like
+        }
+
         if (!empty($data[$param])) {
-            // Verifica se o filtro é do tipo "like" (para nome, por exemplo)
-            if (in_array($param, ["fnome_cliente", "fcidade", "festado"])) {
+            if ($tipoFiltro === 'like') {
                 $where[] = "LOWER($coluna) LIKE LOWER(?)";
                 $valores[] = '%' . trim($data[$param]) . '%';
-                $tipos .= "s";
             } else {
                 $where[] = "$coluna = ?";
                 $valores[] = trim($data[$param]);
-                $tipos .= "s";
             }
+            $tipos .= "s"; // Adapte se precisar de outros tipos além de string
         }
     }
 
@@ -1185,25 +956,32 @@ function construirFiltrosCliente($data)
     ];
 }
 
-
-function buscarClientesComFiltros($conn, $filtros)
+function findFilters($conn, array $base, array $filtros)
 {
+    $sql = "SELECT {$base['select']} FROM {$base['from']}";
 
-    $sql = "SELECT cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade,";
-    $sql .= " b.sta_nome, cliente_data_cadastro, pedido_id, cliente_observacoes";
-    $sql .= " FROM clientes a";
-    $sql .= " LEFT JOIN status b ON a.status = b.sta_id";
+    // Aplica JOINs se existirem
+    if (!empty($base['joins'])) {
+        foreach ($base['joins'] as $join) {
+            $sql .= " $join";
+        }
+    }
 
+    // Aplica cláusulas WHERE com modificações específicas
     if (!empty($filtros['where'])) {
-        // Modificar as condições que envolvem fornecedor_dtcadastro
         $modifiedWhere = [];
+
         foreach ($filtros['where'] as $condition) {
-            if (strpos($condition, 'cliente_data_cadastro') !== false) {
-                // Substituir cliente_data_cadastro por DATE(cliente_data_cadastro)
-                $condition = preg_replace('/cliente_data_cadastro\s*(=|!=|>|<|>=|<=|LIKE)/', 'DATE(cliente_data_cadastro) $1', $condition);
+            if (!empty($base['modificadores'])) {
+                foreach ($base['modificadores'] as $coluna => $modificador) {
+                    if (strpos($condition, $coluna) !== false) {
+                        $condition = preg_replace("/\b$coluna\b\s*(=|!=|>|<|>=|<=|LIKE)/", "$modificador $1", $condition);
+                    }
+                }
             }
             $modifiedWhere[] = $condition;
         }
+
         $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
     }
 
@@ -1215,61 +993,10 @@ function buscarClientesComFiltros($conn, $filtros)
 
     $stmt->execute();
     $result = $stmt->get_result();
-    $clientes = $result->fetch_all(MYSQLI_ASSOC);
+    $registros = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    return $clientes;
+    return $registros;
 }
-
-// editar.cliente.php
-
-function buscarClientePorId($conn, $cliente_id)
-{
-    $stmt = $conn->prepare("
-        SELECT 
-            c.cliente_id,
-            c.cliente_nome,
-            c.cliente_email,
-            c.cliente_telefone,
-            c.cliente_cpf_cnpj,
-            c.status,              
-            s.sta_id,             
-            s.sta_nome,            
-            c.cliente_cep,
-            c.cliente_endereco,
-            c.cliente_numendereco,
-            c.cliente_estado,
-            c.cliente_cidade,
-            c.cliente_observacoes,
-            c.cliente_data_cadastro
-        FROM clientes c
-        LEFT JOIN status s ON c.status = s.sta_id
-        WHERE c.cliente_id = ?
-    ");
-
-    if (!$stmt) {
-        error_log("Erro ao preparar consulta: " . $conn->error);
-        return null;
-    }
-
-    $stmt->bind_param("i", $cliente_id);
-
-    if (!$stmt->execute()) {
-        error_log("Erro ao executar consulta: " . $stmt->error);
-        $stmt->close();
-        return null;
-    }
-
-    $result = $stmt->get_result();
-    $dados = $result->fetch_assoc();
-    $stmt->close();
-
-    // Log para depuração
-    error_log("Dados do cliente retornados: " . print_r($dados, true));
-
-    return $dados;
-}
-
-// excluir.cliente.php
 
 ?>

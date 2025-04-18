@@ -23,23 +23,38 @@ if ($conn->connect_error) {
 
 // Processa os dados de entrada
 $rawData = file_get_contents("php://input");
-
 $data = json_decode($rawData, true);
 
-$filtros = construirFiltrosFornecedores($data);
+// Define o mapa de filtros para fornecedores
+$mapaFiltrosFornecedor = [
+    "fnome_empresa"  => ['coluna' => 'fornecedor_nome',        'tipo' => 'like'],
+    "fresponsavel"   => 'fornecedor_responsavel',
+    "fcnpj"          => 'fornecedor_CNPJ',
+    "ftel"           => 'fornecedor_telefone',
+    "fcidade"        => 'fornecedor_cidade',
+    "festado"        => 'fornecedor_estado',
+    "fdataCadastro"  => 'fornecedor_dtcadastro',
+    "fstatus"        => 'fornecedor_status',
+];
 
-if (isset($filtros['where'])) {
-    $filtros['where'] = array_map(function($condition) {
-        // Substitui colunas ambíguas pelos aliases corretos
-        $condition = preg_replace('/\bsta_id\b/', 'u.sta_id', $condition);
-        $condition = preg_replace('/\bcar_id\b/', 'u.car_id', $condition);
-        $condition = preg_replace('/\bnivel_id\b/', 'u.nivel_id', $condition);
-        return $condition;
-    }, $filtros['where']);
-}
+// Gera os filtros com base no mapa
+$filtros = buildFilters($data, $mapaFiltrosFornecedor);
 
-// Busca os usuários com os filtros aplicados
-$fornecedores = buscarFornecedoresComFiltros($conn, $filtros);
+// Define a estrutura da consulta
+$buscaFornecedor = [
+    'select' => "fornecedor_id, fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_responsavel, fornecedor_cep, fornecedor_endereco, fornecedor_num_endereco, fornecedor_estado, fornecedor_cidade, s.sta_nome, fornecedor_dtcadastro",
+    'from' => "fornecedores f",
+    'joins' => [
+        "LEFT JOIN status s ON f.fornecedor_status = s.sta_id"
+    ],
+    'modificadores' => [
+        'fornecedor_dtcadastro' => 'DATE(fornecedor_dtcadastro)'
+    ]
+];
+
+// Busca os dados usando a função genérica
+$fornecedores = findFilters($conn, $buscaFornecedor, $filtros);
+
 
 // Retorna a resposta
 echo json_encode([

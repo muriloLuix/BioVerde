@@ -69,12 +69,12 @@ $stmt->bind_param("sssssssssis",
 
 if ($stmt->execute()) {
 
-    $emailFornecedor = enviarEmailCliente($data['email'], $data);
-    if ($emailFornecedor === true) {
-        echo json_encode(["success" => true, "message" => "Fornecedor cadastrado com sucesso!"]);
+    $emailCliente = enviarEmailCliente($data['email'], $data);
+    if ($emailCliente === true) {
+        echo json_encode(["success" => true, "message" => "cliente cadastrado com sucesso!"]);
     } else {
-        echo json_encode($emailFornecedor);
+        echo json_encode($emailCliente);
     }
 } else {
-    echo json_encode(["success" => false, "message" => "Erro ao cadastrar fornecedor: " . $stmt->error]);
+    echo json_encode(["success" => false, "message" => "Erro ao cadastrar cliente: " . $stmt->error]);
 }
