@@ -7,6 +7,7 @@ import { ConfirmationModal } from "../../shared";
 import { SmartField } from "../../shared";
 import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
+import { useNavigate } from "react-router-dom";
 
 interface Cargo {
   car_id: number;
@@ -47,6 +48,7 @@ export default function UsersPage() {
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({
     position: false,
     level: false,
@@ -87,6 +89,37 @@ export default function UsersPage() {
     dname: "",
     reason: "",
   });
+
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost/BioVerde/back-end/auth/check_session.php",
+          { withCredentials: true }
+        );
+  
+        if (!response.data.loggedIn) {
+          setMessage("Sessão expirada. Por favor, faça login novamente.");
+          setOpenNoticeModal(true);
+  
+          setTimeout(() => {
+            navigate("/");
+          }, 1900);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+        setMessage("Sessão expirada. Por favor, faça login novamente.");
+        setOpenNoticeModal(true);
+  
+        setTimeout(() => {
+          navigate("/");
+        }, 1900);
+      }
+    };
+  
+    checkAuth();
+  }, [navigate]);
 
   //OnChange dos campos
   const handleChange = (
@@ -247,7 +280,7 @@ export default function UsersPage() {
 
     fetchData();
   }, []);
-
+  
   //Função para Atualizar a Tabela após ação
   const refreshData = async () => {
     try {
@@ -335,7 +368,8 @@ export default function UsersPage() {
         clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
-      }
+        setSuccessMsg(false);
+    }
     } catch (error) {
       let errorMessage = "Erro ao conectar com o servidor";
       if (axios.isAxiosError(error)) {

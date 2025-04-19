@@ -11,10 +11,10 @@ header('Content-Type: application/json');
 
 try {
     // Verifica autenticação
-    if (!isset($_SESSION["user_id"])) {
-        throw new Exception("Usuário não autenticado!");
+    if(!isset($_SESSION["user_id"])) {
+        checkLoggedUSer($conn, $_SESSION['user_id']);
+        exit;
     }
-
     // Verifica conexão com o banco
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);

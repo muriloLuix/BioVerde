@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -14,10 +15,12 @@ import {
 
 import Logo from "./Logo";
 import { Avatar, NavigationMenu, Separator } from "radix-ui";
+import { ConfirmationModal } from "../../shared";
 
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
 
   const menuItems = useMemo(
     () => [
@@ -59,6 +62,31 @@ export default function Sidebar() {
 
     if (!item.path) return;
     navigate(item.path);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost/BioVerde/back-end/auth/logout.php",
+        {},
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        navigate("/"); // redireciona para a tela de login
+      } else {
+        console.error("Erro ao fazer logout:", response.data.message);
+      }
+    } catch (error) {
+      let errorMessage = "Erro ao conectar com o servidor";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message;
+      }
+      console.error(errorMessage);
+    }
   };
 
   return (
@@ -121,8 +149,18 @@ export default function Sidebar() {
         <LogOut
           size={30}
           className="p-1 rounded-2xl hover:cursor-pointer hover:text-cinzaClaro hover:bg-hoverMenu active:bg-brancoSal active:text-black"
+          onClick={() => setOpenLogoutModal(true)}
         />
       </div>
+      <ConfirmationModal
+        openModal={openLogoutModal}
+        setOpenModal={setOpenLogoutModal}
+        confirmationModalTitle="Deseja realmente sair do sistema?"
+        confirmationText="Você será deslogado e redirecionado para a tela de login."
+        confirmationRightButtonText="Sim, sair"
+        confirmationLeftButtonText="Cancelar"
+        onConfirm={handleLogout}
+      />
     </div>
   );
 }

@@ -7,8 +7,9 @@ header('Content-Type: application/json');
 
 try {
     // Verificação de autenticação
-    if (!isset($_SESSION["user_id"])) {
-        throw new Exception("Acesso não autorizado. Por favor, faça login novamente.");
+    if(!isset($_SESSION["user_id"])) {
+        checkLoggedUSer($conn, $_SESSION['user_id']);
+        exit;
     }
 
     // Verificação da conexão com o banco

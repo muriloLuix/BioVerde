@@ -5,9 +5,9 @@ session_start();
 
 include_once "../inc/funcoes.inc.php";
 
-if (!isset($_SESSION["user_id"])) {
-    echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
-    exit();
+if(!isset($_SESSION["user_id"])) {
+    checkLoggedUSer($conn, $_SESSION['user_id']);
+    exit;
 }
 
 header('Content-Type: application/json');

@@ -550,6 +550,196 @@ function search($conn, $table, $fields, $joins = []) {
     return $data;
 }
 
+/**
+ * Busca um usuário pelo seu ID
+ * 
+ * @param mysqli $conn Conex o com o banco de dados
+ * @param int $user_id ID do usu rio a ser buscado
+ * 
+ * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
+ */
+function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field = 'user_id') {
+    $sql = "SELECT $fields FROM $table";
+
+    if (!empty($joins) && is_array($joins)) {
+        foreach ($joins as $join) {
+            if (isset($join['type'], $join['join_table'], $join['on'])) {
+                $sql .= " {$join['type']} JOIN {$join['join_table']} ON {$join['on']}";
+            }
+        }
+    }
+
+    $sql .= " WHERE $id_field = ?";
+
+    // 👇 Depurar a query montada
+    // echo $sql;
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro no prepare: " . $conn->error];
+    }
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    return $result->fetch_assoc();
+}
+
+/**
+ * Executa uma consulta com base em um array de parâmetros.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ * @param array $base Array com as informações da consulta base.
+ *      - select: Campos a serem consultados.
+ *      - from: Tabela a ser consultada.
+ *      - joins: Array de JOINs a serem aplicados (opcional).
+ *          - type: Tipo do JOIN (INNER, LEFT, RIGHT).
+ *          - join_table: Tabela a ser JOINada.
+ *          - on: Condi o para o JOIN.
+ *      - modificadores: Array com modifica es específicas para cada campo
+ *          (opcional).
+ * @param array $filtros Array com as informações de filtragem.
+ *      - where: Condi es WHERE a serem aplicadas (opcional).
+ *      - valores: Valores a serem bindados para a consulta (opcional).
+ *      - tipos: Tipos dos valores a serem bindados (opcional).
+ *
+ * @return array|null Retorna um array com os registros encontrados, ou null se n o encontrado.
+ */
+function findFilters($conn, array $base, array $filtros)
+{
+    $sql = "SELECT {$base['select']} FROM {$base['from']}";
+
+    // Aplica JOINs se existirem
+    if (!empty($base['joins'])) {
+        foreach ($base['joins'] as $join) {
+            $sql .= " $join";
+        }
+    }
+
+    // Aplica cláusulas WHERE com modificações específicas
+    if (!empty($filtros['where'])) {
+        $modifiedWhere = [];
+
+        foreach ($filtros['where'] as $condition) {
+            if (!empty($base['modificadores'])) {
+                foreach ($base['modificadores'] as $coluna => $modificador) {
+                    if (strpos($condition, $coluna) !== false) {
+                        $condition = preg_replace("/\b$coluna\b\s*(=|!=|>|<|>=|<=|LIKE)/", "$modificador $1", $condition);
+                    }
+                }
+            }
+            $modifiedWhere[] = $condition;
+        }
+
+        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    if (!empty($filtros['valores'])) {
+        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $registros = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    return $registros;
+}
+
+/**
+ * Gera um array com informações para filtrar uma consulta com base em um array de parâmetros.
+ *
+ * @param array $data Array com os parâmetros a serem filtrados.
+ * @param array $mapaFiltros Array que mapeia cada parâmetro com sua configura o de filtragem.
+ *      - string: Coluna a ser filtrada.
+ *      - array: Array com configura o avançada de filtragem.
+ *          - coluna: Coluna a ser filtrada.
+ *          - tipo: Tipo de filtragem (igual ou like).
+ *
+ * @return array Array com as informações de filtragem.
+ *      - where: Array com as condi es WHERE a serem aplicadas.
+ *      - valores: Array com os valores a serem bindados para a consulta.
+ *      - tipos: String com os tipos dos valores a serem bindados.
+ */
+function buildFilters(array $data, array $mapaFiltros)
+{
+    $where = [];
+    $valores = [];
+    $tipos = "";
+
+    foreach ($mapaFiltros as $param => $config) {
+        // Suporte para config como string (modo simples) ou array (modo avançado)
+        if (is_string($config)) {
+            $coluna = $config;
+            $tipoFiltro = 'igual'; // padrão
+        } else {
+            $coluna = $config['coluna'];
+            $tipoFiltro = $config['tipo'] ?? 'igual'; // igual ou like
+        }
+
+        if (!empty($data[$param])) {
+            if ($tipoFiltro === 'like') {
+                $where[] = "LOWER($coluna) LIKE LOWER(?)";
+                $valores[] = '%' . trim($data[$param]) . '%';
+            } else {
+                $where[] = "$coluna = ?";
+                $valores[] = trim($data[$param]);
+            }
+            $tipos .= "s"; // Adapte se precisar de outros tipos além de string
+        }
+    }
+
+    return [
+        'where' => $where,
+        'valores' => $valores,
+        'tipos' => $tipos
+    ];
+}
+
+/**
+ * Verifica se um registro existe na base de dados com base em dois valores.
+ * 
+ * @param mysqli $conn Conex o com o banco de dados
+ * @param string $valor1 Valor a ser verificado na primeira coluna
+ * @param string $valor2 Valor a ser verificado na segunda coluna (opcional)
+ * @param string $tabela Nome da tabela que cont m o registro
+ * @param string $coluna1 Nome da primeira coluna a ser verificada
+ * @param string $coluna2 Nome da segunda coluna a ser verificada (opcional)
+ * 
+ * @return array|null Retorna um array com uma mensagem de erro se o registro for encontrado, ou null se n o houver registro.
+ */
+function verifyCredentials($conn, $valor1, $valor2 = null, $tabela, $coluna1, $coluna2= null){
+
+    $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
+    $stmt = $conn->prepare($sql);
+
+    if (!$stmt) {
+        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+    }
+
+    $stmt->bind_param('ss', $valor1, $valor2);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
+    }
+
+    return null;
+}
+
+function checkLoggedUser($conn, $sessionUserId){
+    if (!$sessionUserId){
+        http_response_code(401);
+        echo json_encode(["loggedIn" => false, "message" => "Usuário não logado."]);
+        exit;
+    }
+}
+
+
 
 /******************************************************************************/
 
@@ -759,41 +949,7 @@ function obterIdStatusPorNome($conn, $nomeStatus)
     return $row['sta_id'];
 }
 
-/**
- * Busca um usuário pelo seu ID
- * 
- * @param mysqli $conn Conex o com o banco de dados
- * @param int $user_id ID do usu rio a ser buscado
- * 
- * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
- */
-function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field = 'user_id') {
-    $sql = "SELECT $fields FROM $table";
 
-    if (!empty($joins) && is_array($joins)) {
-        foreach ($joins as $join) {
-            if (isset($join['type'], $join['join_table'], $join['on'])) {
-                $sql .= " {$join['type']} JOIN {$join['join_table']} ON {$join['on']}";
-            }
-        }
-    }
-
-    $sql .= " WHERE $id_field = ?";
-
-    // 👇 Depurar a query montada
-    // echo $sql;
-
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro no prepare: " . $conn->error];
-    }
-
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    return $result->fetch_assoc();
-}
 
 // cadastrar_fornecedores.php
 
@@ -852,27 +1008,6 @@ function enviarEmailFornecedor($email, $data)
 
 // cadastrar_clientes.php
 
-function verifyCredentials($conn, $valor1, $valor2 = null, $tabela, $coluna1, $coluna2= null){
-
-    $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
-    }
-
-    $stmt->bind_param('ss', $valor1, $valor2);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
-    }
-
-    return null;
-}
-
-
 function enviarEmailCliente($email, $data)
 {
 
@@ -921,82 +1056,7 @@ function enviarEmailCliente($email, $data)
 }
 // filtro.cliente.php
 
-function buildFilters(array $data, array $mapaFiltros)
-{
-    $where = [];
-    $valores = [];
-    $tipos = "";
 
-    foreach ($mapaFiltros as $param => $config) {
-        // Suporte para config como string (modo simples) ou array (modo avançado)
-        if (is_string($config)) {
-            $coluna = $config;
-            $tipoFiltro = 'igual'; // padrão
-        } else {
-            $coluna = $config['coluna'];
-            $tipoFiltro = $config['tipo'] ?? 'igual'; // igual ou like
-        }
 
-        if (!empty($data[$param])) {
-            if ($tipoFiltro === 'like') {
-                $where[] = "LOWER($coluna) LIKE LOWER(?)";
-                $valores[] = '%' . trim($data[$param]) . '%';
-            } else {
-                $where[] = "$coluna = ?";
-                $valores[] = trim($data[$param]);
-            }
-            $tipos .= "s"; // Adapte se precisar de outros tipos além de string
-        }
-    }
-
-    return [
-        'where' => $where,
-        'valores' => $valores,
-        'tipos' => $tipos
-    ];
-}
-
-function findFilters($conn, array $base, array $filtros)
-{
-    $sql = "SELECT {$base['select']} FROM {$base['from']}";
-
-    // Aplica JOINs se existirem
-    if (!empty($base['joins'])) {
-        foreach ($base['joins'] as $join) {
-            $sql .= " $join";
-        }
-    }
-
-    // Aplica cláusulas WHERE com modificações específicas
-    if (!empty($filtros['where'])) {
-        $modifiedWhere = [];
-
-        foreach ($filtros['where'] as $condition) {
-            if (!empty($base['modificadores'])) {
-                foreach ($base['modificadores'] as $coluna => $modificador) {
-                    if (strpos($condition, $coluna) !== false) {
-                        $condition = preg_replace("/\b$coluna\b\s*(=|!=|>|<|>=|<=|LIKE)/", "$modificador $1", $condition);
-                    }
-                }
-            }
-            $modifiedWhere[] = $condition;
-        }
-
-        $sql .= " WHERE " . implode(" AND ", $modifiedWhere);
-    }
-
-    $stmt = $conn->prepare($sql);
-
-    if (!empty($filtros['valores'])) {
-        $stmt->bind_param($filtros['tipos'], ...$filtros['valores']);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $registros = $result->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    return $registros;
-}
 
 ?>

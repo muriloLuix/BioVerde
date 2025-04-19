@@ -10,6 +10,7 @@ import { NoticeModal } from "../../shared";
 import { Modal } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
+import { useNavigate } from "react-router-dom";
 
 
 interface Estado {
@@ -97,6 +98,37 @@ export default function Clients() {
     setCurrentObs(cliente.cliente_observacoes);
     setOpenObsModal(true);
   };
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost/BioVerde/back-end/auth/check_session.php",
+          { withCredentials: true }
+        );
+  
+        if (!response.data.loggedIn) {
+          setMessage("Sessão expirada. Por favor, faça login novamente.");
+          setOpenNoticeModal(true);
+  
+          setTimeout(() => {
+            navigate("/");
+          }, 1900);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error);
+        setMessage("Sessão expirada. Por favor, faça login novamente.");
+        setOpenNoticeModal(true);
+  
+        setTimeout(() => {
+          navigate("/");
+        }, 1900);
+      }
+    };
+  
+    checkAuth();
+  }, [navigate]);
 
   console.log(formData)
 
