@@ -160,8 +160,8 @@ export default function ProductionSteps() {
   ) => {
     const { name, value } = event.target;
 
-    setFormData({ ...formData, [name]: value });
-    setDeleteStep({ ...deleteStep, [name]: value });
+    if (name in formData) { setFormData({ ...formData, [name]: value }) }
+    if (name in deleteStep) {setDeleteStep({ ...deleteStep, [name]: value }) }
   };
 
   //função para puxar os dados da etapa que será editada

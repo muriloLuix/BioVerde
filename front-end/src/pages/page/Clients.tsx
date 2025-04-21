@@ -145,9 +145,10 @@ export default function Clients() {
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
 
-    setFormData({ ...formData, [name]: value });
-    setFilters({ ...filters, [name]: value });
-    setDeleteClient({ ...deleteClient, [name]: value });
+    if (name in formData) { setFormData({ ...formData, [name]: value }) }
+    if (name in filters) { setFilters({ ...filters, [name]: value }) }
+    if (name in deleteClient) {setDeleteClient({ ...deleteClient, [name]: value }) }
+    
     setErrors(
       (prevErrors) =>
         Object.fromEntries(

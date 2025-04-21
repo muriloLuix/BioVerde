@@ -134,9 +134,10 @@ export default function Suppliers() {
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
     
-    setFormData({ ...formData, [name]: value });
-    setFilters({ ...filters, [name]: value });
-    setDeleteSupplier({ ...deleteSupplier, [name]: value });
+    if (name in formData) { setFormData({ ...formData, [name]: value }) }
+    if (name in filters) { setFilters({ ...filters, [name]: value }) }
+    if (name in deleteSupplier) {setDeleteSupplier({ ...deleteSupplier, [name]: value }) }
+    
     setErrors(
       (prevErrors) =>
         Object.fromEntries(
@@ -1316,7 +1317,6 @@ export default function Suppliers() {
               fieldText="Nome da Empresa"
               fieldClassname="flex flex-col w-full"
               type="text"
-              autoComplete="name"
               required
               readOnly
               value={deleteSupplier.dnome_empresa}

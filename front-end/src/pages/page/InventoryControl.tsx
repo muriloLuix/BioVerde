@@ -109,9 +109,10 @@ export default function InventoryControl() {
   ) => {
     const { name, value } = event.target;
 
-    setFormData({ ...formData, [name]: value });
-    setFilters({ ...filters, [name]: value });
-    setDeleteProduct({ ...deleteProduct, [name]: value });
+    if (name in formData) { setFormData({ ...formData, [name]: value }) }
+    if (name in filters) { setFilters({ ...filters, [name]: value }) }
+    if (name in deleteProduct) {setDeleteProduct({ ...deleteProduct, [name]: value }) }
+
     setErrors(
       (prevErrors) =>
         Object.fromEntries(
