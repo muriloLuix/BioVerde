@@ -11,6 +11,7 @@ type InputPropsBase = {
   isPassword?: boolean;
   isPrice?: boolean;
   isDate?: boolean;
+  isDatalist?: boolean;
   isNumEndereco?: boolean;
   isLoading?: boolean;
   error?: string;
@@ -49,6 +50,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
   inputWidth,
   isPassword,
   isDate,
+  isDatalist,
   generatePassword,
   ...rest
 }) => {
@@ -64,7 +66,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
         className="flex justify-between items-center"
       >
         <span className="text-xl pb-2 font-light">{fieldText}:</span>
-        {isSelect || isPassword || isPrice ? (
+        {isSelect || isPassword || isPrice || isDatalist ? (
             error && (
               <span className={`text-red-500 ${error === "*" ? "text-base" : "text-xs"}`}>{error}</span>
             )
@@ -134,7 +136,19 @@ const SmartField: React.FC<SmartFieldProps> = ({
               Gerar Senha
             </button>
           </div>
-        ) :  (
+        ) : isDatalist ? (
+          <div className="relative">
+            <input
+              type="text"
+              {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
+              name={regex(fieldName)}
+              id={regex(fieldName)}
+              required={required}
+              className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
+            />
+            {children}
+          </div>
+        ) : (
           <Form.Control asChild>
             {isTextArea ? (
               <textarea

@@ -49,6 +49,8 @@ export default function InventoryControl() {
   const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [errors, setErrors] = useState({
@@ -56,6 +58,7 @@ export default function InventoryControl() {
     unit: false,
     status: false,
     price: false,
+    supplier: false,
   });
   const [formData, setFormData] = useState({
     produto_id: 0,
@@ -98,6 +101,26 @@ export default function InventoryControl() {
     reason: "",
   });
 
+  //Para quando digitar no campo de fornecedores, fazer a listagem deles
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+
+      if (formData.fornecedor.trim().length > 0) {
+        axios
+          .get("http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php")
+          .then((res) => {
+            setSuggestions(res.data);
+            setShowSuggestions(true);
+          })
+          .catch(() => setSuggestions([]));
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300); 
+
+    return () => clearTimeout(delayDebounce);
+  }, [formData.fornecedor]);
 
   //OnChange dos campos
   const handleChange = (
@@ -269,6 +292,7 @@ export default function InventoryControl() {
       unit: !formData.unid_medida,
       status: !formData.status,
       price: !formData.preco,
+      supplier: !formData.fornecedor,
     };
     setErrors(errors);
 
@@ -379,6 +403,7 @@ export default function InventoryControl() {
       unit: false,
       status: false,
       price: !formData.preco,
+      supplier: !formData.fornecedor,
     };
     setErrors(errors);
 
@@ -859,18 +884,39 @@ export default function InventoryControl() {
                   value={formData.nome_produto}
                   onChange={handleChange}
                 />
-
+  
                 <SmartField
+                  isDatalist
                   fieldName="fornecedor"
                   fieldText="Fornecedor"
                   fieldClassname="flex flex-col flex-1"
-                  required
-                  type="text"
+                  error={errors.supplier ? "*" : undefined}
                   placeholder="Digite o nome do fornecedor"
-                  autoComplete="name"
+                  inputWidth="w-[440px]"
+                  autoComplete="off"
                   value={formData.fornecedor}
                   onChange={handleChange}
-                />
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
+                  onFocus={() => formData.fornecedor && setShowSuggestions(true)}
+                >
+                  {showSuggestions && suggestions.length > 0 && (
+                    <ul className="absolute z-10  w-full bg-white border border-t-0 rounded shadow max-h-60 overflow-auto">
+                      {suggestions.map((item, index) => (
+                        <li
+                          key={index}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                          onClick={() => {
+                            setFormData((prev) => ({...prev, fornecedor: item}));
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </SmartField>
+
               </div>
 
               <div className="flex gap-x-15 mb-8 items-center">
