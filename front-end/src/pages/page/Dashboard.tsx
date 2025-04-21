@@ -8,9 +8,12 @@ import {
 import { Separator } from "radix-ui";
 import {
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -99,6 +102,19 @@ const Dashboard = () => {
     "Alerta! Excesso de Batata no estoque",
   ];
 
+  const occupation = [
+    {
+      name: "Ocupação",
+      value: 900,
+    },
+    {
+      name: "Livre",
+      value: 100,
+    },
+  ];
+
+  const colors = ["#00997A", "#00C49F"];
+
   return (
     <div className="pl-64">
       <div className="h-screen w-full flex flex-wrap items-start p-4">
@@ -143,8 +159,28 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
-          <div className="h-full w-5/11 flex items-center justify-center p-3 bg-verdeEscuroForte rounded-lg">
-            <strong>?</strong>
+          <div className="h-full w-5/11 flex flex-col items-center justify-center p-5 bg-verdeEscuroForte rounded-lg">
+            <span className="font-semibold text-xl text-white">
+              CAPACIDADE DE ESTOQUE
+            </span>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={occupation}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  fill="#f1f"
+                  label
+                >
+                  {occupation.map((__, index) => (
+                    <Cell key={`cell-${index}`} fill={colors[index]} />
+                  ))}
+                </Pie>
+                <Legend verticalAlign="bottom" height={30} />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
