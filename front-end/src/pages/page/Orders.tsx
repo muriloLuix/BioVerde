@@ -1,6 +1,6 @@
 import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
-import {Plus, Eye, PencilLine, Trash, Search, Loader2 } from "lucide-react";
+import {Plus, Eye, PencilLine, Trash, Search, Loader2, FilterX, Printer } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -10,54 +10,6 @@ import { ConfirmationModal } from "../../shared";
 import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
 import { cepApi } from "../../utils/cepApi";
-
-const orders = [
-  {
-    numero: 1,
-    data: "23/03/2025",
-    hora: "14:30",
-    status: "Pendente",
-    cliente: "Fernando Kotinda",
-    previsaoEntrega: "27/03/2025",
-    itens:
-      "Produto: Pão integral Orgânico  Qtd: 10un  Preço Unitário: R$2  Subtotal: R$ 20.00 <br> Produto: Tomate Orgânico Qtd: 5un  Preço Unitário: R$3  Subtotal: R$ 15.00 <br> Total Pedido: R$ 35.00",
-    valorTotal: 35.0,
-    endereco: "Rua das Flores, 123",
-    telefone: "(11) 98765-4321",
-    cep: "12345-678",
-    observacoes: "Atentar para a qualidade dos itens orgânicos.",
-  },
-  {
-    numero: 2,
-    data: "22/03/2025",
-    hora: "10:15",
-    status: "Entregue",
-    cliente: "Carlos Bandeira",
-    previsaoEntrega: "26/03/2025",
-    itens:
-      "Produto: Pão integral Orgânico  Qtd: 10un  Preço Unitário: R$2  Subtotal: R$ 20.00 <br> Produto: Tomate Orgânico Qtd: 5un  Preço Unitário: R$3  Subtotal: R$ 15.00 <br> Produto: Cenoura Qtd: 40kg  Preço Unitário: R$5  Subtotal: R$ 200.00 <br> Total Pedido: R$ 235.00",
-    valorTotal: 235.0,
-    endereco: "Av. Central, 456",
-    telefone: "(21) 91234-5678",
-    cep: "87654-321",
-    observacoes: "Atentar para a qualidade dos itens orgânicos.",
-  },
-  {
-    numero: 3,
-    data: "23/03/2025",
-    hora: "15:15",
-    status: "Em produção",
-    cliente: "Murilo Luiz",
-    previsaoEntrega: "28/03/2025",
-    itens:
-      "Produto: Pão integral Orgânico  Qtd: 10un  Preço Unitário: R$2  Subtotal: R$ 20.00 <br> Produto: Tomate Orgânico Qtd: 5un  Preço Unitário: R$3  Subtotal: R$ 15.00 <br> Produto: Batata Orgânico Qtd: 10un  Preço Unitário: R$10  Subtotal: R$ 100.00 <br> Produto: Cenoura Qtd: 40kg  Preço Unitário: R$5  Subtotal: R$ 200.00 <br> Total Pedido: R$ 335.00",
-    valorTotal: 335.0,
-    endereco: "Av. Principal, 456",
-    telefone: "(41) 93224-5608",
-    cep: "31232-321",
-    observacoes: "Atentar para a qualidade dos itens orgânicos.",
-  },
-];
 
 interface Estado {
   estado_id: number;
@@ -108,6 +60,13 @@ export default function Orders() {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openNoticeModal, setOpenNoticeModal] = useState(false);
+  const [openObsModal, setOpenObsModal] = useState(false);
+  const [currentObs, setCurrentObs] = useState("");
+  const [openOrderModal, setOpenOrderModal] = useState(false);
+  const [numOrder, setNumOrder] = useState(0);
+  const [clientOrder, setClientOrder] = useState("");
+  const [totalOrder, setTotalOrder] = useState(0);
+  const [selectedOrder, setSelectedOrder] = useState<PedidoItem[]>([]);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -122,6 +81,7 @@ export default function Orders() {
   });
   const [formData, setFormData] = useState({
     pedido_id: 0,
+    num_pedido: 0,
     nome_cliente: "",
     tel: "",
     cep: "",
@@ -150,7 +110,7 @@ export default function Orders() {
     unidades_medida: [],
   });
   const [filters, setFilters] = useState({
-    fnum_pedido: 0,
+    fnum_pedido: "",
     fnome_cliente: "",
     ftel: "",
     fstatus: "",
@@ -167,8 +127,7 @@ export default function Orders() {
     reason: "",
   });
 
-  console.log(formData)
-  console.log(newItem)
+  console.log(filters)
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -303,36 +262,38 @@ export default function Orders() {
     }
   };
 
-  // //função para puxar os dados do pedido que será editado
-  // const handleEditClick = (pedido: Pedido) => {
+  //função para puxar os dados do pedido que será editado
+  const handleEditClick = (pedido: Pedido) => {
 
-  //   setFormData({
-  //     fornecedor_id: pedido.fornecedor_id,
-  //     nome_empresa: pedido.fornecedor_nome,
-  //     razao_social: pedido.fornecedor_razao_social,
-  //     email: pedido.fornecedor_email,
-  //     tel: pedido.fornecedor_telefone,
-  //     cnpj: pedido.fornecedor_CNPJ,
-  //     responsavel: pedido.fornecedor_responsavel,
-  //     status: pedido.sta_id?.toString() || "",
-  //     cep: pedido.fornecedor_cep,
-  //     endereco: pedido.fornecedor_endereco,
-  //     estado: pedido.fornecedor_estado,
-  //     cidade: pedido.fornecedor_cidade,
-  //     num_endereco: pedido.fornecedor_num_endereco,
-  //   });
-  //   setOpenEditModal(true);
-  // };
+    setFormData({
 
-  // //função para puxar o nome do pedido que será excluido
-  // const handleDeleteClick = (pedido: Pedido) => {
-  //   setDeleteOrder({
-  //     fornecedor_id: pedido.fornecedor_id,
-  //     dnome_empresa: pedido.fornecedor_nome,
-  //     reason: "",
-  //   });
-  //   setOpenDeleteModal(true);
-  // };
+      pedido_id: pedido.pedido_id,
+      num_pedido: pedido.pedido_num,
+      nome_cliente: pedido.pedido_cliente,
+      tel: pedido.pedido_telefone,
+      cep: pedido.pedido_cep,
+      status: pedido.sta_id?.toString() || "",
+      endereco: pedido.pedido_endereco,
+      num_endereco: pedido.pedido_num_endereco,
+      estado: pedido.pedido_estado,
+      cidade: pedido.pedido_cidade,
+      prev_entrega: pedido.pedido_prevEntrega,
+      obs: pedido.pedido_observacoes,
+
+    });
+    setOpenEditModal(true);
+  };
+
+  //função para puxar o nome do pedido que será excluido
+  const handleDeleteClick = (pedido: Pedido) => {
+    setDeleteOrder({
+      pedido_id: pedido.pedido_id,
+      dnum_pedido: pedido.pedido_num,
+      dnome_cliente: pedido.pedido_cliente,
+      reason: "",
+    });
+    setOpenDeleteModal(true);
+  };
   
   //OnChange dos campos
   const handleChange = (
@@ -647,6 +608,19 @@ export default function Orders() {
     );
   };
 
+  const handleObsClick = (pedido: Pedido) => {
+    setCurrentObs(pedido.pedido_observacoes);
+    setOpenObsModal(true);
+  };
+
+  const handleSeeOrderClick = (pedido: Pedido) => {
+    setNumOrder(pedido.pedido_num);
+    setClientOrder(pedido.pedido_cliente);
+    setTotalOrder(pedido.pedido_valor_total);
+    setSelectedOrder(pedido.pedido_itens);
+    setOpenOrderModal(true);
+  };
+
   return (
     <div className="flex-1 p-6 pl-[280px]">
       <div className="px-6 font-[inter] bg-brancoSal">
@@ -678,140 +652,192 @@ export default function Orders() {
           </Tabs.List>
 
           <Tabs.Content value="list" className="flex flex-col w-full">
-            <Form.Root className="flex flex-col gap-4 ">
+            <Form.Root className="flex flex-col gap-4" onSubmit={handleFilterSubmit}>
               <h2 className="text-3xl">Filtros:</h2>
-              <div className="flex flex-col gap-7">
-                <div className="flex gap-9 mb-0">
-                  <Form.Field name="filterReqNum" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Número:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="number"
-                        name="filterReqNum"
-                        id="filterReqNum"
-                        placeholder="Nº Pedido"
-                        className="bg-white border w-[120px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+              <div className="flex flex-col gap-7 max-w-[996px]">
+                <div className="flex gap-7 justify-between">
 
-                  <Form.Field name="filterReqCliente" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Cliente:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="filterReqCliente"
-                        id="filterReqCliente"
-                        placeholder="Cliente"
-                        className="bg-white w-[350px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fnum_pedido"
+                    fieldText="Nº Pedido"
+                    type="number"
+                    placeholder="Nº Pedido"
+                    value={filters.fnum_pedido}
+                    onChange={handleChange}
+                    inputWidth="w-[120px]"
+                  />
 
-                  <Form.Field name="filterReqTel" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Telefone:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="tel"
-                        name="filterReqTel"
-                        id="filterReqTel"
-                        placeholder="(xx)xxxxx-xxxx"
-                        autoComplete="tel"
-                        className="bg-white border w-[180px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fnome_cliente"
+                    fieldText="Cliente"
+                    type="text"
+                    placeholder="Nome do Cliente"
+                    autoComplete="name"
+                    value={filters.fnome_cliente}
+                    onChange={handleChange}
+                    inputWidth="w-[550px]"
+                  />
 
-                  <Form.Field name="FilterReqCep" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">CEP:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="text"
-                        name="FilterReqCep"
-                        id="FilterReqCep"
-                        placeholder="xxxxx-xxx"
-                        autoComplete="postal-code"
-                        className="bg-white border w-[180px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="ftel"
+                    fieldText="Telefone"
+                    withInputMask
+                    type="tel"
+                    mask="(99) 9999?9-9999"
+                    autoClear={false}
+                    placeholder="Digite o Telefone"
+                    autoComplete="tel"
+                    value={filters.ftel}
+                    onChange={handleChange}
+                    inputWidth="w-[250px]"
+                  /> 
+
                 </div>
 
-                <div className="flex gap-7 mb-8">
-                  <Form.Field name="filterReqStatus" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">Status:</span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <select
-                        name="filterReqStatus"
-                        id="filterReqStatus"
-                        className="bg-white w-[200px] border border-separator rounded-lg p-2.5 shadow-xl"
-                      >
-                        <option value="todos">Todos</option>
-                        <option value="pendente">Pendente</option>
-                        <option value="producao">Em Produção</option>
-                        <option value="enviado">Enviado</option>
-                        <option value="entregue">Entregue</option>
-                        <option value="cancelado">Cancelado</option>
-                      </select>
-                    </Form.Control>
-                  </Form.Field>
+                <div className="flex gap-7 justify-between">
 
-                  <Form.Field name="filterCreation" className="flex flex-col">
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">
-                        Data de Criação:
-                      </span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="date"
-                        name="filterCreationDate"
-                        id="filterCreationDate"
-                        className="bg-white border w-[240px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fstatus"
+                    fieldText="Status"
+                    isSelect
+                    value={filters.fstatus}
+                    onChange={handleChange}
+                    isLoading={loading.has("options")}
+                    inputWidth="w-[200px]"
+                  > 
+                    <option value="todos">Todos</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="producao">Em Produção</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="entregue">Entregue</option>
+                    <option value="cancelado">Cancelado</option>
+                  </SmartField> 
 
-                  <Form.Field
-                    name="filterDeliveryForecast"
-                    className="flex flex-col"
-                  >
-                    <Form.Label asChild>
-                      <span className="text-xl pb-2 font-light">
-                        Previsão de entrega:
-                      </span>
-                    </Form.Label>
-                    <Form.Control asChild>
-                      <input
-                        type="date"
-                        name="filterDeliveryForecast"
-                        id="filterDeliveryForecast"
-                        className="bg-white border w-[240px] border-separator rounded-lg p-2.5 shadow-xl"
-                      />
-                    </Form.Control>
-                  </Form.Field>
+                  <SmartField
+                    fieldName="fcep"
+                    fieldText="CEP"
+                    withInputMask
+                    type="text"
+                    mask="99999-999"
+                    autoClear={false}
+                    placeholder="Digite o CEP"
+                    autoComplete="postal-code"
+                    value={filters.fcep}
+                    onChange={handleChange}
+                    onBlur={handleCepBlur}
+                    inputWidth="w-[200px]"
+                  /> 
+
+                  <SmartField
+                    fieldName="festado"
+                    fieldText="Estado"
+                    isSelect
+                    value={filters.festado}
+                    onChange={handleChange}
+                    autoComplete="address-level1"
+                    isLoading={loading.has("options")}
+                    inputWidth="w-[200px]"
+                  > 
+                    <option value="">Todos</option>
+                    <option value="AC">Acre</option>
+                    <option value="AL">Alagoas</option>
+                    <option value="AP">Amapá</option>
+                    <option value="AM">Amazonas</option>
+                    <option value="BA">Bahia</option>
+                    <option value="CE">Ceará</option>
+                    <option value="DF">Distrito Federal</option>
+                    <option value="ES">Espírito Santo</option>
+                    <option value="GO">Goiás</option>
+                    <option value="MA">Maranhão</option>
+                    <option value="MT">Mato Grosso</option>
+                    <option value="MS">Mato Grosso do Sul</option>
+                    <option value="MG">Minas Gerais</option>
+                    <option value="PA">Pará</option>
+                    <option value="PB">Paraíba</option>
+                    <option value="PR">Paraná</option>
+                    <option value="PE">Pernambuco</option>
+                    <option value="PI">Piauí</option>
+                    <option value="RJ">Rio de Janeiro</option>
+                    <option value="RN">Rio Grande do Norte</option>
+                    <option value="RS">Rio Grande do Sul</option>
+                    <option value="RO">Rondônia</option>
+                    <option value="RR">Roraima</option>
+                    <option value="SC">Santa Catarina</option>
+                    <option value="SP">São Paulo</option>
+                    <option value="SE">Sergipe</option>
+                    <option value="TO">Tocantins</option>
+                  </SmartField> 
+
+                  <SmartField
+                    fieldName="fcidade"
+                    fieldText="Cidade"
+                    type="text"
+                    placeholder="Cidade"
+                    value={filters.fcidade}
+                    onChange={handleChange}
+                    autoComplete="address-level2"
+                    inputWidth="w-[200px]"
+                  />
+
+                </div>
+
+                <div className="flex gap-15 mb-8">
+
+                  <SmartField
+                    isDate
+                    fieldName="fprev_entrega"
+                    fieldText="Previsão de entrega"
+                    value={filters.fprev_entrega}
+                    onChange={handleChange}
+                    inputWidth="w-[250px]"
+                  />
+
+                  <SmartField
+                    isDate
+                    fieldName="fdt_cadastro"
+                    fieldText="Data de Cadastro"
+                    value={filters.fdt_cadastro}
+                    onChange={handleChange}
+                    inputWidth="w-[250px]"
+                  />  
 
                   <Form.Submit asChild>
-                    <div className="flex place-content-center mt-9 ml-4">
+                    <div className="flex gap-8 mt-8">
                       <button
                         type="submit"
-                        className="bg-verdeMedio p-3 w-[140px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
+                        className="bg-verdeMedio p-3 w-[120px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
+                        disabled={loading.size > 0}
                       >
-                        <Search />
-                        Pesquisar
+                        {loading.has("filterSubmit") ? (
+                          <Loader2 className="animate-spin h-6 w-6" />
+                        ) : (
+                          <>
+                            <Search size={23} />
+                            Filtrar
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="bg-verdeLimparFiltros p-3 w-[120px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-hoverLimparFiltros "
+                        disabled={loading.size > 0}
+                        onClick={() => 
+                          setFilters((prev) =>
+                            Object.fromEntries(
+                              Object.entries(prev).map(([key, value]) => [
+                                key,
+                                typeof value === "number" ? 0 : "",
+                              ])
+                            ) as typeof prev
+                          )
+                        }
+                      >
+                      <FilterX />
+                      Limpar
                       </button>
                     </div>
                   </Form.Submit>
+
                 </div>
               </div>
             </Form.Root>
@@ -821,17 +847,20 @@ export default function Orders() {
                 <thead>
                   <tr className="bg-verdePigmento text-white shadow-thead">
                     {[
-                      "Número",
+                      "Nº",
+                      "Cliente",
                       "Data",
                       "Hora",
                       "Status",
-                      "Cliente",
                       "Previsão de Entrega",
                       "Itens do Pedido",
                       "Valor Total",
-                      "Endereço",
                       "Telefone",
                       "CEP",
+                      "Endereço",
+                      "Nº",
+                      "Cidade",
+                      "Estado",
                       "Observações",
                       "Ações",
                     ].map((header) => (
@@ -845,112 +874,197 @@ export default function Orders() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((pedido, index) => (
-                    <tr
-                      key={pedido.numero}
-                      className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                    >
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.numero}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.data}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.hora}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.status}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.cliente}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.previsaoEntrega}
-                      </td>
-
-                      {/* Itens do Pedido */}
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button
-                          className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                        >
-                          <Eye />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Ver
-                          </div>
-                        </button>
-                      </td>
-
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        R$ {pedido.valorTotal.toFixed(2)}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.endereco}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.telefone}
-                      </td>
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        {pedido.cep}
-                      </td>
-
-                      {/* Observações */}
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button
-                          className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                        >
-                          <Eye />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Ver
-                          </div>
-                        </button>
-                      </td>
-
-                      <td className="border border-black px-4 py-4 whitespace-nowrap">
-                        <button className="mr-4 text-black cursor-pointer relative group">
-                          <PencilLine />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Editar
-                          </div>
-                        </button>
-                        <button className="text-red-500 cursor-pointer relative group">
-                          <Trash />
-                          <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                            Excluir
-                          </div>
-                        </button>
+                  {loading.has("orders") ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-4">
+                        <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                       </td>
                     </tr>
-                  ))}
+                  ) : pedidos.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-4">
+                        Nenhum pedido encontrado
+                      </td>
+                    </tr>
+                  ) : (
+                    //Tabela Dados
+                    pedidos.map((pedido, index) => (
+                      <tr
+                        key={pedido.pedido_id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+                      >
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_num}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_cliente}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {new Date(pedido.pedido_dtCadastro).toLocaleDateString("pt-BR")}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_horaCadastro}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.sta_id}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {new Date(pedido.pedido_prevEntrega).toLocaleDateString("pt-BR")}
+                        </td>
+                        {/* Itens do Pedido */}
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          <button
+                            className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSeeOrderClick(pedido)}
+                          >
+                            <Eye />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Ver
+                            </div>
+                          </button>
+                        </td>
+  
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          R$ {pedido.pedido_valor_total.toFixed(2)}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_telefone}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_cep}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_endereco}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_num_endereco}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_cidade}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.pedido_estado}
+                        </td>
+  
+                        {/* Observações */}
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          <button
+                            className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleObsClick(pedido)}
+                          >
+                            <Eye />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Ver
+                            </div>
+                          </button>
+                        </td>
+  
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          <button 
+                            className="mr-4 text-black cursor-pointer relative group"
+                            onClick={() => handleEditClick(pedido)}
+                          >
+                            <PencilLine />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Editar
+                            </div>
+                          </button>
+  
+                          <button 
+                            className="text-red-500 cursor-pointer relative group"
+                            onClick={() => handleDeleteClick(pedido)}
+                          >
+                            <Trash />
+                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                              Excluir
+                            </div>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-
-              {/* Modal (Pop-up) */}
-              {/* <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <Dialog.Portal>
-                  <Dialog.Overlay className="fixed inset-0 bg-black opacity-50" />
-                  <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg min-w-[300px]">
-                    <Dialog.Title className="text-xl font-bold mb-4">
-                      {modalTitle}
-                    </Dialog.Title>
-                    <Dialog.Description
-                      className="text-gray-700"
-                      dangerouslySetInnerHTML={{
-                        __html: formatItens(modalContent),
-                      }}
-                    />
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        className="bg-verdeMedio text-white px-4 py-2 rounded-lg hover:bg-verdeEscuro cursor-pointer"
-                        onClick={() => setIsModalOpen(false)}
-                      >
-                        Fechar
-                      </button>
-                    </div>
-                  </Dialog.Content>
-                </Dialog.Portal>
-              </Dialog.Root> */}
             </div>
+            {pedidos.length !== 0 && (
+              <div className="min-w-[966px] max-w-[73vw]">
+                <button
+                  type="button"
+                  className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+                >
+                  <Printer />
+                  Gerar Relatório
+                </button>
+              </div>
+            )}
+
+            {/* Modal de Pedidos */}
+            <Modal
+              isOrderModal
+              withExitButton
+              openModal={openOrderModal}
+              setOpenModal={setOpenOrderModal}
+              modalWidth="min-w-[700px]"
+              modalTitle={<>Nº do Pedido: <span className="font-normal">{numOrder}</span></>}
+              modalSecondTitle={<>Cliente: <span className="font-normal">{clientOrder}</span></>}   
+              totalPedido={totalOrder}  
+            >
+              <div className="max-w-[910px] max-h-[300px] overflow-x-auto overflow-y-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="bg-verdePigmento text-white shadow-thead">
+                      <tr>
+                      {[
+                        "#", "Produto", "Qtd.", "Preço Unitário", "Subtotal",
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          className="border border-black px-2 py-3 whitespace-nowrap"
+                        >
+                          {header}
+                        </th>
+                      ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.map((item, index) => {
+                        const itemData = [
+                          index + 1, 
+                          item.nome_produto, 
+                          `${item.quantidade} ${item.unidade_medida}`,
+                          `R$ ${item.preco}`,
+                          `R$ ${item.subtotal.toFixed(2)}`,
+                        ];
+                        return(
+                          <tr
+                          key={index}
+                          className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+                          >
+                            {itemData.map((value, i) => (
+                              <td
+                                key={i}
+                                className="border border-black px-3 py-3 text-center whitespace-nowrap"
+                              >
+                                {value}
+                              </td>
+                            ))}
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+            </Modal>
+
+            {/* Modal de Observações */}
+            <Modal
+              withExitButton
+              openModal={openObsModal}
+              setOpenModal={setOpenObsModal}
+              modalWidth="min-w-[300px] max-w-[500px]"
+              modalTitle="Observações"
+              obsText={currentObs}
+            />
+
           </Tabs.Content>
 
           <Tabs.Content
@@ -1138,7 +1252,7 @@ export default function Orders() {
               {/* Itens adicionados */}
               <h3 className="text-xl font-semibold mb-5">Itens do Pedido:</h3>
               {itens.length > 0 && (
-                <div className="max-w-[910px] overflow-x-auto overflow-y-auto mb-8">
+                <div className="max-w-[910px] max-h-[500px] overflow-x-auto overflow-y-auto mb-8">
                   <table className="w-full border-collapse">
                     <thead className="bg-verdePigmento text-white shadow-thead">
                       <tr>
@@ -1338,7 +1452,189 @@ export default function Orders() {
           onCancel={() => clearFormData()}
           onSubmit={handleUpdateOrder}
         >
+          <div className="flex gap-10 mb-8">
 
+            <SmartField
+              fieldName="num_pedido"
+              fieldText="Nº Pedido"
+              type="number"
+              required
+              placeholder="Nº Pedido"
+              value={formData.num_pedido}
+              onChange={handleChange}
+              inputWidth="w-[120px]"
+            />
+
+            <SmartField
+              fieldName="nome_cliente"
+              fieldText="Cliente"
+              fieldClassname="flex flex-col flex-1"
+              required={showNewItemForm ? false : true}
+              type="text"
+              placeholder="Digite o nome do Cliente"
+              autoComplete="name"
+              value={formData.nome_cliente}
+              onChange={handleChange}
+            />
+
+            <SmartField
+              fieldName="cep"
+              fieldText="CEP"
+              withInputMask
+              required={showNewItemForm ? false : true}
+              type="text"
+              mask="99999-999"
+              autoClear={false}
+              pattern="^\d{5}-\d{3}$"
+              placeholder="Digite o CEP"
+              autoComplete="postal-code"
+              value={formData.cep}
+              onChange={handleChange}
+              onBlur={handleCepBlur}
+              inputWidth="w-[200px]"
+            />  
+
+            </div>
+
+            <div className="flex gap-10 mb-8">
+
+            <SmartField
+              fieldName="endereco"
+              fieldText="Endereço"
+              required={showNewItemForm ? false : true}
+              type="text"
+              placeholder="Endereço"
+              value={formData.endereco}
+              onChange={handleChange}
+              autoComplete="street-address"
+              inputWidth="w-[300px]"
+            />
+            <SmartField
+              fieldName="num_endereco"
+              fieldText="Número"
+              required={showNewItemForm ? false : true}
+              type="text"
+              placeholder="Número"
+              value={formData.num_endereco}
+              onChange={handleChange}
+              autoComplete="address-line1"
+              inputWidth="w-[90px]"
+            />
+
+            <SmartField
+              fieldName="estado"
+              fieldText="Estado"
+              isSelect
+              value={formData.estado}
+              onChange={handleChange}
+              autoComplete="address-level1"
+              isLoading={loading.has("options")}
+              error={errors.states ? "*" : undefined}
+              placeholderOption="Selecione o Estado"
+              inputWidth="w-[200px]"
+            > 
+              <option value="AC">Acre</option>
+              <option value="AL">Alagoas</option>
+              <option value="AP">Amapá</option>
+              <option value="AM">Amazonas</option>
+              <option value="BA">Bahia</option>
+              <option value="CE">Ceará</option>
+              <option value="DF">Distrito Federal</option>
+              <option value="ES">Espírito Santo</option>
+              <option value="GO">Goiás</option>
+              <option value="MA">Maranhão</option>
+              <option value="MT">Mato Grosso</option>
+              <option value="MS">Mato Grosso do Sul</option>
+              <option value="MG">Minas Gerais</option>
+              <option value="PA">Pará</option>
+              <option value="PB">Paraíba</option>
+              <option value="PR">Paraná</option>
+              <option value="PE">Pernambuco</option>
+              <option value="PI">Piauí</option>
+              <option value="RJ">Rio de Janeiro</option>
+              <option value="RN">Rio Grande do Norte</option>
+              <option value="RS">Rio Grande do Sul</option>
+              <option value="RO">Rondônia</option>
+              <option value="RR">Roraima</option>
+              <option value="SC">Santa Catarina</option>
+              <option value="SP">São Paulo</option>
+              <option value="SE">Sergipe</option>
+              <option value="TO">Tocantins</option>
+            </SmartField> 
+
+            <SmartField
+              fieldName="cidade"
+              fieldText="Cidade"
+              required={showNewItemForm ? false : true}
+              type="text"
+              placeholder="Cidade"
+              value={formData.cidade}
+              onChange={handleChange}
+              autoComplete="address-level2"
+              inputWidth="w-[200px]"
+            />
+
+            </div>
+
+            <div className="flex mb-5 justify-between">
+
+            <SmartField
+              fieldName="tel"
+              fieldText="Telefone"
+              withInputMask
+              required={showNewItemForm ? false : true}
+              type="tel"
+              mask="(99) 9999?9-9999"
+              autoClear={false}
+              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+              placeholder="Digite o Telefone"
+              autoComplete="tel"
+              value={formData.tel}
+              onChange={handleChange}
+              inputWidth="w-[250px]"
+            /> 
+
+            <SmartField
+              isDate
+              required={showNewItemForm ? false : true}
+              fieldName="prev_entrega"
+              fieldText="Previsão de entrega"
+              value={formData.prev_entrega}
+              onChange={handleChange}
+              inputWidth="w-[250px]"
+            />
+
+            <SmartField
+              fieldName="status"
+              fieldText="Status"
+              isSelect
+              value={formData.status}
+              onChange={handleChange}
+              isLoading={loading.has("options")}
+              inputWidth="w-[250px]"
+            > 
+              {options.status?.map((status) => (
+                <option key={status.sta_id} value={status.sta_id}>
+                  {status.sta_nome}
+                </option>
+              ))}
+            </SmartField> 
+
+            </div>
+
+            <div className="flex mb-5">
+
+            <SmartField
+              isTextArea
+              fieldName="obs"
+              fieldText="Observações"
+              fieldClassname="flex flex-col w-full"
+              placeholder="Digite as observações do pedido"
+              value={formData.obs}
+              onChange={handleChange}
+              rows={2}
+            />
+            </div>
         </Modal>
 
         <Modal

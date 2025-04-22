@@ -13,6 +13,7 @@ type ConfirmationModalProps = {
   onConfirm?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   loading?: Set<string>;
   isLoading?: boolean;
+  isLogout?: boolean;
 };
 
 const ConfirmationModal = ({
@@ -27,6 +28,7 @@ const ConfirmationModal = ({
   onConfirm,
   isLoading,
   loading,
+  isLogout,
 }: ConfirmationModalProps) => {
 
   return (
@@ -60,7 +62,7 @@ const ConfirmationModal = ({
             <AlertDialog.Action asChild>
               <button
                 type="button"
-                className="bg-red-700 py-2 px-3 w-[186px] h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800"
+                className={`bg-red-700 py-2 px-3  h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800 ${isLogout ? "w-[100px]" : "w-[186px]"}`}
                 onClick={onConfirm}
                 disabled={!!loading?.size}
               >

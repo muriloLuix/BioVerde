@@ -47,6 +47,7 @@ export default function InventoryControl() {
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openObsModal, setOpenObsModal] = useState(false);
   const [openNoticeModal, setOpenNoticeModal] = useState(false);
+  const [currentObs, setCurrentObs] = useState("");
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -510,6 +511,11 @@ export default function InventoryControl() {
       ) as typeof prev
     );
   };
+
+  const handleObsClick = (produto: Produto) => {
+    setCurrentObs(produto.produto_observacoes);
+    setOpenObsModal(true);
+  };
   
   return (
     <div className="flex-1 p-6 pl-[280px]">
@@ -548,7 +554,7 @@ export default function InventoryControl() {
                 activeTab === "prices" ? "select animation-tab" : ""
               }`}
             >
-              Gerencimento de Preços
+              Histórico de Preços
             </Tabs.Trigger>
 
             <Tabs.Trigger
@@ -781,9 +787,7 @@ export default function InventoryControl() {
                     produtos.map((produto, index) => (
                       <tr
                         key={produto.produto_id}
-                        className={
-                          index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-                        }
+                        className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                       >
                         {Object.values(produto)
                           .slice(0, 9)
@@ -794,7 +798,8 @@ export default function InventoryControl() {
                             >
                               {value}
                             </td>
-                          ))}
+                          ))
+                        }
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           {new Date(produto.produto_dtProducao).toLocaleDateString("pt-BR")}
                         </td>
@@ -807,7 +812,7 @@ export default function InventoryControl() {
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           <button
                             className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                            onClick={() => setOpenObsModal(true)}
+                            onClick={() => handleObsClick(produto)}
                           >
                             <Eye />
                             <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
@@ -860,7 +865,7 @@ export default function InventoryControl() {
               setOpenModal={setOpenObsModal}
               modalWidth="min-w-[300px] max-w-[500px]"
               modalTitle="Observações"
-              obsText={formData.obs}
+              obsText={currentObs}
             />
           </Tabs.Content>
 

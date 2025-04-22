@@ -7,7 +7,8 @@ type ModalProps = {
   children?: React.ReactNode;
   buttonName?: string;
   buttonClassname?: string;
-  modalTitle: string;
+  modalTitle: string | React.ReactNode;
+  modalSecondTitle?: string | React.ReactNode;
   obsText?: string;
   withExitButton?: boolean;
   leftButtonText?: string;
@@ -15,6 +16,8 @@ type ModalProps = {
   modalWidth?: string;
   loading?: Set<string>;
   isLoading?: boolean;
+  isOrderModal?: boolean;
+  totalPedido?: number;
   onCancel?: () => void;
   onDelete?: () => void;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -27,13 +30,16 @@ const Modal = ({
   buttonName,
   buttonClassname,
   modalTitle,
+  modalSecondTitle,
   withExitButton,
   modalWidth,
   obsText,
   rightButtonText,
   leftButtonText,
+  isOrderModal,
   isLoading,
   loading,
+  totalPedido,
   onCancel,
   onSubmit,
   onDelete,
@@ -49,26 +55,37 @@ const Modal = ({
         <Dialog.Content
           className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-xl shadow-lg`}
         >
-          <Dialog.Title className="text-2xl font-[inter] font-semibold">
-            {modalTitle}
+          <Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between">
+              <span>{modalTitle}</span>
+              <span>{modalSecondTitle}</span>
           </Dialog.Title>
           <Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
             {withExitButton ? (
               <>
-                {obsText 
-                  ? <p className="text-gray-800 break-words">{obsText}</p> 
-                  : <p className="text-gray-800 break-words">Não há nenhuma observação.</p>
-                }
-              <Dialog.Close asChild>
-                <div className="mt-4 flex justify-end"> 
-                  <button
-                    className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-                    aria-label="Close"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </Dialog.Close>
+                {isOrderModal ? children : (
+                  obsText 
+                    ? <p className="text-gray-800 break-words">{obsText}</p> 
+                    : <p className="text-gray-800 break-words">Não há nenhuma observação.</p>
+                )}
+                
+              <div className={`mt-3 ${isOrderModal && "flex justify-between items-center"}`}>
+                {isOrderModal && (
+                  <span className="text-lg">
+                    Total do Pedido:{" "}
+                    <strong>R$ {totalPedido?.toFixed(2)}</strong>
+                  </span>
+                )}
+                <Dialog.Close asChild>
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+                      aria-label="Close"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </Dialog.Close>
+              </div>
               </>
             ) : (
               <Form.Root 

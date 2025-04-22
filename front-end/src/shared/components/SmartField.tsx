@@ -163,11 +163,11 @@ const SmartField: React.FC<SmartFieldProps> = ({
               />
             ) : withInputMask ? (
               <InputMask
-                {...(rest as InputMaskProps)}
-                name={regex(fieldName)}
-                id={regex(fieldName)}
-                required={required}
-                className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
+              {...(rest as InputMaskProps)}
+              name={regex(fieldName)}
+              id={regex(fieldName)}
+              required={required}
+              className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 shadow-xl`}
               />
             ) : isPrice ? (
               <NumericFormat

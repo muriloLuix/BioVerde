@@ -152,7 +152,9 @@ export default function Sidebar() {
           onClick={() => setOpenLogoutModal(true)}
         />
       </div>
+      
       <ConfirmationModal
+        isLogout
         openModal={openLogoutModal}
         setOpenModal={setOpenLogoutModal}
         confirmationModalTitle="Deseja realmente sair do sistema?"
