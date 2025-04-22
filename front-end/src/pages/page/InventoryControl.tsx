@@ -108,8 +108,13 @@ export default function InventoryControl() {
 
       if (formData.fornecedor.trim().length > 0) {
         axios
-          .get("http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php")
+          .get("http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php",
+            {
+              params: { q: formData.fornecedor },
+            }
+          )
           .then((res) => {
+            console.log(res.data);
             setSuggestions(res.data);
             setShowSuggestions(true);
           })
@@ -911,12 +916,13 @@ export default function InventoryControl() {
                           key={index}
                           className="p-2 hover:bg-gray-200 cursor-pointer"
                           onClick={() => {
-                            setFormData((prev) => ({...prev, fornecedor: item}));
+                            setFormData((prev) => ({ ...prev, fornecedor: item.fornecedor_nome }));
                             setShowSuggestions(false);
                           }}
                         >
-                          {item}
+                          {item.fornecedor_nome}
                         </li>
+
                       ))}
                     </ul>
                   )}
