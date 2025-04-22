@@ -10,10 +10,9 @@ import { NoticeModal } from "../../shared";
 import { Modal } from "../../shared";
 
 interface Tipo {
-  tipo_id: number;
-  tipo_nome: string;
+  tproduto_id: number;
+  tproduto_nome: string;
 }
-
 interface Unidade {
   unidade_id: number;
   unidade_nome: string;
@@ -27,7 +26,7 @@ interface Status {
 interface Produto {
   produto_id: number;
   produto_nome: string;
-  produto_tipo: string;
+  tproduto_id?: number;
   produto_lote: string;
   produto_quantidade: string;
   produto_unidade_medida: string;
@@ -162,7 +161,7 @@ export default function InventoryControl() {
     setFormData({
       produto_id: produto.produto_id,
       nome_produto: produto.produto_nome,
-      tipo: produto.produto_tipo,
+      tipo: produto.tproduto_id?.toString() || "",
       lote: produto.produto_lote,
       quantidade: produto.produto_quantidade,
       unid_medida: produto.produto_unidade_medida,
@@ -207,7 +206,7 @@ export default function InventoryControl() {
           }),
         ]);
 
-        // console.log("Resposta do back-end:", produtosResponse.data);
+         console.log("Resposta do back-end:", produtosResponse.data);
         
         if (optionsResponse.data.success) {
           setOptions({
@@ -1021,21 +1020,24 @@ export default function InventoryControl() {
                   inputWidth="w-[190px]"
                 />
 
-                <SmartField
-                  fieldName="tipo"
-                  fieldText="Tipo"
-                  isSelect
-                  value={formData.tipo}
-                  onChange={handleChange}
-                  isLoading={loading.has("options")}
-                  error={errors.type ? "*" : undefined}
-                  placeholderOption="Selecione o Tipo"
-                  inputWidth="w-[190px]"
-                > 
-                  <option value="materia-prima">Matéria-Prima</option>
-                  <option value="semiacabado">Semiacabado</option>
-                  <option value="acabado">Acabado</option>
-                </SmartField> 
+                  <SmartField
+                    fieldName="tipo"
+                    fieldText="Tipo"
+                    isSelect
+                    value={formData.tipo}
+                    onChange={handleChange}
+                    isLoading={loading.has("options")}
+                    error={errors.type ? "*" : undefined}
+                    placeholderOption="Selecione o Tipo"
+                    inputWidth="w-[190px]"
+                  > 
+                    {options.tipos?.map((tipo) => (
+                      <option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+                        {tipo.tproduto_nome}
+                      </option>
+                    ))}
+                  </SmartField>
+
 
                 <SmartField
                   fieldName="status"

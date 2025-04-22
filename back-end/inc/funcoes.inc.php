@@ -384,6 +384,20 @@ function buscarStatus($conn)
     return $status;
 }
 
+function buscarTipoProduto($conn){
+    $result = $conn->query("SELECT tproduto_id, tproduto_nome FROM tp_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o tipo do produto: " . $conn->error);
+    }
+
+    $tproduto_id = [];
+    while ($row = $result->fetch_assoc()) {
+        $tproduto_id[] = $row;
+    }
+
+    return $tproduto_id;
+}
+
 function enviarEmailRecuperacao($email, $codigo)
 {
     $html = "        <html>
@@ -711,25 +725,33 @@ function buildFilters(array $data, array $mapaFiltros)
  * 
  * @return array|null Retorna um array com uma mensagem de erro se o registro for encontrado, ou null se n o houver registro.
  */
-function verifyCredentials($conn, $valor1, $valor2 = null, $tabela, $coluna1, $coluna2= null){
-
-    $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+function verifyCredentials($conn, $valor1, $tabela, $coluna1, $valor2 = null, $coluna2 = null) {
+    if ($valor2 !== null && $coluna2 !== null) {
+        $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+        }
+        $stmt->bind_param('ss', $valor1, $valor2);
+    } else {
+        $sql = "SELECT * FROM $tabela WHERE $coluna1 = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
+        }
+        $stmt->bind_param('s', $valor1);
     }
 
-    $stmt->bind_param('ss', $valor1, $valor2);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "E-mail ou CPF/CNPJ já existe."];
+        return ["success" => false, "message" => "Registro já existe."];
     }
 
     return null;
 }
+
 
 function checkLoggedUser($conn, $sessionUserId){
     if (!$sessionUserId){

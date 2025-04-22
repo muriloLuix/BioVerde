@@ -78,9 +78,9 @@ $sql = "INSERT INTO produtos (
     produto_preco, 
     produto_dtProducao, 
     produto_validade, 
-    produto_tipo, 
+    tproduto_id, 
     produto_status,
-    produto_obs
+    produto_observacoes
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
