@@ -24,22 +24,36 @@ export default function Sidebar() {
   const [userLevel, setUserLevel] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const [userInitials, setUserInitials] = useState("");
 
   usePageTitle(); //Para mudar o Title da aba do navegador que o usuário está
 
   //Puxar dados do usuário logado
   useEffect(() => {
-
-    axios.get("http://localhost/BioVerde/back-end/auth/usuario_logado.php")
+    axios
+      .get("http://localhost/BioVerde/back-end/auth/usuario_logado.php", {
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      })
       .then((response) => {
+        console.log("Retorno do usuário logado:", response.data);
         const { userName, userLevel } = response.data;
+
         setUserName(userName);
         setUserLevel(userLevel);
+
+        // Gerar iniciais
+        const nomes = userName.trim().split(" ");
+        const primeiraInicial = nomes[0]?.charAt(0).toUpperCase() || "";
+        const ultimaInicial =
+          nomes.length > 1
+            ? nomes[nomes.length - 1]?.charAt(0).toUpperCase()
+            : "";
+        setUserInitials(primeiraInicial + ultimaInicial);
       })
       .catch((error) => {
         console.error("Erro ao buscar informações do usuário:", error);
       });
-
   }, []);
 
   const menuItems = useMemo(
@@ -159,7 +173,7 @@ export default function Sidebar() {
       <div className="bg-verdeEscuroConta gap-4 p-3 w-64 flex place-items-center sticky bottom-0 left-0 -m-5 ">
         <Avatar.Root className="inline-flex size-[45px] select-none items-center justify-center overflow-hidden rounded-full bg-blackA1 align-middle">
           <Avatar.Fallback className="leading-1 flex size-full items-center justify-center bg-white text-black text-[15px] font-medium text-violet11 cursor-pointer">
-            AD
+            {userInitials || "AD"}
           </Avatar.Fallback>
         </Avatar.Root>
         <div className="flex flex-col">
@@ -172,7 +186,7 @@ export default function Sidebar() {
           onClick={() => setOpenLogoutModal(true)}
         />
       </div>
-      
+
       <ConfirmationModal
         isLogout
         openModal={openLogoutModal}
