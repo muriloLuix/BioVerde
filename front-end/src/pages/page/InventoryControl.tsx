@@ -50,7 +50,7 @@ export default function InventoryControl() {
   const [currentObs, setCurrentObs] = useState("");
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Produto[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -909,23 +909,33 @@ export default function InventoryControl() {
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
                   onFocus={() => formData.fornecedor && setShowSuggestions(true)}
                 >
-                  {showSuggestions && suggestions.length > 0 && (
-                    <ul className="absolute z-10  w-full bg-white border border-t-0 rounded shadow max-h-60 overflow-auto">
-                      {suggestions.map((item, index) => (
-                        <li
-                          key={index}
-                          className="p-2 hover:bg-gray-200 cursor-pointer"
-                          onClick={() => {
-                            setFormData((prev) => ({ ...prev, fornecedor: item.fornecedor_nome }));
-                            setShowSuggestions(false);
-                          }}
-                        >
-                          {item.fornecedor_nome}
-                        </li>
+                  {showSuggestions && suggestions.length > 0 && (() => {
+                    const filteredSuggestions = suggestions.filter(
+                      (item) => item.fornecedor_nome !== formData.fornecedor
+                    );
 
-                      ))}
-                    </ul>
-                  )}
+                    if (filteredSuggestions.length === 0) {
+                      setShowSuggestions(false);
+                      return null;
+                    }
+
+                    return (
+                      <ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-60 overflow-auto">
+                        {filteredSuggestions.map((item, index) => (
+                          <li
+                            key={index}
+                            className="p-2 hover:bg-gray-200 cursor-pointer"
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, fornecedor: item.fornecedor_nome }));
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            {item.fornecedor_nome}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
                 </SmartField>
 
               </div>

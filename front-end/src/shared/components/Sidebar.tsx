@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import usePageTitle from "../../hooks/usePageTitle";
 import {
   LayoutDashboard,
   Package,
@@ -18,9 +19,28 @@ import { Avatar, NavigationMenu, Separator } from "radix-ui";
 import { ConfirmationModal } from "../../shared";
 
 export default function Sidebar() {
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userLevel, setUserLevel] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-  const [openLogoutModal, setOpenLogoutModal] = useState(false);
+
+  usePageTitle(); //Para mudar o Title da aba do navegador que o usuário está
+
+  //Puxar dados do usuário logado
+  useEffect(() => {
+
+    axios.get("http://localhost/BioVerde/back-end/auth/usuario_logado.php")
+      .then((response) => {
+        const { userName, userLevel } = response.data;
+        setUserName(userName);
+        setUserLevel(userLevel);
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar informações do usuário:", error);
+      });
+
+  }, []);
 
   const menuItems = useMemo(
     () => [
@@ -143,8 +163,8 @@ export default function Sidebar() {
           </Avatar.Fallback>
         </Avatar.Root>
         <div className="flex flex-col">
-          <span className="text-sm font-[inter]">Nome Sobrenome</span>
-          <span className="text-xs font-[inter]">Admin</span>
+          <span className="text-sm font-[inter]">{userName}</span>
+          <span className="text-xs font-[inter]">{userLevel}</span>
         </div>
         <LogOut
           size={30}

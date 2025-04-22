@@ -90,7 +90,6 @@ export default function UsersPage() {
     reason: "",
   });
 
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
