@@ -71,7 +71,8 @@ try {
         'cliente_numendereco' => $data['num_endereco'],
         'cliente_estado' => $data['estado'],
         'cliente_cidade' => $data['cidade'],
-        'status' => $data['sta_id'] ?? null
+        'status' => $data['sta_id'] ?? null,
+        'cliente_observacoes' => $data['obs']
     ];
 
     $resultado = updateData($conn, "clientes", $camposAtualizados, $data['cliente_id'], "cliente_id");

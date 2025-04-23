@@ -739,7 +739,7 @@ function buildFilters(array $data, array $mapaFiltros)
  * 
  * @return array|null Retorna um array com uma mensagem de erro se o registro for encontrado, ou null se n o houver registro.
  */
-function verifyCredentials($conn, $valor1, $tabela, $coluna1, $valor2 = null, $coluna2 = null) {
+function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $coluna2 = null) {
     if ($valor2 !== null && $coluna2 !== null) {
         $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
         $stmt = $conn->prepare($sql);
@@ -765,7 +765,6 @@ function verifyCredentials($conn, $valor1, $tabela, $coluna1, $valor2 = null, $c
 
     return null;
 }
-
 
 function checkLoggedUser($conn, $sessionUserId){
     if (!$sessionUserId){

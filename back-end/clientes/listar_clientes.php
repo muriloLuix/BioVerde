@@ -24,11 +24,11 @@ try {
         "cliente_numendereco",
         "cliente_estado",
         "cliente_cidade",
-        "status",
+        "b.sta_nome",
         "cliente_observacoes",
         "cliente_data_cadastro",
-        "b.sta_id",
-        "b.sta_nome"
+        "b.sta_id"
+
     );
     
     $joins = [

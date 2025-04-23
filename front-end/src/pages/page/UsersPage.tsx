@@ -360,6 +360,8 @@ export default function UsersPage() {
           withCredentials: true,
         }
       );
+      
+      console.log("Resposta do back-end:", response.data);
   
       if (response.data.success) {
         await refreshData();

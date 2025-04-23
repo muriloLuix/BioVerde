@@ -31,7 +31,12 @@ if ($validacaoDosCampos !== null) {
 }
 
 // Verificar se o nome do produto já existe
-$verifyName = verifyCredentials($conn, $data['nome_produto'], 'produtos', 'produto_nome');
+$verifyName = verifyCredentials(
+    $conn,
+    'produtos',               
+    $data['nome_produto'],  
+    'produto_nome'          
+);
 if ($verifyName !== null) {
     echo json_encode($verifyName);
     exit();

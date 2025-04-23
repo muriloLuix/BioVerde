@@ -47,7 +47,14 @@ if ($nivel_id === null) {
 }
 
 // Verificar email e CPF
-$emailCpfError = verifyCredentials($conn, $data['email'], $data['cpf'], 'usuarios', 'user_email', 'user_CPF');
+$emailCpfError = verifyCredentials(
+    $conn,
+    'usuarios',           
+    $data['email'],       
+    'user_email',         
+    $data['cpf'],       
+    'user_CPF'            
+);
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();

@@ -57,7 +57,7 @@ if (isset($filtros['where'])) {
 
 // Define a estrutura da consulta de usuários
 $buscaUsuario = [
-    'select' => "u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, u.user_dtcadastro, u.sta_id, u.car_id, u.nivel_id, s.sta_nome, c.car_nome, n.nivel_nome",
+    'select' => "u.user_id, u.user_nome, u.user_email, u.user_telefone, u.user_CPF, c.car_nome, n.nivel_nome, s.sta_nome, u.user_dtcadastro",
     'from' => "usuarios u",
     'joins' => [
         "LEFT JOIN status s ON u.sta_id = s.sta_id",
