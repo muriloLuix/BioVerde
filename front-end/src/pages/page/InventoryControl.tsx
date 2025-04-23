@@ -615,10 +615,12 @@ export default function InventoryControl() {
                     isLoading={loading.has("options")}
                     inputWidth="w-[215px]"
                   > 
-                    <option value="">Todos</option>
-                    <option value="materia-prima">Matéria-Prima</option>
-                    <option value="semiacabado">Semiacabado</option>
-                    <option value="acabado">Acabado</option>
+                  <option value="">Todos</option>
+                    {options.tipos?.map((tipo) => (
+                      <option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+                        {tipo.tproduto_nome}
+                      </option>
+                    ))}
                   </SmartField> 
 
                 </div>
@@ -653,16 +655,13 @@ export default function InventoryControl() {
                     onChange={handleChange}
                     isLoading={loading.has("options")}
                     inputWidth="w-[215px]"
-                  > 
+                  >
                     <option value="">Todos</option>
-                    <option value="un">un</option>
-                    <option value="g">g</option>
-                    <option value="kg">kg</option>
-                    <option value="l">L</option>
-                    <option value="ml">ml</option>
-                    <option value="cm">cm</option>
-                    <option value="m">m</option>
-                    <option value="t">t</option>
+                    {options.unidades_medida?.map((unidade) => (
+                      <option key={unidade.uni_id} value={unidade.uni_id}>
+                        {unidade.uni_sigla}
+                      </option>
+                    ))}
                   </SmartField> 
 
                   <SmartField
