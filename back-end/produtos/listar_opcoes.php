@@ -11,11 +11,13 @@ try {
     // Buscar dados
     $status = buscarStatus($conn); 
     $tp_produto = buscarTipoProduto($conn);
+    $unidade_medida = buscarUnidadeMedida($conn);
 
     echo json_encode([
         "success" => true,
         "status" => $status,
-        "tipos" => $tp_produto
+        "tipos" => $tp_produto,
+        "unidades_medida" => $unidade_medida
     ]);
     
 

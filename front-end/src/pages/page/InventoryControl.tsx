@@ -14,8 +14,8 @@ interface Tipo {
   tproduto_nome: string;
 }
 interface Unidade {
-  unidade_id: number;
-  unidade_nome: string;
+  uni_id: number;
+  uni_sigla: string;
 }
 
 interface Status {
@@ -29,7 +29,7 @@ interface Produto {
   tproduto_id?: number;
   produto_lote: string;
   produto_quantidade: string;
-  produto_unidade_medida: string;
+  uni_id?: number;
   produto_preco: string;
   fornecedor_nome: string;
   produto_dtProducao: string;
@@ -164,7 +164,7 @@ export default function InventoryControl() {
       tipo: produto.tproduto_id?.toString() || "",
       lote: produto.produto_lote,
       quantidade: produto.produto_quantidade,
-      unid_medida: produto.produto_unidade_medida,
+      unid_medida: produto.uni_id?.toString() || "",
       status: produto.sta_id?.toString() || "",
       preco: produto.produto_preco,
       dt_producao: produto.produto_dtProducao,
@@ -974,14 +974,11 @@ export default function InventoryControl() {
                   placeholderOption="Selecione a Unid."
                   inputWidth="w-[190px]"
                 > 
-                  <option value="un">un</option>
-                  <option value="g">g</option>
-                  <option value="kg">kg</option>
-                  <option value="l">L</option>
-                  <option value="ml">ml</option>
-                  <option value="cm">cm</option>
-                  <option value="m">m</option>
-                  <option value="t">t</option>
+                    {options.unidades_medida?.map((unidades_medida) => (
+                      <option key={unidades_medida.uni_id} value={unidades_medida.uni_id}>
+                        {unidades_medida.uni_sigla}
+                      </option>
+                    ))}
                 </SmartField> 
 
                 <SmartField
@@ -1171,15 +1168,12 @@ export default function InventoryControl() {
               isLoading={loading.has("options")}
               inputWidth="w-[175px]"
             > 
-              <option value="un">un</option>
-              <option value="g">g</option>
-              <option value="kg">kg</option>
-              <option value="l">L</option>
-              <option value="ml">ml</option>
-              <option value="cm">cm</option>
-              <option value="m">m</option>
-              <option value="t">t</option>
-            </SmartField> 
+              {options.unidades_medida?.map((unidade) => (
+                <option key={unidade.uni_id} value={unidade.uni_id}>
+                  {unidade.uni_sigla}
+                </option>
+              ))}
+            </SmartField>
 
             <SmartField
               isPrice

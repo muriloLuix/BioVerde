@@ -74,7 +74,7 @@ $sql = "INSERT INTO produtos (
     id_fornecedor, 
     produto_lote, 
     produto_quantidade, 
-    produto_unidade_medida, 
+    uni_id, 
     produto_preco, 
     produto_dtProducao, 
     produto_validade, 

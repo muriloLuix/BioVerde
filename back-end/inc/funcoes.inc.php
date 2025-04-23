@@ -398,6 +398,20 @@ function buscarTipoProduto($conn){
     return $tproduto_id;
 }
 
+function buscarUnidadeMedida($conn){
+    $result = $conn->query("SELECT uni_id, uni_sigla FROM unidade_medida");
+    if (!$result) {
+        throw new Exception("Erro ao buscar a unidade de medida: " . $conn->error);
+    }
+
+    $unidade_medida = [];
+    while ($row = $result->fetch_assoc()) {
+        $unidade_medida[] = $row;
+    }
+
+    return $unidade_medida;
+}
+
 function enviarEmailRecuperacao($email, $codigo)
 {
     $html = "        <html>
