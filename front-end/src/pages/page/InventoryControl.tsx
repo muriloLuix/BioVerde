@@ -26,17 +26,19 @@ interface Status {
 interface Produto {
   produto_id: number;
   produto_nome: string;
-  tproduto_id?: number;
+  tproduto_nome: string;
   produto_lote: string;
   produto_quantidade: string;
-  uni_id?: number;
+  uni_id: number;
+  uni_sigla?: string; 
   produto_preco: string;
   fornecedor_nome: string;
   produto_dtProducao: string;
-  produto_dtValidade: string;
-  produto_dtCadastro: string;
+  produto_validade: string;
+  produto_data_cadastro: string;
   produto_observacoes: string;
   sta_id?: number;
+  sta_nome?: string; 
 }
 
 export default function InventoryControl() {
@@ -157,18 +159,23 @@ export default function InventoryControl() {
 
   //função para puxar os dados do produto que será editado
   const handleEditClick = (produto: Produto) => {
-
+    console.log("Dados completos do produto:", produto);
+    // Encontra o tipo correspondente nas opções carregadas
+    const tipoSelecionado = options.tipos.find(
+      (t) => t.tproduto_nome === produto.tproduto_nome
+    );
+  
     setFormData({
       produto_id: produto.produto_id,
       nome_produto: produto.produto_nome,
-      tipo: produto.tproduto_id?.toString() || "",
+      tipo: tipoSelecionado?.tproduto_id.toString() || "",
       lote: produto.produto_lote,
       quantidade: produto.produto_quantidade,
       unid_medida: produto.uni_id?.toString() || "",
       status: produto.sta_id?.toString() || "",
       preco: produto.produto_preco,
-      dt_producao: produto.produto_dtProducao,
-      dt_validade: produto.produto_dtValidade,
+      dt_producao: produto.produto_dtProducao.split(' ')[0],
+      dt_validade: produto.produto_validade.split(' ')[0],
       fornecedor: produto.fornecedor_nome,
       obs: produto.produto_observacoes,
     });
@@ -808,10 +815,10 @@ export default function InventoryControl() {
                           {new Date(produto.produto_dtProducao).toLocaleDateString("pt-BR")}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {new Date(produto.produto_dtValidade).toLocaleDateString("pt-BR")}
+                          {new Date(produto.produto_validade).toLocaleDateString("pt-BR")}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {new Date(produto.produto_dtCadastro).toLocaleDateString("pt-BR")}
+                          {new Date(produto.produto_data_cadastro).toLocaleDateString("pt-BR")}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           <button
