@@ -26,7 +26,11 @@ if (!isset($_SESSION["user_id"])) {
 
 try {
     // Busca dados dos usuários
-    $usuarios = buscarUsuarios($conn);
+    $sql = "SELECT u.user_id, u.user_nome, u.user_email, u.user_CPF, c.car_nome, u.user_dtcadastro FROM usuarios u 
+            INNER JOIN cargo c ON u.car_id = c.car_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $usuarios = $stmt->get_result();
     
     // Cria HTML do relatório
     $html = '
