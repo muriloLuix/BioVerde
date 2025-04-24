@@ -741,7 +741,7 @@ function buildFilters(array $data, array $mapaFiltros)
  */
 function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $coluna2 = null) {
     if ($valor2 !== null && $coluna2 !== null) {
-        $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? AND $coluna2 = ?";
+        $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? OR $coluna2 = ?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             return ["success" => false, "message" => "Erro ao preparar a query: " . $conn->error];
@@ -760,7 +760,7 @@ function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $c
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "Registro já existe."];
+        return ["success" => false, "message" => "O registro " . $valor1 . " e/ou " . $valor2 . " já existe no sistema."];
     }
 
     return null;

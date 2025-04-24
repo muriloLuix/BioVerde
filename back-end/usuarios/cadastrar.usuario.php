@@ -60,6 +60,7 @@ if ($emailCpfError) {
     exit();
 }
 
+
 $sta_id = verificarStatus($conn, $data['status']);
 if ($sta_id === null) { 
     echo json_encode(["success" => false, "message" => "Status nao encontrado."]);
