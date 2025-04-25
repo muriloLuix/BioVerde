@@ -18,7 +18,6 @@ type FormData = {
   insumos: string;
   responsavel: string;
   obs: string;
-  dtCadastro: string;
 };
 
 type ProductsWithSteps = {
@@ -52,8 +51,7 @@ export default function ProductionSteps() {
     tempo: "",
     insumos: "",
     responsavel: "",
-    obs: "",
-    dtCadastro: "",
+    obs: ""
   });
   const [stepData, setStepData] = useState<Etapa[]>([]);
   const [deleteStep, setDeleteStep] = useState({
@@ -178,8 +176,8 @@ export default function ProductionSteps() {
       insumos: etapa.insumos,
       responsavel: etapa.responsavel,
       obs: etapa.obs,
-      dtCadastro: etapa.dtCadastro,
 
+      
     });
     setOpenEditModal(true);
   };
@@ -382,8 +380,7 @@ export default function ProductionSteps() {
         tempo: "",
         insumos: "",
         responsavel: "",
-        obs: "",
-        dtCadastro: "",
+        obs: ""
       });
     } else {
       setFormData((prev) =>
@@ -547,9 +544,6 @@ export default function ProductionSteps() {
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.tempo}</td>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.insumos}</td>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.responsavel}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                {new Date(etapa.dtCadastro).toLocaleDateString("pt-BR")}
-                              </td>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">
                                 <button
                                   type="button"
