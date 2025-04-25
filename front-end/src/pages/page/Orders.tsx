@@ -1,6 +1,6 @@
 import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
-import {Plus, Eye, PencilLine, Trash, Search, Loader2, FilterX, Printer } from "lucide-react";
+import { Eye, PencilLine, Trash, Search, Loader2, FilterX, Printer } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -70,8 +70,6 @@ export default function Orders() {
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
-  const [showNewItemForm, setShowNewItemForm] = useState<boolean>(false);
-  const [itens, setItens] = useState<PedidoItem[]>([]);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [errors, setErrors] = useState({
     status: false,
@@ -315,121 +313,6 @@ export default function Orders() {
     );
   };
 
-  // Calcula Valor total do pedido
-  const totalPedido = itens.reduce((total, itens) => total + itens.subtotal,0);
-
-  //Capturar valor no campo de Preço
-  const handlePriceChange = ({ value }: { value: string }) => {
-    setNewItem({ ...newItem, preco: value });
-    setErrors(errors => ({ ...errors, price: false }));
-  };
-
-  //Função de define qual será o submir que será enviado  
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-  
-    const submitEvent = e.nativeEvent as SubmitEvent;
-    const buttonClicked = (submitEvent.submitter as HTMLButtonElement).name;
-  
-    if (buttonClicked === "saveItem") {
-      handleSaveItem(e); //Submit de cadastrar um item no pedido 
-    } else if (buttonClicked === "submitForm") {
-      handleOrdersSubmit(e); //Submit de cadastrar o pedido completo
-    }
-  };
-
-  //Função para Cadastrar Item no Pedido
-  const handleSaveItem = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const errors  = {
-      states: false,
-      status: false,
-      unit: !newItem.unidade_medida,
-      price: !newItem.preco,
-    };
-    setErrors(errors);
-    if (errors.unit || errors.price) {return;}
-
-    setItens([
-      ...itens,
-      { ...newItem, id: itens.length, subtotal: newItem.quantidade * Number(newItem.preco) },
-    ]);
-    setShowNewItemForm(false);
-    clearNewItem();
-    
-  };
-
-  //Submit de cadastrar pedidos
-  const handleOrdersSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    //Validações
-    const errors  = {
-      states: !formData.estado,
-      status: !formData.status,
-      unit: false,
-      price: false,
-    };
-    setErrors(errors);
-    if (errors.states || errors.status) {return;}
-
-    setLoading((prev) => new Set([...prev, "submit"]));
-    setSuccessMsg(false);
-
-    const completeOrder = {
-      ...formData,
-      valor_total: totalPedido,
-      num_pedido: pedidos.length + 1,
-      itens: itens,
-    };
-
-    console.log(completeOrder)
-
-    try {
-      const response = await axios.post(
-        "http://localhost/BioVerde/back-end/pedidos/cadastrar_pedidos.php",
-        completeOrder,
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
-
-      console.log("Resposta do back-end:", response.data);
-
-      if (response.data.success) {
-        await refreshData();
-        setSuccessMsg(true);
-        setMessage(`Pedido número ${completeOrder.num_pedido} cadastrado com sucesso!`);
-        clearFormData();
-      } else {
-        setMessage(response.data.message || "Erro ao cadastrar pedido");
-      }
-    } catch (error) {
-      let errorMessage = "Erro ao conectar com o servidor";
-
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          errorMessage = error.response.data.message || "Erro no servidor";
-          console.error("Erro na resposta:", error.response.data);
-        } else {
-          console.error("Erro na requisição:", error.message);
-        }
-      } else {
-        console.error("Erro desconhecido:", error);
-      }
-
-      setMessage(errorMessage);
-    } finally {
-      setOpenNoticeModal(true);
-      setLoading((prev) => {
-        const newLoading = new Set(prev);
-        newLoading.delete("submit");
-        return newLoading;
-      });
-    }
-  };
 
   // submit de Filtrar pedidos
   const handleFilterSubmit = async (e: React.FormEvent) => {
@@ -568,15 +451,6 @@ export default function Orders() {
     }
   };
 
-  //Scrolla a pagina para baixo quando clicar em "Adicionar Item"
-  const handleOpenChange = (open: boolean) => {
-    if (open) {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  };
 
   //Função para chamar a api de CEP
   const handleCepBlur = () => {
@@ -596,17 +470,6 @@ export default function Orders() {
     );
   };
 
-  //Limpar NewItem
-  const clearNewItem = () => {
-    setNewItem((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).map(([key, value]) => [
-          key,
-          typeof value === "number" ? 0 : "",
-        ])
-      ) as typeof prev
-    );
-  };
 
   const handleObsClick = (pedido: Pedido) => {
     setCurrentObs(pedido.pedido_observacoes);
@@ -639,15 +502,6 @@ export default function Orders() {
               }`}
             >
               Lista de Pedidos
-            </Tabs.Trigger>
-
-            <Tabs.Trigger
-              value="register"
-              className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-                activeTab === "register" ? "select animation-tab" : ""
-              }`}
-            >
-              Cadastrar Novo Pedido
             </Tabs.Trigger>
           </Tabs.List>
 
@@ -1067,370 +921,7 @@ export default function Orders() {
 
           </Tabs.Content>
 
-          <Tabs.Content
-            value="register"
-            className="flex items-center justify-center"
-          >
-            <Form.Root className="flex flex-col mb-10" onSubmit={handleSubmit}>
-              <h2 className="text-3xl mb-8">Cadastrar Novo Pedido:</h2>
-
-              <div className="flex gap-10 mb-8">
-
-                <SmartField
-                  fieldName="nome_cliente"
-                  fieldText="Cliente"
-                  fieldClassname="flex flex-col flex-1"
-                  required={showNewItemForm ? false : true}
-                  type="text"
-                  placeholder="Digite o nome do Cliente"
-                  autoComplete="name"
-                  value={formData.nome_cliente}
-                  onChange={handleChange}
-                />
-
-                <SmartField
-                  fieldName="cep"
-                  fieldText="CEP"
-                  withInputMask
-                  required={showNewItemForm ? false : true}
-                  type="text"
-                  mask="99999-999"
-                  autoClear={false}
-                  pattern="^\d{5}-\d{3}$"
-                  placeholder="Digite o CEP"
-                  autoComplete="postal-code"
-                  value={formData.cep}
-                  onChange={handleChange}
-                  onBlur={handleCepBlur}
-                  inputWidth="w-[200px]"
-                />  
-
-              </div>
-
-              <div className="flex gap-10 mb-8">
-
-                <SmartField
-                  fieldName="endereco"
-                  fieldText="Endereço"
-                  required={showNewItemForm ? false : true}
-                  type="text"
-                  placeholder="Endereço"
-                  value={formData.endereco}
-                  onChange={handleChange}
-                  autoComplete="street-address"
-                  inputWidth="w-[300px]"
-                />
-                <SmartField
-                  fieldName="num_endereco"
-                  fieldText="Número"
-                  required={showNewItemForm ? false : true}
-                  type="text"
-                  placeholder="Número"
-                  value={formData.num_endereco}
-                  onChange={handleChange}
-                  autoComplete="address-line1"
-                  inputWidth="w-[90px]"
-                />
-
-                <SmartField
-                  fieldName="estado"
-                  fieldText="Estado"
-                  isSelect
-                  value={formData.estado}
-                  onChange={handleChange}
-                  autoComplete="address-level1"
-                  isLoading={loading.has("options")}
-                  error={errors.states ? "*" : undefined}
-                  placeholderOption="Selecione o Estado"
-                  inputWidth="w-[200px]"
-                > 
-                  <option value="AC">Acre</option>
-                  <option value="AL">Alagoas</option>
-                  <option value="AP">Amapá</option>
-                  <option value="AM">Amazonas</option>
-                  <option value="BA">Bahia</option>
-                  <option value="CE">Ceará</option>
-                  <option value="DF">Distrito Federal</option>
-                  <option value="ES">Espírito Santo</option>
-                  <option value="GO">Goiás</option>
-                  <option value="MA">Maranhão</option>
-                  <option value="MT">Mato Grosso</option>
-                  <option value="MS">Mato Grosso do Sul</option>
-                  <option value="MG">Minas Gerais</option>
-                  <option value="PA">Pará</option>
-                  <option value="PB">Paraíba</option>
-                  <option value="PR">Paraná</option>
-                  <option value="PE">Pernambuco</option>
-                  <option value="PI">Piauí</option>
-                  <option value="RJ">Rio de Janeiro</option>
-                  <option value="RN">Rio Grande do Norte</option>
-                  <option value="RS">Rio Grande do Sul</option>
-                  <option value="RO">Rondônia</option>
-                  <option value="RR">Roraima</option>
-                  <option value="SC">Santa Catarina</option>
-                  <option value="SP">São Paulo</option>
-                  <option value="SE">Sergipe</option>
-                  <option value="TO">Tocantins</option>
-                </SmartField> 
-
-                <SmartField
-                  fieldName="cidade"
-                  fieldText="Cidade"
-                  required={showNewItemForm ? false : true}
-                  type="text"
-                  placeholder="Cidade"
-                  value={formData.cidade}
-                  onChange={handleChange}
-                  autoComplete="address-level2"
-                  inputWidth="w-[200px]"
-                />
-
-              </div>
-
-              <div className="flex mb-5 justify-between">
-
-                <SmartField
-                  fieldName="tel"
-                  fieldText="Telefone"
-                  withInputMask
-                  required={showNewItemForm ? false : true}
-                  type="tel"
-                  mask="(99) 9999?9-9999"
-                  autoClear={false}
-                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                  placeholder="Digite o Telefone"
-                  autoComplete="tel"
-                  value={formData.tel}
-                  onChange={handleChange}
-                  inputWidth="w-[250px]"
-                /> 
-
-                <SmartField
-                  isDate
-                  required={showNewItemForm ? false : true}
-                  fieldName="prev_entrega"
-                  fieldText="Previsão de entrega"
-                  value={formData.prev_entrega}
-                  onChange={handleChange}
-                  inputWidth="w-[250px]"
-                />
-
-                <SmartField
-                  fieldName="status"
-                  fieldText="Status"
-                  isSelect
-                  value={formData.status}
-                  onChange={handleChange}
-                  isLoading={loading.has("options")}
-                  error={errors.status ? "*" : undefined}
-                  placeholderOption="Selecione o status"
-                  inputWidth="w-[250px]"
-                > 
-                  {options.status?.map((status) => (
-                    <option key={status.sta_id} value={status.sta_id}>
-                      {status.sta_nome}
-                    </option>
-                  ))}
-                </SmartField> 
-
-              </div>
-
-              <div className="flex mb-5">
-
-                <SmartField
-                  isTextArea
-                  fieldName="obs"
-                  fieldText="Observações"
-                  fieldClassname="flex flex-col w-full"
-                  placeholder="Digite as observações do pedido"
-                  value={formData.obs}
-                  onChange={handleChange}
-                  rows={2}
-                />
-              </div>
-
-              {/* Itens adicionados */}
-              <h3 className="text-xl font-semibold mb-5">Itens do Pedido:</h3>
-              {itens.length > 0 && (
-                <div className="max-w-[910px] max-h-[500px] overflow-x-auto overflow-y-auto mb-8">
-                  <table className="w-full border-collapse">
-                    <thead className="bg-verdePigmento text-white shadow-thead">
-                      <tr>
-                      {[
-                        "#",
-                        "Produto",
-                        "Qtd.",
-                        "Preço Unitário",
-                        "Subtotal",
-                      ].map((header) => (
-                        <th
-                          key={header}
-                          className="border border-black px-2 py-3 whitespace-nowrap"
-                        >
-                          {header}
-                        </th>
-                      ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {itens.map((item, index) => {
-                        const itemData = [
-                          index + 1, 
-                          item.nome_produto, 
-                          `${item.quantidade} ${item.unidade_medida}`,
-                          `R$ ${item.preco}`,
-                          `R$ ${item.subtotal.toFixed(2)}`,
-                        ];
-                        return(
-                          <tr
-                          key={index}
-                          className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                          >
-                            {itemData.map((value, i) => (
-                              <td
-                                key={i}
-                                className="border border-black px-3 py-3 text-center whitespace-nowrap"
-                              >
-                                {value}
-                              </td>
-                            ))}
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Formulário de novo item */}
-              {showNewItemForm ? ( 
-                <div className="bg-gray-100 p-5 rounded-md shadow-xl mb-10">
-                  <div className="flex gap-10 mb-8">
-
-                    <SmartField
-                      fieldName="nome_produto"
-                      fieldText="Nome do Produto"
-                      fieldClassname="flex flex-col w-full"
-                      required
-                      type="text"
-                      placeholder="Digite o nome do Produto"
-                      value={newItem.nome_produto}
-                      onChange={handleChange}
-                    />
-
-                  </div>
-
-                  <div className="flex gap-10 mb-8 justify-between">
-
-                    <SmartField
-                      fieldName="quantidade"
-                      fieldText="Quantidade"
-                      required
-                      type="number"
-                      min="1"
-                      placeholder="Digite a Quantidade"
-                      value={newItem.quantidade}
-                      onChange={handleChange}
-                      inputWidth="w-[220px]"
-                    />
-
-                    <SmartField
-                      fieldName="unidade_medida"
-                      fieldText="Unidade de Medida"
-                      isSelect
-                      value={newItem.unidade_medida}
-                      onChange={handleChange}
-                      isLoading={loading.has("options")}
-                      error={errors.unit ? "*" : undefined}
-                      placeholderOption="Selecione a Unidade"
-                      inputWidth="w-[220px]"
-                    > 
-                      <option value="un">un</option>
-                      <option value="g">g</option>
-                      <option value="kg">kg</option>
-                      <option value="l">L</option>
-                      <option value="ml">ml</option>
-                      <option value="cm">cm</option>
-                      <option value="m">m</option>
-                      <option value="t">t</option>
-                    </SmartField> 
-
-
-                    <SmartField
-                      isPrice
-                      fieldName="preco"
-                      fieldText="Preço Unitário"
-                      type="text"
-                      placeholder="Preço"
-                      error={errors.price ? "*" : undefined}
-                      value={newItem.preco}
-                      onValueChange={handlePriceChange}
-                      inputWidth="w-[220px]"
-                    />
-                  </div>
-
-                  <div className="flex justify-center items-center gap-5">
-                    <Form.Submit asChild>
-                      <button
-                        type="submit"
-                        name="saveItem"
-                        className="bg-verdeMedio p-3 px-7 rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-                      >
-                        Salvar
-                      </button>
-                    </Form.Submit>
-                    <button
-                      type="button"
-                      onClick={() => {setShowNewItemForm(false); clearNewItem()}}
-                      className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex justify-between items-center gap-5 ">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewItemForm(true);
-                        setTimeout(() => handleOpenChange(true), 100);
-                      }}
-                      className="bg-verdeMedio p-3 rounded-2xl text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-verdeEscuro"
-                    >
-                      <Plus /> Adicionar Item
-                    </button>
-                    {itens.length > 0 && (
-                      <span className="text-lg">
-                        Total do Pedido:{" "}
-                        <strong>R$ {totalPedido.toFixed(2)}</strong>
-                      </span>
-                    )}
-                  </div>
-                  {itens.length > 0 && (
-                    <Form.Submit asChild>
-                      <div className="flex place-content-center mt-10">
-                        <button
-                          type="submit"
-                          name="submitForm"
-                          className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-64"
-                        >
-                        {loading.has("submit") ? (
-                          <Loader2 className="animate-spin h-6 w-6" />
-                        ) : (
-                          "Cadastrar Pedido e Gerar NF"
-                        )}
-                        </button>
-                      </div>
-                    </Form.Submit>
-                  )}
-                </div>
-              )}
-            </Form.Root>
-          </Tabs.Content>
         </Tabs.Root>
-
 
         {/* Modal de Avisos */}
         <NoticeModal
@@ -1469,7 +960,7 @@ export default function Orders() {
               fieldName="nome_cliente"
               fieldText="Cliente"
               fieldClassname="flex flex-col flex-1"
-              required={showNewItemForm ? false : true}
+              required
               type="text"
               placeholder="Digite o nome do Cliente"
               autoComplete="name"
@@ -1481,7 +972,7 @@ export default function Orders() {
               fieldName="cep"
               fieldText="CEP"
               withInputMask
-              required={showNewItemForm ? false : true}
+              required
               type="text"
               mask="99999-999"
               autoClear={false}
@@ -1501,7 +992,7 @@ export default function Orders() {
             <SmartField
               fieldName="endereco"
               fieldText="Endereço"
-              required={showNewItemForm ? false : true}
+              required
               type="text"
               placeholder="Endereço"
               value={formData.endereco}
@@ -1512,7 +1003,7 @@ export default function Orders() {
             <SmartField
               fieldName="num_endereco"
               fieldText="Número"
-              required={showNewItemForm ? false : true}
+              required
               type="text"
               placeholder="Número"
               value={formData.num_endereco}
@@ -1565,7 +1056,7 @@ export default function Orders() {
             <SmartField
               fieldName="cidade"
               fieldText="Cidade"
-              required={showNewItemForm ? false : true}
+              required
               type="text"
               placeholder="Cidade"
               value={formData.cidade}
@@ -1582,7 +1073,7 @@ export default function Orders() {
               fieldName="tel"
               fieldText="Telefone"
               withInputMask
-              required={showNewItemForm ? false : true}
+              required
               type="tel"
               mask="(99) 9999?9-9999"
               autoClear={false}
@@ -1596,7 +1087,7 @@ export default function Orders() {
 
             <SmartField
               isDate
-              required={showNewItemForm ? false : true}
+              required
               fieldName="prev_entrega"
               fieldText="Previsão de entrega"
               value={formData.prev_entrega}
