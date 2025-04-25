@@ -11,7 +11,6 @@ import { NoticeModal } from "../../shared";
 
 type FormData = {
   produto_nome: string;
-  id: number;
   ordem: number;
   nome_etapa: string;
   tempo: string;
@@ -25,7 +24,9 @@ type ProductsWithSteps = {
   etapas: Etapa[];
 };  
 
-type Etapa = Omit<FormData, "produto_nome">;
+type Etapa = Omit<FormData, "produto_nome"> & {
+  dtCadastro?: string;
+};
 
 export default function ProductionSteps() {
   const [activeTab, setActiveTab] = useState("list");
@@ -45,7 +46,6 @@ export default function ProductionSteps() {
   const [selectedProduct, setSelectedProduct] = useState<ProductsWithSteps | null>(null);
   const [formData, setFormData] = useState<FormData>({
     produto_nome: "",
-    id: 0,
     ordem: 0,
     nome_etapa: "",
     tempo: "",
@@ -78,7 +78,11 @@ export default function ProductionSteps() {
         console.log("Resposta do back-end:", stepsResponse.data);
     
         if (stepsResponse.data.success) {
-          setProductsWithSteps(stepsResponse.data.clientes || []);
+          const formattedData = stepsResponse.data.etapas.map((item: any) => ({
+            produto_nome: item.produto_nome,
+            etapas: item.etapas
+          }));
+          setProductsWithSteps(formattedData);
         } else {
           setOpenNoticeModal(true);
           setMessage(stepsResponse.data.message || "Erro ao carregar etapas");
@@ -169,7 +173,6 @@ export default function ProductionSteps() {
     setFormData({
 
       produto_nome: nome_produto,
-      id: etapa.id,
       ordem: etapa.ordem,
       nome_etapa: etapa.nome_etapa,
       tempo: etapa.tempo,
@@ -185,14 +188,13 @@ export default function ProductionSteps() {
   //função para puxar o nome da etapa que será excluida
   const handleDeleteClick = (etapa: Etapa, nome_produto: string) => {
     setDeleteStep({
-      step_id: etapa.id,
+      step_id: etapa.id || 0,
       dproduct: nome_produto,
       dstep: etapa.nome_etapa,
       reason: "",
     });
     setOpenDeleteModal(true);
   };
-
   //Função de define qual será o submir que será enviado  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -236,9 +238,11 @@ export default function ProductionSteps() {
         "http://localhost/BioVerde/back-end/etapas/cadastrar_etapas.php",
         {
           produto_nome: formData.produto_nome,
-          etapas: stepData,
+          etapas: stepData
+        },
+        {
           headers: { "Content-Type": "application/json" },
-          withCredentials: true,
+          withCredentials: true
         }
       );
 
@@ -369,12 +373,11 @@ export default function ProductionSteps() {
     }
   };
 
-  //Limpar FormData
+  //Limpar FormData]
   const clearFormData = (keepProduct: boolean) => {
     if(keepProduct) {
       setFormData({
         produto_nome: formData.produto_nome,
-        id: 0,
         ordem: 0,
         nome_etapa: "",
         tempo: "",
@@ -531,56 +534,52 @@ export default function ProductionSteps() {
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Tabela Dados */}
-                          {selectedProduct.etapas.map((etapa, index) => (
-                            <tr
-                              key={etapa.id}
-                              className={
-                                index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-                              }
-                            >
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.ordem}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.nome_etapa}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.tempo}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.insumos}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.responsavel}</td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                <button
-                                  type="button"
-                                  className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                                  onClick={() => {setCurrentObs(etapa.obs); setOpenObsModal(true)}}
-                                >
-                                  <Eye />
-                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                    Ver
-                                  </div>
-                                </button>
-                              </td>
-                              <td className="border border-black px-4 py-4 whitespace-nowrap">
-                                <button
-                                  type="button"
-                                  className="mr-4 text-black cursor-pointer relative group"
-                                  onClick={() => {handleEditClick(etapa, selectedProduct.produto_nome); setKeepProduct(false)}}
-                                >
-                                  <PencilLine />
-                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                    Editar
-                                  </div>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="text-red-500 cursor-pointer relative group"
-                                  onClick={() => handleDeleteClick(etapa, selectedProduct.produto_nome)}
-                                >
-                                  <Trash />
-                                  <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                                    Excluir
-                                  </div>
-                                </button>
-                              </td>
-                            </tr>
-                          ))} 
-                        </tbody>
+                            {/* Tabela Dados */}
+                            {selectedProduct.etapas.map((etapa) => (
+                              <tr key={etapa.ordem}> {/* Faltava a tag <tr> de abertura */}
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.ordem}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.nome_etapa}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.tempo}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.insumos}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.responsavel}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">{etapa.dtCadastro ? new Date(etapa.dtCadastro).toLocaleDateString() : 'N/A'}</td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                    onClick={() => {setCurrentObs(etapa.obs); setOpenObsModal(true)}}
+                                  >
+                                    <Eye />
+                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                      Ver
+                                    </div>
+                                  </button>
+                                </td>
+                                <td className="border border-black px-4 py-4 whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    className="mr-4 text-black cursor-pointer relative group"
+                                    onClick={() => {handleEditClick(etapa, selectedProduct.produto_nome); setKeepProduct(false)}}
+                                  >
+                                    <PencilLine />
+                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                      Editar
+                                    </div>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="text-red-500 cursor-pointer relative group"
+                                    onClick={() => handleDeleteClick(etapa, selectedProduct.produto_nome)}
+                                  >
+                                    <Trash />
+                                    <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
+                                      Excluir
+                                    </div>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
                       </table>
                       </div>
                     </>
@@ -635,6 +634,7 @@ export default function ProductionSteps() {
                               "Tempo Estimado",
                               "Insumos Utilizados",
                               "Responsável",
+                              "Data de Cadastro",
                               "Observações",
                               // "Ações",
                             ].map((header) => (
@@ -649,13 +649,8 @@ export default function ProductionSteps() {
                         </thead>
                         <tbody>
                           {/* Tabela Dados */}
-                          {stepData.map((step, index) => (
-                            <tr
-                              key={step.id}
-                              className={
-                                index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-                              }
-                            >
+                          {stepData.map((step) => (
+                            <tr key={step.ordem}>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{step.ordem}</td>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{step.nome_etapa}</td>
                               <td className="border border-black px-4 py-4 whitespace-nowrap">{step.tempo}</td>
