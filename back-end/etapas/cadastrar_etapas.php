@@ -34,9 +34,13 @@ foreach ($data["etapas"] as $etapa) {
     $etapaResponsavel = $etapa["responsavel"];
     $etapaObs = $etapa["obs"];
     $etapaCadastro = $etapa["dtCadastro"];
-}
 
-exit;
+    // Prepare SQL insert statement
+    $stmt = $conn->prepare("INSERT INTO etapas_producao (id, ordem, nome_etapa, tempo, insumos, responsavel, obs, dtCadastro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iissssss", $etapaId, $etapaOrdem, $etapaNome, $etapaTempo, $etapaInsumos, $etapaResponsavel, $etapaObs, $etapaCadastro);
+    $stmt->execute();
+    $stmt->close();
+}
 
 // Validação dos dados recebidos
 $requiredFields = ['produto_nome', 'id', 'ordem', 'nome_etapa', 'tempo', 'insumos', 'responsavel', 'obs', 'dtCadastro'];
@@ -45,3 +49,6 @@ if ($validationError) {
     echo json_encode($validationError);
     exit();
 }
+
+// etapa_ordens
+// etor_id
