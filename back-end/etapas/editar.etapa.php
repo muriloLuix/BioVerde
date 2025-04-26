@@ -28,16 +28,13 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    // var_dump($data);
-    // exit;
-
-    // Verifica se o etor_id foi enviado
+    // Verifica se o ID da etapa foi enviado
     if (empty($data['etor_id'])) {
         throw new Exception("ID da etapa não informado.");
     }
 
     // Validação dos campos obrigatórios
-    $camposObrigatorios = ['etor_etapa_nome', 'etor_responsavel', 'etor_tempo', 'etor_insumos', 'etor_observacoes'];
+    $camposObrigatorios = ['nome_etapa', 'responsavel', 'tempo', 'insumos', 'obs'];
     foreach ($camposObrigatorios as $campo) {
         if (!isset($data[$campo])) {
             throw new Exception("Campo obrigatório ausente: $campo");
@@ -59,12 +56,12 @@ try {
 
     $stmt->bind_param(
         "sssssi",
-        $data['etor_etapa_nome'],
-        $data['etor_tempo'],
-        $data['etor_insumos'],
-        $data['etor_responsavel'],
-        $data['etor_observacoes'],
-        $data['etor_id']
+        $data['nome_etapa'],       
+        $data['tempo'],         
+        $data['insumos'],         
+        $data['responsavel'],     
+        $data['obs'],           
+        $data['etor_id']            
     );
 
     if (!$stmt->execute()) {
@@ -80,3 +77,6 @@ try {
     error_log("Erro em editar.etapa.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
+
+$conn->close();
+?>

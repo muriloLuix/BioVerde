@@ -253,7 +253,7 @@ export default function ProductionSteps() {
         await refreshData(); 
         setSuccessMsg(true);
         setMessage("Etapa cadastrada com sucesso!");
-        clearFormData(keepProduct); //Limpa o formData
+        clearFormData(keepProduct);
         setStepData([]);
       } else {
         setMessage(response.data.message || "Erro ao cadastrar etapa");

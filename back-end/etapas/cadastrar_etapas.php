@@ -18,7 +18,7 @@ if (!$rawData) {
 
 $data = json_decode($rawData, true);
 
-// Validação básica
+// Validação dos dados recebidos
 if (!isset($data['produto_nome']) || !isset($data['etapas']) || !is_array($data['etapas'])) {
     echo json_encode(["success" => false, "message" => "Dados incompletos ou inválidos."]);
     exit();
@@ -27,14 +27,16 @@ if (!isset($data['produto_nome']) || !isset($data['etapas']) || !is_array($data[
 try {
     $conn->begin_transaction();
 
-    // 1. Criar um novo registro de etapas_producao para o produto
+    // 1. Inserir um novo produto na etapas_producao
     $stmtProducao = $conn->prepare("INSERT INTO etapas_producao (etapa_nome) VALUES (?)");
     $stmtProducao->bind_param("s", $data['produto_nome']);
     $stmtProducao->execute();
-    $producaoId = $conn->insert_id; // Este é o etapa_id para as etapas
+    $producaoId = $conn->insert_id; // ID gerado para o novo produto (etapa_id)
     $stmtProducao->close();
 
-    // 2. Inserir todas as etapas ligadas ao novo producaoId
+    $primeiraEtapaId = null;
+
+    // 2. Inserir as etapas ligadas a esse novo producaoId
     foreach ($data["etapas"] as $etapa) {
         $stmtEtapa = $conn->prepare("INSERT INTO etapa_ordem 
             (etor_ordem, etor_etapa_nome, etor_responsavel, etor_tempo, etor_insumos, etor_observacoes, producao_id) 
@@ -50,13 +52,30 @@ try {
             $producaoId
         );
         $stmtEtapa->execute();
+        $etapaId = $conn->insert_id;
         $stmtEtapa->close();
+
+        // Se for a primeira etapa (ordem == 1), guardar o ID
+        if ($etapa["ordem"] == 1) {
+            $primeiraEtapaId = $etapaId;
+        }
+    }
+
+    // 3. Atualizar a etapas_producao com o ID da primeira etapa
+    if ($primeiraEtapaId !== null) {
+        $stmtUpdate = $conn->prepare("UPDATE etapas_producao SET etor_id = ? WHERE etapa_id = ?");
+        $stmtUpdate->bind_param("ii", $primeiraEtapaId, $producaoId);
+        $stmtUpdate->execute();
+        $stmtUpdate->close();
     }
 
     $conn->commit();
     echo json_encode(["success" => true, "message" => "Produto e etapas cadastrados com sucesso!"]);
+
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar etapas: " . $e->getMessage()]);
 }
+
+$conn->close();
 ?>
