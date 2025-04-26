@@ -38,7 +38,7 @@ const Modal = ({
   leftButtonText,
   isOrderModal,
   isLoading,
-  loading,
+  // loading,
   totalPedido,
   onCancel,
   onSubmit,
@@ -105,7 +105,7 @@ const Modal = ({
                     <button
                       type="submit"
                       className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-                      disabled={!!loading?.size}
+                      // disabled={!!loading?.size}
                     >
                       {isLoading ? (
                         <Loader2 className="animate-spin h-6 w-6" />
