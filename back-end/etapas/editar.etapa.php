@@ -31,6 +31,9 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
+    var_dump($data);
+    exit;
+
     // Verifica se o cliente existe
     if(!verifyExist($conn, $data['etor_id'], 'etor_id', 'etapa_ordem')) {
         throw new Exception('Cliente não encontrado');
