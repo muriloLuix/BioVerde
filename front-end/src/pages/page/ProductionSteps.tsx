@@ -293,14 +293,17 @@ export default function ProductionSteps() {
     try {
 
       const response = await axios.post(
-        "http://localhost/BioVerde/back-end/etapa/editar.etapa.php",
+        "http://localhost/BioVerde/back-end/etapas/editar.etapa.php",
         {
           produto_nome: formData.produto_nome,
           etapas: stepData,
+        },
+        {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
+      
 
       console.log("Resposta do back-end:", response.data);
 
