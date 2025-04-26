@@ -12,12 +12,12 @@ try {
         throw new Exception("Usuário não autenticado.");
     }
 
-    // Conexão com o banco (certifica que $conn esteja incluído!)
+    // Verifica a conexão
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);
     }
 
-    // Recebe os dados
+    // Recebe o JSON
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");
@@ -28,30 +28,43 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    // Validação dos campos obrigatórios
-    $camposObrigatorios = ['produto_nome', 'ordem', 'nome_etapa', 'tempo', 'insumos', 'responsavel', 'obs'];
+    // var_dump($data);
+    // exit;
 
+    // Verifica se o etor_id foi enviado
+    if (empty($data['etor_id'])) {
+        throw new Exception("ID da etapa não informado.");
+    }
+
+    // Validação dos campos obrigatórios
+    $camposObrigatorios = ['etor_etapa_nome', 'etor_responsavel', 'etor_tempo', 'etor_insumos', 'etor_observacoes'];
     foreach ($camposObrigatorios as $campo) {
-        if (empty($data[$campo]) && $data[$campo] !== 0) {
-            throw new Exception("Campo obrigatório ausente ou vazio: $campo");
+        if (!isset($data[$campo])) {
+            throw new Exception("Campo obrigatório ausente: $campo");
         }
     }
 
-    // Atualiza a etapa no banco de dados
-    $stmt = $conn->prepare("UPDATE etapas SET nome_etapa = ?, tempo = ?, insumos = ?, responsavel = ?, obs = ? WHERE produto_nome = ? AND ordem = ?");
+    // Atualiza a etapa_ordem
+    $stmt = $conn->prepare("UPDATE etapa_ordem 
+        SET etor_etapa_nome = ?, 
+            etor_tempo = ?, 
+            etor_insumos = ?, 
+            etor_responsavel = ?, 
+            etor_observacoes = ? 
+        WHERE etor_id = ?");
+
     if (!$stmt) {
-        throw new Exception("Erro ao preparar statement: " . $conn->error);
+        throw new Exception("Erro ao preparar o statement: " . $conn->error);
     }
 
     $stmt->bind_param(
-        "ssssssi",
-        $data['nome_etapa'],
-        $data['tempo'],
-        $data['insumos'],
-        $data['responsavel'],
-        $data['obs'],
-        $data['produto_nome'],
-        $data['ordem']
+        "sssssi",
+        $data['etor_etapa_nome'],
+        $data['etor_tempo'],
+        $data['etor_insumos'],
+        $data['etor_responsavel'],
+        $data['etor_observacoes'],
+        $data['etor_id']
     );
 
     if (!$stmt->execute()) {

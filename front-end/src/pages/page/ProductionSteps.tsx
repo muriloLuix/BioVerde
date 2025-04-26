@@ -11,14 +11,14 @@ import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
 
 type FormData = {
-  produto_nome: string;
-  ordem: number;
-  nome_etapa: string;
-  tempo: string;
-  insumos: string;
-  responsavel: string;
-  obs: string;
+  etor_id: number;  
+  etor_etapa_nome: string;
+  etor_tempo: string;
+  etor_insumos: string;
+  etor_responsavel: string;
+  etor_observacoes: string;
 };
+
 
 type ProductsWithSteps = {
   produto_nome: string;
@@ -294,16 +294,12 @@ export default function ProductionSteps() {
 
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/etapas/editar.etapa.php",
-        {
-          produto_nome: formData.produto_nome,
-          etapas: stepData,
-        },
+        formData,
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
-      
 
       console.log("Resposta do back-end:", response.data);
 
