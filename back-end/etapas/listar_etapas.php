@@ -14,6 +14,7 @@ try {
 
     $cols_etapa = array(
         "a.etor_id",
+        "a.etor_ordem",             // <- BUSCA a ordem correta agora
         "a.etor_etapa_nome",
         "a.etor_responsavel",
         "a.etor_tempo",
@@ -21,7 +22,7 @@ try {
         "a.etor_observacoes",
         "a.etor_dtCadastro",
         "b.etapa_nome as produto_nome",
-        "b.produto_id"
+        "b.etapa_id as producao_id"  // <- Pegamos o ID real do registro de producao
     );
     
     $joins = [
@@ -35,23 +36,23 @@ try {
     // Busca os dados com JOIN
     $etapas = search($conn, "etapa_ordem a", implode(",", $cols_etapa), $joins);
 
-    // Agrupa as etapas por produto
+    // Agrupa as etapas por produção
     $produtosComEtapas = [];
     foreach ($etapas as $etapa) {
+        $producaoId = $etapa['producao_id'];
         $produtoNome = $etapa['produto_nome'];
-        $produtoId = $etapa['produto_id'];
         
-        if (!isset($produtosComEtapas[$produtoId])) {
-            $produtosComEtapas[$produtoId] = [
+        if (!isset($produtosComEtapas[$producaoId])) {
+            $produtosComEtapas[$producaoId] = [
                 'produto_nome' => $produtoNome,
-                'produto_id' => $produtoId,
+                'produto_id' => $producaoId, // agora produto_id é o etapa_id
                 'etapas' => []
             ];
         }
         
-        $produtosComEtapas[$produtoId]['etapas'][] = [
+        $produtosComEtapas[$producaoId]['etapas'][] = [
             'etor_id' => $etapa['etor_id'],
-            'ordem' => $etapa['etor_id'], 
+            'ordem' => $etapa['etor_ordem'], // <- agora sim a ordem certa
             'nome_etapa' => $etapa['etor_etapa_nome'],
             'tempo' => $etapa['etor_tempo'],
             'insumos' => $etapa['etor_insumos'],
@@ -75,3 +76,4 @@ try {
 }
 
 $conn->close();
+?>

@@ -1,6 +1,5 @@
 <?php
 ini_set("display_errors", 1);
-
 session_start();
 include_once "../inc/funcoes.inc.php";
 
@@ -27,46 +26,37 @@ if (!isset($data['produto_nome']) || !isset($data['etapas']) || !is_array($data[
 
 try {
     $conn->begin_transaction();
-    
-    // 1. Inserir na tabela etapas_producao
-    $stmtProducao = $conn->prepare("INSERT INTO etapas_producao (etapa_nome, produto_id) VALUES (?, ?)");
-    $stmtProducao->bind_param("si", $data['produto_nome'], $data['produto_id']); // Assumindo que você envia o produto_id
+
+    // 1. Criar um novo registro de etapas_producao para o produto
+    $stmtProducao = $conn->prepare("INSERT INTO etapas_producao (etapa_nome) VALUES (?)");
+    $stmtProducao->bind_param("s", $data['produto_nome']);
     $stmtProducao->execute();
-    $producaoId = $conn->insert_id;
+    $producaoId = $conn->insert_id; // Este é o etapa_id para as etapas
     $stmtProducao->close();
-    
-    // 2. Inserir etapas na tabela etapa_ordem
+
+    // 2. Inserir todas as etapas ligadas ao novo producaoId
     foreach ($data["etapas"] as $etapa) {
         $stmtEtapa = $conn->prepare("INSERT INTO etapa_ordem 
-                                   (etor_etapa_nome, etor_responsavel, etor_tempo, etor_insumos, 
-                                   etor_observacoes, producao_id) 
-                                   VALUES (?, ?, ?, ?, ?, ?)");
+            (etor_ordem, etor_etapa_nome, etor_responsavel, etor_tempo, etor_insumos, etor_observacoes, producao_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmtEtapa->bind_param(
-            "sssssi", 
+            "isssssi",
+            $etapa["ordem"],
             $etapa["nome_etapa"],
             $etapa["responsavel"],
             $etapa["tempo"],
             $etapa["insumos"],
             $etapa["obs"],
-            $producaoId // Vinculando à produção
+            $producaoId
         );
         $stmtEtapa->execute();
-        $etapaId = $conn->insert_id;
-        
-        // 3. Atualizar a primeira etapa na tabela etapas_producao (se necessário)
-        if ($etapa["ordem"] == 1) {
-            $stmtUpdate = $conn->prepare("UPDATE etapas_producao SET etor_id = ? WHERE etapa_id = ?");
-            $stmtUpdate->bind_param("ii", $etapaId, $producaoId);            
-            $stmtUpdate->execute();
-            $stmtUpdate->close();
-        }
-        
         $stmtEtapa->close();
     }
-    
+
     $conn->commit();
-    echo json_encode(["success" => true, "message" => "Etapas cadastradas com sucesso!"]);
+    echo json_encode(["success" => true, "message" => "Produto e etapas cadastrados com sucesso!"]);
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar etapas: " . $e->getMessage()]);
 }
+?>

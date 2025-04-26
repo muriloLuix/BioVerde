@@ -11,14 +11,14 @@ import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
 
 type FormData = {
-  etor_id: number;  
-  etor_etapa_nome: string;
-  etor_tempo: string;
-  etor_insumos: string;
-  etor_responsavel: string;
-  etor_observacoes: string;
+  produto_nome: string;
+  ordem: number;
+  nome_etapa: string;
+  tempo: string;
+  insumos: string;
+  responsavel: string;
+  obs: string;
 };
-
 
 type ProductsWithSteps = {
   produto_nome: string;
@@ -300,6 +300,8 @@ export default function ProductionSteps() {
           withCredentials: true,
         }
       );
+      
+      
 
       console.log("Resposta do back-end:", response.data);
 
