@@ -143,20 +143,27 @@ export default function UsersPage() {
   };
 
   const gerarRelatorio = async () => {
-
     setLoading((prev) => new Set([...prev, "reports"]));
 
     try {
       const response = await axios.get(
         "http://localhost/BioVerde/back-end/rel/usu.rel.php",
         {
-          responseType: 'blob', 
+          responseType: "blob",
           withCredentials: true,
         }
       );
-  
-      // Cria uma URL para o blob recebido
-      const fileURL = URL.createObjectURL(new Blob([response.data]));
+
+      const contentType = response.headers["content-type"];
+
+      if (contentType !== "application/pdf") {
+        const errorText = await response.data.text();
+        throw new Error(`Erro ao gerar relatório: ${errorText}`);
+      }
+
+      const fileURL = URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
       setRelatorioContent(fileURL);
       setRelatorioModalOpen(true);
     } catch (error) {
@@ -171,6 +178,7 @@ export default function UsersPage() {
       });
     }
   };
+  
 
   //função para puxar os dados do usuario que será editado
   const handleEditClick = (usuario: Usuario) => {
