@@ -11,6 +11,7 @@ import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
 
 type FormData = {
+  produto_id: number,
   produto_nome: string;
   ordem: number;
   nome_etapa: string;
@@ -21,11 +22,13 @@ type FormData = {
 };
 
 type ProductsWithSteps = {
+  produto_id: number;
   produto_nome: string;
   etapas: Etapa[];
 };  
 
-type Etapa = Omit<FormData, "produto_nome"> & {
+type Etapa = Omit<FormData, "produto_nome" | "produto_id"> & {
+  id: number; 
   dtCadastro?: string;
 };
 
@@ -46,6 +49,7 @@ export default function ProductionSteps() {
   const [productsWithSteps, setProductsWithSteps] = useState<ProductsWithSteps[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<ProductsWithSteps | null>(null);
   const [formData, setFormData] = useState<FormData>({
+    produto_id: 0,
     produto_nome: "",
     ordem: 0,
     nome_etapa: "",
@@ -168,11 +172,11 @@ export default function ProductionSteps() {
   };
 
   //função para puxar os dados da etapa que será editada
-  const handleEditClick = (etapa: Etapa, nome_produto: string) => {
+  const handleEditClick = (etapa: Etapa, nome_produto: string, produto_id: number) => {
     console.log("Dados completos da etapa:", etapa); 
 
     setFormData({
-
+      produto_id: produto_id,
       produto_nome: nome_produto,
       ordem: etapa.ordem,
       nome_etapa: etapa.nome_etapa,
@@ -180,8 +184,6 @@ export default function ProductionSteps() {
       insumos: etapa.insumos,
       responsavel: etapa.responsavel,
       obs: etapa.obs,
-
-      
     });
     setOpenEditModal(true);
   };
@@ -214,7 +216,7 @@ export default function ProductionSteps() {
   const handleSaveStep = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { produto_nome, ...stepFields } = formData;
+    const { produto_id, produto_nome, ...stepFields } = formData;
 
     const newStep = {
       ...stepFields,
@@ -238,6 +240,7 @@ export default function ProductionSteps() {
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/etapas/cadastrar_etapas.php",
         {
+          produto_id: formData.produto_id,
           produto_nome: formData.produto_nome,
           etapas: stepData
         },
@@ -283,6 +286,7 @@ export default function ProductionSteps() {
     }
   };
 
+  console.log(formData)
   //submit para atualizar a etapa após a edição dela
   const handleUpdateStep = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -381,6 +385,7 @@ export default function ProductionSteps() {
   const clearFormData = (keepProduct: boolean) => {
     if(keepProduct) {
       setFormData({
+        produto_id: formData.produto_id,
         produto_nome: formData.produto_nome,
         ordem: 0,
         nome_etapa: "",
@@ -563,7 +568,7 @@ export default function ProductionSteps() {
                                   <button
                                     type="button"
                                     className="mr-4 text-black cursor-pointer relative group"
-                                    onClick={() => {handleEditClick(etapa, selectedProduct.produto_nome); setKeepProduct(false)}}
+                                    onClick={() => {handleEditClick(etapa, selectedProduct.produto_nome, selectedProduct.produto_id); setKeepProduct(false)}}
                                   >
                                     <PencilLine />
                                     <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
