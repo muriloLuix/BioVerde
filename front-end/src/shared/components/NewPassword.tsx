@@ -44,8 +44,9 @@ export default function NewPassword({ onNext }: StepProps) {
         { senha },    {
           headers: {
             'X-Session-ID': sessionId
-          }
-        }
+          },
+          withCredentials: true
+        },
       );
 
       console.log("Resposta do back-end:", response.data); 

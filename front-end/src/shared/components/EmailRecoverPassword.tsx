@@ -29,7 +29,13 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
       setLoading(true);
       const response = await api.post(
         "recuperar-senha/recuperar.senha.php",
-        { email }
+        { email },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true
+        }
       );
       console.log("Resposta do back-end:", response.data);
       
