@@ -1,4 +1,4 @@
-# 🌱 BioVerde - Sistema de Automação e Monitoramento Agrícola
+# 🌱 BioVerde | Sistema de Automação e Monitoramento Agrícola
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -8,11 +8,11 @@
 ![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-## 📌 Sobre o Projeto
+## 📌 SOBRE O PROJETO
 
 O **BioVerde** é um sistema desenvolvido para a empresa **BioVerde**, com o objetivo de otimizar e aprimorar a qualidade dos produtos agrícolas e do atendimento ao cliente. Através dele, será possível implementar automações tecnológicas e realizar um monitoramento preciso do cultivo e plantio, trazendo inovação e eficiência para o setor agrícola. 🌾💻
 
-## 🚀 Tecnologias Utilizadas
+## 🚀 TECNOLOGIAS UTILIZADAS
 
 O projeto será desenvolvido com as seguintes tecnologias:
 
@@ -23,46 +23,37 @@ O projeto será desenvolvido com as seguintes tecnologias:
 - 🚀 **Laravel** - Framework para desenvolvimento ágil e seguro
 - 🗄️ **MySQL** - Banco de dados relacional
 
-## 📋 Funcionalidades Principais
+## 📋 FUNCIONALIDADES
 
-✅ Previsão de demandas futuras baseadas no histórico de pedidos 🚜🤖
+✅ Previsão de demandas futuras baseadas no histórico de pedidos 🚜🤖  
 ✅ Gestão de clientes, fornecedores, insumos e produtos 📂🤝  
 ✅ Relatórios detalhados e insights estratégicos 📈📊  
 ✅ Interface amigável e intuitiva para os usuários 💡👨‍💻
 
-## 🔧 Como Configurar o Projeto
+## ⚙️ O QUE PRECISO TER INSTALADO?
 
-1. Clone este repositório:
+❗ **ATENÇÃO** | Para utilizar o projeto é necessário ter as seguintes ferramentas instaladas na máquina:
+
+- GIT
+- XAMPP
+- NODE JS
+
+## 🔧 COMO CONFIGURAR O PROJETO?
+
+1. Clone o repositório dentro da pasta `htdocs` do XAMPP:
    ```bash
    git clone https://github.com/seu-usuario/BioVerde.git
    ```
-2. Instale as dependências do Laravel:
+2. Instale as dependências do projeto:
    ```bash
-   cd BioVerde
-   composer install
+   cd BioVerde/front-end && npm i
    ```
-3. Configure o ambiente:
+3. Inicie o projeto:
    ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-4. Configure o banco de dados MySQL no arquivo `.env`
-5. Rode as migrações para criar as tabelas:
-   ```bash
-   php artisan migrate
-   ```
-6. Inicie o servidor Laravel:
-   ```bash
-   php artisan serve
-   ```
-7. No diretório do front-end, instale as dependências e inicie o React:
-   ```bash
-   cd frontend
-   npm install
-   npm start
+   npm run dev
    ```
 
-## 🤝 Contribuidores
+## 🤝 CONTRIBUIDORES
 
 👨‍💻 **Murilo Luiz Jaboinski**  
 👩‍💻 **Fernando Kotinda**  
@@ -74,7 +65,7 @@ O projeto será desenvolvido com as seguintes tecnologias:
 
 Se deseja contribuir com o projeto, sinta-se à vontade para abrir um pull request! 🚀
 
-## 📜 Licença
+## 📜 LICENÇA
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
