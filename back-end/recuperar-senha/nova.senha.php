@@ -2,9 +2,9 @@
 
 session_start();
 
-if (isset($_SERVER['HTTP_X_SESSION_ID'])) {
-    session_id($_SERVER['HTTP_X_SESSION_ID']);
-}
+// if (isset($_SERVER['HTTP_X_SESSION_ID'])) {
+//     session_id($_SERVER['HTTP_X_SESSION_ID']);
+// }
 
 include_once "../inc/funcoes.inc.php";
 
