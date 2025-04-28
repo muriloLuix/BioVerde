@@ -643,7 +643,6 @@ export default function ProductionSteps() {
                               "Tempo Estimado",
                               "Insumos Utilizados",
                               "Responsável",
-                              "Data de Cadastro",
                               "Observações",
                               // "Ações",
                             ].map((header) => (
