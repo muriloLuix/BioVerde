@@ -13,12 +13,18 @@ import { cepApi } from "../../utils/cepApi";
 
 interface Estado {
   estado_id: number;
-  cliente_estado: string;
+  pedido_estado: string;
 }
 
 interface Status {
-  sta_id: number;
-  sta_nome: string;
+  stapedido_id: number;
+  stapedido_nome: string;
+} 
+
+interface Cliente {
+  cliente_id: number;
+  cliente_nome: string;
+  cliente_tel: string;
 }
 
 interface Unidade {
@@ -28,9 +34,8 @@ interface Unidade {
 
 interface Pedido {
   pedido_id: number;
-  pedido_num: number;
-  pedido_cliente: string;
-  pedido_telefone: string;
+  cliente_nome: string;
+  cliente_tel: string;
   pedido_cep: string;
   pedido_endereco: string;
   pedido_num_endereco: string;
@@ -38,90 +43,89 @@ interface Pedido {
   pedido_estado: string;
   pedido_prevEntrega: string;
   pedido_dtCadastro: string;
-  pedido_horaCadastro: string;
+  pedido_metodo_pagamento: string;
   pedido_observacoes: string;
   pedido_valor_total: number;
-  status: string;
+  stapedido_nome: string;
+  pedidoitem_id?: number;
   pedido_itens: PedidoItem[];
 }
 
 interface PedidoItem {
-  id: number;
-  nome_produto: string;
-  quantidade: number;
-  unidade_medida: string;
-  preco: string;
-  subtotal: number;
+  pedidoitem_id: number;
+  produto_nome: string;
+  pedidoitem_quantidade: number;
+  unidade_nome: string;
+  pedidoitem_preco: number;
+  pedidoitem_subtotal: number;
 }
 
-const orders = [
+const exemploPedidos = [
   {
-    pedido_id: 0,
-    pedido_num: 1,
-    pedido_cliente: "João",
+    pedido_id: 1,
+    cliente_nome: "João",
     pedido_dtCadastro: "2025-04-21",
-    pedido_horaCadastro: "20:07",
-    pedido_telefone: "(41) 11222-2223",
+    cliente_tel: "(41) 11222-2223",
     pedido_cep: "01001-001",
     pedido_cidade: "São Paulo",
     pedido_endereco: "Praça da Sé",
     pedido_estado: "SP",
     pedido_itens: [
       {
-        id: 0,
-        nome_produto: "sementes de tomate",
-        preco: "3.00",
-        quantidade: 12,
-        subtotal: 36,
-        unidade_medida: "kg"
+        pedidoitem_id: 0,
+        produto_nome: "sementes de tomate",
+        pedidoitem_preco: 3.00,
+        pedidoitem_quantidade: 12,
+        pedidoitem_subtotal: 36,
+        unidade_nome: "kg"
       },
       {
-        id: 1,
-        nome_produto: "sementes de laranja",
-        preco: "12.00",
-        quantidade: 3,
-        subtotal: 36,
-        unidade_medida:" kg"
+        pedidoitem_id: 1,
+        produto_nome: "sementes de laranja",
+        pedidoitem_preco: 12.00,
+        pedidoitem_quantidade: 3,
+        pedidoitem_subtotal: 36,
+        unidade_nome:" kg"
       }
     ],
     pedido_num_endereco: "23",
     pedido_prevEntrega: "2025-04-24",
-    status: "em produção",
+    stapedido_nome: "em produção",
+    pedido_metodo_pagamento: "Pix",
     pedido_valor_total: 72,
     pedido_observacoes: "Cliente pediu para entregar após as 14h."
   },
   {
-    pedido_id: 1,
-    pedido_num: 2,
-    pedido_cliente: "Maria",
+    pedido_id: 2,
+    cliente_nome: "Maria",
     pedido_dtCadastro: "2025-04-21",
-    pedido_horaCadastro: "19:07",
-    pedido_telefone: "(11) 99888-7766",
+    cliente_tel: "(11) 99888-7766",
     pedido_cep: "01310-100",
     pedido_cidade: "São Paulo",
     pedido_endereco: "Avenida Paulista",
     pedido_estado: "SP",
     pedido_itens: [
       {
-        id: 0,
-        nome_produto: "sementes de alface",
-        preco: "4.50",
-        quantidade: 10,
-        subtotal: 45,
-        unidade_medida: "kg"
+        pedidoitem_id: 0,
+        produto_nome: "sementes de alface",
+        pedidoitem_preco: 4.50,
+        pedidoitem_quantidade: 10,
+        pedidoitem_subtotal: 45,
+        unidade_nome: "kg"
       },
       {
-        id: 1,
-        nome_produto: "sementes de cenoura",
-        preco: "5.00",
-        quantidade: 5,
-        subtotal: 25,
-        unidade_medida: "kg"
+        pedidoitem_id: 1,
+        produto_nome: "sementes de cenoura",
+        pedidoitem_preco: 5.00,
+        pedidoitem_quantidade: 5,
+        pedidoitem_subtotal: 25,
+        unidade_nome: "kg"
       }
     ],
     pedido_num_endereco: "1050",
     pedido_prevEntrega: "2025-04-25",
-    status: "em separação",
+    stapedido_nome: "em separação",
+    pedido_metodo_pagamento: "Cartão de Débito",
     pedido_valor_total: 70,
     pedido_observacoes: "Cliente solicitou embalagem resistente à umidade",
   }
@@ -148,11 +152,9 @@ export default function Orders() {
     status: false,
     unit: false,
     states: false,
-    price: false,
   });
   const [formData, setFormData] = useState({
     pedido_id: 0,
-    num_pedido: 0,
     nome_cliente: "",
     tel: "",
     cep: "",
@@ -163,13 +165,6 @@ export default function Orders() {
     cidade: "",
     prev_entrega: "",
     obs: "",
-  });
-  const [newItem, setNewItem] = useState<Omit<PedidoItem, "subtotal">>({
-    id: 0,
-    nome_produto: "",
-    quantidade: 0,
-    unidade_medida: "",
-    preco: "",
   });
   const [options, setOptions] = useState<{
     estados: Estado[];
@@ -190,6 +185,7 @@ export default function Orders() {
     fcidade: "",
     fprev_entrega: "",
     fdt_cadastro: "",
+    fpagamento: "",
   });
   const [deleteOrder, setDeleteOrder] = useState({
     pedido_id: 0,
@@ -337,11 +333,10 @@ export default function Orders() {
     setFormData({
 
       pedido_id: pedido.pedido_id,
-      num_pedido: pedido.pedido_num,
-      nome_cliente: pedido.pedido_cliente,
-      tel: pedido.pedido_telefone,
+      nome_cliente: pedido.cliente_nome,
+      tel: pedido.cliente_tel,
       cep: pedido.pedido_cep,
-      status: pedido.sta_id?.toString() || "",
+      status: pedido.stapedido_nome,
       endereco: pedido.pedido_endereco,
       num_endereco: pedido.pedido_num_endereco,
       estado: pedido.pedido_estado,
@@ -357,8 +352,8 @@ export default function Orders() {
   const handleDeleteClick = (pedido: Pedido) => {
     setDeleteOrder({
       pedido_id: pedido.pedido_id,
-      dnum_pedido: pedido.pedido_num,
-      dnome_cliente: pedido.pedido_cliente,
+      dnum_pedido: pedido.pedido_id,
+      dnome_cliente: pedido.cliente_nome,
       reason: "",
     });
     setOpenDeleteModal(true);
@@ -373,7 +368,6 @@ export default function Orders() {
     const { name, value } = event.target;
 
     if (name in formData) { setFormData({ ...formData, [name]: value }) }
-    if (name in newItem) { setNewItem({ ...newItem, [name]: value }) }
     if (name in filters) { setFilters({ ...filters, [name]: value }) }
     if (name in deleteOrder) {setDeleteOrder({ ...deleteOrder, [name]: value }) }
 
@@ -548,8 +542,8 @@ export default function Orders() {
   };
 
   const handleSeeOrderClick = (pedido: Pedido) => {
-    setNumOrder(pedido.pedido_num);
-    setClientOrder(pedido.pedido_cliente);
+    setNumOrder(pedido.pedido_id);
+    setClientOrder(pedido.cliente_nome);
     setTotalOrder(pedido.pedido_valor_total);
     setSelectedOrder(pedido.pedido_itens);
     setOpenOrderModal(true);
@@ -600,7 +594,7 @@ export default function Orders() {
                     autoComplete="name"
                     value={filters.fnome_cliente}
                     onChange={handleChange}
-                    inputWidth="w-[550px]"
+                    inputWidth="w-[580px]"
                   />
 
                   <SmartField
@@ -615,12 +609,12 @@ export default function Orders() {
                     autoComplete="tel"
                     value={filters.ftel}
                     onChange={handleChange}
-                    inputWidth="w-[250px]"
+                    inputWidth="w-[220px]"
                   /> 
 
                 </div>
 
-                <div className="flex gap-7 justify-between">
+                <div className="flex justify-between">
 
                   <SmartField
                     fieldName="fstatus"
@@ -629,7 +623,7 @@ export default function Orders() {
                     value={filters.fstatus}
                     onChange={handleChange}
                     isLoading={loading.has("options")}
-                    inputWidth="w-[200px]"
+                    inputWidth="w-[220px]"
                   > 
                     <option value="todos">Todos</option>
                     <option value="pendente">Pendente</option>
@@ -652,7 +646,7 @@ export default function Orders() {
                     value={filters.fcep}
                     onChange={handleChange}
                     onBlur={handleCepBlur}
-                    inputWidth="w-[200px]"
+                    inputWidth="w-[220px]"
                   /> 
 
                   <SmartField
@@ -663,7 +657,7 @@ export default function Orders() {
                     onChange={handleChange}
                     autoComplete="address-level1"
                     isLoading={loading.has("options")}
-                    inputWidth="w-[200px]"
+                    inputWidth="w-[220px]"
                   > 
                     <option value="">Todos</option>
                     <option value="AC">Acre</option>
@@ -703,12 +697,27 @@ export default function Orders() {
                     value={filters.fcidade}
                     onChange={handleChange}
                     autoComplete="address-level2"
-                    inputWidth="w-[200px]"
+                    inputWidth="w-[220px]"
                   />
 
                 </div>
 
-                <div className="flex gap-15 mb-8">
+                <div className="flex justify-between mb-8">
+
+                <SmartField
+                    fieldName="fpagamento"
+                    fieldText="Método de Pagamento"
+                    isSelect
+                    value={filters.fpagamento}
+                    onChange={handleChange}
+                    // isLoading={loading.has("options")}
+                    inputWidth="w-[220px]"
+                  > 
+                    <option value="">Todos</option>
+                    <option value="pix">Pix</option>
+                    <option value="debito">Cartão de Débito</option>
+                    <option value="credito">Cartão de Crédito</option>
+                  </SmartField> 
 
                   <SmartField
                     isDate
@@ -716,7 +725,7 @@ export default function Orders() {
                     fieldText="Previsão de entrega"
                     value={filters.fprev_entrega}
                     onChange={handleChange}
-                    inputWidth="w-[250px]"
+                    inputWidth="w-[220px]"
                   />
 
                   <SmartField
@@ -725,11 +734,11 @@ export default function Orders() {
                     fieldText="Data de Cadastro"
                     value={filters.fdt_cadastro}
                     onChange={handleChange}
-                    inputWidth="w-[250px]"
+                    inputWidth="w-[220px]"
                   />  
 
                   <Form.Submit asChild>
-                    <div className="flex gap-8 mt-8">
+                    <div className="flex gap-5 mt-8 w-[220px]">
                       <button
                         type="submit"
                         className="bg-verdeMedio p-3 w-[120px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
@@ -777,11 +786,11 @@ export default function Orders() {
                       "Nº",
                       "Cliente",
                       "Data",
-                      "Hora",
                       "Status",
                       "Previsão de Entrega",
                       "Itens do Pedido",
                       "Valor Total",
+                      "Método de Pagamento",
                       "Telefone",
                       "CEP",
                       "Endereço",
@@ -807,7 +816,7 @@ export default function Orders() {
                         <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                       </td>
                     </tr>
-                  ) : orders.length === 0 ? (
+                  ) : exemploPedidos.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="text-center py-4">
                         Nenhum pedido encontrado
@@ -815,25 +824,22 @@ export default function Orders() {
                     </tr>
                   ) : (
                     //Tabela Dados
-                    orders.map((pedido, index) => (
+                    exemploPedidos.map((pedido, index) => (
                       <tr
                         key={pedido.pedido_id}
                         className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
                       >
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.pedido_num}
+                          {pedido.pedido_id}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.pedido_cliente}
+                          {pedido.cliente_nome}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           {new Date(pedido.pedido_dtCadastro).toLocaleDateString("pt-BR")}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.pedido_horaCadastro}
-                        </td>
-                        <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.status}
+                          {pedido.stapedido_nome}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           {new Date(pedido.pedido_prevEntrega).toLocaleDateString("pt-BR")}
@@ -855,7 +861,10 @@ export default function Orders() {
                           R$ {pedido.pedido_valor_total.toFixed(2)}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.pedido_telefone}
+                          {pedido.pedido_metodo_pagamento}
+                        </td>
+                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                          {pedido.cliente_tel}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           {pedido.pedido_cep}
@@ -913,7 +922,7 @@ export default function Orders() {
                 </tbody>
               </table>
             </div>
-            {orders.length !== 0 && (
+            {exemploPedidos.length !== 0 && (
               <div className="min-w-[966px] max-w-[73vw]">
                 <button
                   type="button"
@@ -956,10 +965,10 @@ export default function Orders() {
                       {selectedOrder.map((item, index) => {
                         const itemData = [
                           index + 1, 
-                          item.nome_produto, 
-                          `${item.quantidade} ${item.unidade_medida}`,
-                          `R$ ${item.preco}`,
-                          `R$ ${item.subtotal.toFixed(2)}`,
+                          item.produto_nome, 
+                          `${item.pedidoitem_quantidade} ${item.pedidoitem_quantidade}`,
+                          `R$ ${item.pedidoitem_preco}`,
+                          `R$ ${item.pedidoitem_subtotal.toFixed(2)}`,
                         ];
                         return(
                           <tr
@@ -1024,7 +1033,7 @@ export default function Orders() {
               type="number"
               required
               placeholder="Nº Pedido"
-              value={formData.num_pedido}
+              value={formData.pedido_id}
               onChange={handleChange}
               inputWidth="w-[120px]"
             />
@@ -1180,8 +1189,8 @@ export default function Orders() {
               inputWidth="w-[250px]"
             > 
               {options.status?.map((status) => (
-                <option key={status.sta_id} value={status.sta_id}>
-                  {status.sta_nome}
+                <option key={status.stapedido_id} value={status.stapedido_id}>
+                  {status.stapedido_nome}
                 </option>
               ))}
             </SmartField> 
