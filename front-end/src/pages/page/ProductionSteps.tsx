@@ -286,7 +286,6 @@ export default function ProductionSteps() {
     }
   };
 
-  console.log(formData)
   //submit para atualizar a etapa após a edição dela
   const handleUpdateStep = async (e: React.FormEvent) => {
     e.preventDefault();

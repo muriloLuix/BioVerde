@@ -560,6 +560,7 @@ export default function Suppliers() {
                     fieldName="fcnpj"
                     fieldText="CPF/CNPJ"
                     withInputMask
+                    unstyled
                     type="text"
                     mask={cpfCnpjMask}
                     autoClear={false}
@@ -573,6 +574,7 @@ export default function Suppliers() {
                     fieldName="ftel"
                     fieldText="Telefone"
                     withInputMask
+                    unstyled
                     type="tel"
                     mask="(99) 9999?9-9999"
                     autoClear={false}
@@ -892,6 +894,7 @@ export default function Suppliers() {
                   fieldName="tel"
                   fieldText="Telefone"
                   withInputMask
+                  unstyled
                   required
                   type="tel"
                   mask="(99) 9999?9-9999"
@@ -908,6 +911,7 @@ export default function Suppliers() {
                   fieldName="cnpj"
                   fieldText="CPF/CNPJ"
                   withInputMask
+                  unstyled
                   required
                   type="text"
                   mask={cpfCnpjMask}
@@ -957,6 +961,7 @@ export default function Suppliers() {
                   fieldName="cep"
                   fieldText="CEP"
                   withInputMask
+                  unstyled
                   required
                   type="text"
                   mask="99999-999"
@@ -1140,6 +1145,7 @@ export default function Suppliers() {
               fieldName="tel"
               fieldText="Telefone"
               withInputMask
+              unstyled
               required
               type="tel"
               mask="(99) 9999?9-9999"
@@ -1156,6 +1162,7 @@ export default function Suppliers() {
               fieldName="cnpj"
               fieldText="CPF/CNPJ"
               withInputMask
+              unstyled
               required
               type="text"
               mask={cpfCnpjMask}
@@ -1203,6 +1210,7 @@ export default function Suppliers() {
               fieldName="cep"
               fieldText="CEP"
               withInputMask
+              unstyled
               required
               type="text"
               mask="99999-999"

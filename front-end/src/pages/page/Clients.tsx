@@ -130,8 +130,6 @@ export default function Clients() {
     checkAuth();
   }, [navigate]);
 
-  console.log(formData)
-
   //OnChange dos campos
   const handleChange = (
     event:
@@ -590,6 +588,7 @@ export default function Clients() {
                     fieldName="fcpf_cnpj"
                     fieldText="CPF/CNPJ"
                     withInputMask
+                    unstyled
                     type="text"
                     mask={cpfCnpjMask}
                     autoClear={false}
@@ -647,6 +646,7 @@ export default function Clients() {
                     fieldName="ftel"
                     fieldText="Telefone"
                     withInputMask
+                    unstyled
                     type="tel"
                     mask="(99) 9999?9-9999"
                     autoClear={false}
@@ -904,6 +904,7 @@ export default function Clients() {
                   fieldName="tel"
                   fieldText="Telefone"
                   withInputMask
+                  unstyled
                   required
                   type="tel"
                   mask="(99) 9999?9-9999"
@@ -920,6 +921,7 @@ export default function Clients() {
                   fieldName="cpf_cnpj"
                   fieldText="CPF/CNPJ"
                   withInputMask
+                  unstyled
                   required
                   type="text"
                   mask={cpfCnpjMask}
@@ -953,6 +955,7 @@ export default function Clients() {
                   fieldName="cep"
                   fieldText="CEP"
                   withInputMask
+                  unstyled
                   required
                   type="text"
                   mask="99999-999"
@@ -1136,6 +1139,7 @@ export default function Clients() {
               fieldName="tel"
               fieldText="Telefone"
               withInputMask
+              unstyled
               required
               type="tel"
               mask="(99) 9999?9-9999"
@@ -1152,6 +1156,7 @@ export default function Clients() {
               fieldName="cpf_cnpj"
               fieldText="CPF/CNPJ"
               withInputMask
+              unstyled
               required
               type="text"
               mask={cpfCnpjMask}
@@ -1183,6 +1188,7 @@ export default function Clients() {
               fieldName="cep"
               fieldText="CEP"
               withInputMask
+              unstyled
               required
               type="text"
               mask="99999-999"

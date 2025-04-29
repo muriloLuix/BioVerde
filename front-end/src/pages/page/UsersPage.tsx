@@ -648,6 +648,7 @@ export default function UsersPage() {
                     type="text"
                     mask="999.999.999-99"
                     autoClear={false}
+                    unstyled
                     placeholder="Digite o CPF"
                     value={filters.fcpf}
                     onChange={handleChange}
@@ -683,6 +684,7 @@ export default function UsersPage() {
                     type="text"
                     mask="(99) 9999?9-9999"
                     autoClear={false}
+                    unstyled
                     placeholder="Digite o Telefone"
                     autoComplete="tel"
                     value={filters.ftel}
@@ -922,6 +924,7 @@ export default function UsersPage() {
                   type="tel"
                   mask="(99) 9999?9-9999"
                   autoClear={false}
+                  unstyled
                   pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
                   required
                   autoComplete="tel"
@@ -938,6 +941,7 @@ export default function UsersPage() {
                   type="text"
                   mask="999.999.999-99"
                   autoClear={false}
+                  unstyled
                   pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                   required
                   placeholder="Digite o CPF"
@@ -965,7 +969,7 @@ export default function UsersPage() {
                   </SmartField> 
               </div>
 
-              {/* Linha Nivel de Acesso, Senha e Status*/}
+              {/* Linha Nivel de Acesso e Senha*/}
               <div className="flex gap-x-15 mb-10 items-center">
 
                 <SmartField
@@ -994,27 +998,10 @@ export default function UsersPage() {
                   error={errors.password ? "A senha deve ter pelo menos 8 caracteres*" : undefined}
                   value={formData.password}
                   onChange={handleChange}
-                  inputWidth="w-[243px]"
                   generatePassword={generatePassword}
+                  inputWidth="w-[275px]"
                 />
 
-                <SmartField
-                  fieldName="status"
-                  fieldText="Status"
-                  isSelect
-                  isLoading={loading.has("options")}
-                  error={errors.status ? "*" : undefined}
-                  value={formData.status}
-                  onChange={handleChange}
-                  placeholderOption="Selecione o status" 
-                  inputWidth="w-[190px]"
-                >  
-                  {options.status?.map((status) => (
-                    <option key={status.sta_id} value={status.sta_id}>
-                      {status.sta_nome}
-                    </option>
-                  ))}
-                </SmartField> 
               </div>
 
               <Form.Submit asChild>
@@ -1143,6 +1130,7 @@ export default function UsersPage() {
               type="tel"
               mask="(99) 9999?9-9999"
               autoClear={false}
+              unstyled
               pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
               placeholder="Digite o Telefone"
               autoComplete="tel"
@@ -1159,6 +1147,7 @@ export default function UsersPage() {
               type="text"
               mask="999.999.999-99"
               autoClear={false}
+              unstyled
               pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
               placeholder="Digite o CPF"
               value={formData.cpf}

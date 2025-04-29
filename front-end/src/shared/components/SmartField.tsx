@@ -109,7 +109,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
             </select>
           )
         ) : isPassword ? (
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <div className="relative">
               <input
                 {...(rest as React.InputHTMLAttributes<HTMLInputElement>)}

@@ -41,7 +41,7 @@ interface Pedido {
   pedido_horaCadastro: string;
   pedido_observacoes: string;
   pedido_valor_total: number;
-  sta_id?: number;
+  status: string;
   pedido_itens: PedidoItem[];
 }
 
@@ -53,6 +53,79 @@ interface PedidoItem {
   preco: string;
   subtotal: number;
 }
+
+const orders = [
+  {
+    pedido_id: 0,
+    pedido_num: 1,
+    pedido_cliente: "João",
+    pedido_dtCadastro: "2025-04-21",
+    pedido_horaCadastro: "20:07",
+    pedido_telefone: "(41) 11222-2223",
+    pedido_cep: "01001-001",
+    pedido_cidade: "São Paulo",
+    pedido_endereco: "Praça da Sé",
+    pedido_estado: "SP",
+    pedido_itens: [
+      {
+        id: 0,
+        nome_produto: "sementes de tomate",
+        preco: "3.00",
+        quantidade: 12,
+        subtotal: 36,
+        unidade_medida: "kg"
+      },
+      {
+        id: 1,
+        nome_produto: "sementes de laranja",
+        preco: "12.00",
+        quantidade: 3,
+        subtotal: 36,
+        unidade_medida:" kg"
+      }
+    ],
+    pedido_num_endereco: "23",
+    pedido_prevEntrega: "2025-04-24",
+    status: "em produção",
+    pedido_valor_total: 72,
+    pedido_observacoes: "Cliente pediu para entregar após as 14h."
+  },
+  {
+    pedido_id: 1,
+    pedido_num: 2,
+    pedido_cliente: "Maria",
+    pedido_dtCadastro: "2025-04-21",
+    pedido_horaCadastro: "19:07",
+    pedido_telefone: "(11) 99888-7766",
+    pedido_cep: "01310-100",
+    pedido_cidade: "São Paulo",
+    pedido_endereco: "Avenida Paulista",
+    pedido_estado: "SP",
+    pedido_itens: [
+      {
+        id: 0,
+        nome_produto: "sementes de alface",
+        preco: "4.50",
+        quantidade: 10,
+        subtotal: 45,
+        unidade_medida: "kg"
+      },
+      {
+        id: 1,
+        nome_produto: "sementes de cenoura",
+        preco: "5.00",
+        quantidade: 5,
+        subtotal: 25,
+        unidade_medida: "kg"
+      }
+    ],
+    pedido_num_endereco: "1050",
+    pedido_prevEntrega: "2025-04-25",
+    status: "em separação",
+    pedido_valor_total: 70,
+    pedido_observacoes: "Cliente solicitou embalagem resistente à umidade",
+  }
+];
 
 export default function Orders() {
   const [activeTab, setActiveTab] = useState("list");
@@ -124,9 +197,7 @@ export default function Orders() {
     dnome_cliente: "",
     reason: "",
   });
-
-  console.log(filters)
-
+  
   const navigate = useNavigate();
   useEffect(() => {
     const checkAuth = async () => {
@@ -536,6 +607,7 @@ export default function Orders() {
                     fieldName="ftel"
                     fieldText="Telefone"
                     withInputMask
+                    unstyled
                     type="tel"
                     mask="(99) 9999?9-9999"
                     autoClear={false}
@@ -571,6 +643,7 @@ export default function Orders() {
                     fieldName="fcep"
                     fieldText="CEP"
                     withInputMask
+                    unstyled
                     type="text"
                     mask="99999-999"
                     autoClear={false}
@@ -734,7 +807,7 @@ export default function Orders() {
                         <Loader2 className="animate-spin h-8 w-8 mx-auto" />
                       </td>
                     </tr>
-                  ) : pedidos.length === 0 ? (
+                  ) : orders.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="text-center py-4">
                         Nenhum pedido encontrado
@@ -742,7 +815,7 @@ export default function Orders() {
                     </tr>
                   ) : (
                     //Tabela Dados
-                    pedidos.map((pedido, index) => (
+                    orders.map((pedido, index) => (
                       <tr
                         key={pedido.pedido_id}
                         className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
@@ -760,7 +833,7 @@ export default function Orders() {
                           {pedido.pedido_horaCadastro}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          {pedido.sta_id}
+                          {pedido.status}
                         </td>
                         <td className="border border-black px-4 py-4 whitespace-nowrap">
                           {new Date(pedido.pedido_prevEntrega).toLocaleDateString("pt-BR")}
@@ -840,7 +913,7 @@ export default function Orders() {
                 </tbody>
               </table>
             </div>
-            {pedidos.length !== 0 && (
+            {orders.length !== 0 && (
               <div className="min-w-[966px] max-w-[73vw]">
                 <button
                   type="button"
@@ -972,6 +1045,7 @@ export default function Orders() {
               fieldName="cep"
               fieldText="CEP"
               withInputMask
+              unstyled
               required
               type="text"
               mask="99999-999"
@@ -1073,6 +1147,7 @@ export default function Orders() {
               fieldName="tel"
               fieldText="Telefone"
               withInputMask
+              unstyled
               required
               type="tel"
               mask="(99) 9999?9-9999"
