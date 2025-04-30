@@ -103,31 +103,32 @@ export default function InventoryControl() {
     reason: "",
   });
 
-  //Para quando digitar no campo de fornecedores, fazer a listagem deles
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-
-      if (formData.fornecedor.trim().length > 0) {
-        axios
-          .get("http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php",
-            {
-              params: { q: formData.fornecedor },
-            }
-          )
-          .then((res) => {
-            console.log(res.data);
-            setSuggestions(res.data);
-            setShowSuggestions(true);
-          })
-          .catch(() => setSuggestions([]));
-      } else {
+  //Função para buscar os fornecedores cadastrados e fazer a listagem deles
+  const fetchFornecedores = (query: string) => {
+    axios
+      .get("http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php", {
+        params: { q: query },
+      })
+      .then((res) => {
+        console.log(res.data);
+        setSuggestions(res.data);
+        setShowSuggestions(true);
+      })
+      .catch(() => {
         setSuggestions([]);
         setShowSuggestions(false);
-      }
-    }, 300); 
+      });
+  };
 
+  //Para quando digitar no campo de fornecedores, fazer a listagem deles de acordo com a pesquisa
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchFornecedores(formData.fornecedor.trim());
+    }, 300);
+  
     return () => clearTimeout(delayDebounce);
   }, [formData.fornecedor]);
+  
 
   //OnChange dos campos
   const handleChange = (
@@ -912,7 +913,13 @@ export default function InventoryControl() {
                   value={formData.fornecedor}
                   onChange={handleChange}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-                  onFocus={() => formData.fornecedor && setShowSuggestions(true)}
+                  onFocus={() => {
+                    if (!formData.fornecedor.trim()) {
+                      fetchFornecedores(""); // mostra todos os fornecedores
+                    }
+                    setShowSuggestions(true);
+                  }}
+                  
                 >
                   {showSuggestions && suggestions.length > 0 && (() => {
                     const filteredSuggestions = suggestions.filter(
@@ -925,7 +932,7 @@ export default function InventoryControl() {
                     }
 
                     return (
-                      <ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-60 overflow-auto">
+                      <ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-52 overflow-auto">
                         {filteredSuggestions.map((item, index) => (
                           <li
                             key={index}
