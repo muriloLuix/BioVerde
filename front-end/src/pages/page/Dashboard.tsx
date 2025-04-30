@@ -24,74 +24,60 @@ const Dashboard = () => {
     {
       title: "EM ESTOQUE",
       icon: <PackageSearch className="text-white" />,
-      quantity: 45,
+      quantity: Math.floor(Math.random() * 100),
     },
     {
       title: "EM DESENVOLVIMENTO",
       icon: <Package2 className="text-white" />,
-      quantity: 12,
+      quantity: Math.floor(Math.random() * 100),
     },
     {
       title: "PENDENTES",
       icon: <PackageOpen className="text-white" />,
-      quantity: 20,
+      quantity: Math.floor(Math.random() * 100),
     },
     {
       title: "CONCLUÍDOS (P/MÊS)",
       icon: <PackageCheck className="text-white" />,
-      quantity: 5,
+      quantity: Math.floor(Math.random() * 100),
     },
   ];
 
   const data = [
     {
-      name: "Janeiro",
-      Concluido: 4000,
-      Pendente: 2400,
-      Desenvolvendo: 2000,
-      Estoque: 750,
+      name: "MAIO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Fevereiro",
-      Concluido: 3000,
-      Pendente: 1398,
-      Desenvolvendo: 1200,
-      Estoque: 9000,
+      name: "JUNHO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Março",
-      Concluido: 2000,
-      Pendente: 9800,
-      Desenvolvendo: 900,
-      Estoque: 900,
+      name: "JULHO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Abril",
-      Concluido: 6780,
-      Pendente: 3908,
-      Desenvolvendo: 1000,
-      Estoque: 200,
+      name: "AGOSTO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Maio",
-      Concluido: 1890,
-      Pendente: 4800,
-      Desenvolvendo: 1000,
-      Estoque: 2000,
+      name: "SETEMBRO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Junho",
-      Concluido: 2390,
-      Pendente: 3800,
-      Desenvolvendo: 1000,
-      Estoque: 5000,
+      name: "OUTUBRO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
     {
-      name: "Julho",
-      Concluido: 6490,
-      Pendente: 4300,
-      Desenvolvendo: 1000,
-      Estoque: 300,
+      name: "NOVEMBRO",
+      pedidosTotal: Math.floor(Math.random() * 5000),
+      estoqueOcupado: Math.floor(Math.random() * 5000),
     },
   ];
 
@@ -104,16 +90,16 @@ const Dashboard = () => {
 
   const occupation = [
     {
-      name: "Ocupação",
-      value: 900,
+      name: "OCUPADO",
+      value: Math.floor(Math.random() * 1000),
     },
     {
-      name: "Livre",
-      value: 100,
+      name: "LIVRE",
+      value: Math.floor(Math.random() * 1000),
     },
   ];
 
-  const colors = ["#00997A", "#00C49F"];
+  const colors = ["#dddddd", "#32CD32"];
 
   return (
     <div className="pl-64">
@@ -160,8 +146,8 @@ const Dashboard = () => {
             ))}
           </div>
           <div className="h-full w-5/11 flex flex-col items-center justify-center p-5 bg-verdeEscuroForte rounded-lg">
-            <span className="font-semibold text-xl text-white">
-              CAPACIDADE DE ESTOQUE
+            <span className="mb-2 font-semibold text-xl text-white">
+              ESTOQUE
             </span>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -171,11 +157,35 @@ const Dashboard = () => {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  fill="#f1f"
-                  label
+                  label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                
+                    const colors = ["#344E41", "#ffffff"]
+                    
+                    return (
+                      <text
+                        key={index}
+                        x={x}
+                        y={y}
+                        fill={colors[index]}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize="14"
+                      >
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                  stroke="none"
+                  isAnimationActive
+                  animationEasing="linear"
+                  labelLine={false}
                 >
                   {occupation.map((__, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index]} />
+                    <Cell key={`cell-${index}`} fill={colors[index]}  stroke="none" />
                   ))}
                 </Pie>
                 <Legend verticalAlign="bottom" height={30} />
@@ -193,14 +203,12 @@ const Dashboard = () => {
               data={data}
               style={{ fontSize: "1.1rem", fontWeight: "lighter" }}
             >
-              <CartesianGrid strokeDasharray="3 3 3" />
+              <CartesianGrid strokeDasharray="5 5" />
               <XAxis dataKey="name" tick={{ stroke: "white" }} />
               <YAxis tick={{ stroke: "white" }} tickCount={4} />
               <Legend verticalAlign="top" height={30} />
-              <Line type="monotone" dataKey="Estoque" stroke="#FFFF" />
-              <Line type="monotone" dataKey="Desenvolvendo" stroke="#1E90FF" />
-              <Line type="monotone" dataKey="Pendente" stroke="#FFFF00" />
-              <Line type="monotone" dataKey="Concluido" stroke="#00FF00" />
+              <Line type="monotone" dataKey="pedidosTotal" name="TOTAL DE PEDIDOS" stroke="#32CD32" />
+              <Line type="monotone" dataKey="estoqueOcupado" name="PRODUTOS EM ESTOQUE" stroke="#DDDDDD" />
             </LineChart>
           </ResponsiveContainer>
         </div>
