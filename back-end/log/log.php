@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Registra um evento de log no banco de dados.
+ *
+ * @param mysqli $conn Conexão ativa com o banco de dados.
+ * @param string $log_conteudo Descrição detalhada do evento ou ação a ser registrada.
+ * @param string $log_acao Nome ou identificação da ação realizada.
+ * @param string $log_status (Opcional) Status do evento, padrão é "sucesso".
+ * @param int|null $user_id (Opcional) ID do usuário que realizou a ação, pode ser nulo.
+ *
+ * @return bool Retorna true se o log foi salvo com sucesso, false caso contrário.
+ */
+
 function salvarLog($conn, $log_conteudo, $log_acao, $log_status = "sucesso", $user_id = null) {
     // Verificar conexão válida
     if (!$conn) {
@@ -60,7 +72,7 @@ function salvarLog($conn, $log_conteudo, $log_acao, $log_status = "sucesso", $us
 
     $stmt->bind_param(
         "issssssssssi", 
-        $user_id,          // Pode ser NULL
+        $user_id,         
         $log_user_nome, 
         $log_datahora, 
         $log_pag_id,

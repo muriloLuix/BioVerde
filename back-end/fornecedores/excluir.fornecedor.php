@@ -52,13 +52,7 @@ try {
         'forex_motivo_exclusao' => $data['reason'],
     ];
 
-    // 1. Registra a exclusão
-    $registro = registerDeletion($conn, 'fornecedores_excluidos', $camposExclusao);
-    if (!$registro['success']) {
-        throw new Exception($registro['message'] ?? "Falha ao registrar a exclusão.");
-    }
-
-    // 2. Deleta o usuário
+    // 1. Deleta o usuário
     $exclusao = deleteData($conn, $fornecedor_id, 'fornecedores', "fornecedor_id");
     if (!$exclusao['success']) {
         throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
@@ -76,6 +70,9 @@ try {
         'deleted_id' => $fornecedor_id // Envia o ID do usuário excluído
     ]);
 
+    salvarLog($conn, "O usuário, ID: {$user_id}, excluiu o fornecedor, Nome: {$data['dnome_empresa']} | Motivo: {$data['reason']}", "Exclusão de fornecedor", "sucesso", $_SESSION['user_id']);
+
+
 } catch (Exception $e) {
     // Rollback em caso de erro
     if (isset($conn) && $conn) {
@@ -89,5 +86,8 @@ try {
         'success' => false,
         'message' => $e->getMessage()
     ]);
+
+    salvarLog($conn, "O usuário, ID: {$user_id}, tentou excluir o fornecedor, Nome: {$data['dnome_empresa']} | Motivo: {$data['reason']}", "Exclusão de fornecedor", "erro", $_SESSION['user_id']);
+
     exit();
 }

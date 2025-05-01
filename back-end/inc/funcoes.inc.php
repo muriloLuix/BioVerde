@@ -119,67 +119,6 @@ function verificarStatus($conn, $status)
     return $row['sta_id']; // Retorna apenas o ID
 }
 
-
-/**
- * Registra a exclusão de um registro em uma tabela de log de exclusões.
- * @param object $conn Conexão com o banco de dados.
- * @param string $table Nome da tabela onde será feita a inserção.
- * @param array $fields Array associativo com chaves e valores a serem inseridos.
- * 
- * @return array Retorna um array com uma chave 'success' booleana e, se houver erro,
- *               uma chave 'message' com a descrição do erro. Caso a inserção seja
- *               bem-sucedida, retorna também a chave 'insert_id' com o ID do registro
- *               inserido.
- */
-function registerDeletion($conn, $table, $fields)
-{
-    if (!is_array($fields) || empty($fields)) {
-        return [
-            'success' => false,
-            'message' => 'Nenhum dado fornecido para registrar exclusão.'
-        ];
-    }
-
-    $columns = array_keys($fields);
-    $placeholders = implode(', ', array_fill(0, count($columns), '?'));
-
-    // Query final sem adicionar manualmente o campo de data
-    $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES ({$placeholders})";
-    $stmt = $conn->prepare($sql);
-
-    if (!$stmt) {
-        return [
-            'success' => false,
-            'message' => 'Erro ao preparar a query: ' . $conn->error
-        ];
-    }
-
-    $types = '';
-    $values = [];
-
-    foreach ($fields as $value) {
-        if (is_int($value)) {
-            $types .= 'i';
-        } elseif (is_double($value)) {
-            $types .= 'd';
-        } else {
-            $types .= 's';
-        }
-        $values[] = $value;
-    }
-
-    $stmt->bind_param($types, ...$values);
-
-    if (!$stmt->execute()) {
-        return [
-            'success' => false,
-            'message' => 'Erro ao executar a exclusão: ' . $stmt->error
-        ];
-    }
-
-    return ['success' => true, 'insert_id' => $stmt->insert_id];
-}
-
 /**
  * Exclui um registro de uma tabela
  *
