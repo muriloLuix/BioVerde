@@ -41,7 +41,7 @@ try {
 
     $cliente_id = (int)$data['cliente_id'];
     if ($user_id <= 0) {
-        throw new Exception("ID do fornecedor inválido. Por favor, verifique os dados.");
+        throw new Exception("ID do cliente inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
