@@ -54,17 +54,20 @@ $novaSenha = $data["senha"];
 
 // 10. Verificar se a nova senha é diferente da atual
 if (verificarSenhaAtual($conn, $email, $novaSenha)) {
-    salvarLog($conn, "Usuário tentou alterar a senha para a mesma senha", "login", "erro");
+    salvarLog("Usuário tentou alterar a senha para a mesma senha", Acoes::NOVA_SENHA, "erro");
+
     echo json_encode(["success" => false, "message" => "A nova senha não pode ser igual à atual."]);
     exit;
 }
 
 // 11. Atualizar a senha no banco de dados
 if (atualizarSenha($conn, $email, $novaSenha)) {
-    salvarLog($conn, "Usuário alterou a senha", "login", "sucesso");
+    salvarLog("Usuário alterou a senha", Acoes::NOVA_SENHA);
+
     echo json_encode(["success"=> true]);
 } else {
-    salvarLog($conn, "Erro ao atualizar a senha", "login", "erro");
+    salvarLog("Erro ao atualizar a senha", Acoes::NOVA_SENHA, "erro");
+
     echo json_encode(["success" => false, "message" => "Erro ao atualizar a senha."]);
 }
 

@@ -69,7 +69,7 @@ try {
         'deleted_id' => $user_id // Envia o ID do usuário excluído
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, excluiu o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", "Exclusão de usuário", "sucesso", $_SESSION['user_id']);
+    salvarLog("O usuário, ID: {$user_id}, excluiu o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO);
 
 
 } catch (Exception $e) {
@@ -86,7 +86,8 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, tentou excluir o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", "Exclusão de usuário", "erro", $_SESSION['user_id']);
+    salvarLog("O usuário, ID: {$user_id}, tentou excluir o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO, "erro");
+
 
     exit();
 }

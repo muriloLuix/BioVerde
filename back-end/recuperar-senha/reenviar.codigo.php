@@ -8,21 +8,24 @@ header('Content-Type: application/json; charset=UTF-8');
 $email = $_SESSION['email_recuperacao'] ?? null;
 
 if (!$email) {
-    salvarLog($conn, "Tentativa de reenvio de código sem e-mail na sessão", "reenviar", "erro");
+    salvarLog("Tentativa de reenvio de código sem e-mail na sessão", Acoes::REENVIAR_CODIGO, "erro");
+
     echo json_encode(["success" => false, "message" => "Erro: Nenhum e-mail encontrado na sessão."]);
     exit;
 }
 
 // Verificar conexão com o banco de dados
 if ($conn->connect_error) {
-    salvarLog($conn, "Erro na conexão com o banco de dados: " . $conn->connect_error, "reenviar", "erro");
+    salvarLog("Erro na conexão com o banco de dados: " . $conn->connect_error, Acoes::REENVIAR_CODIGO, "erro");
+
     echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados."]);
     exit;
 }
 
 // Verificar se o email existe no banco de dados
 if (!verificarEmailExiste($conn, $email)) {
-    salvarLog($conn, "Tentativa de reenvio para e-mail não cadastrado: " . $email, "reenviar", "erro");
+    salvarLog("Tentativa de reenvio para e-mail não cadastrado: " . $email, Acoes::REENVIAR_CODIGO, "erro");
+
     echo json_encode(["success" => false, "message" => "E-mail não cadastrado."]);
     exit;
 }
@@ -35,7 +38,8 @@ $update_sql = "UPDATE usuarios SET codigo_recuperacao = ?, codigo_recuperacao_ex
 $update_stmt = $conn->prepare($update_sql);
 
 if (!$update_stmt) {
-    salvarLog($conn, "Erro ao preparar atualização de código: " . $conn->error, "reenviar", "erro");
+    salvarLog("Erro ao preparar atualização de código: " . $conn->error, Acoes::REENVIAR_CODIGO, "erro");
+
     echo json_encode(["success" => false, "message" => "Erro interno ao gerar o código de recuperação."]);
     exit;
 }
@@ -48,13 +52,15 @@ $update_stmt->close();
 $resultadoEmail = enviarEmailRecuperacao($email, $codigo);
 
 if ($resultadoEmail !== true) {
-    salvarLog($conn, "Erro ao enviar e-mail de reenvio para: " . $email, "reenviar", "erro");
+    salvarLog("Erro ao enviar e-mail de reenvio para: " . $email, Acoes::REENVIAR_CODIGO, "erro");
+
     echo json_encode($resultadoEmail);
     exit;
 }
 
 // Log e resposta de sucesso
-salvarLog($conn, "Código de recuperação reenviado para: " . $email, "reenviar", "sucesso");
+salvarLog("Código de recuperação reenviado para: " . $email, Acoes::REENVIAR_CODIGO);
+
 echo json_encode([
     "success" => true, 
     "message" => "E-mail de recuperação reenviado!", 

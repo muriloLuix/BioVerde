@@ -24,7 +24,8 @@ if (empty($rawData)) {
 $data = json_decode($rawData, true);
 
 if (empty($data) || !isset($data["email"])) {
-    salvarLog($conn, "Usuário tentou recuperar senha sem informar o e-mail", "recuperar", "erro");
+    salvarLog("Usuário tentou recuperar senha sem informar o e-mail", Acoes::RECUPERAR_SENHA, "erro");
+
     echo json_encode(["success" => false, "message" => "E-mail não informado ou erro ao decodificar JSON"]);
     exit;
 }
@@ -33,7 +34,8 @@ $email = $conn->real_escape_string($data["email"]);
 
 // Verificar se o email existe
 if (!verificarEmailExiste($conn, $email)) {
-    salvarLog($conn, "Usuário tentou recuperar a senha para o e-mail não cadastrado: " . $email, "recuperar", "erro");
+    salvarLog("Usuário tentou recuperar a senha para o e-mail não cadastrado: " . $email, Acoes::RECUPERAR_SENHA, "erro");
+
     echo json_encode(["success" => false, "message" => "E-mail não cadastrado."]);
     exit;
 }
@@ -46,7 +48,8 @@ $_SESSION['expire_time'] = time() + 600;
 $codigo = gerarCodigoRecuperacao();
 
 if (!atualizarCodigoRecuperacao($conn, $email, $codigo)) {
-    salvarLog($conn, "Falha ao atualizar código de recuperação para o e-mail: " . $email, "recuperar", "erro");
+    salvarLog("Falha ao atualizar código de recuperação para o e-mail: " . $email, Acoes::RECUPERAR_SENHA, "erro");
+
     echo json_encode(["success" => false, "message" => "Erro ao gerar código de recuperação"]);
     exit;
 }
@@ -60,7 +63,9 @@ if ($resultadoEmail !== true) {
 }
 
 // Log e resposta de sucesso
-salvarLog($conn, "Usuário recuperou a senha para o e-mail: " . $email, "recuperar", "sucesso");
+salvarLog("Usuário recuperou a senha para o e-mail: " . $email, Acoes::RECUPERAR_SENHA);
+
+
 echo json_encode([
     "success" => true, 
     "message" => "Código enviado para seu e-mail!", 

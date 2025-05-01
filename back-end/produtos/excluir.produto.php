@@ -71,7 +71,7 @@ try {
         'deleted_id' => $produto_id // Envia o ID do usuário excluído
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, excluiu o produto {$produto_id} | Motivo: {$data['reason']}", "Exclusão de produto", "sucesso", $_SESSION['user_id']);
+    salvarLog("O usuário, ID: {$user_id}, excluiu o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO);
 
 } catch (Exception $e) {
     // Rollback em caso de erro
@@ -88,7 +88,7 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, tentou excluir o produto {$produto_id} | Motivo: {$data['reason']}", "Exclusão de produto", "erro", $_SESSION['user_id']);
+    salvarLog("O usuário, ID: {$user_id}, tentou excluir o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO, "erro");
 
     exit();
 }

@@ -70,8 +70,8 @@ try {
         'deleted_id' => $fornecedor_id // Envia o ID do usuário excluído
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, excluiu o fornecedor, Nome: {$data['dnome_empresa']} | Motivo: {$data['reason']}", "Exclusão de fornecedor", "sucesso", $_SESSION['user_id']);
-
+    salvarLog("O usuário ID {$user_id} excluiu o fornecedor {$data['dnome_empresa']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_FORNECEDOR);
+    
 
 } catch (Exception $e) {
     // Rollback em caso de erro
@@ -87,7 +87,8 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog($conn, "O usuário, ID: {$user_id}, tentou excluir o fornecedor, Nome: {$data['dnome_empresa']} | Motivo: {$data['reason']}", "Exclusão de fornecedor", "erro", $_SESSION['user_id']);
-
+    salvarLog("Falha ao excluir fornecedor {$data['dnome_empresa']}:" . $e->getMessage(),Acoes::EXCLUIR_FORNECEDOR, "erro"
+    );
+    
     exit();
 }
