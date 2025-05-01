@@ -55,6 +55,7 @@ export default function InventoryControl() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [fornecedorTouched, setFornecedorTouched] = useState(false);
   const [errors, setErrors] = useState({
     type: false,
     unit: false,
@@ -122,12 +123,15 @@ export default function InventoryControl() {
 
   //Para quando digitar no campo de fornecedores, fazer a listagem deles de acordo com a pesquisa
   useEffect(() => {
+    if (!fornecedorTouched) return;
+  
     const delayDebounce = setTimeout(() => {
       fetchFornecedores(formData.fornecedor.trim());
     }, 300);
   
     return () => clearTimeout(delayDebounce);
-  }, [formData.fornecedor]);
+  }, [formData.fornecedor, fornecedorTouched]);
+  
   
 
   //OnChange dos campos
@@ -914,11 +918,13 @@ export default function InventoryControl() {
                   onChange={handleChange}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
                   onFocus={() => {
+                    setFornecedorTouched(true);
                     if (!formData.fornecedor.trim()) {
                       fetchFornecedores(""); // mostra todos os fornecedores
                     }
                     setShowSuggestions(true);
                   }}
+                  
                   
                 >
                   {showSuggestions && suggestions.length > 0 && (() => {

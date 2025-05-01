@@ -13,14 +13,15 @@ if ($conn->connect_error) {
 $termo = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if ($termo === '') {
-    echo json_encode([]);
-    exit();
+    $stmt = $conn->prepare("SELECT fornecedor_id, fornecedor_nome FROM fornecedores");
+    $stmt->execute();
+} else {
+    $stmt = $conn->prepare("SELECT fornecedor_id, fornecedor_nome FROM fornecedores WHERE fornecedor_nome LIKE ?");
+    $search = "%$termo%";
+    $stmt->bind_param("s", $search);
+    $stmt->execute();
 }
 
-$stmt = $conn->prepare("SELECT fornecedor_id, fornecedor_nome FROM fornecedores WHERE fornecedor_nome LIKE ?");
-$search = "%$termo%";
-$stmt->bind_param("s", $search);
-$stmt->execute();
 
 $result = $stmt->get_result();
 $fornecedores = [];
