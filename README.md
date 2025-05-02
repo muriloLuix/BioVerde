@@ -32,11 +32,9 @@ O projeto será desenvolvido com as seguintes tecnologias:
 
 ## ⚙️ O QUE PRECISO TER INSTALADO?
 
-❗ **ATENÇÃO** | Para utilizar o projeto é necessário ter as seguintes ferramentas instaladas na máquina:
-
-- GIT
-- XAMPP
-- NODE JS
+- Git
+- Xampp
+- Node JS
 
 ## 🔧 COMO CONFIGURAR O PROJETO?
 
@@ -44,11 +42,12 @@ O projeto será desenvolvido com as seguintes tecnologias:
    ```bash
    git clone https://github.com/seu-usuario/BioVerde.git
    ```
-2. Instale as dependências do projeto:
+2. No Xampp, inicie o Apache
+3. Entre na pasta raíz do front e instale as dependências do projeto:
    ```bash
    cd BioVerde/front-end && npm i
    ```
-3. Inicie o projeto:
+4. Inicie o projeto:
    ```bash
    npm run dev
    ```

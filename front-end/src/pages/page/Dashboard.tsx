@@ -22,22 +22,22 @@ import {
 const Dashboard = () => {
   const cardsNames = [
     {
-      title: "EM ESTOQUE",
+      title: "PRODUTOS EM ESTOQUE",
       icon: <PackageSearch className="text-white" />,
       quantity: Math.floor(Math.random() * 100),
     },
     {
-      title: "EM DESENVOLVIMENTO",
+      title: "PRODUTOS EM DESENVOLVIMENTO",
       icon: <Package2 className="text-white" />,
       quantity: Math.floor(Math.random() * 100),
     },
     {
-      title: "PENDENTES",
+      title: "PEDIDOS PENDENTES",
       icon: <PackageOpen className="text-white" />,
       quantity: Math.floor(Math.random() * 100),
     },
     {
-      title: "CONCLUÍDOS (P/MÊS)",
+      title: "PEDIDOS CONCLUÍDOS",
       icon: <PackageCheck className="text-white" />,
       quantity: Math.floor(Math.random() * 100),
     },
@@ -110,7 +110,7 @@ const Dashboard = () => {
               <div key={index} className="h-full w-1/5 flex flex-col p-2">
                 <div className="h-1/4 w-full flex p-1 item-center justify-center gap-2 font-medium">
                   {card.icon}
-                  <span className="text-white">{card.title}</span>
+                  <span className="text-white text-center">{card.title}</span>
                 </div>
                 <div className="h-3/4 w-full flex items-center justify-center font-medium">
                   <span className="text-5xl text-white">{card.quantity}</span>
