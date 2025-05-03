@@ -348,7 +348,7 @@ export default function UsersPage() {
       position: !formData.cargo,
       level: !formData.nivel,
       password: !formData.password || formData.password.length < 8,
-      status: !formData.status,
+      status: false,
     };
     setErrors(errors);
   
