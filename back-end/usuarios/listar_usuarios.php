@@ -12,7 +12,7 @@ try {
 
     // Buscar usuários
     
-    $cols = array("u.user_id", "u.user_nome", "u.user_email", "u.user_telefone", "u.user_CPF", "c.car_nome", "n.nivel_nome", "s.sta_nome", "u.user_dtcadastro", "u.car_id", "u.nivel_id", "u.sta_id");
+    $cols = array("u.user_id", "u.user_nome", "u.user_email", "u.user_telefone", "u.user_CPF", "c.car_nome", "n.nivel_nome", "u.estaAtivo", ".u.user_dtcadastro", "u.car_id", "u.nivel_id", );
 
     $joins = [
         [
@@ -25,11 +25,6 @@ try {
             "join_table" => "niveis_acesso n",
             "on" => "u.nivel_id = n.nivel_id"
         ],
-        [
-            "type" => "LEFT",
-            "join_table" => "status s",
-            "on" => "u.sta_id = s.sta_id"
-        ]
     ];
 
     $usuarios = search($conn, "usuarios u", implode(",", $cols), $joins);
@@ -39,9 +34,6 @@ try {
 
     // Buscar níveis de acesso
     $niveis = buscarNiveisAcesso($conn);
-
-    // Buscar status
-    $status = buscarStatus($conn);
 
     echo json_encode([
         "success" => true,

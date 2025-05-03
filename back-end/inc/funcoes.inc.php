@@ -299,31 +299,6 @@ function buscarNiveisAcesso($conn)
     return $niveis;
 }
 
-/**
- * Busca todos os status registrados no banco de dados.
- *
- * @param mysqli $conn Conex o com o banco de dados.
- *
- * @return array Retorna um array com os status, onde cada status
- *         é representado por um array com as chaves 'sta_id' e 'sta_nome'.
- *
- * @throws Exception Caso ocorra um erro ao buscar os status.
- */
-function buscarStatus($conn)
-{
-    $result = $conn->query("SELECT sta_id, sta_nome FROM status");
-    if (!$result) {
-        throw new Exception("Erro ao buscar status: " . $conn->error);
-    }
-
-    $status = [];
-    while ($row = $result->fetch_assoc()) {
-        $status[] = $row;
-    }
-
-    return $status;
-}
-
 function buscarTipoProduto($conn){
     $result = $conn->query("SELECT tproduto_id, tproduto_nome FROM tp_produto");
     if (!$result) {

@@ -26,7 +26,7 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos dados recebidos
-$requiredFields = ['name', 'email', 'tel', 'cpf', 'cargo', 'nivel', 'password', 'status'];
+$requiredFields = ['name', 'email', 'tel', 'cpf', 'cargo', 'nivel', 'password'];
 $validationError = validarCampos($data, $requiredFields);
 if ($validationError) {
     echo json_encode($validationError);
@@ -60,33 +60,26 @@ if ($emailCpfError) {
     exit();
 }
 
-
-$sta_id = verificarStatus($conn, $data['status']);
-if ($sta_id === null) { 
-    echo json_encode(["success" => false, "message" => "Status nao encontrado."]);
-    exit();
-}
-
 // Gerar hash da senha
 $senha_hash = password_hash($data['password'], PASSWORD_DEFAULT);
 
 // Cadastro do usuário
-$stmt = $conn->prepare("INSERT INTO usuarios (user_nome, user_email, user_telefone, user_CPF, user_senha, car_id, nivel_id, sta_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO usuarios (user_nome, user_email, user_telefone, user_CPF, user_senha, car_id, nivel_id, estaAtivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 if (!$stmt) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar a query: " . $conn->error]);
     exit();
 }
 
-$stmt->bind_param("sssssiii", 
+$stmt->bind_param("ssssiii", 
     $data['name'], 
     $data['email'], 
     $data['tel'], 
     $data['cpf'], 
     $senha_hash, 
     $car_id, 
-    $nivel_id,
-    $sta_id
+    $nivel_id
 );
+$stmt->send_long_data(7, true);
 
 if ($stmt->execute()) {
     // Enviar email de confirmação
