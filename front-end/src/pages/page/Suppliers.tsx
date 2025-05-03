@@ -12,23 +12,16 @@ import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
 import { useNavigate } from "react-router-dom";
 
-interface Estado {
-  estado_id: number;
-  fornecedor_estado: string;
-}
-
-interface Status {
-  sta_id: number;
-  sta_nome: string;
-}
-
 interface Fornecedor {
   fornecedor_id: number;
   fornecedor_nome: string;
+  fornecedor_empresa: string;
   fornecedor_razao_social: string;
   fornecedor_email: string;
   fornecedor_telefone: string;
-  fornecedor_CNPJ: string;
+  fornecedor_tipo: string;
+  fornecedor_cnpj: string;
+  fornecedor_cpf: string;
   fornecedor_endereco: string;
   fornecedor_num_endereco: string;
   fornecedor_cidade: string;
@@ -36,12 +29,13 @@ interface Fornecedor {
   fornecedor_cep: string;
   fornecedor_responsavel: string;
   fornecedor_dtcadastro: string;
-  sta_id?: number;
+  fornecedor_status: string;
 }
 
 export default function Suppliers() {
   const [activeTab, setActiveTab] = useState("list");
   const [cpfCnpjMask, setCpfCnpjMask] = useState("");
+  const [supplierType, setSupplierType] = useState("juridica");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -53,28 +47,25 @@ export default function Suppliers() {
   const [errors, setErrors] = useState({
     status: false,
     states: false,
+    type: false,
   });
   const [formData, setFormData] = useState({
     fornecedor_id: 0,
     nome_empresa: "",
+    nome_fornecedor: "",
     razao_social: "",
     email: "",
     tel: "",
     cnpj: "",
+    cpf: "",
     responsavel: "",
-    status: "",
+    tipo: "juridica",
     cep: "",
     endereco: "",
     estado: "",
     cidade: "",
     num_endereco: "",
-  });
-  const [options, setOptions] = useState<{
-    estados: Estado[];
-    status: Status[];
-  }>({
-    estados: [],
-    status: [],
+    status: "",
   });
   const [filters, setFilters] = useState({
     fnome_empresa: "",
@@ -91,6 +82,8 @@ export default function Suppliers() {
     dnome_empresa: "",
     reason: "",
   });
+
+ console.log(formData);
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -133,6 +126,8 @@ export default function Suppliers() {
 
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
+
+    if(name === "tipo") {setSupplierType(value ?? "juridica")}
     
     if (name in formData) { setFormData({ ...formData, [name]: value }) }
     if (name in filters) { setFilters({ ...filters, [name]: value }) }
@@ -151,18 +146,21 @@ export default function Suppliers() {
 
     setFormData({
       fornecedor_id: fornecedor.fornecedor_id,
-      nome_empresa: fornecedor.fornecedor_nome,
+      nome_fornecedor: fornecedor.fornecedor_nome,
+      nome_empresa: fornecedor.fornecedor_empresa,
       razao_social: fornecedor.fornecedor_razao_social,
       email: fornecedor.fornecedor_email,
       tel: fornecedor.fornecedor_telefone,
-      cnpj: fornecedor.fornecedor_CNPJ,
+      cnpj: fornecedor.fornecedor_cnpj,
+      cpf: fornecedor.fornecedor_cpf,
       responsavel: fornecedor.fornecedor_responsavel,
-      status: fornecedor.sta_id?.toString() || "",
+      status: fornecedor.fornecedor_status,
       cep: fornecedor.fornecedor_cep,
       endereco: fornecedor.fornecedor_endereco,
       estado: fornecedor.fornecedor_estado,
       cidade: fornecedor.fornecedor_cidade,
       num_endereco: fornecedor.fornecedor_num_endereco,
+      tipo: fornecedor.fornecedor_tipo,
     });
     setOpenEditModal(true);
   };
@@ -186,34 +184,18 @@ export default function Suppliers() {
     const fetchData = async () => {
       try {
         setLoading((prev) => new Set([...prev, "suppliers", "options"]));
-    
-        const [optionsResponse, fornecedoresResponse] = await Promise.all([
-          axios.get("http://localhost/BioVerde/back-end/fornecedores/listar_opcoes.php", {
-            withCredentials: true,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }),
-          axios.get("http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php", {
-            withCredentials: true,
-            headers: {
-              Accept: "application/json",
-            },
-          }),
-        ]);
-
-        // console.log("Resposta do back-end:", fornecedoresResponse.data);
         
-        if (optionsResponse.data.success) {
-          setOptions({
-            estados: optionsResponse.data.estados || [],
-            status: optionsResponse.data.status || [],
-          });
-        } else {
-          setOpenNoticeModal(true);
-          setMessage(optionsResponse.data.message || "Erro ao carregar opções");
-        }
+        const fornecedoresResponse = await axios.
+        get("http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+         {
+            withCredentials: true,
+            headers: {
+              Accept: "application/json",
+            },
+          },
+        );
+
+        // console.log("Resposta do back-end:", fornecedoresResponse.data); 
     
         if (fornecedoresResponse.data.success) {
           setFornecedores(fornecedoresResponse.data.fornecedores || []);
@@ -290,9 +272,10 @@ export default function Suppliers() {
     // Validações
     const errors  = {
       states: !formData.estado,
-      status: !formData.status,
+      status: false,
+      type: !formData.tipo,
     };
-    setErrors(errors );
+    setErrors(errors);
 
     // Se algum erro for true, interrompe a execução
     if (Object.values(errors).some((error) => error)) {
@@ -606,15 +589,11 @@ export default function Suppliers() {
                     isSelect
                     value={filters.fstatus}
                     onChange={handleChange}
-                    isLoading={loading.has("options")}
                     inputWidth="w-[250px]"
                   >  
                     <option value="">Todos</option>
-                    {options.status?.map((status) => (
-                      <option key={status.sta_id} value={status.sta_id}>
-                        {status.sta_nome}
-                      </option>
-                    ))}
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
                   </SmartField> 
                   
                   {/* Input do tipo date não funciona com o SmartField (verificar depois solução) */}
@@ -657,7 +636,6 @@ export default function Suppliers() {
                     isSelect
                     value={filters.festado}
                     onChange={handleChange}
-                    isLoading={loading.has("options")}
                     autoComplete="address-level1"
                     inputWidth="w-[250px]"
                   > 
@@ -846,36 +824,7 @@ export default function Suppliers() {
             <Form.Root className="flex flex-col" onSubmit={handleSubmit}>
               <h2 className="text-3xl mb-8">Cadastro de fornecedores:</h2>
 
-              {/* Linha Nome e razão social*/}
-              <div className="flex gap-x-15 mb-10">
-
-                <SmartField
-                  fieldName="nome_empresa"
-                  fieldText="Nome Fantasia da Empresa"
-                  required
-                  type="text"
-                  placeholder="Digite o nome Fantasia da empresa"
-                  autoComplete="name"
-                  value={formData.nome_empresa}
-                  onChange={handleChange}
-                  inputWidth="w-[400px]"
-                />
-
-                <SmartField
-                  fieldName="razao_social"
-                  fieldText="Razão Social"
-                  fieldClassname="flex flex-col w-full"
-                  required
-                  type="text"
-                  placeholder="Digite a Razão Social da Empresa"
-                  autoComplete="name"
-                  value={formData.razao_social}
-                  onChange={handleChange}
-                />
-
-              </div>
-
-              {/* Linha Email, telefone e cnpj*/}
+              {/* Linha Email, tipo e cnpj/cpf*/}
               <div className="flex mb-10 gap-x-15">
 
                 <SmartField
@@ -891,37 +840,100 @@ export default function Suppliers() {
                 /> 
 
                 <SmartField
-                  fieldName="tel"
-                  fieldText="Telefone"
-                  withInputMask
-                  unstyled
-                  required
-                  type="tel"
-                  mask="(99) 9999?9-9999"
-                  autoClear={false}
-                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                  placeholder="(xx)xxxxx-xxxx"
-                  autoComplete="tel"
-                  value={formData.tel}
+                  fieldName="tipo"
+                  fieldText="Tipo"
+                  isSelect
+                  value={formData.tipo}
                   onChange={handleChange}
+                  error={errors.type ? "*" : undefined}
                   inputWidth="w-[220px]"
-                /> 
+                > 
+                  <option value="juridica">Pessoa Jurídica</option>
+                  <option value="fisica">Pessoa Física</option>
+                </SmartField> 
 
-                <SmartField
-                  fieldName="cnpj"
-                  fieldText="CPF/CNPJ"
-                  withInputMask
-                  unstyled
-                  required
-                  type="text"
-                  mask={cpfCnpjMask}
-                  autoClear={false}
-                  pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-                  placeholder="Digite o CPF/CNPJ"
-                  value={formData.cnpj}
-                  onChange={handleChange}
-                  inputWidth="w-[220px]"
-                />  
+                {supplierType === "juridica" && ( 
+                  <SmartField
+                    fieldName="cnpj"
+                    fieldText="CNPJ"
+                    withInputMask
+                    unstyled
+                    required
+                    type="text"
+                    mask="99.999.999/9999-99"
+                    autoClear={false}
+                    pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+                    placeholder="Digite o CNPJ"
+                    value={formData.cnpj}
+                    onChange={handleChange}
+                    inputWidth="w-[220px]"
+                  />  
+                )}
+
+                {supplierType === "fisica" && ( 
+                  <SmartField
+                    fieldName="cpf"
+                    fieldText="CPF"
+                    withInputMask
+                    unstyled
+                    required
+                    type="text"
+                    mask="999.999.999-99"
+                    autoClear={false}
+                    pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                    placeholder="Digite o CPF"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    inputWidth="w-[220px]"
+                  />  
+                )}
+              </div>
+
+              {/* Linha Nome e razão social*/}
+              <div className="flex gap-x-15 mb-10">
+
+                {supplierType === "juridica" && ( 
+                  <>
+                  <SmartField
+                    fieldName="nome_empresa"
+                    fieldText="Nome Fantasia da Empresa"
+                    required
+                    type="text"
+                    placeholder="Digite o nome Fantasia da empresa"
+                    autoComplete="name"
+                    value={formData.nome_empresa}
+                    onChange={handleChange}
+                    inputWidth="w-[400px]"
+                  />
+
+                  <SmartField
+                    fieldName="razao_social"
+                    fieldText="Razão Social"
+                    fieldClassname="flex flex-col w-full"
+                    required
+                    type="text"
+                    placeholder="Digite a Razão Social da Empresa"
+                    autoComplete="name"
+                    value={formData.razao_social}
+                    onChange={handleChange}
+                  />
+                  </>
+                )}
+
+                {supplierType === "fisica" && ( 
+                  <SmartField
+                    fieldName="nome_fornecedor"
+                    fieldText="Nome do Fornecedor"
+                    fieldClassname="flex flex-col w-full"
+                    required
+                    type="text"
+                    placeholder="Digite o Nome do Fornecedor"
+                    autoComplete="name"
+                    value={formData.nome_fornecedor}
+                    onChange={handleChange}
+                  />
+                )}
+
               </div>
 
               <div className="flex mb-10 gap-x-15 ">
@@ -940,22 +952,21 @@ export default function Suppliers() {
                 />
 
                 <SmartField
-                  fieldName="status"
-                  fieldText="Status"
-                  isSelect
-                  value={formData.status}
+                  fieldName="tel"
+                  fieldText="Telefone"
+                  withInputMask
+                  unstyled
+                  required
+                  type="tel"
+                  mask="(99) 9999?9-9999"
+                  autoClear={false}
+                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+                  placeholder="(xx)xxxxx-xxxx"
+                  autoComplete="tel"
+                  value={formData.tel}
                   onChange={handleChange}
-                  isLoading={loading.has("options")}
-                  error={errors.status ? "*" : undefined}
-                  placeholderOption="Selecione o status"
                   inputWidth="w-[220px]"
-                > 
-                  {options.status?.map((status) => (
-                    <option key={status.sta_id} value={status.sta_id}>
-                      {status.sta_nome}
-                    </option>
-                  ))}
-                </SmartField> 
+                /> 
 
                 <SmartField
                   fieldName="cep"
@@ -976,7 +987,6 @@ export default function Suppliers() {
                 />  
               </div>
 
-              {/* Linha Nivel de Acesso e Senha*/}
               <div className="flex mb-10 gap-x-15 ">
 
                 <div className="flex w-full justify-between">
@@ -1011,7 +1021,6 @@ export default function Suppliers() {
                   value={formData.estado}
                   onChange={handleChange}
                   autoComplete="address-level1"
-                  isLoading={loading.has("options")}
                   error={errors.states ? "*" : undefined}
                   placeholderOption="Selecione o Estado"
                   inputWidth="w-[220px]"
@@ -1099,36 +1108,54 @@ export default function Suppliers() {
         >
           {/* Linha Nome e razão social*/}
           <div className="flex gap-x-10 mb-7">
+            
+            {supplierType === "juridica" && ( 
+              <>
+              <SmartField
+                fieldName="nome_empresa"
+                fieldText="Nome da Empresa"
+                required
+                type="text"
+                placeholder="Digite o nome Fantasia da empresa"
+                autoComplete="name"
+                value={formData.nome_empresa}
+                onChange={handleChange}
+                inputWidth="w-[300px]"
+              />
 
-            <SmartField
-              fieldName="nome_empresa"
-              fieldText="Nome da Empresa"
-              required
-              type="text"
-              placeholder="Digite o nome Fantasia da empresa"
-              autoComplete="name"
-              value={formData.nome_empresa}
-              onChange={handleChange}
-              inputWidth="w-[300px]"
-            />
+              <SmartField
+                fieldName="razao_social"
+                fieldText="Razão Social"
+                fieldClassname="flex flex-col w-full"
+                required
+                type="text"
+                placeholder="Digite a Razão Social da Empresa"
+                autoComplete="name"
+                value={formData.razao_social}
+                onChange={handleChange}
+              />
+              </>
+            )}
 
-            <SmartField
-              fieldName="razao_social"
-              fieldText="Razão Social"
-              fieldClassname="flex flex-col w-full"
-              required
-              type="text"
-              placeholder="Digite a Razão Social da Empresa"
-              autoComplete="name"
-              value={formData.razao_social}
-              onChange={handleChange}
-            />
+            {supplierType === "fisica" && ( 
+              <SmartField
+                fieldName="nome_fornecedor"
+                fieldText="Nome do Fornecedor"
+                fieldClassname="flex flex-col w-full"
+                required
+                type="text"
+                placeholder="Digite o Nome do Fornecedor"
+                autoComplete="name"
+                value={formData.nome_fornecedor}
+                onChange={handleChange}
+              />
+            )}
 
           </div>
 
           {/* Linha Email, telefone e cnpj*/}
           <div className="flex mb-7 gap-x-10">
-
+            
             <SmartField
               fieldName="email"
               fieldText="Email"
@@ -1142,37 +1169,54 @@ export default function Suppliers() {
             /> 
 
             <SmartField
-              fieldName="tel"
-              fieldText="Telefone"
-              withInputMask
-              unstyled
-              required
-              type="tel"
-              mask="(99) 9999?9-9999"
-              autoClear={false}
-              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-              placeholder="(xx)xxxxx-xxxx"
-              autoComplete="tel"
-              value={formData.tel}
+              fieldName="tipo"
+              fieldText="Tipo"
+              fieldClassname="flex flex-col w-full"
+              isSelect
+              value={formData.tipo}
               onChange={handleChange}
-              inputWidth="w-[220px]"
-            /> 
+              error={errors.type ? "*" : undefined}
+            > 
+              <option value="juridica">Pessoa Jurídica</option>
+              <option value="fisica">Pessoa Física</option>
+            </SmartField> 
 
-            <SmartField
-              fieldName="cnpj"
-              fieldText="CPF/CNPJ"
-              withInputMask
-              unstyled
-              required
-              type="text"
-              mask={cpfCnpjMask}
-              autoClear={false}
-              pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-              placeholder="Digite o CPF/CNPJ"
-              value={formData.cnpj}
-              onChange={handleChange}
-              inputWidth="w-[220px]"
-            />  
+            {supplierType === "juridica" && ( 
+              <SmartField
+                fieldName="cnpj"
+                fieldText="CNPJ"
+                withInputMask
+                unstyled
+                required
+                type="text"
+                mask="99.999.999/9999-99"
+                autoClear={false}
+                pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+                placeholder="Digite o CNPJ"
+                fieldClassname="flex flex-col w-full"
+                value={formData.cnpj}
+                onChange={handleChange}
+              />  
+            )}
+
+            {supplierType === "fisica" && ( 
+              <SmartField
+                fieldName="cpf"
+                fieldText="CPF"
+                withInputMask
+                unstyled
+                required
+                type="text"
+                mask="999.999.999-99"
+                autoClear={false}
+                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                placeholder="Digite o CPF"
+                fieldClassname="flex flex-col w-full"
+                value={formData.cpf}
+                onChange={handleChange}
+              />  
+            )}
+
           </div>
 
           <div className="flex mb-7 gap-x-10 ">
@@ -1196,15 +1240,28 @@ export default function Suppliers() {
               isSelect
               value={formData.status}
               onChange={handleChange}
-              isLoading={loading.has("options")}
-              inputWidth="w-[220px]"
+              fieldClassname="flex flex-col w-full"
             > 
-              {options.status?.map((status) => (
-                <option key={status.sta_id} value={status.sta_id}>
-                  {status.sta_nome}
-                </option>
-              ))}
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
             </SmartField> 
+
+            <SmartField
+              fieldName="tel"
+              fieldText="Telefone"
+              withInputMask
+              unstyled
+              required
+              type="tel"
+              mask="(99) 9999?9-9999"
+              autoClear={false}
+              pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+              placeholder="(xx)xxxxx-xxxx"
+              autoComplete="tel"
+              value={formData.tel}
+              onChange={handleChange}
+              inputWidth="w-[170px]"
+            /> 
 
             <SmartField
               fieldName="cep"
@@ -1221,37 +1278,36 @@ export default function Suppliers() {
               value={formData.cep}
               onChange={handleChange}
               onBlur={handleCepBlur}
-              inputWidth="w-[220px]"
+              inputWidth="w-[170px]"
             />  
           </div>
 
           {/* Linha Nivel de Acesso e Senha*/}
           <div className="flex mb-9 gap-x-10 ">
 
-            <div className="flex w-full justify-between">
-              <SmartField
-                fieldName="endereco"
-                fieldText="Endereço"
-                required
-                type="text"
-                placeholder="Endereço Completo"
-                value={formData.endereco}
-                onChange={handleChange}
-                autoComplete="street-address"
-                inputWidth="w-[190px]"
-              />
-              <SmartField
-                fieldName="num_endereco"
-                fieldText="Número"
-                required
-                type="text"
-                placeholder="Número"
-                value={formData.num_endereco}
-                onChange={handleChange}
-                autoComplete="address-line1"
-                inputWidth="w-[90px]"
-              />
-            </div>
+            <SmartField
+              fieldName="endereco"
+              fieldText="Endereço"
+              required
+              type="text"
+              placeholder="Endereço Completo"
+              value={formData.endereco}
+              onChange={handleChange}
+              autoComplete="street-address"
+              inputWidth="w-[300px]"
+            />
+            
+            <SmartField
+              fieldName="num_endereco"
+              fieldText="Número"
+              required
+              type="text"
+              placeholder="Número"
+              value={formData.num_endereco}
+              onChange={handleChange}
+              autoComplete="address-line1"
+              inputWidth="w-[90px]"
+            />
 
             <SmartField
               fieldName="estado"
@@ -1261,7 +1317,7 @@ export default function Suppliers() {
               onChange={handleChange}
               autoComplete="address-level1"
               isLoading={loading.has("options")}
-              inputWidth="w-[220px]"
+              inputWidth="w-[200px]"
             > 
               <option value="AC">Acre</option>
               <option value="AL">Alagoas</option>
@@ -1301,7 +1357,7 @@ export default function Suppliers() {
               value={formData.cidade}
               onChange={handleChange}
               autoComplete="address-level2"
-              inputWidth="w-[220px]"
+              inputWidth="w-[200px]"
             />
           </div>
 
