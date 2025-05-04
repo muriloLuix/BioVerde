@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 
 import { Tabs } from "radix-ui";
 import { AgGridReact } from "ag-grid-react";
@@ -73,7 +73,7 @@ const Batch = () => {
 				className="h-full w-full"
 				onValueChange={(value) => setActiveTab(value)}
 			>
-				<Tabs.List className="flex gap-5 mb-6 border-b border-verdePigmento relative">
+				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 					<Tabs.Trigger
 						className={`relative px-4 py-2 text-verdePigmento text-lg font-semibold cursor-pointer ${
 							activeTab === "list" ? "select animation-tab" : ""
@@ -91,7 +91,7 @@ const Batch = () => {
 						<Modal
 							openModal={handleModal}
 							setOpenModal={setHandleModal}
-							buttonClassname="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg cursor-pointer"
+							buttonClassname="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer"
 							buttonName="+ Novo lote"
 							modalTitle="Adicione as informações"
 							modalWidth="w-1/2"
