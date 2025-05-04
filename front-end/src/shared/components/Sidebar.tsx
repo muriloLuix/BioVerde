@@ -12,6 +12,7 @@ import {
   Truck,
   User,
   LogOut,
+  Boxes
 } from "lucide-react";
 
 import Logo from "./Logo";
@@ -70,6 +71,7 @@ export default function Sidebar() {
         path: "/app/etapas-producao",
       },
       { name: "Pedidos", icon: <ShoppingCart />, path: "/app/pedidos" },
+      { name: "Lotes", icon: <Boxes />, path: "/app/lotes" },
       { name: "Usuários", icon: <Users />, path: "/app/usuarios" },
       { name: "Fornecedores", icon: <Truck />, path: "/app/fornecedores" },
       { name: "Clientes", icon: <User />, path: "/app/clientes" },
@@ -170,7 +172,7 @@ export default function Sidebar() {
           )}
         </NavigationMenu.List>
       </NavigationMenu.Root>
-      <div className="bg-verdeEscuroConta gap-4 p-3 w-64 flex place-items-center sticky bottom-0 left-0 -m-5 ">
+      <div className="bg-verdeEscuroConta gap-5 p-3 w-64 flex place-items-center sticky bottom-0 left-0 -m-5 ">
         <Avatar.Root className="inline-flex size-[45px] select-none items-center justify-center overflow-hidden rounded-full bg-blackA1 align-middle">
           <Avatar.Fallback className="leading-1 flex size-full items-center justify-center bg-white text-black text-[15px] font-medium text-violet11 cursor-pointer">
             {userInitials || "AD"}

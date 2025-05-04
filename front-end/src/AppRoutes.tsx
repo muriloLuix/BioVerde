@@ -12,6 +12,7 @@ import {
   Logs,
   Orders,
   Suppliers,
+  Batch
 } from "./pages/index.tsx";
 
 const AppRoutes = () => {
@@ -32,6 +33,7 @@ const AppRoutes = () => {
           <Route path="fornecedores" element={<Suppliers />} />
           <Route path="clientes" element={<Clients />} />
           <Route path="logs" element={<Logs />} />
+          <Route path="lotes" element={<Batch />} />
         </Route>
       </Routes>
     </Router>
