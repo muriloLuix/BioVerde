@@ -47,7 +47,6 @@ export default function Suppliers() {
   const [errors, setErrors] = useState({
     status: false,
     states: false,
-    type: false,
   });
   const [formData, setFormData] = useState({
     fornecedor_id: 0,
@@ -65,7 +64,7 @@ export default function Suppliers() {
     estado: "",
     cidade: "",
     num_endereco: "",
-    status: "",
+    status: "ativo",
   });
   const [filters, setFilters] = useState({
     fnome_empresa: "",
@@ -83,8 +82,7 @@ export default function Suppliers() {
     reason: "",
   });
 
- console.log(formData);
-
+  console.log(formData)
   const navigate = useNavigate();
   useEffect(() => {
     const checkAuth = async () => {
@@ -273,7 +271,6 @@ export default function Suppliers() {
     const errors  = {
       states: !formData.estado,
       status: false,
-      type: !formData.tipo,
     };
     setErrors(errors);
 
@@ -845,7 +842,6 @@ export default function Suppliers() {
                   isSelect
                   value={formData.tipo}
                   onChange={handleChange}
-                  error={errors.type ? "*" : undefined}
                   inputWidth="w-[220px]"
                 > 
                   <option value="juridica">Pessoa Jurídica</option>
@@ -1175,7 +1171,6 @@ export default function Suppliers() {
               isSelect
               value={formData.tipo}
               onChange={handleChange}
-              error={errors.type ? "*" : undefined}
             > 
               <option value="juridica">Pessoa Jurídica</option>
               <option value="fisica">Pessoa Física</option>
