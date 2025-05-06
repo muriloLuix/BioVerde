@@ -26,11 +26,6 @@ interface Unidade {
 	uni_sigla: string;
 }
 
-interface Status {
-	sta_id: number;
-	sta_nome: string;
-}
-
 interface Produto {
 	produto_id: number;
 	produto_nome: string;
@@ -78,7 +73,7 @@ export default function InventoryControl() {
 		lote: "",
 		quantidade: "",
 		unid_medida: "",
-		status: "",
+		status: "ativo",
 		preco: "",
 		dt_producao: "",
 		dt_validade: "",
@@ -88,11 +83,9 @@ export default function InventoryControl() {
 	const [options, setOptions] = useState<{
 		tipos: Tipo[];
 		unidades_medida: Unidade[];
-		status: Status[];
 	}>({
 		tipos: [],
 		unidades_medida: [],
-		status: [],
 	});
 	const [filters, setFilters] = useState({
 		fnome_produto: "",
@@ -245,7 +238,6 @@ export default function InventoryControl() {
 					setOptions({
 						tipos: optionsResponse.data.tipos || [],
 						unidades_medida: optionsResponse.data.unidades_medida || [],
-						status: optionsResponse.data.status || [],
 					});
 				} else {
 					setOpenNoticeModal(true);
@@ -700,15 +692,11 @@ export default function InventoryControl() {
 										isSelect
 										value={filters.fstatus}
 										onChange={handleChange}
-										isLoading={loading.has("options")}
 										inputWidth="w-[215px]"
 									>
 										<option value="">Todos</option>
-										{options.status?.map((status) => (
-											<option key={status.sta_id} value={status.sta_id}>
-												{status.sta_nome}
-											</option>
-										))}
+										<option value="ativo">Ativo</option>
+										<option value="inativo">Inativo</option>
 									</SmartField>
 								</div>
 
@@ -1049,37 +1037,37 @@ export default function InventoryControl() {
 								/>
 							</div>
 
-							<div className="flex mb-8 justify-between">
+							<div className="flex mb-8 gap-x-15 justify-between">
 								<SmartField
 									isDate
 									fieldName="dt_producao"
 									fieldText="Data de Produção"
+									fieldClassname="flex flex-col flex-1"
 									required
 									value={formData.dt_producao}
 									onChange={handleChange}
-									inputWidth="w-[190px]"
 								/>
 
 								<SmartField
 									isDate
 									fieldName="dt_validade"
 									fieldText="Data de Validade"
+									fieldClassname="flex flex-col flex-1"
 									required
 									value={formData.dt_validade}
 									onChange={handleChange}
-									inputWidth="w-[190px]"
 								/>
 
 								<SmartField
 									fieldName="tipo"
 									fieldText="Tipo"
+									fieldClassname="flex flex-col flex-1"
 									isSelect
 									value={formData.tipo}
 									onChange={handleChange}
 									isLoading={loading.has("options")}
 									error={errors.type ? "*" : undefined}
 									placeholderOption="Selecione o Tipo"
-									inputWidth="w-[190px]"
 								>
 									{options.tipos?.map((tipo) => (
 										<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
@@ -1088,23 +1076,6 @@ export default function InventoryControl() {
 									))}
 								</SmartField>
 
-								<SmartField
-									fieldName="status"
-									fieldText="Status"
-									isSelect
-									value={formData.status}
-									onChange={handleChange}
-									isLoading={loading.has("options")}
-									error={errors.status ? "*" : undefined}
-									placeholderOption="Selecione o Status"
-									inputWidth="w-[190px]"
-								>
-									{options.status?.map((status) => (
-										<option key={status.sta_id} value={status.sta_id}>
-											{status.sta_nome}
-										</option>
-									))}
-								</SmartField>
 							</div>
 
 							<div className="flex mb-10 ">
@@ -1281,14 +1252,10 @@ export default function InventoryControl() {
 							isSelect
 							value={formData.status}
 							onChange={handleChange}
-							isLoading={loading.has("options")}
 							inputWidth="w-[175px]"
 						>
-							{options.status?.map((status) => (
-								<option key={status.sta_id} value={status.sta_id}>
-									{status.sta_nome}
-								</option>
-							))}
+							<option value="ativo">Ativo</option>
+							<option value="inativo">Inativo</option>
 						</SmartField>
 					</div>
 

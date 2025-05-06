@@ -45,7 +45,6 @@ export default function Suppliers() {
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [errors, setErrors] = useState({
-    status: false,
     states: false,
   });
   const [formData, setFormData] = useState({
@@ -125,7 +124,29 @@ export default function Suppliers() {
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
 
-    if(name === "tipo") {setSupplierType(value ?? "juridica")}
+    if(name === "tipo") {
+      const tipo = value ?? "juridica";
+      setSupplierType(tipo)
+    
+      if (tipo === "fisica") {
+        setFormData((prev) => ({
+          ...prev,
+          tipo,
+          cnpj: "",               
+          razao_social: "",       
+          nome_empresa: "",      
+        }));
+      } else if (tipo === "juridica") {
+        setFormData((prev) => ({
+          ...prev,
+          tipo,
+          cpf: "",                
+          nome_fornecedor: "",
+        }));
+      }
+
+      return;
+    }  
     
     if (name in formData) { setFormData({ ...formData, [name]: value }) }
     if (name in filters) { setFilters({ ...filters, [name]: value }) }
@@ -172,11 +193,6 @@ export default function Suppliers() {
     });
     setOpenDeleteModal(true);
   };
-
-  // Chama a função de mascara quando o campo cnpj for atualizado
-  useEffect(() => {
-    switchCpfCnpjMask("cnpj", formData.cnpj, setCpfCnpjMask);
-  }, [formData.cnpj]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -270,7 +286,6 @@ export default function Suppliers() {
     // Validações
     const errors  = {
       states: !formData.estado,
-      status: false,
     };
     setErrors(errors);
 

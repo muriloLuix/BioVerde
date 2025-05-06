@@ -13,22 +13,16 @@ import { cepApi } from "../../utils/cepApi";
 import { useNavigate } from "react-router-dom";
 
 
-interface Estado {
-  estado_id: number;
-  estado_nome: string;
-}
-
-interface Status {
-  sta_id: number;
-  sta_nome: string;
-}
-
 interface Cliente {
   cliente_id: number;
   cliente_nome: string;
+  cliente_empresa: string;
+  cliente_razao_social: string;
   cliente_email: string;
   cliente_telefone: string;
-  cliente_cpf_cnpj: string;
+  cliente_tipo: string;
+  cliente_cnpj: string;
+  cliente_cpf: string;
   cliente_cep: string;
   cliente_endereco: string;
   cliente_numendereco: string;
@@ -36,14 +30,13 @@ interface Cliente {
   cliente_cidade: string;
   cliente_observacoes: string;
   cliente_data_cadastro: string;
-  sta_nome?: string;  
-  sta_id?: number;   
-  status?: string;
+  cliente_status: string;
 }
 
 export default function Clients() {
   const [activeTab, setActiveTab] = useState("list");
   const [cpfCnpjMask, setCpfCnpjMask] = useState("");
+  const [clientType, setClientType] = useState("juridica");
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -55,29 +48,25 @@ export default function Clients() {
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [errors, setErrors] = useState({
-    status: false,
     states: false,
   });
   const [formData, setFormData] = useState({
     cliente_id: 0,
     nome_cliente: "",
+    nome_empresa: "",
+    razao_social: "",
     email: "",
     tel: "",
-    cpf_cnpj: "",
-    status: "",
+    tipo: "juridica",
+    cpf: "",
+    cnpj: "",
+    status: "ativo",
     cep: "",
     endereco: "",
     num_endereco: "",
     estado: "",
     cidade: "",
     obs: "",
-  });
-  const [options, setOptions] = useState<{
-    estados: Estado[];
-    status: Status[];
-  }>({
-    estados: [],
-    status: [],
   });
   const [filters, setFilters] = useState({
     fnome_cliente: "",
@@ -143,6 +132,31 @@ export default function Clients() {
     //Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
     switchCpfCnpjMask(name, value, setCpfCnpjMask);
 
+    if(name === "tipo") {
+      const tipo = value ?? "juridica";
+      setClientType(tipo)
+    
+      if (tipo === "fisica") {
+        setFormData((prev) => ({
+          ...prev,
+          tipo,
+          cnpj: "",               
+          razao_social: "",       
+          nome_empresa: "",      
+        }));
+      } else if (tipo === "juridica") {
+        setFormData((prev) => ({
+          ...prev,
+          tipo,
+          cpf: "",                
+          nome_cliente: "",
+        }));
+      }
+
+      return;
+    }  
+
+
     if (name in formData) { setFormData({ ...formData, [name]: value }) }
     if (name in filters) { setFilters({ ...filters, [name]: value }) }
     if (name in deleteClient) {setDeleteClient({ ...deleteClient, [name]: value }) }
@@ -158,25 +172,25 @@ export default function Clients() {
   //função para puxar os dados do cliente que será editado
   const handleEditClick = (cliente: Cliente) => {
 
-    console.log("Dados completos do usuário:", cliente);
-    console.log("Valor do status vindo do banco:", cliente.status);
-    console.log("Valor do sta_id vindo do banco:", cliente.sta_id);
-
-    const statusId = options.status?.find(s => s.sta_nome === cliente.sta_nome)?.sta_id;
+    console.log("Dados completos do cliente:", cliente);
 
     setFormData({
       cliente_id: cliente.cliente_id,
       nome_cliente: cliente.cliente_nome,
+      nome_empresa: cliente.cliente_empresa,
+      razao_social: cliente.cliente_razao_social,
       email: cliente.cliente_email,
       tel: cliente.cliente_telefone,
-      cpf_cnpj: cliente.cliente_cpf_cnpj,
-      status: statusId?.toString() || "", 
+      cnpj: cliente.cliente_cnpj,
+      cpf: cliente.cliente_cpf,
+      status: cliente.cliente_status, 
       cep: cliente.cliente_cep,
       endereco: cliente.cliente_endereco,
       estado: cliente.cliente_estado, 
       cidade: cliente.cliente_cidade,
       num_endereco: cliente.cliente_numendereco,
       obs: cliente.cliente_observacoes,
+      tipo: cliente.cliente_tipo,
     });
     setOpenEditModal(true);
   };
@@ -191,45 +205,24 @@ export default function Clients() {
     setOpenDeleteModal(true);
   };
 
-  // Chama a função de mascara quando o campo cnpj for atualizado
   useEffect(() => {
-    switchCpfCnpjMask("cnpj", formData.cpf_cnpj, setCpfCnpjMask);
-  }, [formData.cpf_cnpj]);
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading((prev) => new Set([...prev, "clients", "options"]));
     
-        const [optionsResponse, clientesResponse] = await Promise.all([
-          axios.get("http://localhost/BioVerde/back-end/clientes/listar_opcoes.php", {
-            withCredentials: true,
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }),
-          axios.get("http://localhost/BioVerde/back-end/clientes/listar_clientes.php", {
+        const clientesResponse = await axios.
+        get("http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+         {
             withCredentials: true,
             headers: {
               Accept: "application/json",
             },
-          }),
-        ]);
+          },
+        );
 
         console.log("Resposta do back-end:", clientesResponse.data);
         
-    
-        if (optionsResponse.data.success) {
-          setOptions({
-            estados: optionsResponse.data.estados || [],
-            status: optionsResponse.data.status || [],
-          });
-        } else {
-          setOpenNoticeModal(true);
-          setMessage(optionsResponse.data.message || "Erro ao carregar opções");
-        }
-    
         if (clientesResponse.data.success) {
           setClientes(clientesResponse.data.clientes || []);
         } else {
@@ -305,7 +298,6 @@ export default function Clients() {
     // Validações
     const errors  = {
       states: !formData.estado,
-      status: !formData.status,
     };
     setErrors(errors );
 
@@ -605,7 +597,6 @@ export default function Clients() {
                     value={filters.festado}
                     onChange={handleChange}
                     autoComplete="address-level1"
-                    isLoading={loading.has("options")}
                     inputWidth="w-[200px]"
                   > 
                     <option value="">Todos</option>
@@ -663,15 +654,11 @@ export default function Clients() {
                     isSelect
                     value={filters.fstatus}
                     onChange={handleChange}
-                    isLoading={loading.has("options")}
                     inputWidth="w-[200px]"
                   > 
                     <option value="">Todos</option>
-                    {options.status?.map((status) => (
-                      <option key={status.sta_id} value={status.sta_id}>
-                        {status.sta_nome}
-                      </option>
-                    ))}
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
                   </SmartField> 
 
                 </div>
@@ -867,38 +854,132 @@ export default function Clients() {
             value="register"
             className="flex items-center justify-center"
           >
-            <Form.Root className="flex flex-col w-full max-w-4xl" onSubmit={handleSubmit}>
+            <Form.Root className="flex flex-col" onSubmit={handleSubmit}>
               <h2 className="text-3xl mb-8">Cadastro de clientes:</h2>
 
-              <div className="flex mb-8 gap-x-8 justify-between">
-      
-                <SmartField
-                  fieldName="nome_cliente"
-                  fieldText="Nome do cliente"
-                  fieldClassname="flex flex-col flex-1"
-                  type="text"
-                  required
-                  placeholder="Digite o nome completo do Cliente"
-                  autoComplete="name"
-                  value={formData.nome_cliente}
-                  onChange={handleChange}
-                />
+              <div className="flex mb-8 gap-x-7 justify-between">
 
                 <SmartField
-                  fieldName="email"
-                  fieldText="Email"
-                  fieldClassname="flex flex-col flex-1"
-                  required
-                  type="email"
-                  placeholder="Digite o e-mail do cliente"
-                  autoComplete="email"
-                  value={formData.email}
+                  fieldName="tipo"
+                  fieldText="Tipo"
+                  isSelect
+                  value={formData.tipo}
                   onChange={handleChange}
-                /> 
+                  inputWidth="w-[220px]"
+                > 
+                  <option value="juridica">Pessoa Jurídica</option>
+                  <option value="fisica">Pessoa Física</option>
+                </SmartField> 
+
+                {clientType === "juridica" && ( 
+                  <SmartField
+                    fieldName="cnpj"
+                    fieldText="CNPJ"
+                    withInputMask
+                    unstyled
+                    required
+                    type="text"
+                    mask="99.999.999/9999-99"
+                    autoClear={false}
+                    pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+                    placeholder="Digite o CNPJ"
+                    value={formData.cnpj}
+                    onChange={handleChange}
+                    inputWidth="w-[220px]"
+                  />  
+                )}
+
+                {clientType === "fisica" && ( 
+                  <SmartField
+                    fieldName="cpf"
+                    fieldText="CPF"
+                    withInputMask
+                    unstyled
+                    required
+                    type="text"
+                    mask="999.999.999-99"
+                    autoClear={false}
+                    pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                    placeholder="Digite o CPF"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    inputWidth="w-[220px]"
+                  />  
+                )}
+
+                {clientType === "fisica" && ( 
+                  <SmartField
+                    fieldName="email"
+                    fieldText="Email"
+                    fieldClassname="flex flex-col flex-1"
+                    required
+                    type="email"
+                    placeholder="Digite o e-mail do cliente"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                  /> 
+                )}
+
+                {clientType === "juridica" && ( 
+                  <SmartField
+                    fieldName="razao_social"
+                    fieldText="Razão Social"
+                    fieldClassname="flex flex-col flex-1"
+                    required
+                    type="text"
+                    placeholder="Digite a Razão Social da Empresa"
+                    autoComplete="name"
+                    value={formData.razao_social}
+                    onChange={handleChange}
+                  />
+                )}
 
               </div >
 
-              <div className="flex mb-8 justify-between">
+              <div className="flex mb-8 gap-x-7 justify-between">
+
+                {clientType === "fisica" && ( 
+                  <SmartField
+                    fieldName="nome_cliente"
+                    fieldText="Nome do cliente"
+                    type="text"
+                    required
+                    placeholder="Digite o nome completo do Cliente"
+                    autoComplete="name"
+                    value={formData.nome_cliente}
+                    onChange={handleChange}
+                    inputWidth="w-[472px]"
+                  />
+                )}
+
+                {clientType === "juridica" && ( 
+                  <SmartField
+                    fieldName="nome_empresa"
+                    fieldText="Nome Fantasia da Empresa"
+                    required
+                    type="text"
+                    placeholder="Digite o nome Fantasia da empresa"
+                    autoComplete="name"
+                    value={formData.nome_empresa}
+                    onChange={handleChange}
+                    inputWidth="w-[300px]"
+                  />
+                )}
+
+                {clientType === "juridica" && ( 
+                  <SmartField
+                    fieldName="email"
+                    fieldText="Email"
+                    required
+                    type="email"
+                    placeholder="Digite o e-mail do cliente"
+                    autoComplete="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    inputWidth="w-[250px]"
+                  /> 
+                )}
 
                 <SmartField
                   fieldName="tel"
@@ -914,42 +995,8 @@ export default function Clients() {
                   autoComplete="tel"
                   value={formData.tel}
                   onChange={handleChange}
-                  inputWidth="w-[200px]"
+                  inputWidth="w-[190px]"
                 /> 
-
-                <SmartField
-                  fieldName="cpf_cnpj"
-                  fieldText="CPF/CNPJ"
-                  withInputMask
-                  unstyled
-                  required
-                  type="text"
-                  mask={cpfCnpjMask}
-                  autoClear={false}
-                  pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-                  placeholder="Digite o CPF/CNPJ"
-                  value={formData.cpf_cnpj}
-                  onChange={handleChange}
-                  inputWidth="w-[200px]"
-                />  
-
-                <SmartField
-                  fieldName="status"
-                  fieldText="Status"
-                  isSelect
-                  value={formData.status}
-                  onChange={handleChange}
-                  isLoading={loading.has("options")}
-                  error={errors.status ? "*" : undefined}
-                  placeholderOption="Selecione o status"
-                  inputWidth="w-[200px]"
-                > 
-                  {options.status?.map((status) => (
-                    <option key={status.sta_id} value={status.sta_id}>
-                      {status.sta_nome}
-                    </option>
-                  ))}
-                </SmartField> 
 
                 <SmartField
                   fieldName="cep"
@@ -966,23 +1013,23 @@ export default function Clients() {
                   value={formData.cep}
                   onChange={handleChange}
                   onBlur={handleCepBlur}
-                  inputWidth="w-[200px]"
+                  inputWidth="w-[150px]"
                 /> 
 
               </div>
             
-              <div className="flex mb-8 justify-between">
+              <div className="flex mb-8 gap-x-7 justify-between">
 
                 <SmartField
                   fieldName="endereco"
                   fieldText="Endereço"
+                  fieldClassname="flex flex-col flex-1"
                   required
                   type="text"
                   placeholder="Endereço Completo"
                   value={formData.endereco}
                   onChange={handleChange}
                   autoComplete="street-address"
-                  inputWidth="w-[310px]"
                 />
 
                 <SmartField
@@ -1004,7 +1051,6 @@ export default function Clients() {
                   value={formData.estado}
                   onChange={handleChange}
                   autoComplete="address-level1"
-                  isLoading={loading.has("options")}
                   error={errors.states ? "*" : undefined}
                   placeholderOption="Selecione o Estado"
                   inputWidth="w-[200px]"
@@ -1107,33 +1153,110 @@ export default function Clients() {
         >
           <div className="flex mb-6 gap-x-8 justify-between">
 
+            {clientType === "juridica" && ( 
+              <>
+              <SmartField
+                fieldName="nome_empresa"
+                fieldText="Nome Fantasia da Empresa"
+                required
+                type="text"
+                placeholder="Digite o nome Fantasia da empresa"
+                autoComplete="name"
+                value={formData.nome_empresa}
+                onChange={handleChange}
+                inputWidth="w-[300px]"
+              />
+              <SmartField
+                fieldName="razao_social"
+                fieldText="Razão Social"
+                fieldClassname="flex flex-col flex-1"
+                required
+                type="text"
+                placeholder="Digite a Razão Social da Empresa"
+                autoComplete="name"
+                value={formData.razao_social}
+                onChange={handleChange}
+              />
+              </>
+            )}
+
+            {clientType === "fisica" && (
+              <SmartField
+                fieldName="nome_cliente"
+                fieldText="Nome do cliente"
+                fieldClassname="flex flex-col flex-1"
+                type="text"
+                required
+                placeholder="Digite o nome completo do Cliente"
+                autoComplete="name"
+                value={formData.nome_cliente}
+                onChange={handleChange}
+              />
+            )}
+
             <SmartField
-              fieldName="nome_cliente"
-              fieldText="Nome do cliente"
-              fieldClassname="flex flex-col flex-1"
-              type="text"
-              required
-              placeholder="Digite o nome completo do Cliente"
-              autoComplete="name"
-              value={formData.nome_cliente}
+              fieldName="tipo"
+              fieldText="Tipo"
+              isSelect
+              value={formData.tipo}
               onChange={handleChange}
-            />
+              inputWidth="w-[220px]"
+            > 
+              <option value="juridica">Pessoa Jurídica</option>
+              <option value="fisica">Pessoa Física</option>
+            </SmartField> 
+
+          </div >
+
+          <div className="flex mb-6 gap-x-7 justify-between">
 
             <SmartField
               fieldName="email"
               fieldText="Email"
-              fieldClassname="flex flex-col flex-1"
               required
               type="email"
               placeholder="Digite o e-mail do cliente"
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
+              inputWidth="w-[300px]"
             /> 
 
-          </div >
+            {clientType === "juridica" && ( 
+              <SmartField
+                fieldName="cnpj"
+                fieldText="CNPJ"
+                withInputMask
+                unstyled
+                required
+                type="text"
+                mask="99.999.999/9999-99"
+                autoClear={false}
+                pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
+                placeholder="Digite o CNPJ"
+                value={formData.cnpj}
+                onChange={handleChange}
+                inputWidth="w-[180px]"
+              />  
+            )}
 
-          <div className="flex mb-6 gap-x-8 justify-between">
+            {clientType === "fisica" && ( 
+              <SmartField
+                fieldName="cpf"
+                fieldText="CPF"
+                withInputMask
+                unstyled
+                required
+                type="text"
+                mask="999.999.999-99"
+                autoClear={false}
+                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                placeholder="Digite o CPF"
+                value={formData.cpf}
+                onChange={handleChange}
+                inputWidth="w-[160px]"
+              />  
+            )}
 
             <SmartField
               fieldName="tel"
@@ -1149,24 +1272,8 @@ export default function Clients() {
               autoComplete="tel"
               value={formData.tel}
               onChange={handleChange}
-              inputWidth="w-[200px]"
+              inputWidth="w-[180px]"
             /> 
-
-            <SmartField
-              fieldName="cpf_cnpj"
-              fieldText="CPF/CNPJ"
-              withInputMask
-              unstyled
-              required
-              type="text"
-              mask={cpfCnpjMask}
-              autoClear={false}
-              pattern="^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})$"
-              placeholder="Digite o CPF/CNPJ"
-              value={formData.cpf_cnpj}
-              onChange={handleChange}
-              inputWidth="w-[200px]"
-            />  
 
             <SmartField
               fieldName="status"
@@ -1174,14 +1281,10 @@ export default function Clients() {
               isSelect
               value={formData.status}
               onChange={handleChange}
-              isLoading={loading.has("options")}
-              inputWidth="w-[200px]"
+              inputWidth="w-[150px]"
             > 
-              {options.status?.map((status) => (
-                <option key={status.sta_id} value={status.sta_id}>
-                  {status.sta_nome}
-                </option>
-              ))}
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
             </SmartField> 
 
             <SmartField
@@ -1199,23 +1302,23 @@ export default function Clients() {
               value={formData.cep}
               onChange={handleChange}
               onBlur={handleCepBlur}
-              inputWidth="w-[200px]"
+              inputWidth="w-[150px]"
             /> 
 
           </div>
 
-          <div className="flex mb-6 justify-between">
+          <div className="flex mb-6 gap-x-7 justify-between">
 
             <SmartField
               fieldName="endereco"
               fieldText="Endereço"
+              fieldClassname="flex flex-col flex-1"
               required
               type="text"
               placeholder="Endereço Completo"
               value={formData.endereco}
               onChange={handleChange}
               autoComplete="street-address"
-              inputWidth="w-[310px]"
             />
 
             <SmartField
@@ -1237,8 +1340,7 @@ export default function Clients() {
               value={formData.estado}
               onChange={handleChange}
               autoComplete="address-level1"
-              isLoading={loading.has("options")}
-              inputWidth="w-[200px]"
+              inputWidth="w-[195px]"
             > 
               <option value="AC">Acre</option>
               <option value="AL">Alagoas</option>
@@ -1278,7 +1380,7 @@ export default function Clients() {
               value={formData.cidade}
               onChange={handleChange}
               autoComplete="address-level2"
-              inputWidth="w-[200px]"
+              inputWidth="w-[195px]"
             />
 
           </div>
