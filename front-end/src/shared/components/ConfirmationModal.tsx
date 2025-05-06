@@ -27,7 +27,6 @@ const ConfirmationModal = ({
   confirmationModalTitle,
   onConfirm,
   isLoading,
-  loading,
   isLogout,
 }: ConfirmationModalProps) => {
 
@@ -64,7 +63,7 @@ const ConfirmationModal = ({
                 type="button"
                 className={`bg-red-700 py-2 px-3  h-10 rounded text-white cursor-pointer flex place-content-center gap-2 hover:bg-red-800 ${isLogout ? "w-[100px]" : "w-[186px]"}`}
                 onClick={onConfirm}
-                disabled={!!loading?.size}
+                // disabled={!!loading?.size}
               >
                 {isLoading ? (
                   <Loader2 className="animate-spin h-6 w-6" />
