@@ -12,7 +12,23 @@ try {
 
     // Buscar usuários
     
-    $cols = array("u.user_id", "u.user_nome", "u.user_email", "u.user_telefone", "u.user_CPF", "c.car_nome", "n.nivel_nome", "u.estaAtivo", ".u.user_dtcadastro", "u.car_id", "u.nivel_id", );
+    $cols = [
+        "u.user_id", 
+        "u.user_nome", 
+        "u.user_email", 
+        "u.user_telefone", 
+        "u.user_CPF", 
+        "c.car_nome", 
+        "n.nivel_nome",
+      
+        "CASE WHEN u.estaAtivo = 1 THEN 'ATIVO' ELSE 'INATIVO' END AS status_ativo",
+      
+        "u.user_dtcadastro", 
+        "u.estaAtivo",       
+        "u.car_id", 
+        "u.nivel_id"
+      ];
+      
 
     $joins = [
         [

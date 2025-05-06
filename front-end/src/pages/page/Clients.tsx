@@ -30,7 +30,8 @@ interface Cliente {
   cliente_cidade: string;
   cliente_observacoes: string;
   cliente_data_cadastro: string;
-  cliente_status: string;
+  status_ativo: string;  
+  estaAtivo: number;   
 }
 
 export default function Clients() {
@@ -60,7 +61,7 @@ export default function Clients() {
     tipo: "juridica",
     cpf: "",
     cnpj: "",
-    status: "ativo",
+    status: "1",
     cep: "",
     endereco: "",
     num_endereco: "",
@@ -183,7 +184,7 @@ export default function Clients() {
       tel: cliente.cliente_telefone,
       cnpj: cliente.cliente_cnpj,
       cpf: cliente.cliente_cpf,
-      status: cliente.cliente_status, 
+      status:         String(cliente.estaAtivo),
       cep: cliente.cliente_cep,
       endereco: cliente.cliente_endereco,
       estado: cliente.cliente_estado, 
@@ -655,11 +656,12 @@ export default function Clients() {
                     value={filters.fstatus}
                     onChange={handleChange}
                     inputWidth="w-[200px]"
-                  > 
+                  >
                     <option value="">Todos</option>
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
-                  </SmartField> 
+                    <option value="1">Ativo</option>
+                    <option value="0">Inativo</option>
+                  </SmartField>
+
 
                 </div>
 
@@ -1282,10 +1284,11 @@ export default function Clients() {
               value={formData.status}
               onChange={handleChange}
               inputWidth="w-[150px]"
-            > 
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
-            </SmartField> 
+            >
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
+            </SmartField>
+
 
             <SmartField
               fieldName="cep"

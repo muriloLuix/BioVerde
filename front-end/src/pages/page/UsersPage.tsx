@@ -19,11 +19,6 @@ interface NivelAcesso {
   nivel_nome: string;
 }
 
-interface Status {
-  sta_id: number;
-  sta_nome: string;
-}
-
 interface Usuario {
   user_id: number;
   user_nome: string;
@@ -33,9 +28,9 @@ interface Usuario {
   car_nome: string;
   nivel_nome: string;
   user_dtcadastro: string;
-  sta_id?: number;
+  estaAtivo: number;        
+  status_ativo: string;     
 }
-
 export default function UsersPage() {
   const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
   const [relatorioContent, setRelatorioContent] = useState<string>("");
@@ -69,11 +64,9 @@ export default function UsersPage() {
   const [options, setOptions] = useState<{
     cargos: Cargo[];
     niveis: NivelAcesso[];
-    status: Status[];
   }>({
     cargos: [],
     niveis: [],
-    status: [],
   });
   const [filters, setFilters] = useState({
     fname: "",
@@ -182,28 +175,21 @@ export default function UsersPage() {
 
   //função para puxar os dados do usuario que será editado
   const handleEditClick = (usuario: Usuario) => {
-    console.log("Dados completos do usuário:", usuario);
-    console.log(
-      "Status ID:",
-      usuario.sta_id,
-      "Status Nome:",
-      options.status?.find((s) => s.sta_id === usuario.sta_id)?.sta_nome ||
-        "Não encontrado"
-    );
 
     setFormData({
-      user_id: usuario.user_id,
-      name: usuario.user_nome,
-      email: usuario.user_email,
-      tel: usuario.user_telefone,
-      cpf: usuario.user_CPF,
-      cargo: usuario.car_nome,
-      nivel: usuario.nivel_nome,
-      status: usuario.sta_id?.toString() || "",
-      password: "",
+      user_id:   usuario.user_id,
+      name:      usuario.user_nome,
+      email:     usuario.user_email,
+      tel:       usuario.user_telefone,
+      cpf:       usuario.user_CPF,
+      cargo:     usuario.car_nome,
+      nivel:     usuario.nivel_nome,
+      status:    usuario.status_ativo === "ATIVO" ? "1" : "0",
+      password:  "",
     });
     setOpenEditModal(true);
   };
+  
 
   //função para puxar o nome do usuário que será excluido
   const handleDeleteClick = (usuario: Usuario) => {
@@ -247,7 +233,6 @@ export default function UsersPage() {
           setOptions({
             cargos: optionsResponse.data.cargos,
             niveis: optionsResponse.data.niveis,
-            status: optionsResponse.data.status || [],
           });
         } else {
           setOpenNoticeModal(true);
@@ -309,7 +294,6 @@ export default function UsersPage() {
         setOptions({
           cargos: optionsResponse.data.cargos,
           niveis: optionsResponse.data.niveis,
-          status: optionsResponse.data.status || [],
         });
         setUsuarios(usuariosResponse.data.usuarios);
         return true;
@@ -692,22 +676,20 @@ export default function UsersPage() {
                     inputWidth="w-[200px]"
                   />  
 
-                  <SmartField
-                    fieldName="fstatus"
-                    fieldText="Status"
-                    isSelect
-                    isLoading={loading.has("options")}
-                    value={filters.fstatus}
-                    onChange={handleChange}
-                    inputWidth="w-[200px]"
-                  >  
-                    <option value="">Todos</option>
-                    {options.status?.map((status) => (
-                      <option key={status.sta_id} value={status.sta_id}>
-                        {status.sta_nome}
-                      </option>
-                    ))}
-                  </SmartField> 
+                <SmartField
+                  fieldName="fstatus"
+                  fieldText="Status"
+                  isSelect
+                  isLoading={loading.has("options")}
+                  value={filters.fstatus}
+                  onChange={handleChange}
+                  inputWidth="w-[200px]"
+                >
+                  <option value="">Todos</option>
+                  <option value="1">Ativo</option>
+                  <option value="0">Inativo</option>
+                </SmartField>
+
                 </div>
 
                 {/* Coluna Data de Cadastro e Botão Pesquisar */}
@@ -1162,13 +1144,13 @@ export default function UsersPage() {
               value={formData.status}
               onChange={handleChange}
               inputWidth="w-[190px]"
-            > 
-              {options.status?.map((status) => (
-                <option key={status.sta_id} value={status.sta_id}>
-                  {status.sta_nome}
-                </option>
-              ))}
-            </SmartField> 
+            >
+              <option value="">Selecione</option>
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
+            </SmartField>
+
+
 
           </div>
 

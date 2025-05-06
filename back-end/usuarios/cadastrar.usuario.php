@@ -63,6 +63,8 @@ if ($emailCpfError) {
 // Gerar hash da senha
 $senha_hash = password_hash($data['password'], PASSWORD_DEFAULT);
 
+$estaAtivo = 1;
+
 // Cadastro do usuário
 $stmt = $conn->prepare("INSERT INTO usuarios (user_nome, user_email, user_telefone, user_CPF, user_senha, car_id, nivel_id, estaAtivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 if (!$stmt) {
@@ -70,17 +72,17 @@ if (!$stmt) {
     exit();
 }
 
-$stmt->bind_param("ssssiii", 
-    $data['name'], 
-    $data['email'], 
-    $data['tel'], 
-    $data['cpf'], 
-    $senha_hash, 
-    $car_id, 
-    $nivel_id
+$stmt->bind_param(
+    "sssssiii",
+    $data['name'],
+    $data['email'],
+    $data['tel'],
+    $data['cpf'],
+    $senha_hash,
+    $car_id,
+    $nivel_id,
+    $estaAtivo
 );
-$stmt->send_long_data(7, true);
-
 if ($stmt->execute()) {
     // Enviar email de confirmação
 

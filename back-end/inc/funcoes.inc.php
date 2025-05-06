@@ -867,38 +867,6 @@ function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id)
     return null;
 }
 
-/**
- * Obtém o ID do status pelo nome
- */
-function obterIdStatusPorNome($conn, $nomeStatus)
-{
-    if (empty($nomeStatus)) {
-        return null;
-    }
-
-    // Verifica se o parâmetro é numérico (ID) ou string (nome)
-    if (is_numeric($nomeStatus)) {
-        $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_id = ?");
-    } else {
-        $stmt = $conn->prepare("SELECT sta_id FROM status WHERE sta_nome = ?");
-    }
-
-    if (!$stmt) {
-        return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
-    }
-
-    $stmt->bind_param("s", $nomeStatus);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows === 0) {
-        return null;
-    }
-
-    $row = $result->fetch_assoc();
-    return $row['sta_id'];
-}
-
 
 
 // cadastrar_fornecedores.php
