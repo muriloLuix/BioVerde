@@ -1277,17 +1277,17 @@ export default function Clients() {
               inputWidth="w-[180px]"
             /> 
 
-            <SmartField
-              fieldName="status"
-              fieldText="Status"
-              isSelect
-              value={formData.status}
-              onChange={handleChange}
-              inputWidth="w-[150px]"
-            >
-              <option value="1">Ativo</option>
-              <option value="0">Inativo</option>
-            </SmartField>
+              <SmartField
+                fieldName="status"
+                fieldText="Status"
+                isSelect
+                value={formData.status}
+                onChange={handleChange}
+                inputWidth="w-[150px]"
+              >
+                <option value="1">Ativo</option>
+                <option value="0">Inativo</option>
+              </SmartField>
 
 
             <SmartField

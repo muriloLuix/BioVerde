@@ -352,6 +352,8 @@ export default function ProductionSteps() {
           withCredentials: true,
         }
       );
+
+      console.log("Resposta do back-end:", response.data);
   
       if (response.data.success) {
         await refreshData(); 
@@ -818,7 +820,7 @@ export default function ProductionSteps() {
                             <button
                               type="submit"
                               name="submitForm"
-                              className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra w-[278.72px]  hover:bg-verdeGrama flex place-content-center"
+                              className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra w-[278.72px]  hover:bg-verdeGrama "
                               onClick={() => setKeepProduct(false)}
                             >
                               {loading.has("submit") ? (
