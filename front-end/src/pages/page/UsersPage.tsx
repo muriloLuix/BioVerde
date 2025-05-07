@@ -48,7 +48,6 @@ export default function UsersPage() {
     position: false,
     level: false,
     password: false,
-    status: false,
   });
   const [formData, setFormData] = useState({
     user_id: 0,
@@ -59,7 +58,7 @@ export default function UsersPage() {
     cargo: "",
     nivel: "",
     password: "",
-    status: "",
+    status: "ativo",
   });
   const [options, setOptions] = useState<{
     cargos: Cargo[];
@@ -184,7 +183,7 @@ export default function UsersPage() {
       cpf:       usuario.user_CPF,
       cargo:     usuario.car_nome,
       nivel:     usuario.nivel_nome,
-      status:    usuario.status_ativo === "ATIVO" ? "1" : "0",
+      status:    String(usuario.estaAtivo),
       password:  "",
     });
     setOpenEditModal(true);
@@ -332,7 +331,6 @@ export default function UsersPage() {
       position: !formData.cargo,
       level: !formData.nivel,
       password: !formData.password || formData.password.length < 8,
-      status: false,
     };
     setErrors(errors);
   
@@ -680,7 +678,6 @@ export default function UsersPage() {
                   fieldName="fstatus"
                   fieldText="Status"
                   isSelect
-                  isLoading={loading.has("options")}
                   value={filters.fstatus}
                   onChange={handleChange}
                   inputWidth="w-[200px]"
@@ -1145,7 +1142,6 @@ export default function UsersPage() {
               onChange={handleChange}
               inputWidth="w-[190px]"
             >
-              <option value="">Selecione</option>
               <option value="1">Ativo</option>
               <option value="0">Inativo</option>
             </SmartField>

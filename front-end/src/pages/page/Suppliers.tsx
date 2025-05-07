@@ -29,7 +29,8 @@ interface Fornecedor {
   fornecedor_cep: string;
   fornecedor_responsavel: string;
   fornecedor_dtcadastro: string;
-  fornecedor_status: string;
+  status_ativo: string;  
+  estaAtivo: number;  
 }
 
 export default function Suppliers() {
@@ -173,7 +174,7 @@ export default function Suppliers() {
       cnpj: fornecedor.fornecedor_cnpj,
       cpf: fornecedor.fornecedor_cpf,
       responsavel: fornecedor.fornecedor_responsavel,
-      status: fornecedor.fornecedor_status,
+      status: String(fornecedor.estaAtivo),
       cep: fornecedor.fornecedor_cep,
       endereco: fornecedor.fornecedor_endereco,
       estado: fornecedor.fornecedor_estado,
@@ -604,8 +605,8 @@ export default function Suppliers() {
                     inputWidth="w-[250px]"
                   >  
                     <option value="">Todos</option>
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
+                    <option value="1">Ativo</option>
+                    <option value="0">Inativo</option>
                   </SmartField> 
                   
                   {/* Input do tipo date não funciona com o SmartField (verificar depois solução) */}
@@ -726,10 +727,11 @@ export default function Suppliers() {
                   <tr className="bg-verdePigmento text-white shadow-thead">
                     {[
                       "ID",
-                      "Nome Empresa",
+                      "Nome Fornecedor / Nome Empresa",
                       "Razão Social",
                       "Email",
                       "Telefone",
+                      "Tipo",
                       "CPF/CNPJ",
                       "Responsável",
                       "CEP",
@@ -1252,8 +1254,8 @@ export default function Suppliers() {
               onChange={handleChange}
               fieldClassname="flex flex-col w-full"
             > 
-              <option value="ativo">Ativo</option>
-              <option value="inativo">Inativo</option>
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
             </SmartField> 
 
             <SmartField

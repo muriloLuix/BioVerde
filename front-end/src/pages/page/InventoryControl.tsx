@@ -21,27 +21,16 @@ interface Tipo {
 	tproduto_id: number;
 	tproduto_nome: string;
 }
-interface Unidade {
-	uni_id: number;
-	uni_sigla: string;
-}
 
 interface Produto {
 	produto_id: number;
 	produto_nome: string;
 	tproduto_nome: string;
 	produto_lote: string;
-	produto_quantidade: string;
-	uni_id: number;
-	uni_sigla?: string;
 	produto_preco: string;
 	fornecedor_nome: string;
-	produto_dtProducao: string;
-	produto_validade: string;
-	produto_data_cadastro: string;
 	produto_observacoes: string;
-	sta_id?: number;
-	sta_nome?: string;
+	produto_status: string;        
 }
 
 export default function InventoryControl() {
@@ -61,7 +50,6 @@ export default function InventoryControl() {
 	const [fornecedorTouched, setFornecedorTouched] = useState(false);
 	const [errors, setErrors] = useState({
 		type: false,
-		unit: false,
 		status: false,
 		price: false,
 		supplier: false,
@@ -71,21 +59,15 @@ export default function InventoryControl() {
 		nome_produto: "",
 		tipo: "",
 		lote: "",
-		quantidade: "",
-		unid_medida: "",
 		status: "ativo",
 		preco: "",
-		dt_producao: "",
-		dt_validade: "",
 		fornecedor: "",
 		obs: "",
 	});
 	const [options, setOptions] = useState<{
 		tipos: Tipo[];
-		unidades_medida: Unidade[];
 	}>({
 		tipos: [],
-		unidades_medida: [],
 	});
 	const [filters, setFilters] = useState({
 		fnome_produto: "",
@@ -183,12 +165,8 @@ export default function InventoryControl() {
 			nome_produto: produto.produto_nome,
 			tipo: tipoSelecionado?.tproduto_id.toString() || "",
 			lote: produto.produto_lote,
-			quantidade: produto.produto_quantidade,
-			unid_medida: produto.uni_id?.toString() || "",
-			status: produto.sta_id?.toString() || "",
+			status: produto.produto_status,
 			preco: produto.produto_preco,
-			dt_producao: produto.produto_dtProducao.split(" ")[0],
-			dt_validade: produto.produto_validade.split(" ")[0],
 			fornecedor: produto.fornecedor_nome,
 			obs: produto.produto_observacoes,
 		});
@@ -237,7 +215,6 @@ export default function InventoryControl() {
 				if (optionsResponse.data.success) {
 					setOptions({
 						tipos: optionsResponse.data.tipos || [],
-						unidades_medida: optionsResponse.data.unidades_medida || [],
 					});
 				} else {
 					setOpenNoticeModal(true);
@@ -321,7 +298,6 @@ export default function InventoryControl() {
 		// Validações
 		const errors = {
 			type: !formData.tipo,
-			unit: !formData.unid_medida,
 			status: !formData.status,
 			price: !formData.preco,
 			supplier: !formData.fornecedor,
@@ -670,23 +646,6 @@ export default function InventoryControl() {
 									/>
 
 									<SmartField
-										fieldName="funid_medida"
-										fieldText="Uni. de Medida"
-										isSelect
-										value={filters.funid_medida}
-										onChange={handleChange}
-										isLoading={loading.has("options")}
-										inputWidth="w-[215px]"
-									>
-										<option value="">Todos</option>
-										{options.unidades_medida?.map((unidade) => (
-											<option key={unidade.uni_id} value={unidade.uni_id}>
-												{unidade.uni_sigla}
-											</option>
-										))}
-									</SmartField>
-
-									<SmartField
 										fieldName="fstatus"
 										fieldText="Status"
 										isSelect
@@ -695,8 +654,8 @@ export default function InventoryControl() {
 										inputWidth="w-[215px]"
 									>
 										<option value="">Todos</option>
-										<option value="ativo">Ativo</option>
-										<option value="inativo">Inativo</option>
+										<option value="1">Ativo</option>
+										<option value="0">Inativo</option>
 									</SmartField>
 								</div>
 
@@ -828,21 +787,6 @@ export default function InventoryControl() {
 															{value}
 														</td>
 													))}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{new Date(
-														produto.produto_dtProducao
-													).toLocaleDateString("pt-BR")}
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{new Date(
-														produto.produto_validade
-													).toLocaleDateString("pt-BR")}
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{new Date(
-														produto.produto_data_cadastro
-													).toLocaleDateString("pt-BR")}
-												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													<button
 														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
@@ -989,39 +933,39 @@ export default function InventoryControl() {
 									placeholder="Lote do produto"
 									value={formData.lote}
 									onChange={handleChange}
-									inputWidth="w-[190px]"
+									inputWidth="w-[170px]"
 								/>
 
 								<SmartField
-									fieldName="quantidade"
-									fieldText="Quantidade"
-									required
-									type="text"
-									placeholder="Quantidade"
-									value={formData.quantidade}
-									onChange={handleChange}
-									inputWidth="w-[190px]"
-								/>
-
-								<SmartField
-									fieldName="unid_medida"
-									fieldText="Uni. de Medida"
+									fieldName="tipo"
+									fieldText="Tipo"
 									isSelect
-									value={formData.unid_medida}
+									value={formData.tipo}
 									onChange={handleChange}
 									isLoading={loading.has("options")}
-									error={errors.unit ? "*" : undefined}
-									placeholderOption="Selecione a Unid."
-									inputWidth="w-[190px]"
+									error={errors.type ? "*" : undefined}
+									placeholderOption="Selecione o Tipo"
+									inputWidth="w-[200px]"
 								>
-									{options.unidades_medida?.map((unidades_medida) => (
-										<option
-											key={unidades_medida.uni_id}
-											value={unidades_medida.uni_id}
-										>
-											{unidades_medida.uni_sigla}
+									{options.tipos?.map((tipo) => (
+										<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+											{tipo.tproduto_nome}
 										</option>
 									))}
+								</SmartField>
+
+								<SmartField
+									fieldName="status"
+									fieldText="Status"
+									isSelect
+									value={formData.status}
+									error={errors.status ? "*" : undefined}
+									onChange={handleChange}
+									inputWidth="w-[190px]"
+								>
+									<option value="">Selecione o Status</option>
+									<option value="conservado">Conservado</option>
+									<option value="danificado">Danificado</option>
 								</SmartField>
 
 								<SmartField
@@ -1033,49 +977,8 @@ export default function InventoryControl() {
 									error={errors.price ? "*" : undefined}
 									value={formData.preco}
 									onValueChange={handlePriceChange}
-									inputWidth="w-[190px]"
+									inputWidth="w-[150px]"
 								/>
-							</div>
-
-							<div className="flex mb-8 gap-x-15 justify-between">
-								<SmartField
-									isDate
-									fieldName="dt_producao"
-									fieldText="Data de Produção"
-									fieldClassname="flex flex-col flex-1"
-									required
-									value={formData.dt_producao}
-									onChange={handleChange}
-								/>
-
-								<SmartField
-									isDate
-									fieldName="dt_validade"
-									fieldText="Data de Validade"
-									fieldClassname="flex flex-col flex-1"
-									required
-									value={formData.dt_validade}
-									onChange={handleChange}
-								/>
-
-								<SmartField
-									fieldName="tipo"
-									fieldText="Tipo"
-									fieldClassname="flex flex-col flex-1"
-									isSelect
-									value={formData.tipo}
-									onChange={handleChange}
-									isLoading={loading.has("options")}
-									error={errors.type ? "*" : undefined}
-									placeholderOption="Selecione o Tipo"
-								>
-									{options.tipos?.map((tipo) => (
-										<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-											{tipo.tproduto_nome}
-										</option>
-									))}
-								</SmartField>
-
 							</div>
 
 							<div className="flex mb-10 ">
@@ -1168,34 +1071,35 @@ export default function InventoryControl() {
 							placeholder="Lote do produto"
 							value={formData.lote}
 							onChange={handleChange}
-							inputWidth="w-[175px]"
+							inputWidth="w-[170px]"
 						/>
 
 						<SmartField
-							fieldName="quantidade"
-							fieldText="Quantidade"
-							required
-							type="text"
-							placeholder="Quantidade"
-							value={formData.quantidade}
-							onChange={handleChange}
-							inputWidth="w-[175px]"
-						/>
-
-						<SmartField
-							fieldName="unid_medida"
-							fieldText="Uni. de Medida"
+							fieldName="tipo"
+							fieldText="Tipo"
 							isSelect
-							value={formData.unid_medida}
+							value={formData.tipo}
 							onChange={handleChange}
 							isLoading={loading.has("options")}
-							inputWidth="w-[175px]"
+							inputWidth="w-[200px]"
 						>
-							{options.unidades_medida?.map((unidade) => (
-								<option key={unidade.uni_id} value={unidade.uni_id}>
-									{unidade.uni_sigla}
+							{options.tipos?.map((tipo) => (
+								<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+									{tipo.tproduto_nome}
 								</option>
 							))}
+						</SmartField>
+
+						<SmartField
+							fieldName="status"
+							fieldText="Status"
+							isSelect
+							value={formData.status}
+							onChange={handleChange}
+							inputWidth="w-[150px]"
+						>
+							<option value="conservado">Conservado</option>
+							<option value="danificado">Danificado</option>
 						</SmartField>
 
 						<SmartField
@@ -1207,56 +1111,8 @@ export default function InventoryControl() {
 							error={errors.price ? "*" : undefined}
 							value={formData.preco}
 							onValueChange={handlePriceChange}
-							inputWidth="w-[175px]"
+							inputWidth="w-[150px]"
 						/>
-					</div>
-
-					<div className="flex mb-6 justify-between">
-						<SmartField
-							isDate
-							fieldName="dt_producao"
-							fieldText="Data de Produção"
-							required
-							value={formData.dt_producao}
-							onChange={handleChange}
-							inputWidth="w-[175px]"
-						/>
-
-						<SmartField
-							isDate
-							fieldName="dt_validade"
-							fieldText="Data de Validade"
-							required
-							value={formData.dt_validade}
-							onChange={handleChange}
-							inputWidth="w-[175px]"
-						/>
-
-						<SmartField
-							fieldName="tipo"
-							fieldText="Tipo"
-							isSelect
-							value={formData.tipo}
-							onChange={handleChange}
-							isLoading={loading.has("options")}
-							inputWidth="w-[175px]"
-						>
-							<option value="materia-prima">Matéria-Prima</option>
-							<option value="semiacabado">Semiacabado</option>
-							<option value="acabado">Acabado</option>
-						</SmartField>
-
-						<SmartField
-							fieldName="status"
-							fieldText="Status"
-							isSelect
-							value={formData.status}
-							onChange={handleChange}
-							inputWidth="w-[175px]"
-						>
-							<option value="ativo">Ativo</option>
-							<option value="inativo">Inativo</option>
-						</SmartField>
 					</div>
 
 					<div className="flex mb-8 ">

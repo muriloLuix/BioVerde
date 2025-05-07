@@ -47,6 +47,7 @@ interface Pedido {
 	pedido_cep: string;
 	pedido_endereco: string;
 	pedido_num_endereco: string;
+	pedido_complemento: string;
 	pedido_cidade: string;
 	pedido_estado: string;
 	pedido_prevEntrega: string;
@@ -97,6 +98,7 @@ const exemploPedidos = [
 			},
 		],
 		pedido_num_endereco: "23",
+		pedido_complemento: "Casa",
 		pedido_prevEntrega: "2025-04-24",
 		stapedido_nome: "em produção",
 		pedido_metodo_pagamento: "Pix",
@@ -131,6 +133,7 @@ const exemploPedidos = [
 			},
 		],
 		pedido_num_endereco: "1050",
+		pedido_complemento: "Apartamento",
 		pedido_prevEntrega: "2025-04-25",
 		stapedido_nome: "em separação",
 		pedido_metodo_pagamento: "Cartão de Débito",
@@ -812,6 +815,7 @@ export default function Orders() {
 											"CEP",
 											"Endereço",
 											"Nº",
+											"Complemento",
 											"Cidade",
 											"Estado",
 											"Observações",
@@ -897,6 +901,9 @@ export default function Orders() {
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.pedido_num_endereco}
+												</td>
+												<td className="border border-black px-4 py-4 whitespace-nowrap">
+													{pedido.pedido_complemento}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.pedido_cidade}

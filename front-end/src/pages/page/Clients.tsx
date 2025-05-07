@@ -184,7 +184,7 @@ export default function Clients() {
       tel: cliente.cliente_telefone,
       cnpj: cliente.cliente_cnpj,
       cpf: cliente.cliente_cpf,
-      status:         String(cliente.estaAtivo),
+      status: String(cliente.estaAtivo),
       cep: cliente.cliente_cep,
       endereco: cliente.cliente_endereco,
       estado: cliente.cliente_estado, 
@@ -730,9 +730,10 @@ export default function Clients() {
                   <tr className="bg-verdePigmento text-white shadow-thead">
                     {[
                       "ID",
-                      "Nome Cliente",
+                      "Nome Cliente / Nome Empresa",
                       "Email",
                       "Telefone",
+                      "Tipo",
                       "CPF/CNPJ",
                       "CEP",
                       "Endereço",
