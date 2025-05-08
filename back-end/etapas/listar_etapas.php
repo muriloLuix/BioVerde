@@ -9,7 +9,7 @@ header('Content-Type: application/json');
 
 try {
     if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco de dados");
+        throw new Exception("Erro na conexÃ£o com o banco de dados");
     }
 
     $cols_etapa = array(
@@ -36,7 +36,7 @@ try {
     // Busca os dados com JOIN
     $etapas = search($conn, "etapa_ordem a", implode(",", $cols_etapa), $joins);
 
-    // Agrupa as etapas por produção
+    // Agrupa as etapas por produÃ§Ã£o
     $produtosComEtapas = [];
     foreach ($etapas as $etapa) {
         $producaoId = $etapa['producao_id'];
@@ -45,7 +45,7 @@ try {
         if (!isset($produtosComEtapas[$producaoId])) {
             $produtosComEtapas[$producaoId] = [
                 'produto_nome' => $produtoNome,
-                'produto_id' => $producaoId, // agora produto_id é o etapa_id
+                'produto_id' => $producaoId, // agora produto_id Ã© o etapa_id
                 'etapas' => []
             ];
         }

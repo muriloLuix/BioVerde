@@ -266,6 +266,8 @@ export default function InventoryControl() {
 				{ withCredentials: true }
 			);
 
+			console.log("Resposta do back-end:", response.data);
+
 			if (response.data.success) {
 				setProdutos(response.data.produtos || []);
 				return true;
