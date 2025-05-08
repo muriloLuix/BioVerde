@@ -209,7 +209,7 @@ export default function Suppliers() {
           },
         );
 
-        // console.log("Resposta do back-end:", fornecedoresResponse.data); 
+        console.log("Resposta do back-end:", fornecedoresResponse.data); 
     
         if (fornecedoresResponse.data.success) {
           setFornecedores(fornecedoresResponse.data.fornecedores || []);

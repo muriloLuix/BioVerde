@@ -28,17 +28,17 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    // Verifica se o ID da etapa foi enviado
-    if (empty($data['etor_id'])) {
-        throw new Exception("ID da etapa não informado.");
-    }
-
     // Validação dos campos obrigatórios
     $camposObrigatorios = ['nome_etapa', 'responsavel', 'tempo', 'insumos', 'obs'];
     foreach ($camposObrigatorios as $campo) {
         if (!isset($data[$campo])) {
             throw new Exception("Campo obrigatório ausente: $campo");
         }
+    }
+
+    // Verifica se o ID da etapa foi enviado
+    if (empty($data['step_id'])) {
+        throw new Exception("ID da etapa não informado.");
     }
 
     // Atualiza a etapa_ordem

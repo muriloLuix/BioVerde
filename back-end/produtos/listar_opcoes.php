@@ -10,7 +10,7 @@ try {
 
     // Buscar dados
     $tp_produto = buscarTipoProduto($conn);
-    $unidade_medida = buscarUnidadeMedida($conn);
+    // $unidade_medida = buscarUnidadeMedida($conn);
 
     echo json_encode([
         "success" => true,

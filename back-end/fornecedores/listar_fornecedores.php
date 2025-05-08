@@ -10,24 +10,13 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    $cols = array("fornecedor_id", "fornecedor_nome", "fornecedor_razao_social", "fornecedor_email", "fornecedor_telefone", "fornecedor_CNPJ", "fornecedor_responsavel", "fornecedor_cep", "fornecedor_endereco", "fornecedor_num_endereco", "fornecedor_estado", "fornecedor_cidade", "b.sta_nome", "b.sta_id", "fornecedor_dtcadastro");
+    $cols = array("fornecedor_id", "fornecedor_nome", "fornecedor_razao_social", "fornecedor_email", "fornecedor_telefone", "fornecedor_CNPJ", "fornecedor_responsavel", "fornecedor_cep", "fornecedor_endereco", "fornecedor_num_endereco", "fornecedor_estado", "fornecedor_cidade", "fornecedor_dtcadastro");
 
-    $joins = [
-        [
-            "type" => "INNER",
-            "join_table" => "status b",
-            "on" => "a.fornecedor_status = b.sta_id"
-        ]
-    ];
-
-    $fornecedores = search($conn, "fornecedores a", implode(",", $cols), $joins);
-
-    $status = buscarStatus($conn);
+    $fornecedores = search($conn, "fornecedores a", implode(",", $cols));
 
     echo json_encode([
         "success" => true,
-        "fornecedores" => $fornecedores,
-        "status" => $status
+        "fornecedores" => $fornecedores
     ]);
 
 } catch (Exception $e) {

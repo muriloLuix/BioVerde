@@ -40,7 +40,7 @@ try {
     $user_id = $_SESSION['user_id'];
 
     $cliente_id = (int)$data['cliente_id'];
-    if ($user_id <= 0) {
+    if ($cliente_id <= 0) {
         throw new Exception("ID do cliente inválido. Por favor, verifique os dados.");
     }
 
