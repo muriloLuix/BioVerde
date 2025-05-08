@@ -1,5 +1,5 @@
 import { Tabs, Form } from "radix-ui";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
 	Eye,
 	PencilLine,
@@ -546,17 +546,16 @@ export default function Orders() {
 	};
 
 	//Limpar FormData
-	const clearFormData = () => {
-		setFormData(
-			(prev) =>
-				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
-				) as typeof prev
+	const clearFormData = useCallback(() => {
+		setFormData((prev) =>
+		  Object.fromEntries(
+			Object.entries(prev).map(([key, value]) => [
+			  key,
+			  typeof value === "number" ? 0 : "",
+			])
+		  ) as typeof prev
 		);
-	};
+	  }, []);
 
 	const handleObsClick = (pedido: Pedido) => {
 		setCurrentObs(pedido.pedido_observacoes);
@@ -1060,11 +1059,10 @@ export default function Orders() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Pedido:"
-					leftButtonText="Cancelar"
-					rightButtonText="Editar"
-					loading={loading}
+					submitButtonText="Cancelar"
+					cancelButtonText="Editar"
 					isLoading={loading.has("updateOrder")}
-					onCancel={() => clearFormData()}
+					onExit={clearFormData}
 					onSubmit={handleUpdateOrder}
 				>
 					<div className="flex gap-10 mb-8">
@@ -1251,8 +1249,8 @@ export default function Orders() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Pedido:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					submitButtonText="Excluir"
+					cancelButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);

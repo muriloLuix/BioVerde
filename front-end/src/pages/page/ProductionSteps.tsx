@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tabs, Form } from "radix-ui";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, PencilLine, Trash, Eye, Search, Loader2 } from "lucide-react";
 import axios from "axios";
 
@@ -381,10 +381,10 @@ export default function ProductionSteps() {
       });
     }
   };
-
-  //Limpar FormData]
-  const clearFormData = (keepProduct: boolean) => {
-    if(keepProduct) {
+  
+  //Limpar FormData
+  const clearFormData = useCallback((keepProduct: boolean) => {
+    if (keepProduct) {
       setFormData({
         produto_id: formData.produto_id,
         produto_nome: formData.produto_nome,
@@ -405,7 +405,11 @@ export default function ProductionSteps() {
         ) as typeof prev
       );
     }
-  };
+  }, [formData.produto_id, formData.produto_nome]);
+  
+  const handleExit = useCallback(() => {
+    clearFormData(keepProduct);
+  }, [clearFormData, keepProduct]);
 
   //Scrolla a pagina para baixo quando clicar em "Adicionar Etapa"
   const handleOpenChange = (open: boolean) => {
@@ -477,7 +481,7 @@ export default function ProductionSteps() {
                       />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar-products">
+                  <div className="flex-1 overflow-y-auto custom-scrollbar-modal">
                   {loading.has("steps") ? (
                     <div className="flex justify-center items-center h-full">
                       <Loader2 className="animate-spin h-8 w-8 mx-auto" />
@@ -863,11 +867,10 @@ export default function ProductionSteps() {
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
           modalTitle="Editar Etapa:"
-          leftButtonText="Editar"
-          rightButtonText="Cancelar"
-          loading={loading}
+          submitButtonText="Editar"
+          cancelButtonText="Cancelar"
           isLoading={loading.has("updateStep")}
-          onCancel={() => clearFormData(keepProduct)}
+          onExit={handleExit}
           onSubmit={handleUpdateStep}
         >
           <div className="flex gap-10 mb-6 justify-between w-2xl">
@@ -958,8 +961,8 @@ export default function ProductionSteps() {
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
           modalTitle="Excluir Etapa:"
-          leftButtonText="Excluir"
-          rightButtonText="Cancelar"
+          submitButtonText="Excluir"
+          cancelButtonText="Cancelar"
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  

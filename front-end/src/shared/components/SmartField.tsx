@@ -36,6 +36,7 @@ type InputProps =
 type SmartFieldProps = InputProps;
 
 const SmartField: React.FC<SmartFieldProps> = ({
+
 	isSelect,
 	isTextArea,
 	isPrice,
@@ -130,8 +131,8 @@ const SmartField: React.FC<SmartFieldProps> = ({
 					</select>
 				)
 			) : isPassword ? (
-				<div className="flex gap-4">
-					<div className="relative">
+				<div className="flex gap-7">
+					<div className="relative flex-1">
 						<input
 							{...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
 							type={isHidden ? "text" : "password"}

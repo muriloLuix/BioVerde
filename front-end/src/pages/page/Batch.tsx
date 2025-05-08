@@ -95,8 +95,8 @@ const Batch = () => {
 							buttonName="+ Novo lote"
 							modalTitle="Adicione as informações"
 							modalWidth="w-1/2"
-							leftButtonText="Criar"
-							rightButtonText="Cancelar"
+							submitButtonText="Criar"
+							cancelButtonText="Cancelar"
 							children={
 								<>
 									<SmartField

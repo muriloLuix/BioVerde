@@ -1,5 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Dialog, Form } from "radix-ui";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 type ModalProps = {
 	openModal: boolean;
@@ -11,14 +12,16 @@ type ModalProps = {
 	modalSecondTitle?: string | React.ReactNode;
 	obsText?: string;
 	withExitButton?: boolean;
-	leftButtonText?: string;
-	rightButtonText?: string;
+	withXButton?: boolean;
+	submitButtonText?: string;
+	cancelButtonText?: string;
+	registerButtonText?: string;
 	modalWidth?: string;
-	loading?: Set<string>;
 	isLoading?: boolean;
+	isRegister?: boolean;
 	isOrderModal?: boolean;
 	totalPedido?: number;
-	onCancel?: () => void;
+	onExit?: () => void;
 	onDelete?: () => void;
 	onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
@@ -32,17 +35,30 @@ const Modal = ({
 	modalTitle,
 	modalSecondTitle,
 	withExitButton,
+	withXButton,
 	modalWidth,
 	obsText,
-	rightButtonText,
-	leftButtonText,
+	cancelButtonText,
+	submitButtonText,
+	registerButtonText,
 	isOrderModal,
 	isLoading,
+	isRegister,
 	totalPedido,
-	onCancel,
+	onExit,
 	onSubmit,
 	onDelete,
 }: ModalProps) => {
+
+	//Função para limpar os dados após o modal fechar
+	const prevOpenRef = useRef(openModal);
+	useEffect(() => {
+		if (prevOpenRef.current && !openModal) {
+			onExit?.();
+		}
+		prevOpenRef.current = openModal;
+	}, [openModal, onExit]);
+
 	return (
 		<Dialog.Root open={openModal} onOpenChange={setOpenModal}>
 			<Dialog.Trigger asChild>
@@ -53,11 +69,19 @@ const Modal = ({
 			<Dialog.Portal>
 				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
 				<Dialog.Content
-					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-xl shadow-lg`}
+					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg max-h-[90vh] overflow-auto custom-scrollbar-modal`}
 				>
-					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between">
-						<span>{modalTitle}</span>
-						<span>{modalSecondTitle}</span>
+					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between items-center">
+						{modalTitle}
+						{withXButton ? (
+							<Dialog.Close asChild>
+								<button 
+								className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200"
+								>
+									<X />
+								</button>
+							</Dialog.Close>
+						) : modalSecondTitle}	
 					</Dialog.Title>
 					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
 						{withExitButton ? (
@@ -87,7 +111,6 @@ const Modal = ({
 										<div className="flex justify-end">
 											<button
 												className="bg-verdeMedio p-2 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2 hover:bg-verdeEscuro"
-												aria-label="Close"
 											>
 												Fechar
 											</button>
@@ -108,57 +131,48 @@ const Modal = ({
 								}}
 							>
 								{children}
-								<div className="flex justify-end items-center gap-3 m-2">
-									<>
-										{/* <Form.Submit>
+									{isRegister ? (
+										<Form.Submit asChild>
+											<div className="flex place-content-center mt-6">
 											<button
 												type="submit"
-												className="py-2 px-4 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-200"
-												// disabled={!!loading?.size}
+												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
+												// disabled={loading.size > 0}
 											>
 												{isLoading ? (
 													<Loader2 className="animate-spin h-6 w-6" />
 												) : (
-													leftButtonText
+													registerButtonText
 												)}
 											</button>
+											</div>
 										</Form.Submit>
-										<Dialog.Close asChild>
-											<button
+									) : (
+										<div className="flex justify-end items-center gap-3 m-2">
+											<Dialog.Close asChild>
+												<button
 												type="button"
-												onClick={onCancel}
-												className="bg-green-500 py-2 px-4 rounded-xl text-white cursor-pointer flex place-content-center gap-2 hover:bg-green-600"
-												aria-label="Close"
-											>
-												{rightButtonText}
-											</button>
-										</Dialog.Close> */}
-										<Form.Submit>
-											<button
-											type="submit"
-											className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-											// disabled={!!loading?.size}
-											>
-											{isLoading ? (
-												<Loader2 className="animate-spin h-6 w-6" />
-											) : (
-												leftButtonText
-											)}
-											</button>
-										</Form.Submit>
-
-										<Dialog.Close asChild>
-											<button
-											type="button"
-											onClick={onCancel}
-											className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-											aria-label="Close"
-											>
-											{rightButtonText}
-											</button>
-										</Dialog.Close>
-									</>
-								</div>
+												className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
+												>
+													{cancelButtonText}
+												</button>
+											</Dialog.Close>
+											
+											<Form.Submit>
+												<button
+												type="submit"
+												className="bg-verdePigmento p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeGrama"
+												// disabled={!!loading?.size}
+												>
+												{isLoading ? (
+													<Loader2 className="animate-spin h-6 w-6" />
+												) : (
+													submitButtonText
+												)}
+												</button>
+											</Form.Submit>
+										</div>
+									)}
 							</Form.Root>
 						)}
 					</Dialog.Description>

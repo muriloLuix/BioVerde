@@ -1,5 +1,5 @@
 import { Tabs, Form } from "radix-ui";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, PencilLine, Trash, Loader2, FilterX, Printer } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import axios from "axios";
@@ -488,7 +488,7 @@ export default function Suppliers() {
   };
 
   //Limpar FormData
-  const clearFormData = () => {
+  const clearFormData = useCallback(() => {
     setFormData((prev) =>
       Object.fromEntries(
         Object.entries(prev).map(([key, value]) => [
@@ -497,7 +497,7 @@ export default function Suppliers() {
         ])
       ) as typeof prev
     );
-  };
+  }, []);
 
   return (  
     <div className="flex-1 p-6 pl-[280px]">
@@ -1112,11 +1112,10 @@ export default function Suppliers() {
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
           modalTitle="Editar Fornecedor:"
-          leftButtonText="Editar"
-          rightButtonText="Cancelar"
-          loading={loading}
+          submitButtonText="Editar"
+          cancelButtonText="Cancelar"
           isLoading={loading.has("updateSupplier")}
-          onCancel={() => clearFormData()}
+          onExit={clearFormData}
           onSubmit={handleUpdateSupplier}
         >
           {/* Linha Nome e razão social*/}
@@ -1379,8 +1378,8 @@ export default function Suppliers() {
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
           modalTitle="Excluir Fornecedor:"
-          leftButtonText="Excluir"
-          rightButtonText="Cancelar"
+          submitButtonText="Excluir"
+          cancelButtonText="Cancelar"
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  

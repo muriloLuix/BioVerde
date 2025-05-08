@@ -1,5 +1,5 @@
 import { Tabs, Form } from "radix-ui";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
 	Search,
 	PencilLine,
@@ -509,18 +509,26 @@ export default function InventoryControl() {
 	};
 
 	//Limpar FormData
-	const clearFormData = () => {
-		setFormData(
-			(prev) =>
-				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
-				) as typeof prev
+	const clearFormData = useCallback(() => {
+		setFormData((prev) =>
+			Object.fromEntries(
+			Object.entries(prev).map(([key, value]) => [
+				key,
+				typeof value === "number" ? 0 : "",
+			])
+			) as typeof prev
 		);
-	};
+	}, []);
 
+	const handleExit = useCallback(() => {
+		clearFormData();
+		setErrors((prevErrors) => ({
+		  ...prevErrors,
+		  price: false,
+		}));
+	}, [clearFormData]);
+
+	//Puxa a observação ao abrir o modal 
 	const handleObsClick = (produto: Produto) => {
 		setCurrentObs(produto.produto_observacoes);
 		setOpenObsModal(true);
@@ -1025,14 +1033,10 @@ export default function InventoryControl() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Produto:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					submitButtonText="Editar"
+					cancelButtonText="Cancelar"
 					isLoading={loading.has("updateProduct")}
-					onCancel={() => {
-						clearFormData();
-						errors.price = false;
-					}}
+					onExit={handleExit}
 					onSubmit={handleUpdateProduct}
 				>
 					<div className="flex gap-x-15 mb-6">
@@ -1133,8 +1137,8 @@ export default function InventoryControl() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Produto:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					submitButtonText="Excluir"
+					cancelButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);

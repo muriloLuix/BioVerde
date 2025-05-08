@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tabs, Form } from "radix-ui";
-import {Search, PencilLine, Trash, Loader2, FilterX, Printer, X } from "lucide-react";
+import {Search, PencilLine, Trash, Loader2, FilterX, Printer, X, Plus } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import axios from "axios";
 import { ConfirmationModal } from "../../shared";
@@ -35,6 +35,7 @@ export default function UsersPage() {
   const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
   const [relatorioContent, setRelatorioContent] = useState<string>("");
   const [activeTab, setActiveTab] = useState("list");
+  const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -58,7 +59,7 @@ export default function UsersPage() {
     cargo: "",
     nivel: "",
     password: "",
-    status: "ativo",
+    status: "",
   });
   const [options, setOptions] = useState<{
     cargos: Cargo[];
@@ -81,6 +82,8 @@ export default function UsersPage() {
     dname: "",
     reason: "",
   });
+
+  console.log(formData)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -354,9 +357,10 @@ export default function UsersPage() {
       console.log("Resposta do back-end:", response.data);
   
       if (response.data.success) {
-        await refreshData();
+        setOpenRegisterModal(false);
         setSuccessMsg(true);
         setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
+        await refreshData();
         clearFormData();
       } else {
         setMessage(response.data.message || "Erro ao cadastrar usuário");
@@ -538,7 +542,7 @@ export default function UsersPage() {
   };
 
   //Limpar FormData
-  const clearFormData = () => {
+  const clearFormData = useCallback(() => {
     setFormData((prev) =>
       Object.fromEntries(
         Object.entries(prev).map(([key, value]) => [
@@ -547,7 +551,7 @@ export default function UsersPage() {
         ])
       ) as typeof prev
     );
-  };
+  }, []);
 
   return (
     <div className="flex-1 p-6 pl-[280px]">
@@ -571,19 +575,20 @@ export default function UsersPage() {
             >
               Lista de Usuários
             </Tabs.Trigger>
-
-            <Tabs.Trigger
-              value="register"
-              className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-                activeTab === "register" ? "select animation-tab" : ""
-              }`}
-            >
-              Cadastrar Usuários
-            </Tabs.Trigger>
           </Tabs.List>
 
           {/* Aba de Lista de Usuários */}
           <Tabs.Content value="list" className="flex flex-col w-full">
+            <div className="flex justify-end m-1"> 
+              <button
+                type="button"
+                className="bg-verdePigmento p-3 font-bold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center gap-2"
+                onClick={() => setOpenRegisterModal(true)}
+              >
+                <Plus />
+                Novo Usuário
+              </button>
+            </div>
             {/* Filtro de Usuários */}
             <Form.Root onSubmit={handleFilterSubmit} className="flex flex-col gap-4">
               <h2 className="text-3xl">Filtros:</h2>
@@ -857,152 +862,6 @@ export default function UsersPage() {
             {/* Fim aba de Lista de Usuários */}
           </Tabs.Content>
 
-          {/* Aba de Cadastro de Usuários */}
-          <Tabs.Content
-            value="register"
-            className="flex items-center justify-center"
-          >
-            <Form.Root className="flex flex-col" onSubmit={handleSubmit}>
-              <h2 className="text-3xl mb-8">Cadastro de usuários:</h2>
-
-              {/* Linha Nome e Email*/}
-              <div className="flex mb-10 justify-between">
-
-                <SmartField
-                  fieldName="name"
-                  fieldText="Nome Completo"
-                  type="text"
-                  placeholder="Digite o nome completo"
-                  autoComplete="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  inputWidth="w-[400px]"
-                />
-
-                <SmartField
-                  fieldName="email"
-                  fieldText="Email"
-                  type="email"
-                  placeholder="Digite o email"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  inputWidth="w-[400px]"
-                />
-              </div>
-
-              {/* Linha Telefone, CPF, e Cargo*/}
-              <div className="flex gap-x-15 mb-10 justify-between">
-
-                <SmartField
-                  fieldName="tel"
-                  fieldText="Telefone"
-                  withInputMask
-                  type="tel"
-                  mask="(99) 9999?9-9999"
-                  autoClear={false}
-                  unstyled
-                  pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                  required
-                  autoComplete="tel"
-                  placeholder="Digite o Telefone"
-                  value={formData.tel}
-                  onChange={handleChange}
-                  inputWidth="w-[275px]"
-                />  
-
-                <SmartField
-                  fieldName="cpf"
-                  fieldText="CPF"
-                  withInputMask
-                  type="text"
-                  mask="999.999.999-99"
-                  autoClear={false}
-                  unstyled
-                  pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                  required
-                  placeholder="Digite o CPF"
-                  value={formData.cpf}
-                  onChange={handleChange}
-                  inputWidth="w-[275px]"
-                />  
-
-                <SmartField
-                    fieldName="cargo"
-                    fieldText="Cargo"
-                    isSelect
-                    isLoading={loading.has("options")}
-                    error={errors.position ? "*" : undefined}
-                    value={formData.cargo}
-                    onChange={handleChange}
-                    placeholderOption="Selecione o cargo" 
-                    inputWidth="w-[275px]"
-                  >  
-                    {options.cargos.map((cargo) => (
-                      <option key={cargo.car_id} value={cargo.car_nome}>
-                        {cargo.car_nome}
-                      </option>
-                    ))}
-                  </SmartField> 
-              </div>
-
-              {/* Linha Nivel de Acesso e Senha*/}
-              <div className="flex gap-x-15 mb-10 items-center">
-
-                <SmartField
-                  fieldName="nivel"
-                  fieldText="Nível de Acesso"
-                  isSelect
-                  isLoading={loading.has("options")}
-                  error={errors.level ? "*" : undefined}
-                  value={formData.nivel}
-                  onChange={handleChange}
-                  placeholderOption="Selecione o nível de acesso" 
-                  inputWidth="w-[275px]"
-                >  
-                  {options.niveis.map((nivel) => (
-                    <option key={nivel.nivel_id} value={nivel.nivel_nome}>
-                      {nivel.nivel_nome}
-                    </option>
-                  ))}
-                </SmartField> 
-
-                <SmartField
-                  isPassword
-                  fieldName="password"
-                  fieldText="Senha"
-                  placeholder="Digite ou Gere a senha"
-                  error={errors.password ? "A senha deve ter pelo menos 8 caracteres*" : undefined}
-                  value={formData.password}
-                  onChange={handleChange}
-                  generatePassword={generatePassword}
-                  inputWidth="w-[275px]"
-                />
-
-              </div>
-
-              <Form.Submit asChild>
-                <div className="flex place-content-center mb-5 mt-5">
-                  <button
-                    type="submit"
-                    className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
-                    disabled={loading.size > 0}
-                  >
-                    {loading.has("submit") ? (
-                      <Loader2 className="animate-spin h-6 w-6" />
-                    ) : (
-                      "Cadastrar Usuário"
-                    )}
-                  </button>
-                </div>
-              </Form.Submit>
-            </Form.Root>
-
-            {/* Fim aba de cadastro de usuários*/}
-          </Tabs.Content>
-
         </Tabs.Root>
 
         {/* Modal de Avisos */}
@@ -1058,16 +917,135 @@ export default function UsersPage() {
           </div>
         )}
 
+        {/* Modal de Cadastro de Usuários */}
+        <Modal
+          isRegister
+          withXButton
+          openModal={openRegisterModal}
+          setOpenModal={setOpenRegisterModal}
+          modalTitle="Cadastrar Usuário:"
+          modalWidth="w-1/2"
+          registerButtonText="Cadastrar Usuário"
+          isLoading={loading.has("submit")}
+          onExit={clearFormData}
+          onSubmit={handleSubmit}
+        >
+          <div className="flex flex-col gap-4">
+            <SmartField
+              fieldName="name"
+              fieldText="Nome Completo"
+              placeholder="Digite o nome completo"
+              autoComplete="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+            <SmartField
+              fieldName="email"
+              fieldText="Email"
+              type="email"
+              placeholder="Digite o email"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+
+            <div className="flex gap-7">
+              <SmartField
+                fieldName="tel"
+                fieldText="Telefone"
+                fieldClassname="flex flex-col w-1/2"
+                withInputMask
+                type="tel"
+                mask="(99) 9999?9-9999"
+                autoClear={false}
+                unstyled
+                pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
+                required
+                autoComplete="tel"
+                placeholder="Digite o Telefone"
+                value={formData.tel}
+                onChange={handleChange}
+              />
+              <SmartField
+                fieldName="cpf"
+                fieldText="CPF"
+                fieldClassname="flex flex-col w-1/2"
+                withInputMask
+                type="text"
+                mask="999.999.999-99"
+                autoClear={false}
+                unstyled
+                pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
+                required
+                placeholder="Digite o CPF"
+                value={formData.cpf}
+                onChange={handleChange}
+                inputWidth="w-full"
+              />
+            </div>
+
+            <div className="flex gap-7">
+              <SmartField
+                fieldName="cargo"
+                fieldText="Cargo"
+                fieldClassname="flex flex-col w-1/2"
+                isSelect
+                isLoading={loading.has("options")}
+                error={errors.position ? "*" : undefined}
+                value={formData.cargo}
+                onChange={handleChange}
+                placeholderOption="Selecione o cargo"
+              >
+                {options.cargos.map((cargo) => (
+                  <option key={cargo.car_id} value={cargo.car_nome}>
+                    {cargo.car_nome}
+                  </option>
+                ))}
+              </SmartField>
+              <SmartField
+                fieldName="nivel"
+                fieldText="Nível de Acesso"
+                fieldClassname="flex flex-col w-1/2"
+                isSelect
+                isLoading={loading.has("options")}
+                error={errors.level ? "*" : undefined}
+                value={formData.nivel}
+                onChange={handleChange}
+                placeholderOption="Selecione o nível de acesso"
+              >
+                {options.niveis.map((nivel) => (
+                  <option key={nivel.nivel_id} value={nivel.nivel_nome}>
+                    {nivel.nivel_nome}
+                  </option>
+                ))}
+              </SmartField>
+            </div>
+            <SmartField
+              isPassword
+              fieldName="password"
+              fieldText="Senha"
+              placeholder="Digite ou Gere a senha"
+              error={errors.password ? "A senha deve ter pelo menos 8 caracteres*" : undefined}
+              value={formData.password}
+              onChange={handleChange}
+              generatePassword={generatePassword}
+              inputWidth="w-full"
+            />
+          </div>
+
+        </Modal>
+
         {/* Modal de Edição */}
         <Modal
           openModal={openEditModal}
           setOpenModal={setOpenEditModal}
           modalTitle="Editar Usuário:"
-          leftButtonText="Editar"
-          rightButtonText="Cancelar"
-          loading={loading}
+          submitButtonText="Editar"
+          cancelButtonText="Cancelar"
           isLoading={loading.has("updateUser")}
-          onCancel={() => clearFormData()}
+          onExit={() => clearFormData()}
           onSubmit={handleUpdateUser}
         >
         {/* Linha Nome e Email*/} 
@@ -1191,8 +1169,8 @@ export default function UsersPage() {
           openModal={openDeleteModal}
           setOpenModal={setOpenDeleteModal}
           modalTitle="Excluir Usuário:"
-          leftButtonText="Excluir"
-          rightButtonText="Cancelar"
+          submitButtonText="Excluir"
+          cancelButtonText="Cancelar"
           onDelete={() => {
             setOpenConfirmModal(true);
             setOpenDeleteModal(false);  

@@ -56,21 +56,21 @@ border-radius: 8px;
 background: #26382f;
 border-radius: 8px;
 }
-.custom-scrollbar-products::-webkit-scrollbar {
+.custom-scrollbar-modal::-webkit-scrollbar {
     width: 9px;
 }
 
-.custom-scrollbar-products::-webkit-scrollbar-track {
+.custom-scrollbar-modal::-webkit-scrollbar-track {
 background: transparent;
 border-radius: 8px;
 }
 
-.custom-scrollbar-products::-webkit-scrollbar-thumb {
+.custom-scrollbar-modal::-webkit-scrollbar-thumb {
 background: #b9b9b9;
 border-radius: 8px;
 }
 
-.custom-scrollbar-products::-webkit-scrollbar-thumb:hover {
+.custom-scrollbar-modal::-webkit-scrollbar-thumb:hover {
 background: #a0a0a0; /* cor mais escura no hover */
 }
 
