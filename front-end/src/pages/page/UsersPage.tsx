@@ -58,7 +58,7 @@ export default function UsersPage() {
     cargo: "",
     nivel: "",
     password: "",
-    status: "ativo",
+    status: "1",
   });
   const [options, setOptions] = useState<{
     cargos: Cargo[];
@@ -82,6 +82,7 @@ export default function UsersPage() {
     reason: "",
   });
 
+  console.log(formData)
   useEffect(() => {
     const checkAuth = async () => {
       try {

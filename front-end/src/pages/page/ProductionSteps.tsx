@@ -28,7 +28,7 @@ type ProductsWithSteps = {
 };  
 
 type Etapa = Omit<FormData, "produto_nome" | "produto_id"> & {
-  id: number; 
+  etor_id: number; 
   dtCadastro?: string;
 };
 
@@ -191,13 +191,15 @@ export default function ProductionSteps() {
   //função para puxar o nome da etapa que será excluida
   const handleDeleteClick = (etapa: Etapa, nome_produto: string) => {
     setDeleteStep({
-      step_id: etapa.id || 0,
+      step_id: etapa.etor_id,
       dproduct: nome_produto,
       dstep: etapa.nome_etapa,
       reason: "",
     });
     setOpenDeleteModal(true);
   };
+
+  console.log(deleteStep)
   //Função de define qual será o submir que será enviado  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -220,7 +222,7 @@ export default function ProductionSteps() {
 
     const newStep = {
       ...stepFields,
-      id: stepData.length,
+      etor_id: stepData.length,
       ordem: stepData.length + 1,
     };
   
@@ -820,7 +822,7 @@ export default function ProductionSteps() {
                             <button
                               type="submit"
                               name="submitForm"
-                              className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra w-[278.72px]  hover:bg-verdeGrama "
+                              className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra w-[278.72px]  hover:bg-verdeGrama flex place-content-center"
                               onClick={() => setKeepProduct(false)}
                             >
                               {loading.has("submit") ? (

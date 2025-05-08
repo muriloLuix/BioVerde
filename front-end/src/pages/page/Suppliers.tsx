@@ -64,7 +64,7 @@ export default function Suppliers() {
     estado: "",
     cidade: "",
     num_endereco: "",
-    status: "ativo",
+    status: "1",
   });
   const [filters, setFilters] = useState({
     fnome_empresa: "",
@@ -81,8 +81,7 @@ export default function Suppliers() {
     dnome_empresa: "",
     reason: "",
   });
-
-  console.log(formData)
+  
   const navigate = useNavigate();
   useEffect(() => {
     const checkAuth = async () => {

@@ -59,7 +59,7 @@ export default function InventoryControl() {
 		nome_produto: "",
 		tipo: "",
 		lote: "",
-		status: "ativo",
+		status: "1",
 		preco: "",
 		fornecedor: "",
 		obs: "",
