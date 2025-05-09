@@ -13,6 +13,7 @@ import { NoticeModal } from "../../shared";
 type FormData = {
   produto_id: number,
   produto_nome: string;
+  etor_id: number; 
   ordem: number;
   nome_etapa: string;
   tempo: string;
@@ -51,6 +52,7 @@ export default function ProductionSteps() {
   const [formData, setFormData] = useState<FormData>({
     produto_id: 0,
     produto_nome: "",
+    etor_id: 0,
     ordem: 0,
     nome_etapa: "",
     tempo: "",
@@ -60,7 +62,7 @@ export default function ProductionSteps() {
   });
   const [stepData, setStepData] = useState<Etapa[]>([]);
   const [deleteStep, setDeleteStep] = useState({
-    step_id: 0,
+    etor_id: 0,
     dproduct: "",
     dstep: "",
     reason: "",
@@ -178,6 +180,7 @@ export default function ProductionSteps() {
     setFormData({
       produto_id: produto_id,
       produto_nome: nome_produto,
+      etor_id: etapa.etor_id,
       ordem: etapa.ordem,
       nome_etapa: etapa.nome_etapa,
       tempo: etapa.tempo,
@@ -191,7 +194,7 @@ export default function ProductionSteps() {
   //função para puxar o nome da etapa que será excluida
   const handleDeleteClick = (etapa: Etapa, nome_produto: string) => {
     setDeleteStep({
-      step_id: etapa.etor_id,
+      etor_id: etapa.etor_id,
       dproduct: nome_produto,
       dstep: etapa.nome_etapa,
       reason: "",
@@ -199,7 +202,6 @@ export default function ProductionSteps() {
     setOpenDeleteModal(true);
   };
 
-  console.log(deleteStep)
   //Função de define qual será o submir que será enviado  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -390,6 +392,7 @@ export default function ProductionSteps() {
       setFormData({
         produto_id: formData.produto_id,
         produto_nome: formData.produto_nome,
+        etor_id: 0, 
         ordem: 0,
         nome_etapa: "",
         tempo: "",
@@ -873,18 +876,6 @@ export default function ProductionSteps() {
           onSubmit={handleUpdateStep}
         >
           <div className="flex gap-10 mb-6 justify-between w-2xl">
-            {!keepProduct && (
-              <SmartField
-                fieldName="produto_nome"
-                fieldText="Produto Final"
-                fieldClassname="flex flex-col flex-1"
-                type="text"
-                required
-                placeholder="Nome do Produto final a ser produzido"
-                value={formData.produto_nome}
-                onChange={handleChange}
-              />
-            )}
             <SmartField
               fieldName="nome_etapa"
               fieldText="Nome da Etapa"

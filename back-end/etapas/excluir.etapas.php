@@ -31,9 +31,6 @@ try {
         throw new Exception("Formato de dados inválido. Por favor, verifique os dados enviados.");
     }
 
-    var_dump($data);
-    exit;
-
     // Validação dos campos obrigatórios
     $camposObrigatorios = ['dproduct', 'dstep', 'reason'];
     foreach ($camposObrigatorios as $field) {
@@ -44,7 +41,7 @@ try {
 
     $user_id = $_SESSION['user_id'];
 
-    $etor_id = (int) $data['step_id'];
+    $etor_id = (int) $data['etor_id'];
     if ($etor_id <= 0) {
         throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
     }
@@ -84,7 +81,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
-        'step_id' => $etor_id,
+        'etor_id' => $etor_id,
         'reason' => $data['reason'],
         'dproduct' => $data['dproduct'],
     ]);
