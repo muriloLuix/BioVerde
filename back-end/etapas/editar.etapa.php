@@ -37,7 +37,7 @@ try {
     }
 
     // Verifica se o ID da etapa foi enviado
-    if (empty($data['step_id'])) {
+    if (empty($data['etor_id'])) {
         throw new Exception("ID da etapa não informado.");
     }
 
