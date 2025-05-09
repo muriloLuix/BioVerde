@@ -37,6 +37,7 @@ $resultado = verificarCredenciais($conn, $email, $password);
 if ($resultado["success"]) {
     // Configurar sessão
     $_SESSION['user_id'] = $resultado["user"]["id"];
+    $_SESSION['nivel_acesso'] = $resultado["user"]["nivel_id"]; 
     $_SESSION['last_activity'] = time();
         
     echo json_encode([
