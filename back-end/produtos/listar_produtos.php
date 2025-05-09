@@ -12,7 +12,7 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    $cols = array("produto_id", "produto_nome", "c.tproduto_nome", "produto_preco", "sp.staproduto_nome", "f.fornecedor_nome", "produto_observacoes");
+    $cols = array("produto_id", "produto_nome", "c.tproduto_nome", "produto_preco", "sp.staproduto_nome", "f.fornecedor_nome_ou_empresa", "produto_observacoes");
 
     $joins = [
         [
@@ -36,15 +36,12 @@ try {
 
     $tp_produto = buscarTipoProduto($conn);
 
-    $unidade_medida = buscarUnidadeMedida($conn);
-
     $status_produto = buscarStatus($conn);
 
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,
         "tp_produto" => $tp_produto,
-        "unidades_medida" => $unidade_medida,
         "status_produto" => $status_produto
     ]);
 

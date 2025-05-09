@@ -213,11 +213,11 @@ export default function InventoryControl() {
 
 				if (optionsResponse.data.success) {
 					setOptions({
-						tipos: optionsResponse.data.tipos || [],
+						tipos: optionsResponse.data.tipos ?? [],
 					});
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(optionsResponse.data.message || "Erro ao carregar opções");
+					setMessage(optionsResponse.data.message ?? "Erro ao carregar opções");
 				}
 
 				if (produtosResponse.data.success) {
@@ -225,7 +225,7 @@ export default function InventoryControl() {
 				} else {
 					setOpenNoticeModal(true);
 					setMessage(
-						produtosResponse.data.message || "Erro ao carregar produtos"
+						produtosResponse.data.message ?? "Erro ao carregar produtos"
 					);
 				}
 			} catch (error) {
@@ -235,7 +235,7 @@ export default function InventoryControl() {
 				if (axios.isAxiosError(error)) {
 					console.error(
 						"Erro na requisição:",
-						error.response?.data || error.message
+						error.response?.data ?? error.message
 					);
 					if (error.response?.data?.message) {
 						setMessage(error.response.data.message);
@@ -738,7 +738,6 @@ export default function InventoryControl() {
 											"Preço",
 											"Status",
 											"Fornecedor",
-											"Uni. de Medida",
 											"Observações",
 											"Ações",
 										].map((header) => (
@@ -769,43 +768,39 @@ export default function InventoryControl() {
 											>
 												{Object.values(produto)
 													.slice(0, 9)
-													.map((value, idx) => (
+													.map((value, index) => (
 														<td
-															key={idx}
-															className="border border-black px-4 py-4 whitespace-nowrap"
+															key={value}
+															className="border border-black p-4 text-center"
 														>
-															{value}
+															{index === 6 ? (
+																<button
+																	className="text-blue-600 cursor-pointer"
+																	onClick={() => handleObsClick(produto)}
+																	title="Ver observações"
+																>
+																	<Eye />
+																</button>
+															) : (
+																value
+															)}
 														</td>
 													))}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-														onClick={() => handleObsClick(produto)}
-													>
-														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
-													</button>
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													<button
-														className="mr-4 text-black cursor-pointer relative group"
+														className="text-black cursor-pointer mr-2"
 														onClick={() => handleEditClick(produto)}
+														title="Editar produto"
 													>
 														<PencilLine />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Editar
-														</div>
 													</button>
 													<button
-														className="text-red-500 cursor-pointer relative group"
+														className="text-red-500 cursor-pointer"
 														onClick={() => handleDeleteClick(produto)}
+														title="Excluir produto"
 													>
 														<Trash />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Excluir
-														</div>
 													</button>
 												</td>
 											</tr>
@@ -814,7 +809,7 @@ export default function InventoryControl() {
 								</tbody>
 							</table>
 						</div>
-						{produtos.length !== 0 && (
+						{produtos.length > 0 && (
 							<div className="min-w-[966px] max-w-[73vw]">
 								<button
 									type="button"
