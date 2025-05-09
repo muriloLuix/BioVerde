@@ -275,6 +275,31 @@ function buscarCargos($conn)
 }
 
 /**
+ * Busca todos os status do produto registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os status do produto, onde cada status
+ *         é representado por um array com as chaves 'staproduto_id' e 'staproduto_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os status.
+ */
+function buscarStatus($conn)
+{
+    $result = $conn->query("SELECT staproduto_id, staproduto_nome FROM status_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $status_produto = [];
+    while ($row = $result->fetch_assoc()) {
+        $status_produto[] = $row;
+    }
+
+    return $status_produto;
+}
+
+/**
  * Busca todos os níveis de acesso registrados no banco de dados.
  *
  * @param mysqli $conn Conex o com o banco de dados.

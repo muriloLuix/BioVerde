@@ -12,10 +12,12 @@ import {
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import axios from "axios";
 
-import { SmartField } from "../../shared";
-import { ConfirmationModal } from "../../shared";
-import { NoticeModal } from "../../shared";
-import { Modal } from "../../shared";
+import {
+	SmartField,
+	Modal,
+	NoticeModal,
+	ConfirmationModal,
+} from "../../shared";
 
 interface Tipo {
 	tproduto_id: number;
@@ -26,11 +28,10 @@ interface Produto {
 	produto_id: number;
 	produto_nome: string;
 	tproduto_nome: string;
-	produto_lote: string;
 	produto_preco: string;
 	fornecedor_nome: string;
 	produto_observacoes: string;
-	produto_status: string;        
+	produto_status: string;
 }
 
 export default function InventoryControl() {
@@ -58,8 +59,7 @@ export default function InventoryControl() {
 		produto_id: 0,
 		nome_produto: "",
 		tipo: "",
-		lote: "",
-		status: "1",
+		status: "",
 		preco: "",
 		fornecedor: "",
 		obs: "",
@@ -164,7 +164,6 @@ export default function InventoryControl() {
 			produto_id: produto.produto_id,
 			nome_produto: produto.produto_nome,
 			tipo: tipoSelecionado?.tproduto_id.toString() || "",
-			lote: produto.produto_lote,
 			status: produto.produto_status,
 			preco: produto.produto_preco,
 			fornecedor: produto.fornecedor_nome,
@@ -222,7 +221,7 @@ export default function InventoryControl() {
 				}
 
 				if (produtosResponse.data.success) {
-					setProdutos(produtosResponse.data.produtos || []);
+					setProdutos(produtosResponse.data.produtos ?? []);
 				} else {
 					setOpenNoticeModal(true);
 					setMessage(
@@ -736,15 +735,10 @@ export default function InventoryControl() {
 											"ID",
 											"Nome Produto",
 											"Tipo",
-											"Lote",
-											"Quantidade",
-											"Uni. de Medida",
 											"Preço",
-											"Fornecedor",
 											"Status",
-											"Data de Produção",
-											"Data de Validade",
-											"Data de Cadastro",
+											"Fornecedor",
+											"Uni. de Medida",
 											"Observações",
 											"Ações",
 										].map((header) => (
@@ -762,12 +756,6 @@ export default function InventoryControl() {
 										<tr>
 											<td colSpan={9} className="text-center py-4">
 												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
-											</td>
-										</tr>
-									) : produtos.length === 0 ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												Nenhum produto encontrado
 											</td>
 										</tr>
 									) : (
@@ -928,17 +916,6 @@ export default function InventoryControl() {
 
 							<div className="flex gap-x-15 mb-8 items-center">
 								<SmartField
-									fieldName="lote"
-									fieldText="Lote"
-									required
-									type="text"
-									placeholder="Lote do produto"
-									value={formData.lote}
-									onChange={handleChange}
-									inputWidth="w-[170px]"
-								/>
-
-								<SmartField
 									fieldName="tipo"
 									fieldText="Tipo"
 									isSelect
@@ -1065,17 +1042,6 @@ export default function InventoryControl() {
 					</div>
 
 					<div className="flex gap-x-15 mb-6 items-center">
-						<SmartField
-							fieldName="lote"
-							fieldText="Lote"
-							required
-							type="text"
-							placeholder="Lote do produto"
-							value={formData.lote}
-							onChange={handleChange}
-							inputWidth="w-[170px]"
-						/>
-
 						<SmartField
 							fieldName="tipo"
 							fieldText="Tipo"
