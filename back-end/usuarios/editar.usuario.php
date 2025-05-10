@@ -46,8 +46,12 @@ try {
         throw new Exception("Usuário não encontrado");
     }
 
+
     // Conflitos de email/CPF
-    $conflito = verificarConflitosAtualizacao($conn, $data['email'], $data['cpf'], $data['user_id']);
+    $colunas = ["user_email", "user_CPF"];
+    $valores = [$data["email"], $data["cpf"]];
+    
+    $conflito = verificarConflitosAtualizacao($conn, "usuarios", $colunas, $valores, "user_id", $data["user_id"]);
     if ($conflito) {
         throw new Exception($conflito['message']);
     }
