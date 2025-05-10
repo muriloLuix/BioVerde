@@ -43,7 +43,7 @@ $filtros = buildFilters($data, $mapaFiltrosFornecedor);
 if (isset($data['fstatus']) && $data['fstatus'] !== "") {
     // garante inteiro 0 ou 1
     $val = intval($data['fstatus']);
-    $filtros['where'][] = "F.estaAtivo = {$val}";
+    $filtros['where'][] = "f.estaAtivo = {$val}";
 }
 
 // Define a estrutura da consulta

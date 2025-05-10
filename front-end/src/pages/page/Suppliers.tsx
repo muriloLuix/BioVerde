@@ -481,7 +481,7 @@ export default function Suppliers() {
   //Função para chamar a api de CEP
   const handleCepBlur = () => {
     setSuccessMsg(false);
-    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
+    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
   };
 
   //Limpar FormData
