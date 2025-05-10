@@ -14,14 +14,12 @@ import { useNavigate } from "react-router-dom";
 
 interface Fornecedor {
   fornecedor_id: number;
-  fornecedor_nome: string;
-  fornecedor_empresa: string;
+  fornecedor_nome_ou_empresa: string;
   fornecedor_razao_social: string;
   fornecedor_email: string;
   fornecedor_telefone: string;
   fornecedor_tipo: string;
-  fornecedor_cnpj: string;
-  fornecedor_cpf: string;
+  fornecedor_cpf_ou_cnpj: string;
   fornecedor_endereco: string;
   fornecedor_num_endereco: string;
   fornecedor_cidade: string;
@@ -29,7 +27,6 @@ interface Fornecedor {
   fornecedor_cep: string;
   fornecedor_responsavel: string;
   fornecedor_dtcadastro: string;
-  status_ativo: string;  
   estaAtivo: number;  
 }
 
@@ -50,13 +47,11 @@ export default function Suppliers() {
   });
   const [formData, setFormData] = useState({
     fornecedor_id: 0,
-    nome_empresa: "",
-    nome_fornecedor: "",
+    nome_empresa_fornecedor: "",
     razao_social: "",
     email: "",
     tel: "",
-    cnpj: "",
-    cpf: "",
+    cpf_cnpj: "",
     responsavel: "",
     tipo: "juridica",
     cep: "",
@@ -113,6 +108,8 @@ export default function Suppliers() {
     checkAuth();
   }, [navigate]);
 
+  console.log(formData)
+
   //OnChange dos campos
   const handleChange = (
     event:
@@ -132,16 +129,16 @@ export default function Suppliers() {
         setFormData((prev) => ({
           ...prev,
           tipo,
-          cnpj: "",               
+          cpf_cnpj: "",               
           razao_social: "",       
-          nome_empresa: "",      
+          nome_empresa_fornecedor: "",      
         }));
       } else if (tipo === "juridica") {
         setFormData((prev) => ({
           ...prev,
           tipo,
-          cpf: "",                
-          nome_fornecedor: "",
+          cpf_cnpj: "",                
+          nome_empresa_fornecedor: "",
         }));
       }
 
@@ -165,13 +162,11 @@ export default function Suppliers() {
 
     setFormData({
       fornecedor_id: fornecedor.fornecedor_id,
-      nome_fornecedor: fornecedor.fornecedor_nome,
-      nome_empresa: fornecedor.fornecedor_empresa,
+      nome_empresa_fornecedor: fornecedor.fornecedor_nome_ou_empresa,
       razao_social: fornecedor.fornecedor_razao_social,
       email: fornecedor.fornecedor_email,
       tel: fornecedor.fornecedor_telefone,
-      cnpj: fornecedor.fornecedor_cnpj,
-      cpf: fornecedor.fornecedor_cpf,
+      cpf_cnpj: fornecedor.fornecedor_cpf_ou_cnpj,
       responsavel: fornecedor.fornecedor_responsavel,
       status: String(fornecedor.estaAtivo),
       cep: fornecedor.fornecedor_cep,
@@ -181,14 +176,17 @@ export default function Suppliers() {
       num_endereco: fornecedor.fornecedor_num_endereco,
       tipo: fornecedor.fornecedor_tipo,
     });
+    setSupplierType(fornecedor.fornecedor_tipo)
     setOpenEditModal(true);
   };
+
+  console.log(formData)
 
   //função para puxar o nome do fornecedor que será excluido
   const handleDeleteClick = (fornecedor: Fornecedor) => {
     setDeleteSupplier({
       fornecedor_id: fornecedor.fornecedor_id,
-      dnome_empresa: fornecedor.fornecedor_nome,
+      dnome_empresa: fornecedor.fornecedor_nome_ou_empresa,
       reason: "",
     });
     setOpenDeleteModal(true);
@@ -726,18 +724,17 @@ export default function Suppliers() {
                   <tr className="bg-verdePigmento text-white shadow-thead">
                     {[
                       "ID",
-                      "Nome Fornecedor / Nome Empresa",
-                      "Razão Social",
-                      "Email",
-                      "Telefone",
+                      "Nome Fornecedor/Empresa",
                       "Tipo",
                       "CPF/CNPJ",
+                      "Email",
+                      "Telefone",
                       "Responsável",
                       "CEP",
                       "Endereço",
                       "Nº",
-                      "Estado",
                       "Cidade",
+                      "Estado",
                       "Status",
                       "Data de Cadastro",
                       "Ações"
@@ -866,7 +863,7 @@ export default function Suppliers() {
 
                 {supplierType === "juridica" && ( 
                   <SmartField
-                    fieldName="cnpj"
+                    fieldName="cpf_cnpj"
                     fieldText="CNPJ"
                     withInputMask
                     unstyled
@@ -876,7 +873,7 @@ export default function Suppliers() {
                     autoClear={false}
                     pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
                     placeholder="Digite o CNPJ"
-                    value={formData.cnpj}
+                    value={formData.cpf_cnpj}
                     onChange={handleChange}
                     inputWidth="w-[220px]"
                   />  
@@ -884,7 +881,7 @@ export default function Suppliers() {
 
                 {supplierType === "fisica" && ( 
                   <SmartField
-                    fieldName="cpf"
+                    fieldName="cpf_cnpj"
                     fieldText="CPF"
                     withInputMask
                     unstyled
@@ -894,7 +891,7 @@ export default function Suppliers() {
                     autoClear={false}
                     pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                     placeholder="Digite o CPF"
-                    value={formData.cpf}
+                    value={formData.cpf_cnpj}
                     onChange={handleChange}
                     inputWidth="w-[220px]"
                   />  
@@ -907,13 +904,13 @@ export default function Suppliers() {
                 {supplierType === "juridica" && ( 
                   <>
                   <SmartField
-                    fieldName="nome_empresa"
+                    fieldName="nome_empresa_fornecedor"
                     fieldText="Nome Fantasia da Empresa"
                     required
                     type="text"
                     placeholder="Digite o nome Fantasia da empresa"
                     autoComplete="name"
-                    value={formData.nome_empresa}
+                    value={formData.nome_empresa_fornecedor}
                     onChange={handleChange}
                     inputWidth="w-[400px]"
                   />
@@ -934,14 +931,14 @@ export default function Suppliers() {
 
                 {supplierType === "fisica" && ( 
                   <SmartField
-                    fieldName="nome_fornecedor"
+                    fieldName="nome_empresa_fornecedor"
                     fieldText="Nome do Fornecedor"
                     fieldClassname="flex flex-col w-full"
                     required
                     type="text"
                     placeholder="Digite o Nome do Fornecedor"
                     autoComplete="name"
-                    value={formData.nome_fornecedor}
+                    value={formData.nome_empresa_fornecedor}
                     onChange={handleChange}
                   />
                 )}
@@ -1124,13 +1121,13 @@ export default function Suppliers() {
             {supplierType === "juridica" && ( 
               <>
               <SmartField
-                fieldName="nome_empresa"
+                fieldName="nome_empresa_fornecedor"
                 fieldText="Nome da Empresa"
                 required
                 type="text"
                 placeholder="Digite o nome Fantasia da empresa"
                 autoComplete="name"
-                value={formData.nome_empresa}
+                value={formData.nome_empresa_fornecedor}
                 onChange={handleChange}
                 inputWidth="w-[300px]"
               />
@@ -1151,14 +1148,14 @@ export default function Suppliers() {
 
             {supplierType === "fisica" && ( 
               <SmartField
-                fieldName="nome_fornecedor"
+                fieldName="nome_empresa_fornecedor"
                 fieldText="Nome do Fornecedor"
                 fieldClassname="flex flex-col w-full"
                 required
                 type="text"
                 placeholder="Digite o Nome do Fornecedor"
                 autoComplete="name"
-                value={formData.nome_fornecedor}
+                value={formData.nome_empresa_fornecedor}
                 onChange={handleChange}
               />
             )}
@@ -1194,7 +1191,7 @@ export default function Suppliers() {
 
             {supplierType === "juridica" && ( 
               <SmartField
-                fieldName="cnpj"
+                fieldName="cpf_cnpj"
                 fieldText="CNPJ"
                 withInputMask
                 unstyled
@@ -1205,14 +1202,14 @@ export default function Suppliers() {
                 pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
                 placeholder="Digite o CNPJ"
                 fieldClassname="flex flex-col w-full"
-                value={formData.cnpj}
+                value={formData.cpf_cnpj}
                 onChange={handleChange}
               />  
             )}
 
             {supplierType === "fisica" && ( 
               <SmartField
-                fieldName="cpf"
+                fieldName="cpf_cnpj"
                 fieldText="CPF"
                 withInputMask
                 unstyled
@@ -1223,7 +1220,7 @@ export default function Suppliers() {
                 pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                 placeholder="Digite o CPF"
                 fieldClassname="flex flex-col w-full"
-                value={formData.cpf}
+                value={formData.cpf_cnpj}
                 onChange={handleChange}
               />  
             )}

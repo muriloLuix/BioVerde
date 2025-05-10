@@ -872,31 +872,53 @@ function configurarSessaoSegura()
 
 // editar.usuario.php
 
-/**
- * Verifica conflitos de email/CPF (excluindo o próprio usuário)
+/*
+ * Verifica conflitos de email/CPF/CNPJ
  */
-function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id)
+function verificarConflitosAtualizacao($conn, $tabela, $colunas, $valores, $chavePrimaria, $idIgnorar)
 {
-    $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE (user_email = ? OR user_CPF = ?) AND user_id != ?");
+    // Validação básica dos parâmetros
+    if (count($colunas) !== count($valores)) {
+        return ["success" => false, "message" => "Número de colunas e valores não correspondem."];
+    }
+
+    // Monta a cláusula WHERE dinamicamente
+    $condicoes = [];
+    $tipos = "";
+    $params = [];
+
+    foreach ($colunas as $i => $coluna) {
+        $condicoes[] = "$coluna = ?";
+        $tipos .= "s";
+        $params[] = $valores[$i];
+    }
+
+    $whereClause = implode(" OR ", $condicoes);
+    $whereClause = "($whereClause) AND $chavePrimaria != ?";
+
+    $tipos .= "i";
+    $params[] = $idIgnorar;
+
+    $query = "SELECT $chavePrimaria FROM $tabela WHERE $whereClause";
+
+    $stmt = $conn->prepare($query);
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    $stmt->bind_param("ssi", $email, $cpf, $user_id);
+
+    // Usa o operador splat (...) para passar os parâmetros dinamicamente
+    $stmt->bind_param($tipos, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $conflito = $result->fetch_assoc();
-        return ["success" => false, "message" => "E-mail ou CPF já está em uso por outro usuário."];
+        return ["success" => false, "message" => "Um dos valores já está em uso por outro registro."];
     }
+
     return null;
 }
 
-
-
 // cadastrar_fornecedores.php
-
-
 /**
  * Envia um e-mail de confirmação de cadastro de fornecedor
  * @param string $email e-mail do fornecedor
@@ -919,10 +941,10 @@ function enviarEmailFornecedor($email, $data)
                             <p style='font-size: 18px; line-height: 1.6;'>Em nome da BioVerde, gostariamos de agradecer pela confiança em nossos serviços.</p>
                             <p style='font-size: 18px; line-height: 1.6;'>Seguem abaixo os dados cadastrados no sistema:</p>
                             <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome da Empresa: </strong> " . $data['nome_empresa'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome da Empresa/Fornecedor: </strong> " . $data['nome_empresa_fornecedor'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Razão Social: </strong> " . $data['razao_social'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>E-mail: </strong> " . $data['email'] . "</p>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cnpj'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cpf_cnpj'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Endereço: </strong> " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Cidade: </strong> " . $data['cidade'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Estado: </strong> " . $data['estado'] . "</p>

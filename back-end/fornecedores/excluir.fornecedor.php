@@ -46,12 +46,6 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
-    $camposExclusao = [
-        'forex_excluido' => $data['dnome_empresa'],
-        'forex_exclusao' => $user_id,
-        'forex_motivo_exclusao' => $data['reason'],
-    ];
-
     // 1. Deleta o usuário
     $exclusao = deleteData($conn, $fornecedor_id, 'fornecedores', "fornecedor_id");
     if (!$exclusao['success']) {
@@ -66,7 +60,7 @@ try {
     // Resposta de sucesso simplificada para produção
     echo json_encode([
         'success' => true,
-        'message' => 'Usuário excluído com sucesso',
+        'message' => 'Fornecedor excluído com sucesso',
         'deleted_id' => $fornecedor_id // Envia o ID do usuário excluído
     ]);
 

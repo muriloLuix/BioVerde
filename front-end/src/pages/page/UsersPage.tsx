@@ -29,7 +29,6 @@ interface Usuario {
   nivel_nome: string;
   user_dtcadastro: string;
   estaAtivo: number;        
-  status_ativo: string;     
 }
 export default function UsersPage() {
   const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
@@ -82,7 +81,7 @@ export default function UsersPage() {
     reason: "",
   });
 
-  console.log(formData)
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
