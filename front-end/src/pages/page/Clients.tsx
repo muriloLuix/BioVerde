@@ -15,22 +15,19 @@ import { useNavigate } from "react-router-dom";
 
 interface Cliente {
   cliente_id: number;
-  cliente_nome: string;
-  cliente_empresa: string;
+  cliente_nome_ou_empresa: string;
   cliente_razao_social: string;
   cliente_email: string;
   cliente_telefone: string;
   cliente_tipo: string;
-  cliente_cnpj: string;
-  cliente_cpf: string;
+  cliente_cpf_ou_cnpj: string;
   cliente_cep: string;
   cliente_endereco: string;
   cliente_numendereco: string;
   cliente_estado: string;
   cliente_cidade: string;
   cliente_observacoes: string;
-  cliente_data_cadastro: string;
-  status_ativo: string;  
+  cliente_data_cadastro: string;  
   estaAtivo: number;   
 }
 
@@ -53,14 +50,12 @@ export default function Clients() {
   });
   const [formData, setFormData] = useState({
     cliente_id: 0,
-    nome_cliente: "",
-    nome_empresa: "",
+    nome_empresa_cliente: "",
     razao_social: "",
     email: "",
     tel: "",
     tipo: "juridica",
-    cpf: "",
-    cnpj: "",
+    cpf_cnpj: "",
     status: "1",
     cep: "",
     endereco: "",
@@ -141,16 +136,16 @@ export default function Clients() {
         setFormData((prev) => ({
           ...prev,
           tipo,
-          cnpj: "",               
+          cpf_cnpj: "",               
           razao_social: "",       
-          nome_empresa: "",      
+          nome_empresa_cliente: "",      
         }));
       } else if (tipo === "juridica") {
         setFormData((prev) => ({
           ...prev,
           tipo,
-          cpf: "",                
-          nome_cliente: "",
+          cpf_cnpj: "",                
+          nome_empresa_cliente: "",
         }));
       }
 
@@ -177,13 +172,11 @@ export default function Clients() {
 
     setFormData({
       cliente_id: cliente.cliente_id,
-      nome_cliente: cliente.cliente_nome,
-      nome_empresa: cliente.cliente_empresa,
+      nome_empresa_cliente: cliente.cliente_nome_ou_empresa,
       razao_social: cliente.cliente_razao_social,
       email: cliente.cliente_email,
       tel: cliente.cliente_telefone,
-      cnpj: cliente.cliente_cnpj,
-      cpf: cliente.cliente_cpf,
+      cpf_cnpj: cliente.cliente_cpf_ou_cnpj,
       status: String(cliente.estaAtivo),
       cep: cliente.cliente_cep,
       endereco: cliente.cliente_endereco,
@@ -193,6 +186,7 @@ export default function Clients() {
       obs: cliente.cliente_observacoes,
       tipo: cliente.cliente_tipo,
     });
+    setClientType(cliente.cliente_tipo)
     setOpenEditModal(true);
   };
 
@@ -200,7 +194,7 @@ export default function Clients() {
   const handleDeleteClick = (cliente: Cliente) => {
     setDeleteClient({
       cliente_id: cliente.cliente_id,
-      dnome_cliente: cliente.cliente_nome,
+      dnome_cliente: cliente.cliente_nome_ou_empresa,
       reason: "",
     });
     setOpenDeleteModal(true);
@@ -494,7 +488,7 @@ export default function Clients() {
 
   //Função para chamar a api de CEP
   const handleCepBlur = () => {
-    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
+    cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
   };
 
   //Limpar FormData
@@ -730,11 +724,11 @@ export default function Clients() {
                   <tr className="bg-verdePigmento text-white shadow-thead">
                     {[
                       "ID",
-                      "Nome Cliente / Nome Empresa",
-                      "Email",
-                      "Telefone",
+                      "Nome Cliente/Empresa",
                       "Tipo",
                       "CPF/CNPJ",
+                      "Email",
+                      "Telefone",
                       "CEP",
                       "Endereço",
                       "Nº",
@@ -777,7 +771,7 @@ export default function Clients() {
                         }
                       >
                         {Object.values(cliente)
-                          .slice(0, 11)
+                          .slice(0, 12)
                           .map((value, idx) => (
                             <td
                               key={idx}
@@ -876,7 +870,7 @@ export default function Clients() {
 
                 {clientType === "juridica" && ( 
                   <SmartField
-                    fieldName="cnpj"
+                    fieldName="cpf_cnpj"
                     fieldText="CNPJ"
                     withInputMask
                     unstyled
@@ -886,7 +880,7 @@ export default function Clients() {
                     autoClear={false}
                     pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
                     placeholder="Digite o CNPJ"
-                    value={formData.cnpj}
+                    value={formData.cpf_cnpj}
                     onChange={handleChange}
                     inputWidth="w-[220px]"
                   />  
@@ -894,7 +888,7 @@ export default function Clients() {
 
                 {clientType === "fisica" && ( 
                   <SmartField
-                    fieldName="cpf"
+                    fieldName="cpf_cnpj"
                     fieldText="CPF"
                     withInputMask
                     unstyled
@@ -904,7 +898,7 @@ export default function Clients() {
                     autoClear={false}
                     pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                     placeholder="Digite o CPF"
-                    value={formData.cpf}
+                    value={formData.cpf_cnpj}
                     onChange={handleChange}
                     inputWidth="w-[220px]"
                   />  
@@ -944,13 +938,13 @@ export default function Clients() {
 
                 {clientType === "fisica" && ( 
                   <SmartField
-                    fieldName="nome_cliente"
+                    fieldName="nome_empresa_cliente"
                     fieldText="Nome do cliente"
                     type="text"
                     required
                     placeholder="Digite o nome completo do Cliente"
                     autoComplete="name"
-                    value={formData.nome_cliente}
+                    value={formData.nome_empresa_cliente}
                     onChange={handleChange}
                     inputWidth="w-[472px]"
                   />
@@ -958,13 +952,13 @@ export default function Clients() {
 
                 {clientType === "juridica" && ( 
                   <SmartField
-                    fieldName="nome_empresa"
+                    fieldName="nome_empresa_cliente"
                     fieldText="Nome Fantasia da Empresa"
                     required
                     type="text"
                     placeholder="Digite o nome Fantasia da empresa"
                     autoComplete="name"
-                    value={formData.nome_empresa}
+                    value={formData.nome_empresa_cliente}
                     onChange={handleChange}
                     inputWidth="w-[300px]"
                   />
@@ -1159,13 +1153,13 @@ export default function Clients() {
             {clientType === "juridica" && ( 
               <>
               <SmartField
-                fieldName="nome_empresa"
+                fieldName="nome_empresa_cliente"
                 fieldText="Nome Fantasia da Empresa"
                 required
                 type="text"
                 placeholder="Digite o nome Fantasia da empresa"
                 autoComplete="name"
-                value={formData.nome_empresa}
+                value={formData.nome_empresa_cliente}
                 onChange={handleChange}
                 inputWidth="w-[300px]"
               />
@@ -1185,14 +1179,14 @@ export default function Clients() {
 
             {clientType === "fisica" && (
               <SmartField
-                fieldName="nome_cliente"
+                fieldName="nome_empresa_cliente"
                 fieldText="Nome do cliente"
                 fieldClassname="flex flex-col flex-1"
                 type="text"
                 required
                 placeholder="Digite o nome completo do Cliente"
                 autoComplete="name"
-                value={formData.nome_cliente}
+                value={formData.nome_empresa_cliente}
                 onChange={handleChange}
               />
             )}
@@ -1227,7 +1221,7 @@ export default function Clients() {
 
             {clientType === "juridica" && ( 
               <SmartField
-                fieldName="cnpj"
+                fieldName="cpf_cnpj"
                 fieldText="CNPJ"
                 withInputMask
                 unstyled
@@ -1237,7 +1231,7 @@ export default function Clients() {
                 autoClear={false}
                 pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
                 placeholder="Digite o CNPJ"
-                value={formData.cnpj}
+                value={formData.cpf_cnpj}
                 onChange={handleChange}
                 inputWidth="w-[180px]"
               />  
@@ -1245,7 +1239,7 @@ export default function Clients() {
 
             {clientType === "fisica" && ( 
               <SmartField
-                fieldName="cpf"
+                fieldName="cpf_cnpj"
                 fieldText="CPF"
                 withInputMask
                 unstyled
@@ -1255,7 +1249,7 @@ export default function Clients() {
                 autoClear={false}
                 pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
                 placeholder="Digite o CPF"
-                value={formData.cpf}
+                value={formData.cpf_cnpj}
                 onChange={handleChange}
                 inputWidth="w-[160px]"
               />  

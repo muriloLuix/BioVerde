@@ -990,7 +990,7 @@ function enviarEmailCliente($email, $data)
                             <p style='font-size: 18px; line-height: 1.6;'>Em nome da BioVerde, gostariamos de agradecer pela confiança em nossos serviços.</p>
                             <p style='font-size: 18px; line-height: 1.6;'>Seguem abaixo os dados cadastrados no sistema:</p>
                             <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome do Cliente: </strong> " . $data['nome_cliente'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome do Cliente/Empresa: </strong> " . $data['nome_empresa_cliente'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cpf_cnpj'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Telefone/Celular: </strong> " . $data['tel'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>E-mail: </strong> " . $data['email'] . "</p>

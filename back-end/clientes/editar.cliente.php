@@ -36,8 +36,8 @@ try {
         throw new Exception('Cliente não encontrado');
     }
 
-    // Validação dos campos obrigatórios (sem status pois vamos tratá-lo separadamente)
-    $camposObrigatorios = ['cliente_id', 'nome_cliente', 'email', 'tel', 'cpf_cnpj', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade'];
+    // Validação dos campos obrigatórios
+    $camposObrigatorios = ['cliente_id', 'nome_empresa_cliente', 'tipo', 'email', 'tel', 'cpf_cnpj', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
     if ($validacaoDosCampos !== null) { 
         echo json_encode($validacaoDosCampos);
@@ -49,29 +49,32 @@ try {
         throw new Exception("Email inválido");
     }
 
-    // Tratamento do status
-    if (empty($data['status'])) {
-        throw new Exception("O campo status é obrigatório");
+    // Conflitos de email/CPF/CNPJ
+    $colunas = ["cliente_email", "cliente_cpf_ou_cnpj"];
+    $valores = [$data["email"], $data["cpf_cnpj"]];
+    
+    $conflito = verificarConflitosAtualizacao($conn, "clientes", $colunas, $valores, "cliente_id", $data["cliente_id"]);
+    if ($conflito) {
+        throw new Exception($conflito['message']);
     }
 
-    // Converte o ID do status para garantir que é numérico
-    $data['sta_id'] = (int)$data['status'];
-    if ($data['sta_id'] <= 0) {
-        throw new Exception("Status inválido");
-    }
+    // Converte o status (string "1" ou "0") para inteiro
+    $statusValue = (int)$data['status'];  // 1 = ativo, 0 = inativo
 
     // Atualiza cliente
     $camposAtualizados = [
-        'cliente_nome' => $data['nome_cliente'],
+        'cliente_nome_ou_empresa' => $data['nome_empresa_cliente'],
+        'cliente_razao_social' => $data['razao_social'],
+        'cliente_tipo' => $data['tipo'],
         'cliente_email' => $data['email'],
         'cliente_telefone' => $data['tel'],
-        'cliente_cpf_cnpj' => $data['cpf_cnpj'],
+        'cliente_cpf_ou_cnpj' => $data['cpf_cnpj'],
         'cliente_cep' => $data['cep'],
         'cliente_endereco' => $data['endereco'],
         'cliente_numendereco' => $data['num_endereco'],
         'cliente_estado' => $data['estado'],
         'cliente_cidade' => $data['cidade'],
-        'status' => $data['sta_id'] ?? null,
+        'estaAtivo' => $statusValue,
         'cliente_observacoes' => $data['obs']
     ];
 
@@ -82,27 +85,25 @@ try {
 
     $fields = "
     c.cliente_id,
-    c.cliente_nome,
+    c.cliente_nome_ou_empresa,
+    c.cliente_razao_social,
     c.cliente_email,
     c.cliente_telefone,
-    c.cliente_cpf_cnpj,
+    c.cliente_tipo,
+    c.cliente_cpf_ou_cnpj,
     c.cliente_cep,
     c.cliente_endereco,
     c.cliente_numendereco,
     c.cliente_estado,
     c.cliente_cidade,
-    c.status,
     c.cliente_observacoes,
     c.cliente_data_cadastro,
-    s.sta_id
-";
+    c.estaAtivo
+    ";
 
-$joins = [
-    ['type' => 'LEFT', 'join_table' => 'status s', 'on' => 'c.status = s.sta_id']
-];
+$joins = [];
 
 $cliente = searchPersonPerID($conn, $data['cliente_id'], 'clientes c', $fields, $joins, 'c.cliente_id');
-
 
     echo json_encode([
         "success" => true,

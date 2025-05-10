@@ -26,7 +26,7 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos
-$camposObrigatorios = ['nome_cliente', 'email', 'tel', 'cpf_cnpj', 'status', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade', 'obs'];
+$camposObrigatorios = ['nome_empresa_cliente', 'email', 'tipo', 'tel', 'cpf_cnpj', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) { 
     echo json_encode($validacaoDosCampos);
@@ -40,30 +40,23 @@ $emailCpfError = verifyCredentials(
     $data['email'], 
     "cliente_email", 
     $data['cpf_cnpj'], 
-    "cliente_cpf_cnpj"
+    "cliente_cpf_ou_cnpj"
 );
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();
 }
-$sta_id = verificarStatus($conn, $data['status']);
-if ($sta_id === null) { 
-    // Adicione mais informações de debug
-    error_log("Status inválido fornecido: " . $data['status']);
-    echo json_encode([
-        "success" => false, 
-        "message" => "Status inválido. O valor '".$data['status']."' não existe na tabela de status."
-    ]);
-    exit();
-}
+
+$estaAtivo = 1;
 
 // Cadastro do cliente
+$stmt = $conn->prepare("INSERT INTO clientes (cliente_nome_ou_empresa, cliente_razao_social, cliente_cpf_ou_cnpj, cliente_tipo, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_cidade, cliente_estado, cliente_cep, estaAtivo, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-$stmt = $conn->prepare("INSERT INTO clientes (cliente_nome, cliente_cpf_cnpj, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_cidade, cliente_estado, cliente_cep, status, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-$stmt->bind_param("sssssssssis", 
-    $data['nome_cliente'], 
+$stmt->bind_param("sssssssssssis", 
+    $data['nome_empresa_cliente'], 
+    $data['razao_social'], 
     $data['cpf_cnpj'],
+    $data['tipo'],
     $data['tel'], 
     $data['email'], 
     $data['endereco'], 
@@ -71,7 +64,7 @@ $stmt->bind_param("sssssssssis",
     $data['cidade'], 
     $data['estado'], 
     $data['cep'], 
-    $sta_id,
+    $estaAtivo,
     $data['obs']
 );
 
