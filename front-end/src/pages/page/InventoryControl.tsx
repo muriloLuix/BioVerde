@@ -23,6 +23,10 @@ interface Tipo {
 	tproduto_id: number;
 	tproduto_nome: string;
 }
+interface Status {
+	staproduto_id: number;
+	staproduto_nome: string;
+}
 
 interface Produto {
 	produto_id: number;
@@ -32,6 +36,10 @@ interface Produto {
 	fornecedor_nome: string;
 	produto_observacoes: string;
 	produto_status: string;
+}
+interface Fornecedor {
+	fornecedor_id: number;
+	fornecedor_nome_ou_empresa: string;
 }
 
 export default function InventoryControl() {
@@ -44,7 +52,7 @@ export default function InventoryControl() {
 	const [currentObs, setCurrentObs] = useState("");
 	const [message, setMessage] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
-	const [suggestions, setSuggestions] = useState<Produto[]>([]);
+	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -56,29 +64,21 @@ export default function InventoryControl() {
 		supplier: false,
 	});
 	const [formData, setFormData] = useState({
-		produto_id: 0,
 		nome_produto: "",
 		tipo: "",
 		status: "",
-		preco: "",
+		preco: 0.0,
 		fornecedor: "",
 		obs: "",
 	});
-	const [options, setOptions] = useState<{
-		tipos: Tipo[];
-	}>({
-		tipos: [],
+	const [options, setOptions] = useState({
+		tipos: [] as Tipo[],
+		status: [] as Status[],
 	});
 	const [filters, setFilters] = useState({
 		fnome_produto: "",
 		ffornecedor: "",
 		ftipo: "",
-		flote: "",
-		fquantidade: "",
-		funid_medida: "",
-		fdt_producao: "",
-		fdt_validade: "",
-		fdt_cadastro: "",
 		fstatus: "",
 	});
 	const [deleteProduct, setDeleteProduct] = useState({
@@ -112,7 +112,7 @@ export default function InventoryControl() {
 		if (!fornecedorTouched) return;
 
 		const delayDebounce = setTimeout(() => {
-			fetchFornecedores(formData.fornecedor.trim());
+			fetchFornecedores("");
 		}, 300);
 
 		return () => clearTimeout(delayDebounce);
@@ -129,7 +129,10 @@ export default function InventoryControl() {
 		const { name, value } = event.target;
 
 		if (name in formData) {
-			setFormData({ ...formData, [name]: value });
+			setFormData({
+				...formData,
+				[name]: value,
+			});
 		}
 		if (name in filters) {
 			setFilters({ ...filters, [name]: value });
@@ -148,7 +151,7 @@ export default function InventoryControl() {
 
 	//Capturar valor no campo de Preço
 	const handlePriceChange = ({ value }: { value: string }) => {
-		setFormData({ ...formData, preco: value });
+		setFormData({ ...formData, preco: parseFloat(value) });
 		setErrors((errors) => ({ ...errors, price: false }));
 	};
 
@@ -156,19 +159,20 @@ export default function InventoryControl() {
 	const handleEditClick = (produto: Produto) => {
 		console.log("Dados completos do produto:", produto);
 		// Encontra o tipo correspondente nas opções carregadas
-		const tipoSelecionado = options.tipos.find(
-			(t) => t.tproduto_nome === produto.tproduto_nome
-		);
+		if (options) {
+			const tipoSelecionado = options.tipos.find(
+				(t) => t.tproduto_nome === produto.tproduto_nome
+			);
 
-		setFormData({
-			produto_id: produto.produto_id,
-			nome_produto: produto.produto_nome,
-			tipo: tipoSelecionado?.tproduto_id.toString() || "",
-			status: produto.produto_status,
-			preco: produto.produto_preco,
-			fornecedor: produto.fornecedor_nome,
-			obs: produto.produto_observacoes,
-		});
+			setFormData({
+				nome_produto: produto.produto_nome,
+				tipo: tipoSelecionado?.tproduto_nome ?? "",
+				status: produto.produto_status ?? "",
+				preco: parseFloat(produto.produto_preco) ?? 0.0,
+				fornecedor: produto.fornecedor_nome ?? "",
+				obs: produto.produto_observacoes,
+			});
+		}
 		setOpenEditModal(true);
 	};
 
@@ -185,47 +189,30 @@ export default function InventoryControl() {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				setLoading((prev) => new Set([...prev, "products", "options"]));
+				setLoading((prev) => new Set([...prev, "products"]));
 
-				const [optionsResponse, produtosResponse] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/produtos/listar_opcoes.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-								"Content-Type": "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-				]);
+				const productsAndOptions = await axios.get(
+					"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+						},
+					}
+				);
 
-				console.log("Resposta do back-end:", produtosResponse.data);
+				console.log("Resposta do back-end:", productsAndOptions.data);
 
-				if (optionsResponse.data.success) {
+				if (productsAndOptions.data.success) {
+					setProdutos(productsAndOptions.data.produtos ?? []);
 					setOptions({
-						tipos: optionsResponse.data.tipos ?? [],
+						tipos: productsAndOptions.data.tp_produto ?? [],
+						status: productsAndOptions.data.status_produto ?? [],
 					});
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(optionsResponse.data.message ?? "Erro ao carregar opções");
-				}
-
-				if (produtosResponse.data.success) {
-					setProdutos(produtosResponse.data.produtos ?? []);
-				} else {
-					setOpenNoticeModal(true);
 					setMessage(
-						produtosResponse.data.message ?? "Erro ao carregar produtos"
+						productsAndOptions.data.message ?? "Erro ao carregar opções"
 					);
 				}
 			} catch (error) {
@@ -298,8 +285,8 @@ export default function InventoryControl() {
 
 		// Validações
 		const errors = {
-			type: !formData.tipo,
 			status: !formData.status,
+			type: !formData.tipo,
 			price: !formData.preco,
 			supplier: !formData.fornecedor,
 		};
@@ -312,6 +299,9 @@ export default function InventoryControl() {
 
 		setLoading((prev) => new Set([...prev, "submit"]));
 		setSuccessMsg(false);
+
+		// Log formData for debugging
+		console.log("Dados enviados no formData:", formData);
 
 		try {
 			const response = await axios.post(
@@ -331,14 +321,14 @@ export default function InventoryControl() {
 				setMessage("Produto cadastrado com sucesso!");
 				clearFormData();
 			} else {
-				setMessage(response.data.message || "Erro ao cadastrar produto");
+				setMessage(response.data.message ?? "Erro ao cadastrar produto");
 			}
 		} catch (error) {
 			let errorMessage = "Erro ao conectar com o servidor";
 
 			if (axios.isAxiosError(error)) {
 				if (error.response) {
-					errorMessage = error.response.data.message || "Erro no servidor";
+					errorMessage = error.response.data.message ?? "Erro no servidor";
 					console.error("Erro na resposta:", error.response.data);
 				} else {
 					console.error("Erro na requisição:", error.message);
@@ -382,12 +372,12 @@ export default function InventoryControl() {
 			} else {
 				setOpenNoticeModal(true);
 				setMessage(
-					response.data.message || "Nenhum produto encontrado com esse filtro"
+					response.data.message ?? "Nenhum produto encontrado com esse filtro"
 				);
 			}
 		} catch (error) {
 			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
+				setMessage(error.response.data.message ?? "Erro no servidor");
 				console.error("Erro na resposta:", error.response.data);
 			} else {
 				setMessage("Erro ao conectar com o servidor");
@@ -613,11 +603,11 @@ export default function InventoryControl() {
 										isSelect
 										value={filters.ftipo}
 										onChange={handleChange}
-										isLoading={loading.has("options")}
+										isLoading={loading.has("products")}
 										inputWidth="w-[215px]"
 									>
-										<option value="">Todos</option>
-										{options.tipos?.map((tipo) => (
+										<option>Todos</option>
+										{options.tipos.map((tipo) => (
 											<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
 												{tipo.tproduto_nome}
 											</option>
@@ -627,66 +617,24 @@ export default function InventoryControl() {
 
 								<div className="flex justify-between">
 									<SmartField
-										fieldName="flote"
-										fieldText="Lote"
-										type="text"
-										placeholder="Lote do produto"
-										value={filters.flote}
-										onChange={handleChange}
-										inputWidth="w-[215px]"
-									/>
-
-									<SmartField
-										fieldName="fquantidade"
-										fieldText="Quantidade"
-										type="text"
-										placeholder="Quantidade"
-										value={filters.fquantidade}
-										onChange={handleChange}
-										inputWidth="w-[215px]"
-									/>
-
-									<SmartField
 										fieldName="fstatus"
 										fieldText="Status"
 										isSelect
 										value={filters.fstatus}
 										onChange={handleChange}
+										isLoading={loading.has("products")}
 										inputWidth="w-[215px]"
 									>
-										<option value="">Todos</option>
-										<option value="1">Ativo</option>
-										<option value="0">Inativo</option>
+										<option>Todos</option>
+										{options.status.map((status) => (
+											<option
+												key={status.staproduto_id}
+												value={status.staproduto_id}
+											>
+												{status.staproduto_nome}
+											</option>
+										))}
 									</SmartField>
-								</div>
-
-								<div className="flex justify-between mb-10">
-									<SmartField
-										isDate
-										fieldName="fdt_producao"
-										fieldText="Data de Produção"
-										value={filters.fdt_producao}
-										onChange={handleChange}
-										inputWidth="w-[215px]"
-									/>
-
-									<SmartField
-										isDate
-										fieldName="fdt_validade"
-										fieldText="Data de Validade"
-										value={filters.fdt_validade}
-										onChange={handleChange}
-										inputWidth="w-[215px]"
-									/>
-
-									<SmartField
-										isDate
-										fieldName="fdt_cadastro"
-										fieldText="Data de Cadastro"
-										value={filters.fdt_cadastro}
-										onChange={handleChange}
-										inputWidth="w-[215px]"
-									/>
 
 									<Form.Submit asChild>
 										<div className="flex place-content-center gap-4 w-[215px] mt-9">
@@ -736,8 +684,8 @@ export default function InventoryControl() {
 											"Nome Produto",
 											"Tipo",
 											"Preço",
-											"Status",
 											"Fornecedor",
+											"Status",
 											"Observações",
 											"Ações",
 										].map((header) => (
@@ -868,7 +816,7 @@ export default function InventoryControl() {
 									}
 									onFocus={() => {
 										setFornecedorTouched(true);
-										if (!formData.fornecedor.trim()) {
+										if (!formData.fornecedor) {
 											fetchFornecedores(""); // mostra todos os fornecedores
 										}
 										setShowSuggestions(true);
@@ -878,7 +826,9 @@ export default function InventoryControl() {
 										suggestions.length > 0 &&
 										(() => {
 											const filteredSuggestions = suggestions.filter(
-												(item) => item.fornecedor_nome !== formData.fornecedor
+												(item) =>
+													item.fornecedor_nome_ou_empresa !==
+													formData.fornecedor
 											);
 
 											if (filteredSuggestions.length === 0) {
@@ -888,19 +838,19 @@ export default function InventoryControl() {
 
 											return (
 												<ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-52 overflow-auto">
-													{filteredSuggestions.map((item, index) => (
+													{filteredSuggestions.map((item) => (
 														<li
-															key={index}
+															key={item.fornecedor_id}
 															className="p-2 hover:bg-gray-200 cursor-pointer"
 															onClick={() => {
 																setFormData((prev) => ({
 																	...prev,
-																	fornecedor: item.fornecedor_nome,
+																	fornecedor: item.fornecedor_nome_ou_empresa,
 																}));
 																setShowSuggestions(false);
 															}}
 														>
-															{item.fornecedor_nome}
+															{item.fornecedor_nome_ou_empresa}
 														</li>
 													))}
 												</ul>
@@ -916,13 +866,13 @@ export default function InventoryControl() {
 									isSelect
 									value={formData.tipo}
 									onChange={handleChange}
-									isLoading={loading.has("options")}
+									isLoading={loading.has("products")}
 									error={errors.type ? "*" : undefined}
 									placeholderOption="Selecione o Tipo"
 									inputWidth="w-[200px]"
 								>
-									{options.tipos?.map((tipo) => (
-										<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+									{options.tipos.map((tipo) => (
+										<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
 											{tipo.tproduto_nome}
 										</option>
 									))}
@@ -935,11 +885,17 @@ export default function InventoryControl() {
 									value={formData.status}
 									error={errors.status ? "*" : undefined}
 									onChange={handleChange}
+									placeholderOption="Selecione o Status"
 									inputWidth="w-[190px]"
 								>
-									<option value="">Selecione o Status</option>
-									<option value="conservado">Conservado</option>
-									<option value="danificado">Danificado</option>
+									{options.status.map((status) => (
+										<option
+											key={status.staproduto_id}
+											value={status.staproduto_nome}
+										>
+											{status.staproduto_nome}
+										</option>
+									))}
 								</SmartField>
 
 								<SmartField
@@ -977,7 +933,7 @@ export default function InventoryControl() {
 										{loading.has("submit") ? (
 											<Loader2 className="animate-spin h-6 w-6" />
 										) : (
-											" Adicionar Produto"
+											"Adicionar Produto"
 										)}
 									</button>
 								</div>
@@ -1043,7 +999,7 @@ export default function InventoryControl() {
 							isSelect
 							value={formData.tipo}
 							onChange={handleChange}
-							isLoading={loading.has("options")}
+							isLoading={loading.has("products")}
 							inputWidth="w-[200px]"
 						>
 							{options.tipos?.map((tipo) => (
@@ -1061,8 +1017,11 @@ export default function InventoryControl() {
 							onChange={handleChange}
 							inputWidth="w-[150px]"
 						>
-							<option value="conservado">Conservado</option>
-							<option value="danificado">Danificado</option>
+							{options.status.map((status) => (
+								<option key={status.staproduto_id} value={status.staproduto_id}>
+									{status.staproduto_nome}
+								</option>
+							))}
 						</SmartField>
 
 						<SmartField

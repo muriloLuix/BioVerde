@@ -36,7 +36,7 @@ try {
     }
 
     // Validação dos campos obrigatórios
-    $camposObrigatorios = ['nome_produto', 'tipo', 'lote', 'quantidade', 'unid_medida', 'status', 'preco', 'dt_producao', 'dt_validade', 'fornecedor', 'obs'];
+    $camposObrigatorios = ['nome_produto', 'tipo', 'preco', 'status', 'fornecedor', 'obs'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
     if ($validacaoDosCampos !== null) {
         echo json_encode($validacaoDosCampos);
@@ -67,25 +67,12 @@ try {
         throw new Exception("Status inválido");
     }
 
-    // Validação das datas
-    $dt_producao = date('Y-m-d', strtotime($data['dt_producao']));
-    $dt_validade = date('Y-m-d', strtotime($data['dt_validade']));
-    
-    if (!$dt_producao || !$dt_validade) {
-        throw new Exception("Datas inválidas");
-    }
-
     // Atualiza produto
     $camposAtualizados = [
         'produto_nome' => $data['nome_produto'],
         'tproduto_id' => (int)$data['tipo'],
-        'produto_lote' => $data['lote'],
-        'produto_quantidade' => (float)$data['quantidade'],
-        'uni_id' => (int)$data['unid_medida'],
-        'produto_status' => $sta_id,
         'produto_preco' => (float)$data['preco'],
-        'produto_dtProducao' => $dt_producao,
-        'produto_validade' => $dt_validade,
+        'status_id' => $sta_id,
         'id_fornecedor' => $id_fornecedor,
         'produto_observacoes' => $data['obs']
     ];

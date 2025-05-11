@@ -1,7 +1,9 @@
 <?php 
-
 session_start();
-include_once("../inc/funcoes.inc.php");
+
+ini_set("display_errors", '1');
+
+include_once "../inc/funcoes.inc.php";
 
 header('Content-Type: application/json');
 
@@ -23,19 +25,19 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos obrigatórios
-$camposObrigatorios = ['nome_produto', 'tipo', 'lote', 'quantidade', 'unid_medida', 'status', 'preco', 'dt_producao', 'dt_validade', 'fornecedor', 'obs'];
+$camposObrigatorios = ['nome_produto', 'tipo', 'status', 'preco', 'fornecedor', 'obs'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
-if ($validacaoDosCampos !== null) { 
+if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
-    exit();    
+    exit();
 }
 
 // Verificar se o nome do produto já existe
 $verifyName = verifyCredentials(
     $conn,
-    'produtos',               
-    $data['nome_produto'],  
-    'produto_nome'          
+    'produtos',
+    $data['nome_produto'],
+    'produto_nome'
 );
 if ($verifyName !== null) {
     echo json_encode($verifyName);
@@ -44,17 +46,17 @@ if ($verifyName !== null) {
 
 // Verificar ID do status
 $sta_id = verificarStatus($conn, $data['status']);
-if ($sta_id === null) { 
+if ($sta_id === null) {
     error_log("Status inválido fornecido: " . $data['status']);
     echo json_encode([
-        "success" => false, 
+        "success" => false,
         "message" => "Status inválido. O valor '" . $data['status'] . "' não existe na tabela de status."
     ]);
     exit();
 }
 
 // Buscar ID do fornecedor
-$sqlFornecedor = "SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome = ?";
+$sqlFornecedor = "SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome_ou_empresa = ?";
 $stmtFornecedor = $conn->prepare($sqlFornecedor);
 if (!$stmtFornecedor) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar consulta de fornecedor: " . $conn->error]);
@@ -73,20 +75,26 @@ if (!$fornecedor) {
 
 $fornecedor_id = $fornecedor['fornecedor_id'];
 
+// Verificar ID do tipo
+$tp_id = verificarTipo($conn, $data['tipo']);
+if ($tp_id === null) {
+    error_log("Tipo inválido fornecido: " . $data['tipo']);
+    echo json_encode([
+        "success" => false,
+        "message" => "Tipo inválido. O valor '" . $data['tipo'] . "' não existe na tabela de status."
+    ]);
+    exit();
+}
+
 // Cadastro do produto
 $sql = "INSERT INTO produtos (
-    produto_nome, 
-    id_fornecedor, 
-    produto_lote, 
-    produto_quantidade, 
-    uni_id, 
-    produto_preco, 
-    produto_dtProducao, 
-    produto_validade, 
-    tproduto_id, 
-    produto_status,
+    produto_nome,
+    id_fornecedor,
+    produto_preco,
+    tproduto_id,
+    status_id,
     produto_observacoes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+) VALUES (?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -95,18 +103,13 @@ if (!$stmt) {
 }
 
 $stmt->bind_param(
-    "sisdsssssis", 
-    $data['nome_produto'],
-    $fornecedor_id,
-    $data['lote'],
-    $data['quantidade'],
-    $data['unid_medida'],
-    $data['preco'],
-    $data['dt_producao'],
-    $data['dt_validade'],
-    $data['tipo'],
-    $sta_id,
-    $data['obs']
+    "sisiss",
+    $data['nome_produto'], // string
+    $fornecedor_id,        // integer
+    $data['preco'],        // double/float
+    $tp_id,         // integer
+    $sta_id,               // integer
+    $data['obs']           // string
 );
 
 if ($stmt->execute()) {
