@@ -8,15 +8,12 @@ include("../inc/ambiente.inc.php");
  *
  * @param int $nivelMinimo
  */
-function authorize(int $nivelMinimo): void {
+function authorize(int $nivelMinimo, string $message = null): void {
     if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] < $nivelMinimo) {
-        http_response_code(403);
-        header('Content-Type: application/json; charset=UTF-8');
-        echo json_encode(['error' => 'Acesso negado']);
+        echo json_encode(["success" => false, "message" => $message]);
         exit;
     }
 }
-
 /**
  * Retorna o nível mínimo exigido para o recurso, ou null se não definido.
  *

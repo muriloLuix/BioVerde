@@ -2,6 +2,9 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
+include_once "../auth/autorizacao.php";
+authorize(3, "Você não tem permissão para listar usuários");
+
 
 header('Content-Type: application/json');
 
