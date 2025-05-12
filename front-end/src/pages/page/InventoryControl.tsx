@@ -33,9 +33,9 @@ interface Produto {
 	produto_nome: string;
 	tproduto_nome: string;
 	produto_preco: string;
-	fornecedor_nome: string;
+	fornecedor_nome_ou_empresa: string;
 	produto_observacoes: string;
-	produto_status: string;
+	staproduto_nome: string;
 }
 interface Fornecedor {
 	fornecedor_id: number;
@@ -64,6 +64,7 @@ export default function InventoryControl() {
 		supplier: false,
 	});
 	const [formData, setFormData] = useState({
+		produto_id: 0,
 		nome_produto: "",
 		tipo: "",
 		status: "",
@@ -158,21 +159,26 @@ export default function InventoryControl() {
 	//função para puxar os dados do produto que será editado
 	const handleEditClick = (produto: Produto) => {
 		console.log("Dados completos do produto:", produto);
-		// Encontra o tipo correspondente nas opções carregadas
-		if (options) {
-			const tipoSelecionado = options.tipos.find(
-				(t) => t.tproduto_nome === produto.tproduto_nome
-			);
 
-			setFormData({
-				nome_produto: produto.produto_nome,
-				tipo: tipoSelecionado?.tproduto_nome ?? "",
-				status: produto.produto_status ?? "",
-				preco: parseFloat(produto.produto_preco) ?? 0.0,
-				fornecedor: produto.fornecedor_nome ?? "",
-				obs: produto.produto_observacoes,
-			});
-		}
+		console.log("Dados do produto:", produto.staproduto_nome);
+
+		// Encontra o tipo correspondente nas opções carregadas
+		setFormData({
+			produto_id: produto.produto_id ?? 0,
+			nome_produto: produto.produto_nome,
+			tipo:
+				options.tipos
+					.find((tipo) => tipo.tproduto_nome === produto.tproduto_nome)
+					?.tproduto_id.toString() ?? "",
+			status:
+				options.status
+					.find((status) => status.staproduto_nome === produto.staproduto_nome)
+					?.staproduto_id.toString() ?? "",
+			preco: parseFloat(produto.produto_preco) ?? 0.0,
+			fornecedor: produto.fornecedor_nome_ou_empresa ?? "",
+			obs: produto.produto_observacoes,
+		});
+
 		setOpenEditModal(true);
 	};
 
@@ -518,592 +524,576 @@ export default function InventoryControl() {
 	};
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
-			<div className="px-6 font-[inter]">
-				<h1 className="text-[40px] font-semibold text-center mb-3">
-					Controle de Estoque
-				</h1>
+		<div className="flex-1 p-6 pl-[280px] font-[inter]">
+			<h1 className="text-[40px] font-semibold text-center mb-3">
+				Controle de Estoque
+			</h1>
 
-				<Tabs.Root
-					defaultValue="list"
-					className="h-full w-full"
-					onValueChange={(value) => setActiveTab(value)}
-				>
-					<Tabs.List className="flex gap-5 mb-6 border-b border-verdePigmento relative">
-						<Tabs.Trigger
-							value="list"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "list" ? "select animation-tab" : ""
-							}`}
-						>
-							Lista de Estoque
-						</Tabs.Trigger>
+			<Tabs.Root
+				defaultValue="list"
+				className="h-screen w-full"
+				onValueChange={(value) => setActiveTab(value)}
+			>
+				<Tabs.List className="flex gap-5 mb-6 border-b border-verdePigmento relative">
+					<Tabs.Trigger
+						value="list"
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							activeTab === "list" ? "select animation-tab" : ""
+						}`}
+					>
+						Lista de Estoque
+					</Tabs.Trigger>
 
-						<Tabs.Trigger
-							value="register"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "register" ? "select animation-tab" : ""
-							}`}
-						>
-							Adicionar Novo Produto
-						</Tabs.Trigger>
+					<Tabs.Trigger
+						value="register"
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							activeTab === "register" ? "select animation-tab" : ""
+						}`}
+					>
+						Adicionar Novo Produto
+					</Tabs.Trigger>
 
-						<Tabs.Trigger
-							value="prices"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "prices" ? "select animation-tab" : ""
-							}`}
-						>
-							Histórico de Preços
-						</Tabs.Trigger>
+					<Tabs.Trigger
+						value="prices"
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							activeTab === "prices" ? "select animation-tab" : ""
+						}`}
+					>
+						Histórico de Preços
+					</Tabs.Trigger>
 
-						<Tabs.Trigger
-							value="movements"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "movements" ? "select animation-tab" : ""
-							}`}
-						>
-							Movimentações do Estoque
-						</Tabs.Trigger>
-					</Tabs.List>
+					<Tabs.Trigger
+						value="movements"
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							activeTab === "movements" ? "select animation-tab" : ""
+						}`}
+					>
+						Movimentações do Estoque
+					</Tabs.Trigger>
+				</Tabs.List>
 
-					{/* Filtros */}
-					<Tabs.Content value="list" className="flex flex-col w-full">
-						<Form.Root
-							className="flex flex-col gap-4"
-							onSubmit={handleFilterSubmit}
-						>
-							<h2 className="text-3xl">Filtros:</h2>
-							<div className="flex flex-col gap-8 max-w-[996px]">
-								<div className="flex justify-between">
-									<SmartField
-										fieldName="fnome_produto"
-										fieldText="Nome do Produto"
-										type="text"
-										placeholder="Nome do produto"
-										value={filters.fnome_produto}
-										onChange={handleChange}
-										inputWidth="w-[345px]"
-									/>
+				{/* Filtros */}
+				<Tabs.Content value="list" className="h-full w-full">
+					<Form.Root
+						className="h-1/6 w-full flex"
+						onSubmit={handleFilterSubmit}
+					>
+						<div className="w-4/5 flex items-center gap-8">
+							<SmartField
+								fieldName="fnome_produto"
+								fieldText="Nome do Produto"
+								type="text"
+								placeholder="Nome do produto"
+								value={filters.fnome_produto}
+								onChange={handleChange}
+								inputWidth="w-full"
+							/>
 
-									<SmartField
-										fieldName="ffornecedor"
-										fieldText="Fornecedor"
-										type="text"
-										placeholder="Nome do fornecedor"
-										autoComplete="name"
-										value={filters.ffornecedor}
-										onChange={handleChange}
-										inputWidth="w-[345px]"
-									/>
+							<SmartField
+								fieldName="ffornecedor"
+								fieldText="Fornecedor"
+								type="text"
+								placeholder="Nome do fornecedor"
+								autoComplete="name"
+								value={filters.ffornecedor}
+								onChange={handleChange}
+								inputWidth="w-full"
+							/>
 
-									<SmartField
-										fieldName="ftipo"
-										fieldText="Tipo"
-										isSelect
-										value={filters.ftipo}
-										onChange={handleChange}
-										isLoading={loading.has("products")}
-										inputWidth="w-[215px]"
+							<SmartField
+								fieldName="ftipo"
+								fieldText="Tipo"
+								isSelect
+								value={filters.ftipo}
+								onChange={handleChange}
+								isLoading={loading.has("products")}
+								inputWidth="w-full"
+							>
+								<option>Todos</option>
+								{options.tipos.map((tipo) => (
+									<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+										{tipo.tproduto_nome}
+									</option>
+								))}
+							</SmartField>
+
+							<SmartField
+								fieldName="fstatus"
+								fieldText="Status"
+								isSelect
+								value={filters.fstatus}
+								onChange={handleChange}
+								isLoading={loading.has("products")}
+								inputWidth="w-full"
+							>
+								<option>Todos</option>
+								{options.status.map((status) => (
+									<option
+										key={status.staproduto_id}
+										value={status.staproduto_id}
 									>
-										<option>Todos</option>
-										{options.tipos.map((tipo) => (
-											<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-												{tipo.tproduto_nome}
-											</option>
-										))}
-									</SmartField>
-								</div>
-
-								<div className="flex justify-between">
-									<SmartField
-										fieldName="fstatus"
-										fieldText="Status"
-										isSelect
-										value={filters.fstatus}
-										onChange={handleChange}
-										isLoading={loading.has("products")}
-										inputWidth="w-[215px]"
-									>
-										<option>Todos</option>
-										{options.status.map((status) => (
-											<option
-												key={status.staproduto_id}
-												value={status.staproduto_id}
-											>
-												{status.staproduto_nome}
-											</option>
-										))}
-									</SmartField>
-
-									<Form.Submit asChild>
-										<div className="flex place-content-center gap-4 w-[215px] mt-9">
-											<button
-												type="submit"
-												className="bg-verdeMedio p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro"
-												disabled={loading.size > 0}
-											>
-												{loading.has("filterSubmit") ? (
-													<Loader2 className="animate-spin h-6 w-6" />
-												) : (
-													<>
-														<Search size={23} />
-														Filtrar
-													</>
-												)}
-											</button>
-											<button
-												type="button"
-												className="bg-verdeLimparFiltros p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-hoverLimparFiltros"
-												disabled={loading.size > 0}
-												onClick={() =>
-													setFilters(
-														(prev) =>
-															Object.fromEntries(
-																Object.keys(prev).map((key) => [key, ""])
-															) as typeof prev
-													)
-												}
-											>
-												<FilterX size={23} />
-												Limpar
-											</button>
-										</div>
-									</Form.Submit>
-								</div>
-							</div>
-						</Form.Root>
-
-						<div className="min-w-[966px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
-							<table className="w-full border-collapse">
-								{/* Tabela Cabeçalho */}
-								<thead>
-									<tr className="bg-verdePigmento text-white shadow-thead">
-										{[
-											"ID",
-											"Nome Produto",
-											"Tipo",
-											"Preço",
-											"Fornecedor",
-											"Status",
-											"Observações",
-											"Ações",
-										].map((header) => (
-											<th
-												key={header}
-												className="border border-black px-4 py-4 whitespace-nowrap"
-											>
-												{header}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{loading.has("products") ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
-											</td>
-										</tr>
-									) : (
-										//Tabela Dados
-										produtos.map((produto, index) => (
-											<tr
-												key={produto.produto_id}
-												className={
-													index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-												}
-											>
-												{Object.values(produto)
-													.slice(0, 9)
-													.map((value, index) => (
-														<td
-															key={value}
-															className="border border-black p-4 text-center"
-														>
-															{index === 6 ? (
-																<button
-																	className="text-blue-600 cursor-pointer"
-																	onClick={() => handleObsClick(produto)}
-																	title="Ver observações"
-																>
-																	<Eye />
-																</button>
-															) : (
-																value
-															)}
-														</td>
-													))}
-
-												<td className="border border-black p-4 text-center">
-													<button
-														className="text-black cursor-pointer mr-2"
-														onClick={() => handleEditClick(produto)}
-														title="Editar produto"
-													>
-														<PencilLine />
-													</button>
-													<button
-														className="text-red-500 cursor-pointer"
-														onClick={() => handleDeleteClick(produto)}
-														title="Excluir produto"
-													>
-														<Trash />
-													</button>
-												</td>
-											</tr>
-										))
-									)}
-								</tbody>
-							</table>
+										{status.staproduto_nome}
+									</option>
+								))}
+							</SmartField>
 						</div>
-						{produtos.length > 0 && (
-							<div className="min-w-[966px] max-w-[73vw]">
+						<Form.Submit className="w-1/5" asChild>
+							<div className="flex items-center justify-end gap-6">
+								<button
+									type="submit"
+									className="bg-verdeMedio hover:bg-verdeEscuro flex items-center justify-center px-5 py-3 gap-2 rounded-full cursor-pointer text-white"
+									disabled={loading.size > 0}
+								>
+									{loading.has("filterSubmit") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										<>
+											<Search size={23} />
+											<span>Filtrar</span>
+										</>
+									)}
+								</button>
 								<button
 									type="button"
-									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+									className="bg-gray-200 hover:bg-gray-300 flex items-center justify-center px-5 py-3 gap-2 rounded-full cursor-pointer"
+									disabled={loading.size > 0}
+									onClick={() =>
+										setFilters(
+											(prev) =>
+												Object.fromEntries(
+													Object.keys(prev).map((key) => [key, ""])
+												) as typeof prev
+										)
+									}
 								>
-									<Printer />
-									Gerar Relatório
+									<FilterX size={23} />
+									<span>Limpar</span>
 								</button>
 							</div>
-						)}
-
-						{/* Modal de Observações */}
-						<Modal
-							withExitButton
-							openModal={openObsModal}
-							setOpenModal={setOpenObsModal}
-							modalWidth="min-w-[300px] max-w-[500px]"
-							modalTitle="Observações"
-							obsText={currentObs}
-						/>
-					</Tabs.Content>
-
-					{/* Cadastrar Produto */}
-					<Tabs.Content
-						value="register"
-						className="flex items-center justify-center"
-					>
-						<Form.Root className="flex flex-col" onSubmit={handleSubmit}>
-							<h2 className="text-3xl mb-8">Adicionar Novo Produto</h2>
-
-							<div className="flex gap-x-15 mb-8">
-								<SmartField
-									fieldName="nome_produto"
-									fieldText="Nome do Produto"
-									fieldClassname="flex flex-col flex-1"
-									required
-									type="text"
-									placeholder="Digite o nome do produto"
-									value={formData.nome_produto}
-									onChange={handleChange}
-								/>
-
-								<SmartField
-									isDatalist
-									fieldName="fornecedor"
-									fieldText="Fornecedor"
-									fieldClassname="flex flex-col flex-1"
-									error={errors.supplier ? "*" : undefined}
-									placeholder="Digite o nome do fornecedor"
-									inputWidth="w-[440px]"
-									autoComplete="off"
-									value={formData.fornecedor}
-									onChange={handleChange}
-									onBlur={() =>
-										setTimeout(() => setShowSuggestions(false), 300)
-									}
-									onFocus={() => {
-										setFornecedorTouched(true);
-										if (!formData.fornecedor) {
-											fetchFornecedores(""); // mostra todos os fornecedores
-										}
-										setShowSuggestions(true);
-									}}
-								>
-									{showSuggestions &&
-										suggestions.length > 0 &&
-										(() => {
-											const filteredSuggestions = suggestions.filter(
-												(item) =>
-													item.fornecedor_nome_ou_empresa !==
-													formData.fornecedor
-											);
-
-											if (filteredSuggestions.length === 0) {
-												setShowSuggestions(false);
-												return null;
-											}
-
-											return (
-												<ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-52 overflow-auto">
-													{filteredSuggestions.map((item) => (
-														<li
-															key={item.fornecedor_id}
-															className="p-2 hover:bg-gray-200 cursor-pointer"
-															onClick={() => {
-																setFormData((prev) => ({
-																	...prev,
-																	fornecedor: item.fornecedor_nome_ou_empresa,
-																}));
-																setShowSuggestions(false);
-															}}
-														>
-															{item.fornecedor_nome_ou_empresa}
-														</li>
-													))}
-												</ul>
-											);
-										})()}
-								</SmartField>
-							</div>
-
-							<div className="flex gap-x-15 mb-8 items-center">
-								<SmartField
-									fieldName="tipo"
-									fieldText="Tipo"
-									isSelect
-									value={formData.tipo}
-									onChange={handleChange}
-									isLoading={loading.has("products")}
-									error={errors.type ? "*" : undefined}
-									placeholderOption="Selecione o Tipo"
-									inputWidth="w-[200px]"
-								>
-									{options.tipos.map((tipo) => (
-										<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
-											{tipo.tproduto_nome}
-										</option>
-									))}
-								</SmartField>
-
-								<SmartField
-									fieldName="status"
-									fieldText="Status"
-									isSelect
-									value={formData.status}
-									error={errors.status ? "*" : undefined}
-									onChange={handleChange}
-									placeholderOption="Selecione o Status"
-									inputWidth="w-[190px]"
-								>
-									{options.status.map((status) => (
-										<option
-											key={status.staproduto_id}
-											value={status.staproduto_nome}
+						</Form.Submit>
+					</Form.Root>
+					<div className="h-5/6 w-full overflow-x-auto overflow-y-auto py-6">
+						<table className="w-full border-collapse">
+							{/* Tabela Cabeçalho */}
+							<thead>
+								<tr className="bg-verdePigmento text-white shadow-thead">
+									{[
+										"ID",
+										"Nome Produto",
+										"Tipo",
+										"Preço",
+										"Status",
+										"Fornecedor",
+										"Observações",
+										"Ações",
+									].map((header) => (
+										<th
+											key={header}
+											className="border border-black px-4 py-4 whitespace-nowrap"
 										>
-											{status.staproduto_nome}
-										</option>
+											{header}
+										</th>
 									))}
-								</SmartField>
+								</tr>
+							</thead>
+							<tbody>
+								{loading.has("products") ? (
+									<tr>
+										<td colSpan={9} className="text-center py-4">
+											<Loader2 className="animate-spin h-8 w-8 mx-auto" />
+										</td>
+									</tr>
+								) : (
+									//Tabela Dados
+									produtos.map((produto, index) => (
+										<tr
+											key={produto.produto_id}
+											className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+										>
+											{Object.values(produto)
+												.slice(0, 9)
+												.map((value, index) => (
+													<td
+														key={value}
+														className="border border-black p-4 text-center"
+													>
+														{index === 6 ? (
+															<button
+																className="text-blue-600 cursor-pointer"
+																onClick={() => handleObsClick(produto)}
+																title="Ver observações"
+															>
+																<Eye />
+															</button>
+														) : (
+															value
+														)}
+													</td>
+												))}
 
-								<SmartField
-									isPrice
-									fieldName="preco"
-									fieldText="Preço"
-									type="text"
-									placeholder="Preço"
-									error={errors.price ? "*" : undefined}
-									value={formData.preco}
-									onValueChange={handlePriceChange}
-									inputWidth="w-[150px]"
-								/>
-							</div>
+											<td className="border border-black p-4 text-center">
+												<button
+													className="text-black cursor-pointer mr-2"
+													onClick={() => handleEditClick(produto)}
+													title="Editar produto"
+												>
+													<PencilLine />
+												</button>
+												<button
+													className="text-red-500 cursor-pointer"
+													onClick={() => handleDeleteClick(produto)}
+													title="Excluir produto"
+												>
+													<Trash />
+												</button>
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+						<button
+							type="button"
+							className="bg-verdeGrama px-5 py-3 rounded-full text-white cursor-pointer flex ml-auto mt-5 gap-2 hover:bg-[#246127]"
+							disabled={produtos.length === 0}
+						>
+							<Printer />
+							Gerar Relatório
+						</button>
+					</div>
 
-							<div className="flex mb-10 ">
-								<SmartField
-									isTextArea
-									fieldName="obs"
-									fieldText="Observações"
-									fieldClassname="flex flex-col w-full"
-									placeholder="Digite as observações do produto"
-									value={formData.obs}
-									onChange={handleChange}
-								/>
-							</div>
+					{/* Modal de Observações */}
+					<Modal
+						withExitButton
+						openModal={openObsModal}
+						setOpenModal={setOpenObsModal}
+						modalWidth="min-w-[300px] max-w-[500px]"
+						modalTitle="Observações"
+						obsText={currentObs}
+					/>
+				</Tabs.Content>
 
-							<Form.Submit asChild>
-								<div className="flex place-content-center mb-5">
-									<button
-										type="submit"
-										className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
-										disabled={loading.size > 0}
+				{/* Cadastrar Produto */}
+				<Tabs.Content
+					value="register"
+					className="flex items-center justify-center"
+				>
+					<Form.Root className="flex flex-col" onSubmit={handleSubmit}>
+						<h2 className="text-3xl mb-8">Adicionar Novo Produto</h2>
+
+						<div className="flex gap-x-15 mb-8">
+							<SmartField
+								fieldName="nome_produto"
+								fieldText="Nome do Produto"
+								fieldClassname="flex flex-col flex-1"
+								required
+								type="text"
+								placeholder="Digite o nome do produto"
+								value={formData.nome_produto}
+								onChange={handleChange}
+							/>
+
+							<SmartField
+								isDatalist
+								fieldName="fornecedor"
+								fieldText="Fornecedor"
+								fieldClassname="flex flex-col flex-1"
+								error={errors.supplier ? "*" : undefined}
+								placeholder="Digite o nome do fornecedor"
+								inputWidth="w-[440px]"
+								autoComplete="off"
+								value={formData.fornecedor}
+								onChange={handleChange}
+								onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
+								onFocus={() => {
+									setFornecedorTouched(true);
+									if (!formData.fornecedor) {
+										fetchFornecedores(""); // mostra todos os fornecedores
+									}
+									setShowSuggestions(true);
+								}}
+							>
+								{showSuggestions &&
+									suggestions.length > 0 &&
+									(() => {
+										const filteredSuggestions = suggestions.filter(
+											(item) =>
+												item.fornecedor_nome_ou_empresa !== formData.fornecedor
+										);
+
+										if (filteredSuggestions.length === 0) {
+											setShowSuggestions(false);
+											return null;
+										}
+
+										return (
+											<ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-52 overflow-auto">
+												{filteredSuggestions.map((item) => (
+													<li
+														key={item.fornecedor_id}
+														className="p-2 hover:bg-gray-200 cursor-pointer"
+														onClick={() => {
+															setFormData((prev) => ({
+																...prev,
+																fornecedor: item.fornecedor_nome_ou_empresa,
+															}));
+															setShowSuggestions(false);
+														}}
+													>
+														{item.fornecedor_nome_ou_empresa}
+													</li>
+												))}
+											</ul>
+										);
+									})()}
+							</SmartField>
+						</div>
+
+						<div className="flex gap-x-15 mb-8 items-center">
+							<SmartField
+								fieldName="tipo"
+								fieldText="Tipo"
+								isSelect
+								value={formData.tipo}
+								onChange={handleChange}
+								isLoading={loading.has("products")}
+								error={errors.type ? "*" : undefined}
+								placeholderOption="Selecione o Tipo"
+								inputWidth="w-[200px]"
+							>
+								{options.tipos.map((tipo) => (
+									<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
+										{tipo.tproduto_nome}
+									</option>
+								))}
+							</SmartField>
+
+							<SmartField
+								fieldName="status"
+								fieldText="Status"
+								isSelect
+								value={formData.status}
+								error={errors.status ? "*" : undefined}
+								onChange={handleChange}
+								placeholderOption="Selecione o Status"
+								inputWidth="w-[190px]"
+							>
+								{options.status.map((status) => (
+									<option
+										key={status.staproduto_id}
+										value={status.staproduto_nome}
 									>
-										{loading.has("submit") ? (
-											<Loader2 className="animate-spin h-6 w-6" />
-										) : (
-											"Adicionar Produto"
-										)}
-									</button>
-								</div>
-							</Form.Submit>
-						</Form.Root>
-					</Tabs.Content>
-				</Tabs.Root>
+										{status.staproduto_nome}
+									</option>
+								))}
+							</SmartField>
 
-				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
+							<SmartField
+								isPrice
+								fieldName="preco"
+								fieldText="Preço"
+								type="text"
+								placeholder="Preço"
+								error={errors.price ? "*" : undefined}
+								value={formData.preco}
+								onValueChange={handlePriceChange}
+								inputWidth="w-[150px]"
+							/>
+						</div>
 
-				{/* Modal de Edição */}
-				<Modal
-					openModal={openEditModal}
-					setOpenModal={setOpenEditModal}
-					modalTitle="Editar Produto:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
-					isLoading={loading.has("updateProduct")}
-					onCancel={() => {
-						clearFormData();
-						errors.price = false;
-					}}
-					onSubmit={handleUpdateProduct}
-				>
-					<div className="flex gap-x-15 mb-6">
-						<SmartField
-							fieldName="nome_produto"
-							fieldText="Nome do Produto"
-							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							placeholder="Digite o nome do produto"
-							value={formData.nome_produto}
-							onChange={handleChange}
-							inputWidth="w[340px]"
-						/>
+						<div className="flex mb-10 ">
+							<SmartField
+								isTextArea
+								fieldName="obs"
+								fieldText="Observações"
+								fieldClassname="flex flex-col w-full"
+								placeholder="Digite as observações do produto"
+								value={formData.obs}
+								onChange={handleChange}
+							/>
+						</div>
 
-						<SmartField
-							fieldName="fornecedor"
-							fieldText="Fornecedor"
-							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							placeholder="Digite o nome do fornecedor"
-							autoComplete="name"
-							value={formData.fornecedor}
-							onChange={handleChange}
-							inputWidth="w[340px]"
-						/>
-					</div>
+						<Form.Submit asChild>
+							<div className="flex place-content-center mb-5">
+								<button
+									type="submit"
+									className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
+									disabled={loading.size > 0}
+								>
+									{loading.has("submit") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										"Adicionar Produto"
+									)}
+								</button>
+							</div>
+						</Form.Submit>
+					</Form.Root>
+				</Tabs.Content>
+			</Tabs.Root>
 
-					<div className="flex gap-x-15 mb-6 items-center">
-						<SmartField
-							fieldName="tipo"
-							fieldText="Tipo"
-							isSelect
-							value={formData.tipo}
-							onChange={handleChange}
-							isLoading={loading.has("products")}
-							inputWidth="w-[200px]"
-						>
-							{options.tipos?.map((tipo) => (
-								<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-									{tipo.tproduto_nome}
-								</option>
-							))}
-						</SmartField>
+			{/* Modal de Avisos */}
+			<NoticeModal
+				openModal={openNoticeModal}
+				setOpenModal={setOpenNoticeModal}
+				successMsg={successMsg}
+				message={message}
+			/>
 
-						<SmartField
-							fieldName="status"
-							fieldText="Status"
-							isSelect
-							value={formData.status}
-							onChange={handleChange}
-							inputWidth="w-[150px]"
-						>
-							{options.status.map((status) => (
-								<option key={status.staproduto_id} value={status.staproduto_id}>
-									{status.staproduto_nome}
-								</option>
-							))}
-						</SmartField>
+			{/* Modal de Edição */}
+			<Modal
+				openModal={openEditModal}
+				setOpenModal={setOpenEditModal}
+				modalTitle="Editar Produto:"
+				leftButtonText="Editar"
+				rightButtonText="Cancelar"
+				loading={loading}
+				isLoading={loading.has("updateProduct")}
+				onCancel={() => {
+					clearFormData();
+					errors.price = false;
+				}}
+				onSubmit={handleUpdateProduct}
+			>
+				<div className="flex gap-x-15 mb-6">
+					<SmartField
+						fieldName="nome_produto"
+						fieldText="Nome do Produto"
+						fieldClassname="flex flex-col flex-1"
+						required
+						type="text"
+						placeholder="Digite o nome do produto"
+						value={formData.nome_produto}
+						onChange={handleChange}
+						inputWidth="w[340px]"
+					/>
 
-						<SmartField
-							isPrice
-							fieldName="preco"
-							fieldText="Preço"
-							type="text"
-							placeholder="Preço"
-							error={errors.price ? "*" : undefined}
-							value={formData.preco}
-							onValueChange={handlePriceChange}
-							inputWidth="w-[150px]"
-						/>
-					</div>
+					<SmartField
+						fieldName="fornecedor"
+						fieldText="Fornecedor"
+						fieldClassname="flex flex-col flex-1"
+						required
+						type="text"
+						placeholder="Digite o nome do fornecedor"
+						autoComplete="name"
+						value={formData.fornecedor}
+						onChange={handleChange}
+						inputWidth="w[340px]"
+					/>
+				</div>
 
-					<div className="flex mb-8 ">
-						<SmartField
-							isTextArea
-							fieldName="obs"
-							fieldText="Observações"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite as observações do produto"
-							value={formData.obs}
-							onChange={handleChange}
-							rows={2}
-						/>
-					</div>
-				</Modal>
+				<div className="flex gap-x-15 mb-6 items-center">
+					<SmartField
+						fieldName="tipo"
+						fieldText="Tipo"
+						isSelect
+						value={formData.tipo}
+						onChange={handleChange}
+						isLoading={loading.has("products")}
+						inputWidth="w-[200px]"
+					>
+						{options.tipos?.map((tipo) => (
+							<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
+								{tipo.tproduto_nome}
+							</option>
+						))}
+					</SmartField>
 
-				<Modal
-					openModal={openDeleteModal}
-					setOpenModal={setOpenDeleteModal}
-					modalTitle="Excluir Produto:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
-					onDelete={() => {
-						setOpenConfirmModal(true);
-						setOpenDeleteModal(false);
-					}}
-				>
-					<div className="flex mb-10">
-						<SmartField
-							fieldName="dnome_empresa"
-							fieldText="Nome do Produto"
-							fieldClassname="flex flex-col w-full"
-							type="text"
-							autoComplete="name"
-							required
-							readOnly
-							value={deleteProduct.dnome_produto}
-							onChange={handleChange}
-						/>
-					</div>
+					<SmartField
+						fieldName="status"
+						fieldText="Status"
+						isSelect
+						value={formData.status}
+						onChange={handleChange}
+						isLoading={loading.has("products")}
+						inputWidth="w-[150px]"
+					>
+						{options.status?.map((status) => (
+							<option key={status.staproduto_id} value={status.staproduto_id}>
+								{status.staproduto_nome}
+							</option>
+						))}
+					</SmartField>
 
-					<div className="flex mb-10 ">
-						<SmartField
-							isTextArea
-							fieldName="reason"
-							required
-							autoFocus
-							fieldText="Motivo da Exclusão"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite o motivo da exclusão do produto"
-							value={deleteProduct.reason}
-							onChange={handleChange}
-						/>
-					</div>
-				</Modal>
+					<SmartField
+						isPrice
+						fieldName="preco"
+						fieldText="Preço"
+						type="text"
+						placeholder="Preço"
+						error={errors.price ? "*" : undefined}
+						value={formData.preco}
+						onValueChange={handlePriceChange}
+						inputWidth="w-[150px]"
+					/>
+				</div>
 
-				{/* Alert para confirmar exclusão do produto */}
-				<ConfirmationModal
-					openModal={openConfirmModal}
-					setOpenModal={setOpenConfirmModal}
-					confirmationModalTitle="Tem certeza que deseja excluir o produto?"
-					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-					onConfirm={handleDeleteProduct}
-					loading={loading}
-					isLoading={loading.has("deleteProduct")}
-					confirmationLeftButtonText="Cancelar"
-					confirmationRightButtonText="Sim, excluir produto"
-				/>
-			</div>
+				<div className="flex mb-8 ">
+					<SmartField
+						isTextArea
+						fieldName="obs"
+						fieldText="Observações"
+						fieldClassname="flex flex-col w-full"
+						placeholder="Digite as observações do produto"
+						value={formData.obs}
+						onChange={handleChange}
+						rows={2}
+					/>
+				</div>
+			</Modal>
+
+			<Modal
+				openModal={openDeleteModal}
+				setOpenModal={setOpenDeleteModal}
+				modalTitle="Excluir Produto:"
+				leftButtonText="Excluir"
+				rightButtonText="Cancelar"
+				onDelete={() => {
+					setOpenConfirmModal(true);
+					setOpenDeleteModal(false);
+				}}
+			>
+				<div className="flex mb-10">
+					<SmartField
+						fieldName="dnome_empresa"
+						fieldText="Nome do Produto"
+						fieldClassname="flex flex-col w-full"
+						type="text"
+						autoComplete="name"
+						required
+						readOnly
+						value={deleteProduct.dnome_produto}
+						onChange={handleChange}
+					/>
+				</div>
+
+				<div className="flex mb-10 ">
+					<SmartField
+						isTextArea
+						fieldName="reason"
+						required
+						autoFocus
+						fieldText="Motivo da Exclusão"
+						fieldClassname="flex flex-col w-full"
+						placeholder="Digite o motivo da exclusão do produto"
+						value={deleteProduct.reason}
+						onChange={handleChange}
+					/>
+				</div>
+			</Modal>
+
+			{/* Alert para confirmar exclusão do produto */}
+			<ConfirmationModal
+				openModal={openConfirmModal}
+				setOpenModal={setOpenConfirmModal}
+				confirmationModalTitle="Tem certeza que deseja excluir o produto?"
+				confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+				onConfirm={handleDeleteProduct}
+				loading={loading}
+				isLoading={loading.has("deleteProduct")}
+				confirmationLeftButtonText="Cancelar"
+				confirmationRightButtonText="Sim, excluir produto"
+			/>
 		</div>
 	);
 }

@@ -63,7 +63,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
 	return (
 		<Form.Field
 			name={regex(fieldName)}
-			className={fieldClassname ? fieldClassname : "flex flex-col"}
+			className={fieldClassname ?? "flex flex-col"}
 		>
 			<Form.Label
 				htmlFor={regex(fieldName)}
