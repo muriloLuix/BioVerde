@@ -52,7 +52,6 @@ interface Pedido {
 	pedido_estado: string;
 	pedido_prevEntrega: string;
 	pedido_dtCadastro: string;
-	pedido_metodo_pagamento: string;
 	pedido_observacoes: string;
 	pedido_valor_total: number;
 	stapedido_nome: string;
@@ -101,7 +100,6 @@ const exemploPedidos = [
 		pedido_complemento: "Casa",
 		pedido_prevEntrega: "2025-04-24",
 		stapedido_nome: "em produção",
-		pedido_metodo_pagamento: "Pix",
 		pedido_valor_total: 72,
 		pedido_observacoes: "Cliente pediu para entregar após as 14h.",
 	},
@@ -136,7 +134,6 @@ const exemploPedidos = [
 		pedido_complemento: "Apartamento",
 		pedido_prevEntrega: "2025-04-25",
 		stapedido_nome: "em separação",
-		pedido_metodo_pagamento: "Cartão de Débito",
 		pedido_valor_total: 70,
 		pedido_observacoes: "Cliente solicitou embalagem resistente à umidade",
 	},
@@ -542,7 +539,7 @@ export default function Orders() {
 	//Função para chamar a api de CEP
 	const handleCepBlur = () => {
 		setSuccessMsg(false);
-		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
+		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
 	};
 
 	//Limpar FormData
@@ -805,12 +802,11 @@ export default function Orders() {
 										{[
 											"Nº",
 											"Cliente",
-											"Data",
+											"Data de Cadastro",
 											"Status",
 											"Previsão de Entrega",
 											"Itens do Pedido",
 											"Valor Total",
-											"Método de Pagamento",
 											"Telefone",
 											"CEP",
 											"Endereço",
@@ -886,9 +882,6 @@ export default function Orders() {
 
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													R$ {pedido.pedido_valor_total.toFixed(2)}
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.pedido_metodo_pagamento}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.cliente_tel}

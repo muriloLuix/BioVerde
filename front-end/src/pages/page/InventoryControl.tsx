@@ -27,16 +27,21 @@ interface Status {
 	staproduto_id: number;
 	staproduto_nome: string;
 }
+interface Lote {
+	lote_id: number;
+}
 
 interface Produto {
 	produto_id: number;
 	produto_nome: string;
 	tproduto_nome: string;
 	produto_preco: string;
+	lote_id: number;
 	fornecedor_nome_ou_empresa: string;
 	produto_observacoes: string;
 	staproduto_nome: string;
 }
+
 interface Fornecedor {
 	fornecedor_id: number;
 	fornecedor_nome_ou_empresa: string;
@@ -67,6 +72,7 @@ export default function InventoryControl() {
 		produto_id: 0,
 		nome_produto: "",
 		tipo: "",
+		lote: 0,
 		status: "",
 		preco: 0.0,
 		fornecedor: "",
@@ -174,6 +180,7 @@ export default function InventoryControl() {
 				options.status
 					.find((status) => status.staproduto_nome === produto.staproduto_nome)
 					?.staproduto_id.toString() ?? "",
+			lote: produto.lote_id,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
 			fornecedor: produto.fornecedor_nome_ou_empresa ?? "",
 			obs: produto.produto_observacoes,
@@ -867,6 +874,17 @@ export default function InventoryControl() {
 									</option>
 								))}
 							</SmartField>
+
+							<SmartField
+								fieldName="lote"
+								fieldText="Lote"
+								required
+								type="text"
+								placeholder="Nº do Lote"
+								value={formData.lote}
+								onChange={handleChange}
+								inputWidth="w-[150px]"
+							/>
 
 							<SmartField
 								fieldName="status"
