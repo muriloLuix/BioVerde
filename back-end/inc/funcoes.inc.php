@@ -102,7 +102,7 @@ function verificarNivel($conn, $nivel)
  */
 function verificarStatus($conn, $status)
 {
-    $stmt = $conn->prepare("SELECT sta_id, sta_nome FROM status WHERE sta_id = ?");
+    $stmt = $conn->prepare("SELECT staproduto_id, staproduto_nome FROM status_produto WHERE staproduto_nome = ?");
     if (!$stmt) {
         return null; // Retorna null em caso de erro na query
     }
@@ -117,7 +117,33 @@ function verificarStatus($conn, $status)
 
     $row = $result->fetch_assoc();
     $stmt->close();
-    return $row['sta_id']; // Retorna apenas o ID
+    return $row['staproduto_id']; // Retorna apenas o ID
+}
+
+/**
+ * Verifica se o tipo existe e retorna o ID do tipo.
+ * @param mysqli $conn conex o ao banco de dados
+ * @param string $tipo nome do tipo a ser verificado
+ * @return int|null retorna o ID do tipo ou null se houver erro na query ou se o tipo não existir
+ */
+function verificarTipo($conn, $tipo)
+{
+    $stmt = $conn->prepare("SELECT tproduto_id FROM tp_produto WHERE tproduto_nome = ?");
+    if (!$stmt) {
+        return null; // Retorna null em caso de erro na query
+    }
+
+    $stmt->bind_param("s", $tipo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        return null; // Retorna null quando tipo não existe
+    }
+
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row['tproduto_id']; // Retorna apenas o ID
 }
 
 /**
@@ -272,6 +298,31 @@ function buscarCargos($conn)
     }
 
     return $cargos;
+}
+
+/**
+ * Busca todos os status do produto registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os status do produto, onde cada status
+ *         é representado por um array com as chaves 'staproduto_id' e 'staproduto_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os status.
+ */
+function buscarStatus($conn)
+{
+    $result = $conn->query("SELECT staproduto_id, staproduto_nome FROM status_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $status_produto = [];
+    while ($row = $result->fetch_assoc()) {
+        $status_produto[] = $row;
+    }
+
+    return $status_produto;
 }
 
 /**
