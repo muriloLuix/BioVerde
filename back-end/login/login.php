@@ -1,7 +1,6 @@
 <?php
 
 global $conn;
-
 include_once '../inc/funcoes.inc.php';
 
 // Configurações de sessão segura

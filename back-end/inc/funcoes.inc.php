@@ -1047,7 +1047,46 @@ function enviarEmailCliente($email, $data)
 }
 // filtro.cliente.php
 
+/**
+ * Verifica se o usuário logado tem pelo menos o nível mínimo.
+ * Retorna HTTP 403 se não autorizado.
+ *
+ * @param int $nivelMinimo
+ */
+function authorize(int $nivelMinimo): void {
+    if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] < $nivelMinimo) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode([
+            "success" => false
+        ]);
+        exit;
+    }
+}
+/**
+ * Retorna o nível mínimo exigido para o recurso, ou null se não definido.
+ *
+ * @param string $recurso
+ * @return int|null
+ */
+function getMinLevelFor(string $recurso): ?int {
 
+    $sql = "SELECT nivel_minimo FROM permissoes WHERE recurso = ?";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('s', $recurso);
+    $stmt->execute();
+    $stmt->bind_result($nivelMinimo);
+
+    $result = null;
+    if ($stmt->fetch()) {
+        $result = (int)$nivelMinimo;
+    }
+    $stmt->close();
+    return $result;
+}
 
 
 ?>
