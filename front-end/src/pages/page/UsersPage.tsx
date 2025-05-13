@@ -202,6 +202,7 @@ export default function UsersPage() {
 
   //Carrega a lista de usuario e as opções nos selects ao renderizar a página
   useEffect(() => {
+
     const fetchData = async () => {
       try {
         setLoading((prev) => new Set([...prev, "users", "options"]));

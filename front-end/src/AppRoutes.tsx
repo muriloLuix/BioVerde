@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./shared/components/ProtectedRoute.tsx";
 
 import { Home } from "./shared/index.tsx";
 import {
@@ -29,11 +30,39 @@ const AppRoutes = () => {
           <Route path="controle-estoque" element={<InventoryControl />} />
           <Route path="etapas-producao" element={<ProductionSteps />} />
           <Route path="pedidos" element={<Orders />} />
-          <Route path="usuarios" element={<UsersPage />} />
-          <Route path="fornecedores" element={<Suppliers />} />
-          <Route path="clientes" element={<Clients />} />
-          <Route path="logs" element={<Logs />} />
           <Route path="lotes" element={<Batch />} />
+          <Route 
+            path="usuarios" 
+            element={
+              <ProtectedRoute nivelMinimo={2}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="fornecedores"
+            element={
+              <ProtectedRoute nivelMinimo={2}>
+                <Suppliers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="clientes"
+            element={
+              <ProtectedRoute nivelMinimo={2}>
+                <Clients />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="logs"
+            element={
+              <ProtectedRoute nivelMinimo={2}>
+                <Logs />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </Router>

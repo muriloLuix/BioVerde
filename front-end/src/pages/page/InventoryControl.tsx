@@ -27,9 +27,9 @@ interface Status {
 	staproduto_id: number;
 	staproduto_nome: string;
 }
-interface Lote {
-	lote_id: number;
-}
+// interface Lote {
+// 	lote_id: number;
+// }
 
 interface Produto {
 	produto_id: number;
@@ -878,8 +878,8 @@ export default function InventoryControl() {
 							<SmartField
 								fieldName="lote"
 								fieldText="Lote"
+								type="number"
 								required
-								type="text"
 								placeholder="Nº do Lote"
 								value={formData.lote}
 								onChange={handleChange}
@@ -1016,6 +1016,17 @@ export default function InventoryControl() {
 							</option>
 						))}
 					</SmartField>
+
+					<SmartField
+						fieldName="lote"
+						fieldText="Lote"
+						type="number"
+						required
+						placeholder="Nº do Lote"
+						value={formData.lote}
+						onChange={handleChange}
+						inputWidth="w-[150px]"
+					/>
 
 					<SmartField
 						fieldName="status"

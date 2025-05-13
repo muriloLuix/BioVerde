@@ -2,8 +2,6 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
-authorize(3);
-
 
 header('Content-Type: application/json');
 
