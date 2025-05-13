@@ -8,6 +8,7 @@ import { SmartField } from "../../shared";
 import { Modal } from "../../shared";
 import { NoticeModal } from "../../shared";
 import { useNavigate } from "react-router-dom";
+import useVerificarNivelAcesso from "../../hooks/useVerificarNivelAcesso";
 
 interface Cargo {
   car_id: number;
@@ -80,8 +81,7 @@ export default function UsersPage() {
     dname: "",
     reason: "",
   });
-
-
+  useVerificarNivelAcesso();
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -270,7 +270,6 @@ export default function UsersPage() {
         });
       }
     };
-
     fetchData();
   }, []);
   
