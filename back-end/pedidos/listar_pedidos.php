@@ -11,24 +11,27 @@ try {
     }
 
     $cols_pedidos = array(
+        "d.pedido_id",
+        "e.cliente_nome_ou_empresa",
+        "d.pedido_dtCadastro",
+        "f.stapedido_nome",
+        "d.pedido_prevEntrega AS pedido_prevEntrega",
         "a.pedidoitem_id",
-        "a.pedidoitem_quantidade",
-        "a.pedidoitem_preco",
-        "a.pedidoitem_subtotal",
         "b.produto_id",
         "b.produto_nome",
+        "a.pedidoitem_quantidade",
         "c.uni_nome",
-        "d.pedido_id",
+        "a.pedidoitem_preco",
+        "a.pedidoitem_subtotal",
+        "d.pedido_valor_total",
+        "e.cliente_telefone",
         "d.pedido_cep",
         "d.pedido_endereco",
         "d.pedido_num_endereco",
         "d.pedido_complemento",
         "d.pedido_cidade",
         "d.pedido_estado",
-        "d.pedido_prevEntrega",
-        "d.pedido_dtCadastro",
         "d.pedido_observacoes",
-        "d.pedido_valor_total"
     );
 
     $joins = [
@@ -46,7 +49,17 @@ try {
             'type' => 'INNER',
             'join_table' => 'pedidos d',
             'on' => 'a.pedidoitem_id = d.pedidoid_itens'
-        ]
+        ],
+        [
+            'type' => 'INNER',
+            'join_table' => 'clientes e',
+            'on' => 'd.cliente_id = e.cliente_id'
+        ],
+        [
+            'type' => 'INNER',
+            'join_table' => 'status_pedido f',
+            'on' => 'd.stapedido_id = f.stapedido_id'
+        ],
     ];
 
     $pedidos = search($conn, "pedido_item a", implode(",", $cols_pedidos), $joins);
@@ -58,29 +71,31 @@ try {
 
         if (!isset($pedidosAgrupados[$pedidoId])) {
             $pedidosAgrupados[$pedidoId] = [
-                'pedido_id' => $pedidoId,
-                'cep' => $item['pedido_cep'],
-                'endereco' => $item['pedido_endereco'],
-                'numero' => $item['pedido_num_endereco'],
-                'complemento' => $item['pedido_complemento'],
-                'cidade' => $item['pedido_cidade'],
-                'estado' => $item['pedido_estado'],
-                'prevEntrega' => $item['pedido_prevEntrega'],
-                'dtCadastro' => $item['pedido_dtCadastro'],
-                'observacoes' => $item['pedido_observacoes'],
-                'valor_total' => $item['pedido_valor_total'],
-                'itens' => []
+                'pedido_id'         => (int)   $item['pedido_id'],
+                'pedido_dtCadastro' =>  $item['pedido_dtCadastro'],
+                'stapedido_nome' =>  $item['stapedido_nome'],
+                'pedido_prevEntrega' => $item['pedido_prevEntrega'],
+                'cliente_nome_ou_empresa'  =>  $item['cliente_nome_ou_empresa'],
+                'pedido_valor_total' => (float) $item['pedido_valor_total'],
+                'cliente_telefone'       =>  $item['cliente_telefone'],
+                'pedido_cep'        =>  $item['pedido_cep'],
+                'pedido_endereco'        =>  $item['pedido_endereco'],
+                'pedido_num_endereco'        =>  $item['pedido_num_endereco'],
+                'pedido_complemento'        =>  $item['pedido_complemento'],
+                'pedido_cidade'        =>  $item['pedido_cidade'],
+                'pedido_estado'        =>  $item['pedido_estado'],
+                'pedido_observacoes'        =>  $item['pedido_observacoes'],
+                'pedido_itens'       => []
             ];
         }
 
-        $pedidosAgrupados[$pedidoId]['itens'][] = [
-            'pedidoitem_id' => $item['pedidoitem_id'],
-            'produto_id' => $item['produto_id'],
-            'produto_nome' => $item['produto_nome'],
-            'quantidade' => $item['pedidoitem_quantidade'],
-            'unidade' => $item['uni_nome'],
-            'preco' => $item['pedidoitem_preco'],
-            'subtotal' => $item['pedidoitem_subtotal']
+        $pedidosAgrupados[$pedidoId]['pedido_itens'][] = [
+            'pedidoitem_id'        => (int)   $item['pedidoitem_id'],
+            'produto_nome'         =>  $item['produto_nome'],
+            'pedidoitem_quantidade'=> (int)   $item['pedidoitem_quantidade'],
+            'unidade_nome'         =>  $item['uni_nome'],
+            'pedidoitem_preco'     => (float) $item['pedidoitem_preco'],
+            'pedidoitem_subtotal'  => (float) $item['pedidoitem_subtotal'],
         ];
     }
 

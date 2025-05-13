@@ -30,7 +30,7 @@ try {
     }
 
     // Validação dos campos obrigatórios
-    $camposObrigatorios = ['dproduct', 'dstep', 'reason'];
+    $camposObrigatorios = ['dnum_pedido', 'dnome_cliente', 'reason'];
     foreach ($camposObrigatorios as $field) {
         if (empty($data[$field])) {
             throw new Exception("O campo '{$field}' é obrigatório para a exclusão.");
@@ -39,17 +39,17 @@ try {
 
     $user_id = $_SESSION['user_id'];
 
-    $etor_id = (int) $data['etor_id'];
-    if ($etor_id <= 0) {
-        throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
+    $pedido_id = (int)$data['pedido_id'];
+    if ($pedido_id <= 0) {
+        throw new Exception("ID do pedido inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
     $conn->begin_transaction();
 
-    $exclusao = deleteData($conn, $etor_id, "etapa_ordem", "etor_id");
+    $exclusao = deleteData($conn, $pedido_id, "pedidos", "pedido_id");
     if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
+        throw new Exception($exclusao['message'] ?? "Falha ao excluir o pedido.");
     }
 
     // Commit da transação
@@ -60,31 +60,33 @@ try {
     // Resposta de sucesso simplificada para produção
     echo json_encode([
         'success' => true,
-        'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $etor_id 
+        'message' => 'Pedido excluído com sucesso',
+        'deleted_id' => $pedido_id
     ]);
 
-    salvarLog("O usuário ID {$user_id} excluiu a etapa de produção do produto {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
+    salvarLog("O usuário ID {$user_id} excluiu o pedido do produto {$data['dnum_pedido']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_PEDIDO);
 
 
-} catch (Exception $e) {
+}catch (Exception $e) {
     // Rollback em caso de erro
     if (isset($conn) && $conn) {
         $conn->rollback();
     }
-    
+
     error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
-    
+
     // Resposta de erro simplificada para produção
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
-        'etor_id' => $etor_id,
+        'pedido_id' => $pedido_id,
         'reason' => $data['reason'],
-        'dproduct' => $data['dproduct'],
+        'dnum_pedido' => $data['dnum_pedido'],
     ]);
 
-    salvarLog("O usuário ID {$user_id} tentou excluir a etapa de produção do produto {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE, "erro");
+    salvarLog("O usuário ID {$user_id} tentou excluir o pedido do produto {$data['dnum_pedido']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE, "erro");
 
     exit();
 }
+
+?>

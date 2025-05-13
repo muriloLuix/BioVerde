@@ -16,7 +16,7 @@ try {
 
     echo json_encode([
         "success" => true,
-        "status" => $statusPedido
+        "status" => $statusPedido,
     ]);
 
 } catch (Exception $e) {

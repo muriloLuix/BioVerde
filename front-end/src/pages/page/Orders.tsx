@@ -31,8 +31,8 @@ interface Status {
 
 interface Cliente {
 	cliente_id: number;
-	cliente_nome: string;
-	cliente_tel: string;
+	cliente_nome_ou_empresa: string;
+	cliente_telefone: string;
 }
 
 interface Unidade {
@@ -42,8 +42,8 @@ interface Unidade {
 
 interface Pedido {
 	pedido_id: number;
-	cliente_nome: string;
-	cliente_tel: string;
+	cliente_nome_ou_empresa: string;
+	cliente_telefone: string;
 	pedido_cep: string;
 	pedido_endereco: string;
 	pedido_num_endereco: string;
@@ -52,7 +52,6 @@ interface Pedido {
 	pedido_estado: string;
 	pedido_prevEntrega: string;
 	pedido_dtCadastro: string;
-	pedido_metodo_pagamento: string;
 	pedido_observacoes: string;
 	pedido_valor_total: number;
 	stapedido_nome: string;
@@ -276,17 +275,23 @@ export default function Orders() {
 
 	//função para puxar os dados do pedido que será editado
 	const handleEditClick = (pedido: Pedido) => {
+		const formatDate = (isoDate: string) => {
+			const date = new Date(isoDate);
+			// Retorna no formato YYYY-MM-DD
+			return date.toISOString().split("T")[0];
+		};
+
 		setFormData({
 			pedido_id: pedido.pedido_id,
-			nome_cliente: pedido.cliente_nome,
-			tel: pedido.cliente_tel,
+			nome_cliente: pedido.cliente_nome_ou_empresa,
+			tel: pedido.cliente_telefone,
 			cep: pedido.pedido_cep,
 			status: pedido.stapedido_nome,
 			endereco: pedido.pedido_endereco,
 			num_endereco: pedido.pedido_num_endereco,
 			estado: pedido.pedido_estado,
 			cidade: pedido.pedido_cidade,
-			prev_entrega: pedido.pedido_prevEntrega,
+			prev_entrega: formatDate(pedido.pedido_prevEntrega),
 			obs: pedido.pedido_observacoes,
 		});
 		setOpenEditModal(true);
@@ -297,7 +302,7 @@ export default function Orders() {
 		setDeleteOrder({
 			pedido_id: pedido.pedido_id,
 			dnum_pedido: pedido.pedido_id,
-			dnome_cliente: pedido.cliente_nome,
+			dnome_cliente: pedido.cliente_nome_ou_empresa,
 			reason: "",
 		});
 		setOpenDeleteModal(true);
@@ -470,7 +475,7 @@ export default function Orders() {
 	//Função para chamar a api de CEP
 	const handleCepBlur = () => {
 		setSuccessMsg(false);
-		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
+		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
 	};
 
 	//Limpar FormData
@@ -493,7 +498,7 @@ export default function Orders() {
 
 	const handleSeeOrderClick = (pedido: Pedido) => {
 		setNumOrder(pedido.pedido_id);
-		setClientOrder(pedido.cliente_nome);
+		setClientOrder(pedido.cliente_nome_ou_empresa);
 		setTotalOrder(pedido.pedido_valor_total);
 		setSelectedOrder(pedido.pedido_itens);
 		setOpenOrderModal(true);
@@ -653,21 +658,6 @@ export default function Orders() {
 
 								<div className="flex justify-between mb-8">
 									<SmartField
-										fieldName="fpagamento"
-										fieldText="Método de Pagamento"
-										isSelect
-										value={filters.fpagamento}
-										onChange={handleChange}
-										// isLoading={loading.has("options")}
-										inputWidth="w-[220px]"
-									>
-										<option value="">Todos</option>
-										<option value="pix">Pix</option>
-										<option value="debito">Cartão de Débito</option>
-										<option value="credito">Cartão de Crédito</option>
-									</SmartField>
-
-									<SmartField
 										isDate
 										fieldName="fprev_entrega"
 										fieldText="Previsão de entrega"
@@ -738,7 +728,6 @@ export default function Orders() {
 											"Previsão de Entrega",
 											"Itens do Pedido",
 											"Valor Total",
-											"Método de Pagamento",
 											"Telefone",
 											"CEP",
 											"Endereço",
@@ -784,7 +773,7 @@ export default function Orders() {
 													{pedido.pedido_id}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_nome}
+													{pedido.cliente_nome_ou_empresa}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{new Date(
@@ -816,10 +805,7 @@ export default function Orders() {
 													R$ {pedido.pedido_valor_total.toFixed(2)}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.pedido_metodo_pagamento}
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_tel}
+													{pedido.cliente_telefone}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.pedido_cep}
@@ -988,8 +974,8 @@ export default function Orders() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Pedido:"
-					leftButtonText="Cancelar"
-					rightButtonText="Editar"
+					leftButtonText="Editar"
+					rightButtonText="Cancelar"
 					loading={loading}
 					isLoading={loading.has("updateOrder")}
 					onCancel={() => clearFormData()}

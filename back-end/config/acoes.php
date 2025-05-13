@@ -36,6 +36,9 @@ class Acoes {
     const EDITAR_FORNECEDOR = 16;
     const EXCLUIR_FORNECEDOR = 17;
 
+    /*************************** PEDIDOS *******************************/
+
+    const EXCLUIR_PEDIDO = 22;
 
 }
 
