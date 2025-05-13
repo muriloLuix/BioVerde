@@ -46,6 +46,7 @@ const ProtectedRoute = ({ children, nivelMinimo }: ProtectedRouteProps) => {
             <div className="forbidden-sign"></div>
             <h1>O acesso a esta página é restrito</h1>
             <p>Você não tem permissão para visualizar esta página.</p>
+            <p>Faça logout do sistema ou fale com seu supervisor.</p>
         </div>
       </div>
     );

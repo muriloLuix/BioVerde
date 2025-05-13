@@ -110,6 +110,12 @@ try {
         ['type' => 'INNER', 'join_table' => 'niveis_acesso n', 'on' => 'u.nivel_id = n.nivel_id'],
     ];
 
+    // força o logout da pessoa que acabou de ter o nível (ou status) alterado
+    $stmt = $conn->prepare("UPDATE usuarios SET force_logout = 1 WHERE user_id = ?");
+    $stmt->bind_param("i", $data['user_id']);
+    $stmt->execute();
+    $stmt->close();
+
     $usuarioAtualizado = searchPersonPerID($conn, $data['user_id'], 'usuarios u', $fields, $joins);
 
     echo json_encode([

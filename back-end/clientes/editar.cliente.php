@@ -11,7 +11,7 @@ try {
     // Verifica autenticação
 
     if(!isset($_SESSION["user_id"])) {
-        checkLoggedUSer($conn, $_SESSION['user_id']);
+        checkLoggedUser($conn, $_SESSION['user_id']);;
         exit;
     }
 

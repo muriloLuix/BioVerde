@@ -748,13 +748,50 @@ function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $c
     return null;
 }
 
-function checkLoggedUser($conn, $sessionUserId){
-    if (!$sessionUserId){
+function checkLoggedUser($conn, $sessionUserId) {
+    header('Content-Type: application/json');
+
+    // 1) Sem sessão => 401
+    if (!$sessionUserId) {
         http_response_code(401);
-        echo json_encode(["loggedIn" => false, "message" => "Usuário não logado."]);
+        echo json_encode([
+            "loggedIn" => false,
+            "message"  => "Usuário não logado."
+        ]);
         exit;
     }
+
+    // 2) Checa flag de forced logout
+    $stmt = $conn->prepare("SELECT force_logout FROM usuarios WHERE user_id = ?");
+    $stmt->bind_param("i", $sessionUserId);
+    $stmt->execute();
+    $stmt->bind_result($flag);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($flag) {
+        // Reseta o flag para não ficar em loop
+        $upd = $conn->prepare("UPDATE usuarios SET force_logout = 0 WHERE user_id = ?");
+        $upd->bind_param("i", $sessionUserId);
+        $upd->execute();
+        $upd->close();
+
+        // Destroi sessão atual
+        session_unset();
+        session_destroy();
+
+        // Retorna 401 forçando re-login
+        http_response_code(401);
+        echo json_encode([
+            "loggedIn" => false,
+            "message"  => "Sua sessão expirou devido a alteração de permissões. Por favor, faça o login novamente."
+        ]);
+        exit;
+    }
+
+    // 3) Se chegar aqui, está tudo OK – continue normalmente
 }
+
 
 
 

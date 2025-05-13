@@ -2,6 +2,7 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
+checkLoggedUser($conn, $_SESSION['user_id']);
 
 header('Content-Type: application/json');
 
