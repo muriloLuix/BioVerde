@@ -18,6 +18,8 @@ const ProtectedRoute = ({ children, nivelMinimo }: ProtectedRouteProps) => {
           withCredentials: true,
         });
 
+        console.log("Resposta do back-end:", res.data);
+
         if (res.data.success && res.data.nivel_acesso >= nivelMinimo) {
           setAutorizado(true);
         } else {
