@@ -122,7 +122,6 @@ export default function Orders() {
 		fcidade: "",
 		fprev_entrega: "",
 		fdt_cadastro: "",
-		fpagamento: "",
 	});
 	const [deleteOrder, setDeleteOrder] = useState({
 		pedido_id: 0,
@@ -581,11 +580,11 @@ export default function Orders() {
 										inputWidth="w-[220px]"
 									>
 										<option value="todos">Todos</option>
-										<option value="pendente">Pendente</option>
-										<option value="producao">Em Produção</option>
-										<option value="enviado">Enviado</option>
-										<option value="entregue">Entregue</option>
-										<option value="cancelado">Cancelado</option>
+										{options.status?.map((status) => (
+											<option key={status.stapedido_id} value={status.stapedido_id}>
+												{status.stapedido_nome}
+											</option>
+										))}
 									</SmartField>
 
 									<SmartField

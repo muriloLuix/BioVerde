@@ -47,9 +47,14 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
-    $exclusao = deleteData($conn, $pedido_id, "pedidos", "pedido_id");
-    if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o pedido.");
+    $exclusaoPedido = deleteData($conn, $pedido_id, "pedidos", "pedido_id");
+    if (!$exclusaoPedido['success']) {
+        throw new Exception($exclusaoPedido['message'] ?? "Falha ao excluir o pedido.");
+    }
+
+    $exclusaoPedidoItens = deleteData($conn, $pedido_id, "pedido_item", "pedidoitem_id");
+    if (!$exclusaoPedidoItens['success']) {
+        throw new Exception($exclusaoPedidoItens['message'] ?? "Falha ao excluir os itens do pedido.");
     }
 
     // Commit da transação
