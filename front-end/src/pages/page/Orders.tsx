@@ -52,6 +52,7 @@ interface Pedido {
 	pedido_estado: string;
 	pedido_prevEntrega: string;
 	pedido_dtCadastro: string;
+	pedido_metodo_pagamento: string;
 	pedido_observacoes: string;
 	pedido_valor_total: number;
 	stapedido_nome: string;
@@ -67,77 +68,6 @@ interface PedidoItem {
 	pedidoitem_preco: number;
 	pedidoitem_subtotal: number;
 }
-
-const exemploPedidos = [
-	{
-		pedido_id: 1,
-		cliente_nome: "João",
-		pedido_dtCadastro: "2025-04-21",
-		cliente_tel: "(41) 11222-2223",
-		pedido_cep: "01001-001",
-		pedido_cidade: "São Paulo",
-		pedido_endereco: "Praça da Sé",
-		pedido_estado: "SP",
-		pedido_itens: [
-			{
-				pedidoitem_id: 0,
-				produto_nome: "sementes de tomate",
-				pedidoitem_preco: 3.0,
-				pedidoitem_quantidade: 12,
-				pedidoitem_subtotal: 36,
-				unidade_nome: "kg",
-			},
-			{
-				pedidoitem_id: 1,
-				produto_nome: "sementes de laranja",
-				pedidoitem_preco: 12.0,
-				pedidoitem_quantidade: 3,
-				pedidoitem_subtotal: 36,
-				unidade_nome: " kg",
-			},
-		],
-		pedido_num_endereco: "23",
-		pedido_complemento: "Casa",
-		pedido_prevEntrega: "2025-04-24",
-		stapedido_nome: "em produção",
-		pedido_valor_total: 72,
-		pedido_observacoes: "Cliente pediu para entregar após as 14h.",
-	},
-	{
-		pedido_id: 2,
-		cliente_nome: "Maria",
-		pedido_dtCadastro: "2025-04-21",
-		cliente_tel: "(11) 99888-7766",
-		pedido_cep: "01310-100",
-		pedido_cidade: "São Paulo",
-		pedido_endereco: "Avenida Paulista",
-		pedido_estado: "SP",
-		pedido_itens: [
-			{
-				pedidoitem_id: 0,
-				produto_nome: "sementes de alface",
-				pedidoitem_preco: 4.5,
-				pedidoitem_quantidade: 10,
-				pedidoitem_subtotal: 45,
-				unidade_nome: "kg",
-			},
-			{
-				pedidoitem_id: 1,
-				produto_nome: "sementes de cenoura",
-				pedidoitem_preco: 5.0,
-				pedidoitem_quantidade: 5,
-				pedidoitem_subtotal: 25,
-				unidade_nome: "kg",
-			},
-		],
-		pedido_num_endereco: "1050",
-		pedido_complemento: "Apartamento",
-		pedido_prevEntrega: "2025-04-25",
-		stapedido_nome: "em separação",
-		pedido_valor_total: 70,
-		pedido_observacoes: "Cliente solicitou embalagem resistente à umidade",
-	},
-];
 
 export default function Orders() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -260,7 +190,8 @@ export default function Orders() {
 					),
 				]);
 
-				// console.log("Resposta do back-end:", pedidosResponse.data);
+				console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
+				console.log("Resposta do back-end Options:", optionsResponse.data);
 
 				if (optionsResponse.data.success) {
 					setOptions({
@@ -539,7 +470,7 @@ export default function Orders() {
 	//Função para chamar a api de CEP
 	const handleCepBlur = () => {
 		setSuccessMsg(false);
-		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
+		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
 	};
 
 	//Limpar FormData
@@ -800,13 +731,14 @@ export default function Orders() {
 								<thead>
 									<tr className="bg-verdePigmento text-white shadow-thead">
 										{[
-											"Nº",
+											"ID",
 											"Cliente",
-											"Data de Cadastro",
+											"Data",
 											"Status",
 											"Previsão de Entrega",
 											"Itens do Pedido",
 											"Valor Total",
+											"Método de Pagamento",
 											"Telefone",
 											"CEP",
 											"Endereço",
@@ -833,7 +765,7 @@ export default function Orders() {
 												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
 											</td>
 										</tr>
-									) : exemploPedidos.length === 0 ? (
+									) : pedidos.length === 0 ? (
 										<tr>
 											<td colSpan={9} className="text-center py-4">
 												Nenhum pedido encontrado
@@ -841,7 +773,7 @@ export default function Orders() {
 										</tr>
 									) : (
 										//Tabela Dados
-										exemploPedidos.map((pedido, index) => (
+										pedidos.map((pedido, index) => (
 											<tr
 												key={pedido.pedido_id}
 												className={
@@ -882,6 +814,9 @@ export default function Orders() {
 
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													R$ {pedido.pedido_valor_total.toFixed(2)}
+												</td>
+												<td className="border border-black px-4 py-4 whitespace-nowrap">
+													{pedido.pedido_metodo_pagamento}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.cliente_tel}
@@ -945,7 +880,7 @@ export default function Orders() {
 								</tbody>
 							</table>
 						</div>
-						{exemploPedidos.length !== 0 && (
+						{pedidos.length !== 0 && (
 							<div className="min-w-[966px] max-w-[73vw]">
 								<button
 									type="button"

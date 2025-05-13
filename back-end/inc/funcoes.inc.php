@@ -300,6 +300,22 @@ function buscarCargos($conn)
     return $cargos;
 }
 
+
+function buscarStatusPedido($conn)
+{
+    $result = $conn->query("SELECT stapedido_id, stapedido_nome FROM status_pedido");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $statusPedido = [];
+    while ($row = $result->fetch_assoc()) {
+        $statusPedido[] = $row;
+    }
+
+    return $statusPedido;
+}
+
 /**
  * Busca todos os status do produto registrados no banco de dados.
  *
