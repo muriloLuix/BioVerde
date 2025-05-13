@@ -5,10 +5,12 @@ function useVerificarNivelAcesso() {
 
   useEffect(() => {
     const intervalo = setInterval(async () => {
+        console.log('teste')
       try {
         const response = await fetch('http://localhost/BioVerde/back-end/auth/check_authorization.php');
         const data = await response.json();
-        
+        console.log('teste' + data.data)
+
         if (!data.success) {
         //   window.location.reload();
           return;

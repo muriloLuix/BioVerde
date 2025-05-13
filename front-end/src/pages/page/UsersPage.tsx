@@ -81,7 +81,9 @@ export default function UsersPage() {
     dname: "",
     reason: "",
   });
+
   useVerificarNivelAcesso();
+  
   useEffect(() => {
     const checkAuth = async () => {
       try {
