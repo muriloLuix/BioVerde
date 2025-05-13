@@ -21,13 +21,19 @@ $stmt->bind_result($nivelMinimo);
 $stmt->fetch();
 $stmt->close();
 
-if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] != $nivelMinimo) {
-    echo json_encode(["success" => false, "message" => "Acesso negado"]);
+if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] !== $nivelMinimo) {
+    echo json_encode([
+        "success" => false,
+        "nivel_acesso" => $_SESSION['nivel_acesso'],
+        "nivel_minimo" => $nivelMinimo
+    ]);
+    exit;
+} else {
+    echo json_encode([
+        "success" => true,
+        "nivel_acesso" => $_SESSION['nivel_acesso'],
+        "nivel_minimo" => $nivelMinimo
+    ]);
     exit;
 }
 
-echo json_encode([
-    "success" => true,
-    "nivel_acesso" => $_SESSION['nivel_acesso'],
-    "nivel_minimo" => $nivelMinimo
-]);
