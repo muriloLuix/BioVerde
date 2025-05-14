@@ -1,9 +1,6 @@
 <?php
 session_start();
-ini_set("display_errors", '1');
 include_once "../inc/funcoes.inc.php";
-checkLoggedUser($conn, $_SESSION['user_id']);
-
 header('Content-Type: application/json');
 
 try {
