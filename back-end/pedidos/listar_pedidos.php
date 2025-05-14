@@ -31,6 +31,7 @@ try {
         "d.pedido_cidade",
         "d.pedido_estado",
         "d.pedido_observacoes",
+        "f.stapedido_id"
     ];
 
     $joins = [
@@ -64,7 +65,6 @@ try {
         ],
     ];
 
-    // **IMPORTANTE**: base = "pedidos d"
     $pedidos = search(
         $conn,
         "pedidos d",

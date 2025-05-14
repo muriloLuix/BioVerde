@@ -58,6 +58,7 @@ interface Pedido {
 	pedido_observacoes: string;
 	pedido_valor_total: number;
 	stapedido_nome: string;
+	stapedido_id: number;
 	pedidoitem_id?: number;
 	pedido_itens: PedidoItem[];
 }
@@ -211,7 +212,7 @@ export default function Orders() {
 					}
 				),
 				axios.get(
-					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
 					{
 						withCredentials: true,
 						headers: { "Content-Type": "application/json" },
@@ -324,7 +325,9 @@ export default function Orders() {
 			nome_cliente: pedido.cliente_nome_ou_empresa,
 			tel: pedido.pedido_telefone,
 			cep: pedido.pedido_cep,
-			status: pedido.stapedido_nome,
+			status: options.status
+				.find((status) => status.stapedido_nome === pedido.stapedido_nome)
+				?.stapedido_id.toString() ?? "",
 			endereco: pedido.pedido_endereco,
 			num_endereco: pedido.pedido_num_endereco,
 			estado: pedido.pedido_estado,
@@ -869,7 +872,7 @@ export default function Orders() {
 													>
 														<Eye />
 													</button>
-												</td>				
+												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													R$ {pedido.pedido_valor_total.toFixed(2)}
 												</td>
