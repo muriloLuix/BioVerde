@@ -81,7 +81,7 @@ export default function InventoryControl() {
 		lote: 0,
 		status: "",
 		preco: 0.0,
-		fornecedor: "",
+		fornecedor: { value: "", label: "" },
 		obs: "",
 	});
 	const [options, setOptions] = useState({
@@ -99,8 +99,6 @@ export default function InventoryControl() {
 		dnome_produto: "",
 		reason: "",
 	});
-
-	console.log(formData)
 
 	//Função para buscar os fornecedores cadastrados e fazer a listagem deles
 	const fetchFornecedores = (query: string) => {
@@ -164,6 +162,10 @@ export default function InventoryControl() {
 
 		console.log("Dados do produto:", produto.staproduto_nome);
 
+		const fornecedorSelecionado = suggestions.find(
+			(f) => f.fornecedor_nome_ou_empresa === produto.fornecedor_nome_ou_empresa
+		);
+
 		// Encontra o tipo correspondente nas opções carregadas
 		setFormData({
 			produto_id: produto.produto_id ?? 0,
@@ -178,7 +180,15 @@ export default function InventoryControl() {
 					?.staproduto_id.toString() ?? "",
 			lote: produto.lote_id,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
-			fornecedor: produto.fornecedor_nome_ou_empresa ?? "",
+			fornecedor: fornecedorSelecionado
+			? {
+					value: fornecedorSelecionado.fornecedor_nome_ou_empresa,
+					label: fornecedorSelecionado.fornecedor_nome_ou_empresa,
+			  }
+			: {
+					value: produto.fornecedor_nome_ou_empresa ?? "",
+					label: produto.fornecedor_nome_ou_empresa ?? "",
+			  },
 			obs: produto.produto_observacoes,
 		});
 
@@ -527,14 +537,15 @@ export default function InventoryControl() {
 
 	//Limpar FormData
 	const clearFormData = () => {
-		setFormData(
-			(prev) =>
-				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
-				) as typeof prev
+		setFormData((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).map(([key, value]) => {
+					if (key === "fornecedor") {
+						return [key, { value: "", label: "" }];
+					}
+					return [key, typeof value === "number" ? 0 : ""];
+				})
+			) as typeof prev
 		);
 	};
 
@@ -838,39 +849,6 @@ export default function InventoryControl() {
 										fornecedor: option?.value.toString() ?? "",
 									});
 								}}
-								/* onCreateOption={async (value: string) => {
-									try {
-										const response = await axios.post(
-											"http://localhost/BioVerde/back-end/fornecedores/cadastrar_fornecedores.php",
-											{
-												cep: "32044-455",
-												cidade: "Contagem",
-												cpf_cnpj: "10.200.100/2000-30",
-												email: "testes@email.com",
-												endereco: "Rua A",
-												estado: "MG",
-												fornecedor_id: 0,
-												num_endereco: "239",
-												razao_social: value,
-												responsavel: "Fernando",
-												status: "1",
-												tel: "(41) 00000-0000",
-												tipo: "juridica",
-											},
-											{
-												headers: { "Content-Type": "application/json" },
-												withCredentials: true,
-											}
-										);
-
-										console.log(response);
-									} catch (err) {
-										console.error(err);
-									} finally {
-										fetchFornecedores("");
-										setFormData({ ...formData, fornecedor: "" });
-									}
-								}} */
 							>
 								{suggestions.map((fornecedor) => (
 									<option
@@ -880,7 +858,7 @@ export default function InventoryControl() {
 										{fornecedor.fornecedor_nome_ou_empresa}
 									</option>
 								))}
-							</SmartField>
+							</SmartField> 
 						</div>
 
 						<div className="flex gap-x-15 mb-8 items-center">
@@ -1028,19 +1006,10 @@ export default function InventoryControl() {
 						onChange={(newValue: any) =>
 							setFormData({
 								...formData,
-								fornecedor: newValue.value ?? "",
+								fornecedor: newValue?.value || "",
 							})
 						}
-					>
-						{suggestions.map((fornecedor) => (
-							<option
-								key={fornecedor.fornecedor_id}
-								value={fornecedor.fornecedor_nome_ou_empresa}
-							>
-								{fornecedor.fornecedor_nome_ou_empresa}
-							</option>
-						))}
-					</SmartField>
+					/>
 				</div>
 
 				<div className="flex gap-x-15 mb-6 items-center">
