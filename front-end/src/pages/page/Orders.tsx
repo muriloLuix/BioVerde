@@ -35,7 +35,7 @@ interface Status {
 interface Cliente {
 	cliente_id: number;
 	cliente_nome_ou_empresa: string;
-	cliente_telefone: string;
+	pedido_telefone: string;
 }
 
 interface Unidade {
@@ -46,7 +46,7 @@ interface Unidade {
 interface Pedido {
 	pedido_id: number;
 	cliente_nome_ou_empresa: string;
-	cliente_telefone: string;
+	pedido_telefone: string;
 	pedido_cep: string;
 	pedido_endereco: string;
 	pedido_num_endereco: string;
@@ -322,7 +322,7 @@ export default function Orders() {
 		setFormData({
 			pedido_id: pedido.pedido_id,
 			nome_cliente: pedido.cliente_nome_ou_empresa,
-			tel: pedido.cliente_telefone,
+			tel: pedido.pedido_telefone,
 			cep: pedido.pedido_cep,
 			status: pedido.stapedido_nome,
 			endereco: pedido.pedido_endereco,
@@ -874,7 +874,7 @@ export default function Orders() {
 													R$ {pedido.pedido_valor_total.toFixed(2)}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_telefone}
+													{pedido.pedido_telefone}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.pedido_cep}

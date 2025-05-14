@@ -1,21 +1,9 @@
 <?php
 ini_set("display_errors", 1);
 session_start();
-
-include_once "../inc/funcoes.inc.php";
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
-
-ini_set("display_errors",1);
-session_start();
-
 include_once "../inc/funcoes.inc.php";
-
-// configurarSessaoSegura();
-
-header_remove('X-Powered-By');
-header('Content-Type: application/json');
 
 try {
     // Verifica autenticação
@@ -40,9 +28,6 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    var_dump($data['nome_cliente']);
-        exit;
-
     // Validação dos campos obrigatórios
     $camposObrigatorios = ['nome_cliente', 'tel', 'cep', 'status', 'endereco', 'num_endereco', 'estado', 'cidade', 'prev_entrega', 'obs'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
@@ -56,30 +41,46 @@ try {
     }
 
     // Pesquisar id pelo nome
-    $sql = "SELECT cliente_id, cliente_nome_ou_empresa FROM clientes WHERE cliente_nome_ou_empresa = ?";
+    $sql = "SELECT cliente_id FROM clientes WHERE cliente_nome_ou_empresa = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $data['nome_cliente']);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($result->num_rows === 0) {
-
+        throw new Exception("Cliente não encontrado");
     }
+    $row = $result->fetch_assoc();
+    $id_cliente = $row['cliente_id'];
 
     $camposAtualizados = [
-        'cliente_id' => $data['nome_cliente'],
-        'fornecedor_razao_social' => $data['tel'],
-        'fornecedor_email' => $data['cep'],
-        'fornecedor_telefone' => $data['status'],
-        'fornecedor_tipo' => $data['endereco'],
-        'fornecedor_cpf_ou_cnpj' => $data['num_endereco'],
-        'fornecedor_responsavel' => $data['estado'],
-        'fornecedor_cep' => $data['cidade'],
-        'fornecedor_endereco' => $data['prev_entrega'],
-        'fornecedor_num_endereco' => $data['obs']
+        'cliente_id' => $id_cliente,
+        'pedido_cep' => $data['cep'],
+        'stapedido_id' => $data['status'],
+        'pedido_endereco' => $data['endereco'],
+        'pedido_num_endereco' => $data['num_endereco'],
+        'pedido_estado' => $data['estado'],
+        'pedido_cidade' => $data['cidade'],
+        'pedido_prevEntrega' => $data['prev_entrega'],
+        'pedido_observacoes' => $data['obs'],
+        'pedido_telefone' => $data['tel']
     ];
+    // Executa update
+    $resultado = updateData($conn, 'pedidos', $camposAtualizados, $data['pedido_id'], 'pedido_id');
+    if (!$resultado['success']) {
+        throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
+    }
+
+    echo json_encode([
+        "success" => true,
+        "message" => "Pedido atualizado com sucesso!",
+    ]);
 
 } catch (Exception $e) {
-    error_log("Erro em editar.pedido.php: " . $e->getMessage());
+    error_log("Erro em editar.usuario.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
+} finally {
+    if (isset($conn) && $conn) {
+        $conn->close();
+    }
 }
 ?>

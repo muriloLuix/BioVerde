@@ -581,8 +581,6 @@ function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field =
 
     $sql .= " WHERE $id_field = ?";
 
-    // 👇 Depurar a query montada
-    // echo $sql;
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
