@@ -102,7 +102,7 @@ export default function Orders() {
 	});
 	const [formData, setFormData] = useState({
 		pedido_id: 0,
-		nome_cliente: "",
+		nome_cliente: { value: "", label: "" },
 		tel: "",
 		cep: "",
 		status: "",
@@ -320,9 +320,21 @@ export default function Orders() {
 			return date.toISOString().split("T")[0];
 		};
 
+		const clienteSelecionado = suggestions.find(
+			(f) => f.cliente_nome_ou_empresa === pedido.cliente_nome_ou_empresa
+		);
+
 		setFormData({
 			pedido_id: pedido.pedido_id,
-			nome_cliente: pedido.cliente_nome_ou_empresa,
+			nome_cliente: clienteSelecionado
+			? {
+					value: clienteSelecionado.cliente_nome_ou_empresa,
+					label: clienteSelecionado.cliente_nome_ou_empresa,
+			  }
+			: {
+					value: pedido.cliente_nome_ou_empresa ?? "",
+					label: pedido.cliente_nome_ou_empresa ?? "",
+			  },
 			tel: pedido.pedido_telefone,
 			cep: pedido.pedido_cep,
 			status: options.status
@@ -527,14 +539,15 @@ export default function Orders() {
 
 	//Limpar FormData
 	const clearFormData = () => {
-		setFormData(
-			(prev) =>
-				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
-				) as typeof prev
+		setFormData((prev) =>
+			Object.fromEntries(
+				Object.entries(prev).map(([key, value]) => {
+					if (key === "nome_cliente") {
+						return [key, { value: "", label: "" }];
+					}
+					return [key, typeof value === "number" ? 0 : ""];
+				})
+			) as typeof prev
 		);
 	};
 
@@ -1077,16 +1090,7 @@ export default function Orders() {
 									nome_cliente: newValue.value ?? "",
 								})
 							}
-						>
-							{suggestions.map((cliente) => (
-								<option
-									key={cliente.cliente_id}
-									value={cliente.cliente_nome_ou_empresa}
-								>
-									{cliente.cliente_nome_ou_empresa}
-								</option>
-							))}
-						</SmartField>
+						/>
 
 						<SmartField
 							fieldName="cep"
