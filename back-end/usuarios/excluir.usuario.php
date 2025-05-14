@@ -1,7 +1,7 @@
 <?php 
 session_start();
 include_once "../inc/funcoes.inc.php";
-
+authorize(3);
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
 
