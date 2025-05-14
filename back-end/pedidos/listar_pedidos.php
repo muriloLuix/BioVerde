@@ -2,7 +2,7 @@
 session_start();
 
 include_once "../inc/funcoes.inc.php";
-header('Content-Type: application/json');
+// header('Content-Type: application/json');
 
 try {
     if ($conn->connect_error) {

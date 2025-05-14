@@ -100,6 +100,8 @@ export default function InventoryControl() {
 		reason: "",
 	});
 
+	console.log(formData)
+
 	//Função para buscar os fornecedores cadastrados e fazer a listagem deles
 	const fetchFornecedores = (query: string) => {
 		axios
