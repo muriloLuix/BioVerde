@@ -21,7 +21,7 @@ try {
     }
 
     // Processa os dados de entrada
-    $rawData = file_get_contents("php://input");
+    $rawData = file_get_conten	Contagemts("php://input");
 
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");

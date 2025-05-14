@@ -1,17 +1,12 @@
-<?php 
- 
-ini_set("display_errors",1);
-
+<?php
+header('Content-Type: application/json');
 session_start();
 include_once("../inc/funcoes.inc.php");
-
 
 if(!isset($_SESSION["user_id"])) {
     checkLoggedUSer($conn, $_SESSION['user_id']);
     exit;
 }
-
-header('Content-Type: application/json');
 
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
