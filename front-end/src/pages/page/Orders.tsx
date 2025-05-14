@@ -13,11 +13,14 @@ import { InputMaskChangeEvent } from "primereact/inputmask";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import { SmartField } from "../../shared";
-import { ConfirmationModal } from "../../shared";
-import { Modal } from "../../shared";
-import { NoticeModal } from "../../shared";
+import {
+	SmartField,
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+} from "../../shared";
 import { cepApi } from "../../utils/cepApi";
+import { OnChangeValue } from "react-select";
 
 interface Estado {
 	estado_id: number;
@@ -67,6 +70,10 @@ interface PedidoItem {
 	pedidoitem_preco: number;
 	pedidoitem_subtotal: number;
 }
+interface Option {
+	value: string | number;
+	label: string;
+}
 
 export default function Orders() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -112,7 +119,7 @@ export default function Orders() {
 	}>({
 		estados: [],
 		status: [],
-		unidades_medida: []
+		unidades_medida: [],
 	});
 	const [filters, setFilters] = useState({
 		fnum_pedido: "",
@@ -135,12 +142,9 @@ export default function Orders() {
 	//Função para buscar os clientes cadastrados e fazer a listagem deles
 	const fetchClientes = (query: string) => {
 		axios
-			.get(
-				"http://localhost/BioVerde/back-end/pedidos/listar_clientes.php",
-				{
-					params: { q: query },
-				}
-			)
+			.get("http://localhost/BioVerde/back-end/pedidos/listar_clientes.php", {
+				params: { q: query },
+			})
 			.then((res) => {
 				console.log(res.data);
 				setSuggestions(res.data);
@@ -233,9 +237,7 @@ export default function Orders() {
 				setPedidos(pedidosResponse.data.pedidos || []);
 			} else {
 				setOpenNoticeModal(true);
-				setMessage(
-					pedidosResponse.data.message || "Erro ao carregar pedidos"
-				);
+				setMessage(pedidosResponse.data.message || "Erro ao carregar pedidos");
 			}
 
 			if (userLevelResponse.data.success) {
@@ -511,7 +513,13 @@ export default function Orders() {
 	//Função para chamar a api de CEP
 	const handleCepBlur = () => {
 		setSuccessMsg(false);
-		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage, setSuccessMsg);
+		cepApi(
+			formData.cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg
+		);
 	};
 
 	//Limpar FormData
@@ -586,17 +594,24 @@ export default function Orders() {
 										isCreatableSelect
 										placeholder="Selecione um cliente"
 										isLoading={loading.has("orders")}
-										defaultValue={filters.fnome_cliente}
+										value={suggestions
+											.map((cliente: Cliente) => ({
+												value: cliente.cliente_nome_ou_empresa,
+												label: cliente.cliente_nome_ou_empresa,
+											}))
+											.find(
+												(opt) => opt.value === formData.nome_cliente || null
+											)}
 										options={suggestions.map((cliente: Cliente) => ({
 											value: cliente.cliente_nome_ou_empresa,
 											label: cliente.cliente_nome_ou_empresa,
 										}))}
-										onChange={(newValue: any) =>
+										onChange={(option: OnChangeValue<Option, false>) => {
 											setFilters({
 												...filters,
-												fnome_cliente: newValue.value ?? "",
-											})
-										}
+												fnome_cliente: option?.value.toString() ?? "",
+											});
+										}}
 									>
 										{suggestions.map((cliente) => (
 											<option
@@ -607,7 +622,6 @@ export default function Orders() {
 											</option>
 										))}
 									</SmartField>
-
 
 									<SmartField
 										fieldName="ftel"
@@ -637,7 +651,10 @@ export default function Orders() {
 									>
 										<option value="todos">Todos</option>
 										{options.status?.map((status) => (
-											<option key={status.stapedido_id} value={status.stapedido_id}>
+											<option
+												key={status.stapedido_id}
+												value={status.stapedido_id}
+											>
 												{status.stapedido_nome}
 											</option>
 										))}
