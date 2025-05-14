@@ -47,6 +47,7 @@ export default function Suppliers() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [message, setMessage] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
+	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
 	const [errors, setErrors] = useState({
@@ -212,7 +213,8 @@ export default function Suppliers() {
 			try {
 				setLoading((prev) => new Set([...prev, "suppliers", "options"]));
 
-				const fornecedoresResponse = await axios.get(
+				const [fornecedoresResponse, userLevelResponse] = await Promise.all([
+					axios.get(
 					"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
 					{
 						withCredentials: true,
@@ -220,7 +222,15 @@ export default function Suppliers() {
 							Accept: "application/json",
 						},
 					}
-				);
+					),
+					axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
+					),
+				]);
 
 				console.log("Resposta do back-end:", fornecedoresResponse.data);
 
@@ -232,6 +242,14 @@ export default function Suppliers() {
 						fornecedoresResponse.data.message || "Erro ao carregar fornecedores"
 					);
 				}
+
+				if (userLevelResponse.data.success) {
+					setUserLevel(userLevelResponse.data.userLevel)
+				} else {
+					setOpenNoticeModal(true);
+					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				}
+
 			} catch (error) {
 				setOpenNoticeModal(true);
 				setMessage("Erro ao conectar com o servidor");
@@ -797,35 +815,33 @@ export default function Suppliers() {
 													.map((value, idx) => (
 														<td
 															key={idx}
-															className="border border-black px-4 py-4 whitespace-nowrap"
+															className="border border-black p-4 whitespace-nowrap"
 														>
 															{value}
 														</td>
 													))}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													{new Date(
 														fornecedor.fornecedor_dtcadastro
 													).toLocaleDateString("pt-BR")}
 												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													<button
-														className="mr-4 text-black cursor-pointer relative group"
+														className="text-black cursor-pointer"
 														onClick={() => handleEditClick(fornecedor)}
+														title="Editar produto"
 													>
 														<PencilLine />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Editar
-														</div>
 													</button>
-													<button
-														className="text-red-500 cursor-pointer relative group"
-														onClick={() => handleDeleteClick(fornecedor)}
-													>
-														<Trash />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Excluir
-														</div>
-													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeleteClick(fornecedor)}
+															title="Excluir produto"
+														>
+															<Trash />
+														</button>
+													)}
 												</td>
 											</tr>
 										))

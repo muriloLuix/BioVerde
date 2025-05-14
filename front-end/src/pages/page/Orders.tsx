@@ -76,6 +76,7 @@ export default function Orders() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
 	const [currentObs, setCurrentObs] = useState("");
+	const [userLevel, setUserLevel] = useState("");
 	const [suggestions, setSuggestions] = useState<Cliente[]>([]);
 	const [openOrderModal, setOpenOrderModal] = useState(false);
 	const [numOrder, setNumOrder] = useState(0);
@@ -185,7 +186,7 @@ export default function Orders() {
 		try {
 			setLoading((prev) => new Set([...prev, "orders", "options"]));
 
-			const [optionsResponse, pedidosResponse] = await Promise.all([
+			const [optionsResponse, pedidosResponse, userLevelResponse] = await Promise.all([
 				axios.get(
 					"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
 					{
@@ -203,6 +204,13 @@ export default function Orders() {
 						headers: {
 							Accept: "application/json",
 						},
+					}
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
 					}
 				),
 			]);
@@ -229,6 +237,14 @@ export default function Orders() {
 					pedidosResponse.data.message || "Erro ao carregar pedidos"
 				);
 			}
+
+			if (userLevelResponse.data.success) {
+				setUserLevel(userLevelResponse.data.userLevel)
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+			}
+
 		} catch (error) {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
@@ -563,17 +579,6 @@ export default function Orders() {
 										inputWidth="w-[120px]"
 									/>
 
-									{/* <SmartField
-										fieldName="fnome_cliente"
-										fieldText="Cliente"
-										type="text"
-										placeholder="Nome do Cliente"
-										autoComplete="name"
-										value={filters.fnome_cliente}
-										onChange={handleChange}
-										inputWidth="w-[580px]"
-									/> */}
-
 									<SmartField
 										fieldName="fnome_cliente"
 										fieldText="Cliente"
@@ -839,18 +844,15 @@ export default function Orders() {
 													).toLocaleDateString("pt-BR")}
 												</td>
 												{/* Itens do Pedido */}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+														className="text-blue-600 cursor-pointer"
 														onClick={() => handleSeeOrderClick(pedido)}
+														title="Ver Itens"
 													>
 														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
 													</button>
-												</td>
-
+												</td>				
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													R$ {pedido.pedido_valor_total.toFixed(2)}
 												</td>
@@ -877,38 +879,32 @@ export default function Orders() {
 												</td>
 
 												{/* Observações */}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+														className="text-blue-600 cursor-pointer"
 														onClick={() => handleObsClick(pedido)}
+														title="Ver observações"
 													>
 														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
 													</button>
 												</td>
-
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													<button
-														className="mr-4 text-black cursor-pointer relative group"
+														className="text-black cursor-pointer"
 														onClick={() => handleEditClick(pedido)}
+														title="Editar produto"
 													>
 														<PencilLine />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Editar
-														</div>
 													</button>
-
-													<button
-														className="text-red-500 cursor-pointer relative group"
-														onClick={() => handleDeleteClick(pedido)}
-													>
-														<Trash />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Excluir
-														</div>
-													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeleteClick(pedido)}
+															title="Excluir produto"
+														>
+															<Trash />
+														</button>
+													)}
 												</td>
 											</tr>
 										))

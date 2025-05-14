@@ -50,6 +50,7 @@ export default function Clients() {
 	const [message, setMessage] = useState("");
 	const [currentObs, setCurrentObs] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
+	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [clientes, setClientes] = useState<Cliente[]>([]);
 	const [errors, setErrors] = useState({
@@ -216,7 +217,8 @@ export default function Clients() {
 			try {
 				setLoading((prev) => new Set([...prev, "clients", "options"]));
 
-				const clientesResponse = await axios.get(
+				const [clientesResponse, userLevelResponse] = await Promise.all([
+					axios.get(
 					"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
 					{
 						withCredentials: true,
@@ -224,7 +226,15 @@ export default function Clients() {
 							Accept: "application/json",
 						},
 					}
-				);
+					),
+					axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
+					),
+				]);
 
 				console.log("Resposta do back-end:", clientesResponse.data);
 
@@ -236,6 +246,14 @@ export default function Clients() {
 						clientesResponse.data.message || "Erro ao carregar clientes"
 					);
 				}
+
+				if (userLevelResponse.data.success) {
+					setUserLevel(userLevelResponse.data.userLevel)
+				} else {
+					setOpenNoticeModal(true);
+					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				}
+
 			} catch (error) {
 				setOpenNoticeModal(true);
 				setMessage("Erro ao conectar com o servidor");
@@ -790,46 +808,42 @@ export default function Clients() {
 													.map((value, idx) => (
 														<td
 															key={idx}
-															className="border border-black px-4 py-4 whitespace-nowrap"
+															className="border border-black p-4 whitespace-nowrap"
 														>
 															{value}
 														</td>
 													))}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+														className="text-blue-600 cursor-pointer"
 														onClick={() => handleObsClick(cliente)}
+														title="Ver observações"
 													>
 														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
 													</button>
 												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													{new Date(
 														cliente.cliente_data_cadastro
 													).toLocaleDateString("pt-BR")}
 												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													<button
-														className="mr-4 text-black cursor-pointer relative group"
+														className="text-black cursor-pointer"
 														onClick={() => handleEditClick(cliente)}
+														title="Editar produto"
 													>
 														<PencilLine />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Editar
-														</div>
 													</button>
-													<button
-														className="text-red-500 cursor-pointer relative group"
-														onClick={() => handleDeleteClick(cliente)}
-													>
-														<Trash />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Excluir
-														</div>
-													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeleteClick(cliente)}
+															title="Excluir produto"
+														>
+															<Trash />
+														</button>
+													)}
 												</td>
 											</tr>
 										))

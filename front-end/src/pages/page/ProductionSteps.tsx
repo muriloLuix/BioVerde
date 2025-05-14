@@ -45,6 +45,7 @@ export default function ProductionSteps() {
 	const [openObsModal, setOpenObsModal] = useState(false);
 	const [keepProduct, setKeepProduct] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
+	const [userLevel, setUserLevel] = useState("");
 	const [search, setSearch] = useState("");
 	const [currentObs, setCurrentObs] = useState("");
 	const [message, setMessage] = useState("");
@@ -79,7 +80,8 @@ export default function ProductionSteps() {
 			try {
 				setLoading((prev) => new Set([...prev, "steps", "options"]));
 
-				const stepsResponse = await axios.get(
+				const [stepsResponse, userLevelResponse] = await Promise.all([
+					axios.get(
 					"http://localhost/BioVerde/back-end/etapas/listar_etapas.php",
 					{
 						withCredentials: true,
@@ -87,7 +89,15 @@ export default function ProductionSteps() {
 							Accept: "application/json",
 						},
 					}
-				);
+					),
+					axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
+					),
+				]);
 
 				console.log("Resposta do back-end:", stepsResponse.data);
 
@@ -101,6 +111,14 @@ export default function ProductionSteps() {
 					setOpenNoticeModal(true);
 					setMessage(stepsResponse.data.message || "Erro ao carregar etapas");
 				}
+
+				if (userLevelResponse.data.success) {
+					setUserLevel(userLevelResponse.data.userLevel)
+				} else {
+					setOpenNoticeModal(true);
+					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				}
+
 			} catch (error) {
 				setOpenNoticeModal(true);
 				setMessage("Erro ao conectar com o servidor");
@@ -560,7 +578,7 @@ export default function ProductionSteps() {
 															].map((header) => (
 																<th
 																	key={header}
-																	className="border border-black px-4 py-4 whitespace-nowrap"
+																	className="border border-black p-4 whitespace-nowrap"
 																>
 																	{header}
 																</th>
@@ -573,47 +591,45 @@ export default function ProductionSteps() {
 															<tr key={etapa.ordem}>
 																{" "}
 																{/* Faltava a tag <tr> de abertura */}
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 whitespace-nowrap">
 																	{etapa.ordem}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 whitespace-nowrap">
 																	{etapa.nome_etapa}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 whitespace-nowrap">
 																	{etapa.tempo}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 whitespace-nowrap">
 																	{etapa.insumos}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 whitespace-nowrap">
 																	{etapa.responsavel}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 text-center whitespace-nowrap">
 																	{etapa.dtCadastro
 																		? new Date(
 																				etapa.dtCadastro
 																		  ).toLocaleDateString()
 																		: "N/A"}
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 text-center">
 																	<button
 																		type="button"
-																		className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+																		className="text-blue-600 cursor-pointer"
+																		title="Ver observações"
 																		onClick={() => {
 																			setCurrentObs(etapa.obs);
 																			setOpenObsModal(true);
 																		}}
 																	>
 																		<Eye />
-																		<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-																			Ver
-																		</div>
 																	</button>
 																</td>
-																<td className="border border-black px-4 py-4 whitespace-nowrap">
+																<td className="border border-black p-4 text-center whitespace-nowrap">
 																	<button
-																		type="button"
-																		className="mr-4 text-black cursor-pointer relative group"
+																		className="text-black cursor-pointer"
+																		title="Editar produto"
 																		onClick={() => {
 																			handleEditClick(
 																				etapa,
@@ -624,25 +640,21 @@ export default function ProductionSteps() {
 																		}}
 																	>
 																		<PencilLine />
-																		<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-																			Editar
-																		</div>
 																	</button>
-																	<button
-																		type="button"
-																		className="text-red-500 cursor-pointer relative group"
-																		onClick={() =>
-																			handleDeleteClick(
-																				etapa,
-																				selectedProduct.produto_nome
-																			)
-																		}
-																	>
-																		<Trash />
-																		<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-																			Excluir
-																		</div>
-																	</button>
+																	{userLevel === "Administrador" && (
+																		<button
+																			className="text-red-500 cursor-pointer ml-3"
+																			title="Excluir produto"
+																			onClick={() =>
+																				handleDeleteClick(
+																					etapa,
+																					selectedProduct.produto_nome
+																				)
+																			}
+																		>
+																			<Trash />
+																		</button>
+																	)}
 																</td>
 															</tr>
 														))}

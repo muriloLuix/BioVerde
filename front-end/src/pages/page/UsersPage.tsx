@@ -41,6 +41,7 @@ export default function UsersPage() {
   const [openNoticeModal, setOpenNoticeModal] = useState(false);
   const [message, setMessage] = useState("");
   const [successMsg, setSuccessMsg] = useState(false);
+  const [userLevel, setUserLevel] = useState("");
   const [loading, setLoading] = useState<Set<string>>(new Set());
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const navigate = useNavigate();
@@ -209,7 +210,7 @@ export default function UsersPage() {
       try {
         setLoading((prev) => new Set([...prev, "users", "options"]));
 
-        const [optionsResponse, usuariosResponse] = await Promise.all([
+        const [optionsResponse, usuariosResponse, userLevelResponse] = await Promise.all([
           axios.get(
             "http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
             {
@@ -229,7 +230,20 @@ export default function UsersPage() {
               },
             }
           ),
+          axios.get("http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+            {
+              withCredentials: true,
+              headers: { "Content-Type": "application/json" },
+            }
+          ),
         ]);
+
+        if (userLevelResponse.data.success) {
+          setUserLevel(userLevelResponse.data.userLevel)
+        } else {
+          setOpenNoticeModal(true);
+          setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+        }
 
         if (optionsResponse.data.success) {
           setOptions({
@@ -800,36 +814,34 @@ export default function UsersPage() {
                           .map((value, idx) => (
                             <td
                               key={idx}
-                              className="border border-black px-4 py-4 whitespace-nowrap"
+                              className="border border-black p-4 whitespace-nowrap"
                             >
                               {value}
                             </td>
                           ))}
-                        <td className="border border-black px-4 py-4 whitespace-nowrap">
+                        <td className="border border-black p-4 text-center whitespace-nowrap">
                           {new Date(usuario.user_dtcadastro).toLocaleDateString(
                             "pt-BR"
                           )}
                         </td>
-                        <td className="border border-black px-4 py-4 whitespace-nowrap">
-                          <button
-                            className="mr-4 text-black cursor-pointer relative group"
-                            onClick={() => handleEditClick(usuario)}
-                          >
-                            <PencilLine />
-                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                              Editar
-                            </div>
-                          </button>
-                          <button
-                            className="text-red-500 cursor-pointer relative group"
-                            onClick={() => handleDeleteClick(usuario)}
-                          >
-                            <Trash />
-                            <div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-                              Excluir
-                            </div>
-                          </button>
-                        </td>
+												<td className="border border-black p-4 text-center whitespace-nowrap">
+													<button
+														className="text-black cursor-pointer"
+														onClick={() => handleEditClick(usuario)}
+														title="Editar produto"
+													>
+														<PencilLine />
+													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeleteClick(usuario)}
+															title="Excluir produto"
+														>
+															<Trash />
+														</button>
+													)}
+												</td>
                       </tr>
                     ))
                   )}

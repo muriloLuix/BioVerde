@@ -57,6 +57,7 @@ export default function InventoryControl() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [currentObs, setCurrentObs] = useState("");
 	const [message, setMessage] = useState("");
+	const [userLevel, setUserLevel] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
@@ -190,7 +191,8 @@ export default function InventoryControl() {
 		try {
 			setLoading((prev) => new Set([...prev, "products"]));
 
-			const productsAndOptions = await axios.get(
+			const [productsAndOptions, userLevelResponse] = await Promise.all([
+				axios.get(
 				"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
 				{
 					withCredentials: true,
@@ -198,7 +200,15 @@ export default function InventoryControl() {
 						Accept: "application/json",
 					},
 				}
-			);
+				),
+				axios.get(
+				"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
+				{
+					withCredentials: true,
+					headers: { "Content-Type": "application/json" },
+				}
+				),
+			]);
 
 			console.log("Resposta do back-end:", productsAndOptions.data);
 
@@ -213,6 +223,13 @@ export default function InventoryControl() {
 				setMessage(
 					productsAndOptions.data.message ?? "Erro ao carregar opções"
 				);
+			}
+
+			if (userLevelResponse.data.success) {
+				setUserLevel(userLevelResponse.data.userLevel)
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
 			}
 		} catch (error) {
 			setOpenNoticeModal(true);
@@ -710,7 +727,7 @@ export default function InventoryControl() {
 												.map((value, index) => (
 													<td
 														key={value}
-														className="border border-black p-4 text-center"
+														className="border border-black p-4 text-center whitespace-nowrap"
 													>
 														{index === 6 ? (
 															<button
@@ -724,23 +741,25 @@ export default function InventoryControl() {
 															value
 														)}
 													</td>
-												))}
-
-											<td className="border border-black p-4 text-center">
+												))
+											}
+											<td className="border border-black p-4 text-center whitespace-nowrap">
 												<button
-													className="text-black cursor-pointer mr-2"
+													className="text-black cursor-pointer"
 													onClick={() => handleEditClick(produto)}
 													title="Editar produto"
 												>
 													<PencilLine />
 												</button>
-												<button
-													className="text-red-500 cursor-pointer"
-													onClick={() => handleDeleteClick(produto)}
-													title="Excluir produto"
-												>
-													<Trash />
-												</button>
+												{userLevel === "Administrador" && (
+													<button
+														className="text-red-500 cursor-pointer ml-3"
+														onClick={() => handleDeleteClick(produto)}
+														title="Excluir produto"
+													>
+														<Trash />
+													</button>
+												)}
 											</td>
 										</tr>
 									))
