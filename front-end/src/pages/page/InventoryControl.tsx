@@ -806,13 +806,12 @@ export default function InventoryControl() {
 										value: fornecedor.fornecedor_nome_ou_empresa,
 										label: fornecedor.fornecedor_nome_ou_empresa,
 									}))
-									.filter((opt) => opt.value === formData.fornecedor)}
+									.find((opt) => opt.value === formData.fornecedor)}
 								options={suggestions.map((fornecedor: Fornecedor) => ({
 									value: fornecedor.fornecedor_nome_ou_empresa,
 									label: fornecedor.fornecedor_nome_ou_empresa,
 								}))}
 								onChange={(option: OnChangeValue<Option, false>) => {
-									console.log(option);
 									setFormData({
 										...formData,
 										fornecedor: option?.value.toString() ?? "",
