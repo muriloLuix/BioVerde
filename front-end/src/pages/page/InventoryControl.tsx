@@ -985,14 +985,31 @@ export default function InventoryControl() {
 						fieldName="fornecedor"
 						fieldText="Fornecedor"
 						fieldClassname="flex flex-col flex-1"
-						required
-						type="text"
-						placeholder="Digite o nome do fornecedor"
-						autoComplete="name"
-						value={formData.fornecedor}
-						onChange={handleChange}
-						inputWidth="w[340px]"
-					/>
+						isCreatableSelect
+						placeholder="Selecione um fornecedor"
+						isLoading={loading.has("products")}
+						defaultValue={formData.fornecedor}
+						options={suggestions.map((fornecedor: Fornecedor) => ({
+							value: fornecedor.fornecedor_nome_ou_empresa,
+							label: fornecedor.fornecedor_nome_ou_empresa,
+						}))}
+						onChange={(newValue: any) =>
+							setFormData({
+								...formData,
+								fornecedor: newValue.value ?? "",
+							})
+						}
+					>
+						{suggestions.map((fornecedor) => (
+							<option
+								key={fornecedor.fornecedor_id}
+								value={fornecedor.fornecedor_nome_ou_empresa}
+							>
+								{fornecedor.fornecedor_nome_ou_empresa}
+							</option>
+						))}
+					</SmartField>
+						
 				</div>
 
 				<div className="flex gap-x-15 mb-6 items-center">

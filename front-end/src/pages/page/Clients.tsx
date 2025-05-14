@@ -1151,7 +1151,7 @@ export default function Clients() {
 					rightButtonText="Cancelar"
 					loading={loading}
 					isLoading={loading.has("updateClient")}
-					onCancel={() => clearFormData()}
+					onCancel={() => {clearFormData(); setClientType("juridica")}}
 					onSubmit={handleUpdateClient}
 				>
 					<div className="flex mb-6 gap-x-8 justify-between">

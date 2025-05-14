@@ -76,6 +76,7 @@ export default function Orders() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
 	const [currentObs, setCurrentObs] = useState("");
+	const [suggestions, setSuggestions] = useState<Cliente[]>([]);
 	const [openOrderModal, setOpenOrderModal] = useState(false);
 	const [numOrder, setNumOrder] = useState(0);
 	const [clientOrder, setClientOrder] = useState("");
@@ -110,7 +111,7 @@ export default function Orders() {
 	}>({
 		estados: [],
 		status: [],
-		unidades_medida: [],
+		unidades_medida: []
 	});
 	const [filters, setFilters] = useState({
 		fnum_pedido: "",
@@ -129,6 +130,25 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
+
+	//Função para buscar os clientes cadastrados e fazer a listagem deles
+	const fetchClientes = (query: string) => {
+		axios
+			.get(
+				"http://localhost/BioVerde/back-end/pedidos/listar_clientes.php",
+				{
+					params: { q: query },
+				}
+			)
+			.then((res) => {
+				console.log(res.data);
+				setSuggestions(res.data);
+			})
+			.catch((err) => {
+				console.error(err);
+				setSuggestions([]);
+			});
+	};
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -161,80 +181,81 @@ export default function Orders() {
 		checkAuth();
 	}, [navigate]);
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "orders", "options"]));
+	const fetchData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "orders", "options"]));
 
-				const [optionsResponse, pedidosResponse] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-								"Content-Type": "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-				]);
-
-				console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
-				console.log("Resposta do back-end Options:", optionsResponse.data);
-
-				if (optionsResponse.data.success) {
-					setOptions({
-						estados: optionsResponse.data.estados || [],
-						status: optionsResponse.data.status || [],
-						unidades_medida: optionsResponse.data.unidades_medida || [],
-					});
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(optionsResponse.data.message || "Erro ao carregar opções");
-				}
-
-				if (pedidosResponse.data.success) {
-					setPedidos(pedidosResponse.data.pedidos || []);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						pedidosResponse.data.message || "Erro ao carregar pedidos"
-					);
-				}
-			} catch (error) {
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-
-				if (axios.isAxiosError(error)) {
-					console.error(
-						"Erro na requisição:",
-						error.response?.data || error.message
-					);
-					if (error.response?.data?.message) {
-						setMessage(error.response.data.message);
+			const [optionsResponse, pedidosResponse] = await Promise.all([
+				axios.get(
+					"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+							"Content-Type": "application/json",
+						},
 					}
-				} else {
-					console.error("Erro desconhecido:", error);
-				}
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["orders", "options"].forEach((item) => newLoading.delete(item));
-					return newLoading;
-				});
-			}
-		};
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+						},
+					}
+				),
+			]);
 
+			console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
+			console.log("Resposta do back-end Options:", optionsResponse.data);
+
+			if (optionsResponse.data.success) {
+				setOptions({
+					estados: optionsResponse.data.estados || [],
+					status: optionsResponse.data.status || [],
+					unidades_medida: optionsResponse.data.unidades_medida || [],
+				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(optionsResponse.data.message || "Erro ao carregar opções");
+			}
+
+			if (pedidosResponse.data.success) {
+				setPedidos(pedidosResponse.data.pedidos || []);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(
+					pedidosResponse.data.message || "Erro ao carregar pedidos"
+				);
+			}
+		} catch (error) {
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+
+			if (axios.isAxiosError(error)) {
+				console.error(
+					"Erro na requisição:",
+					error.response?.data || error.message
+				);
+				if (error.response?.data?.message) {
+					setMessage(error.response.data.message);
+				}
+			} else {
+				console.error("Erro desconhecido:", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				["orders", "options"].forEach((item) => newLoading.delete(item));
+				return newLoading;
+			});
+		}
+	};
+
+	useEffect(() => {
 		fetchData();
+		fetchClientes("");
 	}, []);
 
 	//Função para Atualizar a Tabela após ação
@@ -542,7 +563,7 @@ export default function Orders() {
 										inputWidth="w-[120px]"
 									/>
 
-									<SmartField
+									{/* <SmartField
 										fieldName="fnome_cliente"
 										fieldText="Cliente"
 										type="text"
@@ -551,7 +572,37 @@ export default function Orders() {
 										value={filters.fnome_cliente}
 										onChange={handleChange}
 										inputWidth="w-[580px]"
-									/>
+									/> */}
+
+									<SmartField
+										fieldName="fnome_cliente"
+										fieldText="Cliente"
+										fieldClassname="flex flex-col flex-1"
+										isCreatableSelect
+										placeholder="Selecione um cliente"
+										isLoading={loading.has("orders")}
+										defaultValue={filters.fnome_cliente}
+										options={suggestions.map((cliente: Cliente) => ({
+											value: cliente.cliente_nome_ou_empresa,
+											label: cliente.cliente_nome_ou_empresa,
+										}))}
+										onChange={(newValue: any) =>
+											setFilters({
+												...filters,
+												fnome_cliente: newValue.value ?? "",
+											})
+										}
+									>
+										{suggestions.map((cliente) => (
+											<option
+												key={cliente.cliente_id}
+												value={cliente.cliente_nome_ou_empresa}
+											>
+												{cliente.cliente_nome_ou_empresa}
+											</option>
+										))}
+									</SmartField>
+
 
 									<SmartField
 										fieldName="ftel"
@@ -657,7 +708,7 @@ export default function Orders() {
 
 								<div className="flex justify-between mb-8">
 									<SmartField
-										isDate
+										type="date"
 										fieldName="fprev_entrega"
 										fieldText="Previsão de entrega"
 										value={filters.fprev_entrega}
@@ -666,7 +717,7 @@ export default function Orders() {
 									/>
 
 									<SmartField
-										isDate
+										type="date"
 										fieldName="fdt_cadastro"
 										fieldText="Data de Cadastro"
 										value={filters.fdt_cadastro}
@@ -996,13 +1047,30 @@ export default function Orders() {
 							fieldName="nome_cliente"
 							fieldText="Cliente"
 							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							placeholder="Digite o nome do Cliente"
-							autoComplete="name"
-							value={formData.nome_cliente}
-							onChange={handleChange}
-						/>
+							isCreatableSelect
+							placeholder="Selecione um cliente"
+							isLoading={loading.has("orders")}
+							defaultValue={formData.nome_cliente}
+							options={suggestions.map((cliente: Cliente) => ({
+								value: cliente.cliente_nome_ou_empresa,
+								label: cliente.cliente_nome_ou_empresa,
+							}))}
+							onChange={(newValue: any) =>
+								setFormData({
+									...formData,
+									nome_cliente: newValue.value ?? "",
+								})
+							}
+						>
+							{suggestions.map((cliente) => (
+								<option
+									key={cliente.cliente_id}
+									value={cliente.cliente_nome_ou_empresa}
+								>
+									{cliente.cliente_nome_ou_empresa}
+								</option>
+							))}
+						</SmartField>
 
 						<SmartField
 							fieldName="cep"
@@ -1120,7 +1188,7 @@ export default function Orders() {
 						/>
 
 						<SmartField
-							isDate
+							type="date"
 							required
 							fieldName="prev_entrega"
 							fieldText="Previsão de entrega"

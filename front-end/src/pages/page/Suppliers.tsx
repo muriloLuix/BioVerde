@@ -1129,7 +1129,7 @@ export default function Suppliers() {
 					rightButtonText="Cancelar"
 					loading={loading}
 					isLoading={loading.has("updateSupplier")}
-					onCancel={() => clearFormData()}
+					onCancel={() => {clearFormData(); setSupplierType("juridica")}}
 					onSubmit={handleUpdateSupplier}
 				>
 					{/* Linha Nome e razão social*/}
