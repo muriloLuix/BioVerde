@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import axios from "axios";
 import { OnChangeValue } from "react-select";
@@ -1000,14 +1000,9 @@ export default function InventoryControl() {
 				openModal={openEditModal}
 				setOpenModal={setOpenEditModal}
 				modalTitle="Editar Produto:"
-				leftButtonText="Editar"
-				rightButtonText="Cancelar"
-				loading={loading}
+				submitButtonText="Editar"
+				cancelButtonText="Cancelar"
 				isLoading={loading.has("updateProduct")}
-				onCancel={() => {
-					clearFormData();
-					errors.price = false;
-				}}
 				onSubmit={handleUpdateProduct}
 			>
 				<div className="flex gap-x-15 mb-6">
@@ -1128,8 +1123,8 @@ export default function InventoryControl() {
 				openModal={openDeleteModal}
 				setOpenModal={setOpenDeleteModal}
 				modalTitle="Excluir Produto:"
-				leftButtonText="Excluir"
-				rightButtonText="Cancelar"
+				submitButtonText="Excluir"
+				cancelButtonText="Cancelar"
 				onDelete={() => {
 					setOpenConfirmModal(true);
 					setOpenDeleteModal(false);

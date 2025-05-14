@@ -1039,9 +1039,8 @@ export default function Orders() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Pedido:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					cancelButtonText="Cancelar"
+					submitButtonText="Editar"
 					isLoading={loading.has("updateOrder")}
 					onExit={clearFormData}
 					onSubmit={handleUpdateOrder}
