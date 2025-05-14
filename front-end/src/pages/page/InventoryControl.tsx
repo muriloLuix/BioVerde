@@ -1,5 +1,8 @@
-import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
+
+import axios from "axios";
+import { InputMaskChangeEvent } from "primereact/inputmask";
+import { Tabs, Form } from "radix-ui";
 import {
 	Search,
 	PencilLine,
@@ -9,8 +12,6 @@ import {
 	FilterX,
 	Printer,
 } from "lucide-react";
-import { InputMaskChangeEvent } from "primereact/inputmask";
-import axios from "axios";
 
 import {
 	SmartField,
@@ -58,10 +59,8 @@ export default function InventoryControl() {
 	const [message, setMessage] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
-	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [produtos, setProdutos] = useState<Produto[]>([]);
-	const [fornecedorTouched, setFornecedorTouched] = useState(false);
 	const [errors, setErrors] = useState({
 		type: false,
 		status: false,
@@ -106,24 +105,12 @@ export default function InventoryControl() {
 			.then((res) => {
 				console.log(res.data);
 				setSuggestions(res.data);
-				setShowSuggestions(true);
 			})
-			.catch(() => {
+			.catch((err) => {
+				console.error(err);
 				setSuggestions([]);
-				setShowSuggestions(false);
 			});
 	};
-
-	//Para quando digitar no campo de fornecedores, fazer a listagem deles de acordo com a pesquisa
-	useEffect(() => {
-		if (!fornecedorTouched) return;
-
-		const delayDebounce = setTimeout(() => {
-			fetchFornecedores("");
-		}, 300);
-
-		return () => clearTimeout(delayDebounce);
-	}, [formData.fornecedor, fornecedorTouched]);
 
 	//OnChange dos campos
 	const handleChange = (
@@ -199,61 +186,57 @@ export default function InventoryControl() {
 		setOpenDeleteModal(true);
 	};
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "products"]));
+	const fetchData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "products"]));
 
-				const productsAndOptions = await axios.get(
-					"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-						},
-					}
-				);
-
-				console.log("Resposta do back-end:", productsAndOptions.data);
-
-				if (productsAndOptions.data.success) {
-					setProdutos(productsAndOptions.data.produtos ?? []);
-					setOptions({
-						tipos: productsAndOptions.data.tp_produto ?? [],
-						status: productsAndOptions.data.status_produto ?? [],
-					});
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						productsAndOptions.data.message ?? "Erro ao carregar opções"
-					);
+			const productsAndOptions = await axios.get(
+				"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
+				{
+					withCredentials: true,
+					headers: {
+						Accept: "application/json",
+					},
 				}
-			} catch (error) {
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
+			);
 
-				if (axios.isAxiosError(error)) {
-					console.error(
-						"Erro na requisição:",
-						error.response?.data ?? error.message
-					);
-					if (error.response?.data?.message) {
-						setMessage(error.response.data.message);
-					}
-				} else {
-					console.error("Erro desconhecido:", error);
-				}
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["products", "options"].forEach((item) => newLoading.delete(item));
-					return newLoading;
+			console.log("Resposta do back-end:", productsAndOptions.data);
+
+			if (productsAndOptions.data.success) {
+				setProdutos(productsAndOptions.data.produtos ?? []);
+				setOptions({
+					tipos: productsAndOptions.data.tp_produto ?? [],
+					status: productsAndOptions.data.status_produto ?? [],
 				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(
+					productsAndOptions.data.message ?? "Erro ao carregar opções"
+				);
 			}
-		};
+		} catch (error) {
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 
-		fetchData();
-	}, []);
+			if (axios.isAxiosError(error)) {
+				console.error(
+					"Erro na requisição:",
+					error.response?.data ?? error.message
+				);
+				if (error.response?.data?.message) {
+					setMessage(error.response.data.message);
+				}
+			} else {
+				console.error("Erro desconhecido:", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				["products", "options"].forEach((item) => newLoading.delete(item));
+				return newLoading;
+			});
+		}
+	};
 
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
@@ -404,6 +387,11 @@ export default function InventoryControl() {
 			});
 		}
 	};
+
+	useEffect(() => {
+		fetchData();
+		fetchFornecedores("");
+	}, []);
 
 	// submit para atualizar o produto após a edição dele
 	const handleUpdateProduct = async (e: React.FormEvent) => {
@@ -792,7 +780,7 @@ export default function InventoryControl() {
 							<SmartField
 								fieldName="nome_produto"
 								fieldText="Nome do Produto"
-								fieldClassname="flex flex-col flex-1"
+								fieldClassname="flex flex-col flex-2"
 								required
 								type="text"
 								placeholder="Digite o nome do produto"
@@ -801,58 +789,65 @@ export default function InventoryControl() {
 							/>
 
 							<SmartField
-								isDatalist
 								fieldName="fornecedor"
 								fieldText="Fornecedor"
 								fieldClassname="flex flex-col flex-1"
-								error={errors.supplier ? "*" : undefined}
-								placeholder="Digite o nome do fornecedor"
-								inputWidth="w-[440px]"
-								autoComplete="off"
-								value={formData.fornecedor}
-								onChange={handleChange}
-								onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-								onFocus={() => {
-									setFornecedorTouched(true);
-									if (!formData.fornecedor) {
-										fetchFornecedores(""); // mostra todos os fornecedores
+								isCreatableSelect
+								placeholder="Selecione um fornecedor"
+								isLoading={loading.has("products")}
+								defaultValue={formData.fornecedor}
+								options={suggestions.map((fornecedor: Fornecedor) => ({
+									value: fornecedor.fornecedor_nome_ou_empresa,
+									label: fornecedor.fornecedor_nome_ou_empresa,
+								}))}
+								onChange={(newValue: any) =>
+									setFormData({
+										...formData,
+										fornecedor: newValue.value ?? "",
+									})
+								}
+								/* onCreateOption={async (value: string) => {
+									try {
+										const response = await axios.post(
+											"http://localhost/BioVerde/back-end/fornecedores/cadastrar_fornecedores.php",
+											{
+												cep: "32044-455",
+												cidade: "Contagem",
+												cpf_cnpj: "10.200.100/2000-30",
+												email: "testes@email.com",
+												endereco: "Rua A",
+												estado: "MG",
+												fornecedor_id: 0,
+												num_endereco: "239",
+												razao_social: value,
+												responsavel: "Fernando",
+												status: "1",
+												tel: "(41) 00000-0000",
+												tipo: "juridica",
+											},
+											{
+												headers: { "Content-Type": "application/json" },
+												withCredentials: true,
+											}
+										);
+
+										console.log(response);
+									} catch (err) {
+										console.error(err);
+									} finally {
+										fetchFornecedores("");
+										setFormData({ ...formData, fornecedor: "" });
 									}
-									setShowSuggestions(true);
-								}}
+								}} */
 							>
-								{showSuggestions &&
-									suggestions.length > 0 &&
-									(() => {
-										const filteredSuggestions = suggestions.filter(
-											(item) =>
-												item.fornecedor_nome_ou_empresa !== formData.fornecedor
-										);
-
-										if (filteredSuggestions.length === 0) {
-											setShowSuggestions(false);
-											return null;
-										}
-
-										return (
-											<ul className="absolute z-10 w-full bg-white border border-t-0 rounded shadow max-h-52 overflow-auto">
-												{filteredSuggestions.map((item) => (
-													<li
-														key={item.fornecedor_id}
-														className="p-2 hover:bg-gray-200 cursor-pointer"
-														onClick={() => {
-															setFormData((prev) => ({
-																...prev,
-																fornecedor: item.fornecedor_nome_ou_empresa,
-															}));
-															setShowSuggestions(false);
-														}}
-													>
-														{item.fornecedor_nome_ou_empresa}
-													</li>
-												))}
-											</ul>
-										);
-									})()}
+								{suggestions.map((fornecedor) => (
+									<option
+										key={fornecedor.fornecedor_id}
+										value={fornecedor.fornecedor_nome_ou_empresa}
+									>
+										{fornecedor.fornecedor_nome_ou_empresa}
+									</option>
+								))}
 							</SmartField>
 						</div>
 

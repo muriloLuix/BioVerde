@@ -97,37 +97,30 @@ const Batch = () => {
 							modalWidth="w-1/2"
 							leftButtonText="Criar"
 							rightButtonText="Cancelar"
-							children={
-								<>
-									<SmartField
-										fieldName="produto"
-										fieldText="Produto"
-										isSelect
-									/>
-									<SmartField
-										fieldName="quantidade"
-										type="number"
-										fieldText="Quantidade"
-									/>
-									<SmartField
-										fieldName="fabricacao"
-										fieldText="Data de fabricação"
-										isDate
-									/>
-									<SmartField
-										fieldName="validade"
-										fieldText="Data de validade"
-										isDate
-									/>
-									<SmartField
-										fieldName="observacoes"
-										fieldText="Observações"
-										isTextArea
-										placeholder="Adicione informações sobre o lote"
-									/>
-								</>
-							}
-						/>
+						>
+							<SmartField fieldName="produto" fieldText="Produto" isSelect />
+							<SmartField
+								fieldName="quantidade"
+								type="number"
+								fieldText="Quantidade"
+							/>
+							<SmartField
+								fieldName="fabricacao"
+								fieldText="Data de fabricação"
+								type="date"
+							/>
+							<SmartField
+								fieldName="validade"
+								fieldText="Data de validade"
+								type="date"
+							/>
+							<SmartField
+								fieldName="observacoes"
+								fieldText="Observações"
+								isTextArea
+								placeholder="Adicione informações sobre o lote"
+							/>
+						</Modal>
 					</div>
 					<AgGridReact
 						modules={[AllCommunityModule]}
