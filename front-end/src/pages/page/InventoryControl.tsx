@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import axios from "axios";
+import { OnChangeValue } from "react-select";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { Tabs, Form } from "radix-ui";
 import {
@@ -46,6 +47,11 @@ interface Produto {
 interface Fornecedor {
 	fornecedor_id: number;
 	fornecedor_nome_ou_empresa: string;
+}
+
+interface Option {
+	value: string | number;
+	label: string;
 }
 
 export default function InventoryControl() {
@@ -795,17 +801,23 @@ export default function InventoryControl() {
 								isCreatableSelect
 								placeholder="Selecione um fornecedor"
 								isLoading={loading.has("products")}
-								defaultValue={formData.fornecedor}
+								value={suggestions
+									.map((fornecedor: Fornecedor) => ({
+										value: fornecedor.fornecedor_nome_ou_empresa,
+										label: fornecedor.fornecedor_nome_ou_empresa,
+									}))
+									.filter((opt) => opt.value === formData.fornecedor)}
 								options={suggestions.map((fornecedor: Fornecedor) => ({
 									value: fornecedor.fornecedor_nome_ou_empresa,
 									label: fornecedor.fornecedor_nome_ou_empresa,
 								}))}
-								onChange={(newValue: any) =>
+								onChange={(option: OnChangeValue<Option, false>) => {
+									console.log(option);
 									setFormData({
 										...formData,
-										fornecedor: newValue.value ?? "",
-									})
-								}
+										fornecedor: option?.value.toString() ?? "",
+									});
+								}}
 								/* onCreateOption={async (value: string) => {
 									try {
 										const response = await axios.post(
@@ -1009,7 +1021,6 @@ export default function InventoryControl() {
 							</option>
 						))}
 					</SmartField>
-						
 				</div>
 
 				<div className="flex gap-x-15 mb-6 items-center">
