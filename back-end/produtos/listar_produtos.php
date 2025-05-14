@@ -1,8 +1,6 @@
 <?php
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header('Content-Type: application/json');
 
 try {
@@ -10,14 +8,9 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    $cols = array("produto_id", "produto_nome", "tproduto_nome", "produto_lote", "produto_quantidade", "d.uni_nome", "produto_preco","f.fornecedor_nome", "b.sta_nome", "produto_dtProducao", "produto_validade", "produto_data_cadastro", "produto_observacoes", "b.sta_id", "d.uni_id");
+    $cols = array("produto_id", "produto_nome", "c.tproduto_nome", "produto_preco", "sp.staproduto_nome", "f.fornecedor_nome_ou_empresa", "produto_observacoes");
 
     $joins = [
-        [
-            "type" => "INNER",
-            "join_table" => "status b",
-            "on" => "a.produto_status = b.sta_id"
-        ],
         [
             "type"=> "INNER",
             "join_table" => "fornecedores f",
@@ -30,25 +23,22 @@ try {
         ],
         [
             "type" => "INNER",
-            "join_table" => "unidade_medida d",
-            "on" => "a.uni_id = d.uni_id"
+            "join_table" => "status_produto sp",
+            "on" => "a.status_id = sp.staproduto_id"
         ]
     ];
 
     $produtos = search($conn, "produtos a", implode(",", $cols), $joins);
 
-    $status = buscarStatus($conn);
-
     $tp_produto = buscarTipoProduto($conn);
 
-    $unidade_medida = buscarUnidadeMedida($conn);
+    $status_produto = buscarStatus($conn);
 
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,
-        "status" => $status,
         "tp_produto" => $tp_produto,
-        "unidades_medida" => $unidade_medida
+        "status_produto" => $status_produto
     ]);
 
 } catch (Exception $e) {

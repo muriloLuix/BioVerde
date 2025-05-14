@@ -32,11 +32,8 @@ try {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
 
-    // var_dump($data);
-    // exit;
-
-        // Validação dos campos obrigatórios
-    $camposObrigatorios = ['fornecedor_id', 'nome_empresa', 'razao_social', 'email', 'tel', 'cnpj', 'responsavel', 'status', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
+    // Validação dos campos obrigatórios
+    $camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'responsavel', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
     if ($validacaoDosCampos !== null) { 
         echo json_encode($validacaoDosCampos);
@@ -52,73 +49,66 @@ try {
     if(!verifyExist($conn, $data["fornecedor_id"], "fornecedor_id", "fornecedores")) {
         throw new Exception("Fornecedor nao encontrado");
     }
+
+    // Conflitos de email/CPF/CNPJ
+    $colunas = ["fornecedor_email", "fornecedor_cpf_ou_cnpj"];
+    $valores = [$data["email"], $data["cpf_cnpj"]];
     
-    if (isset($data['status'])) {
-        $statusId = obterIdStatusPorNome($conn, $data['status']);
-        
-        // Se a função retornar array, é porque deu erro
-        if (is_array($statusId)) {
-            throw new Exception($statusId['message']);
-        }
-        
-        // Adiciona o ID do status aos dados com o nome correto que a função espera
-        $data['sta_id'] = $statusId;
+    $conflito = verificarConflitosAtualizacao($conn, "fornecedores", $colunas, $valores, "fornecedor_id", $data["fornecedor_id"]);
+    if ($conflito) {
+        throw new Exception($conflito['message']);
     }
+    
+    // Converte o status (string "1" ou "0") para inteiro
+    $statusValue = (int)$data['status'];  // 1 = ativo, 0 = inativo
 
     // Atualiza fornecedor
-
     $camposAtualizados = [
-        'fornecedor_nome' => $data['nome_empresa'],
+        'fornecedor_nome_ou_empresa' => $data['nome_empresa_fornecedor'],
         'fornecedor_razao_social' => $data['razao_social'],
         'fornecedor_email' => $data['email'],
         'fornecedor_telefone' => $data['tel'],
-        'fornecedor_CNPJ' => $data['cnpj'],
-        'fornecedor_status' => $data['status'] ?? null,
+        'fornecedor_tipo' => $data['tipo'],
+        'fornecedor_cpf_ou_cnpj' => $data['cpf_cnpj'],
         'fornecedor_responsavel' => $data['responsavel'],
         'fornecedor_cep' => $data['cep'],
         'fornecedor_endereco' => $data['endereco'],
         'fornecedor_num_endereco' => $data['num_endereco'],
         'fornecedor_cidade' => $data['cidade'],
-        'fornecedor_estado' => $data['estado']
+        'fornecedor_estado' => $data['estado'],
+        'estaAtivo' => $statusValue,
     ];
 
     $resultado = updateData($conn, 'fornecedores', $camposAtualizados, $data['fornecedor_id'], 'fornecedor_id');
     if (!$resultado['success']) {
-        throw new Exception($resultado['message'] ?? "Erro ao atualizar usuário");
+        throw new Exception($resultado['message'] ?? "Erro ao atualizar fornecedor");
     }
 
     $fields = "
     f.fornecedor_id,
-    f.fornecedor_nome,
+    f.fornecedor_nome_ou_empresa,
     f.fornecedor_email,
     f.fornecedor_telefone,
-    f.fornecedor_CNPJ,
+    f.fornecedor_tipo,
+    f.fornecedor_cpf_ou_cnpj,
     f.fornecedor_cep,
     f.fornecedor_endereco,
     f.fornecedor_num_endereco,
     f.fornecedor_estado,
     f.fornecedor_cidade,
     f.fornecedor_responsavel,
-    f.fornecedor_status,
     f.fornecedor_razao_social,
     f.fornecedor_dtcadastro,
-    s.sta_id,
-    s.sta_nome
+    f.estaAtivo
     ";
 
-    $joins = [
-        ['type' => 'LEFT', 'join_table' => 'status s', 'on' => 'f.fornecedor_status = s.sta_id']
-    ];
-
-    $fornecedor = searchPersonPerID($conn, $data['fornecedor_id'], 'fornecedores f', $fields, $joins, 'f.fornecedor_id');
+    $fornecedor = searchPersonPerID($conn, $data['fornecedor_id'], 'fornecedores f', $fields, [], 'f.fornecedor_id');
 
     echo json_encode([
         "success" => true,
-        "message" => "Usuário atualizado com sucesso!",
-        "usuario" => $fornecedor 
+        "message" => "Fornecedor atualizado com sucesso!",
+        "fornecedor" => $fornecedor 
     ]);
-
-
 
 } catch (Exception $e) {
     error_log("Erro em editar.fornecedor.php: " . $e->getMessage());

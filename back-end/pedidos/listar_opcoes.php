@@ -1,6 +1,8 @@
-<?php 
+<?php
 session_start();
+
 include_once "../inc/funcoes.inc.php";
+
 header('Content-Type: application/json');
 
 try {
@@ -8,14 +10,14 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar dados
-    $tp_produto = buscarTipoProduto($conn);
+    // Buscar cargos
+    $statusPedido = buscarStatusPedido($conn);
+    // Buscar níveis de acesso
 
     echo json_encode([
         "success" => true,
-        "tipos" => $tp_produto,
+        "status" => $statusPedido,
     ]);
-    
 
 } catch (Exception $e) {
     http_response_code(500);

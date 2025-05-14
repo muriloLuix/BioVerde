@@ -1,5 +1,6 @@
 <?php
 
+global $conn;
 include_once '../inc/funcoes.inc.php';
 
 // Configurações de sessão segura
@@ -35,18 +36,25 @@ $password = $data["password"];
 $resultado = verificarCredenciais($conn, $email, $password);
 
 if ($resultado["success"]) {
-    // Configurar sessão
-    $_SESSION['user_id'] = $resultado["user"]["id"];
+    $sql = "SELECT user_id, nivel_id FROM usuarios WHERE user_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $resultado["user"]["id"]);
+    $stmt->execute();
+    $stmt->bind_result($user_id, $nivel_id);
+    $stmt->fetch();
+    $stmt->close();
+
+    $_SESSION['user_id'] = $user_id;
+    $_SESSION['nivel_acesso'] = $nivel_id;
     $_SESSION['last_activity'] = time();
-        
+
     echo json_encode([
         "success" => true,
         "message" => "Login realizado com sucesso!",
         "user" => $resultado["user"]
     ]);
 
-    salvarLog("Login bem-sucedido para o usuário: " . $resultado["user"]["id"], Acoes::LOGIN, "sucesso");
-
+    salvarLog("Login bem-sucedido para o usuário: " . $user_id, Acoes::LOGIN, "sucesso");
 } else {
     
     echo json_encode([

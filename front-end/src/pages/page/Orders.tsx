@@ -13,11 +13,14 @@ import { InputMaskChangeEvent } from "primereact/inputmask";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import { SmartField } from "../../shared";
-import { ConfirmationModal } from "../../shared";
-import { Modal } from "../../shared";
-import { NoticeModal } from "../../shared";
+import {
+	SmartField,
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+} from "../../shared";
 import { cepApi } from "../../utils/cepApi";
+import { OnChangeValue } from "react-select";
 
 interface Estado {
 	estado_id: number;
@@ -31,8 +34,8 @@ interface Status {
 
 interface Cliente {
 	cliente_id: number;
-	cliente_nome: string;
-	cliente_tel: string;
+	cliente_nome_ou_empresa: string;
+	cliente_telefone: string;
 }
 
 interface Unidade {
@@ -42,8 +45,8 @@ interface Unidade {
 
 interface Pedido {
 	pedido_id: number;
-	cliente_nome: string;
-	cliente_tel: string;
+	cliente_nome_ou_empresa: string;
+	cliente_telefone: string;
 	pedido_cep: string;
 	pedido_endereco: string;
 	pedido_num_endereco: string;
@@ -52,7 +55,6 @@ interface Pedido {
 	pedido_estado: string;
 	pedido_prevEntrega: string;
 	pedido_dtCadastro: string;
-	pedido_metodo_pagamento: string;
 	pedido_observacoes: string;
 	pedido_valor_total: number;
 	stapedido_nome: string;
@@ -68,79 +70,10 @@ interface PedidoItem {
 	pedidoitem_preco: number;
 	pedidoitem_subtotal: number;
 }
-
-const exemploPedidos = [
-	{
-		pedido_id: 1,
-		cliente_nome: "João",
-		pedido_dtCadastro: "2025-04-21",
-		cliente_tel: "(41) 11222-2223",
-		pedido_cep: "01001-001",
-		pedido_cidade: "São Paulo",
-		pedido_endereco: "Praça da Sé",
-		pedido_estado: "SP",
-		pedido_itens: [
-			{
-				pedidoitem_id: 0,
-				produto_nome: "sementes de tomate",
-				pedidoitem_preco: 3.0,
-				pedidoitem_quantidade: 12,
-				pedidoitem_subtotal: 36,
-				unidade_nome: "kg",
-			},
-			{
-				pedidoitem_id: 1,
-				produto_nome: "sementes de laranja",
-				pedidoitem_preco: 12.0,
-				pedidoitem_quantidade: 3,
-				pedidoitem_subtotal: 36,
-				unidade_nome: " kg",
-			},
-		],
-		pedido_num_endereco: "23",
-		pedido_complemento: "Casa",
-		pedido_prevEntrega: "2025-04-24",
-		stapedido_nome: "em produção",
-		pedido_metodo_pagamento: "Pix",
-		pedido_valor_total: 72,
-		pedido_observacoes: "Cliente pediu para entregar após as 14h.",
-	},
-	{
-		pedido_id: 2,
-		cliente_nome: "Maria",
-		pedido_dtCadastro: "2025-04-21",
-		cliente_tel: "(11) 99888-7766",
-		pedido_cep: "01310-100",
-		pedido_cidade: "São Paulo",
-		pedido_endereco: "Avenida Paulista",
-		pedido_estado: "SP",
-		pedido_itens: [
-			{
-				pedidoitem_id: 0,
-				produto_nome: "sementes de alface",
-				pedidoitem_preco: 4.5,
-				pedidoitem_quantidade: 10,
-				pedidoitem_subtotal: 45,
-				unidade_nome: "kg",
-			},
-			{
-				pedidoitem_id: 1,
-				produto_nome: "sementes de cenoura",
-				pedidoitem_preco: 5.0,
-				pedidoitem_quantidade: 5,
-				pedidoitem_subtotal: 25,
-				unidade_nome: "kg",
-			},
-		],
-		pedido_num_endereco: "1050",
-		pedido_complemento: "Apartamento",
-		pedido_prevEntrega: "2025-04-25",
-		stapedido_nome: "em separação",
-		pedido_metodo_pagamento: "Cartão de Débito",
-		pedido_valor_total: 70,
-		pedido_observacoes: "Cliente solicitou embalagem resistente à umidade",
-	},
-];
+interface Option {
+	value: string | number;
+	label: string;
+}
 
 export default function Orders() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -150,6 +83,8 @@ export default function Orders() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
 	const [currentObs, setCurrentObs] = useState("");
+	const [userLevel, setUserLevel] = useState("");
+	const [suggestions, setSuggestions] = useState<Cliente[]>([]);
 	const [openOrderModal, setOpenOrderModal] = useState(false);
 	const [numOrder, setNumOrder] = useState(0);
 	const [clientOrder, setClientOrder] = useState("");
@@ -196,7 +131,6 @@ export default function Orders() {
 		fcidade: "",
 		fprev_entrega: "",
 		fdt_cadastro: "",
-		fpagamento: "",
 	});
 	const [deleteOrder, setDeleteOrder] = useState({
 		pedido_id: 0,
@@ -204,6 +138,22 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
+
+	//Função para buscar os clientes cadastrados e fazer a listagem deles
+	const fetchClientes = (query: string) => {
+		axios
+			.get("http://localhost/BioVerde/back-end/pedidos/listar_clientes.php", {
+				params: { q: query },
+			})
+			.then((res) => {
+				console.log(res.data);
+				setSuggestions(res.data);
+			})
+			.catch((err) => {
+				console.error(err);
+				setSuggestions([]);
+			});
+	};
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -236,12 +186,12 @@ export default function Orders() {
 		checkAuth();
 	}, [navigate]);
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "orders", "options"]));
+	const fetchData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "orders", "options"]));
 
-				const [optionsResponse, pedidosResponse] = await Promise.all([
+			const [optionsResponse, pedidosResponse, userLevelResponse] =
+				await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
 						{
@@ -261,54 +211,71 @@ export default function Orders() {
 							},
 						}
 					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
+					),
 				]);
 
-				// console.log("Resposta do back-end:", pedidosResponse.data);
+			console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
+			console.log("Resposta do back-end Options:", optionsResponse.data);
 
-				if (optionsResponse.data.success) {
-					setOptions({
-						estados: optionsResponse.data.estados || [],
-						status: optionsResponse.data.status || [],
-						unidades_medida: optionsResponse.data.unidades_medida || [],
-					});
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(optionsResponse.data.message || "Erro ao carregar opções");
-				}
-
-				if (pedidosResponse.data.success) {
-					setPedidos(pedidosResponse.data.pedidos || []);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						pedidosResponse.data.message || "Erro ao carregar pedidos"
-					);
-				}
-			} catch (error) {
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-
-				if (axios.isAxiosError(error)) {
-					console.error(
-						"Erro na requisição:",
-						error.response?.data || error.message
-					);
-					if (error.response?.data?.message) {
-						setMessage(error.response.data.message);
-					}
-				} else {
-					console.error("Erro desconhecido:", error);
-				}
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["orders", "options"].forEach((item) => newLoading.delete(item));
-					return newLoading;
+			if (optionsResponse.data.success) {
+				setOptions({
+					estados: optionsResponse.data.estados || [],
+					status: optionsResponse.data.status || [],
+					unidades_medida: optionsResponse.data.unidades_medida || [],
 				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(optionsResponse.data.message || "Erro ao carregar opções");
 			}
-		};
 
+			if (pedidosResponse.data.success) {
+				setPedidos(pedidosResponse.data.pedidos || []);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(pedidosResponse.data.message || "Erro ao carregar pedidos");
+			}
+
+			if (userLevelResponse.data.success) {
+				setUserLevel(userLevelResponse.data.userLevel);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(
+					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
+			}
+		} catch (error) {
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+
+			if (axios.isAxiosError(error)) {
+				console.error(
+					"Erro na requisição:",
+					error.response?.data || error.message
+				);
+				if (error.response?.data?.message) {
+					setMessage(error.response.data.message);
+				}
+			} else {
+				console.error("Erro desconhecido:", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				["orders", "options"].forEach((item) => newLoading.delete(item));
+				return newLoading;
+			});
+		}
+	};
+
+	useEffect(() => {
 		fetchData();
+		fetchClientes("");
 	}, []);
 
 	//Função para Atualizar a Tabela após ação
@@ -348,17 +315,23 @@ export default function Orders() {
 
 	//função para puxar os dados do pedido que será editado
 	const handleEditClick = (pedido: Pedido) => {
+		const formatDate = (isoDate: string) => {
+			const date = new Date(isoDate);
+			// Retorna no formato YYYY-MM-DD
+			return date.toISOString().split("T")[0];
+		};
+
 		setFormData({
 			pedido_id: pedido.pedido_id,
-			nome_cliente: pedido.cliente_nome,
-			tel: pedido.cliente_tel,
+			nome_cliente: pedido.cliente_nome_ou_empresa,
+			tel: pedido.cliente_telefone,
 			cep: pedido.pedido_cep,
 			status: pedido.stapedido_nome,
 			endereco: pedido.pedido_endereco,
 			num_endereco: pedido.pedido_num_endereco,
 			estado: pedido.pedido_estado,
 			cidade: pedido.pedido_cidade,
-			prev_entrega: pedido.pedido_prevEntrega,
+			prev_entrega: formatDate(pedido.pedido_prevEntrega),
 			obs: pedido.pedido_observacoes,
 		});
 		setOpenEditModal(true);
@@ -369,7 +342,7 @@ export default function Orders() {
 		setDeleteOrder({
 			pedido_id: pedido.pedido_id,
 			dnum_pedido: pedido.pedido_id,
-			dnome_cliente: pedido.cliente_nome,
+			dnome_cliente: pedido.cliente_nome_ou_empresa,
 			reason: "",
 		});
 		setOpenDeleteModal(true);
@@ -542,20 +515,27 @@ export default function Orders() {
 	//Função para chamar a api de CEP
 	const handleCepBlur = () => {
 		setSuccessMsg(false);
-		cepApi(formData.cep, setFormData, setOpenNoticeModal, setMessage);
+		cepApi(
+			formData.cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg
+		);
 	};
 
 	//Limpar FormData
 	const clearFormData = useCallback(() => {
-		setFormData((prev) =>
-		  Object.fromEntries(
-			Object.entries(prev).map(([key, value]) => [
-			  key,
-			  typeof value === "number" ? 0 : "",
-			])
-		  ) as typeof prev
+		setFormData(
+			(prev) =>
+				Object.fromEntries(
+					Object.entries(prev).map(([key, value]) => [
+						key,
+						typeof value === "number" ? 0 : "",
+					])
+				) as typeof prev
 		);
-	  }, []);
+	}, []);
 
 	const handleObsClick = (pedido: Pedido) => {
 		setCurrentObs(pedido.pedido_observacoes);
@@ -564,7 +544,7 @@ export default function Orders() {
 
 	const handleSeeOrderClick = (pedido: Pedido) => {
 		setNumOrder(pedido.pedido_id);
-		setClientOrder(pedido.cliente_nome);
+		setClientOrder(pedido.cliente_nome_ou_empresa);
 		setTotalOrder(pedido.pedido_valor_total);
 		setSelectedOrder(pedido.pedido_itens);
 		setOpenOrderModal(true);
@@ -612,13 +592,38 @@ export default function Orders() {
 									<SmartField
 										fieldName="fnome_cliente"
 										fieldText="Cliente"
-										type="text"
-										placeholder="Nome do Cliente"
-										autoComplete="name"
-										value={filters.fnome_cliente}
-										onChange={handleChange}
-										inputWidth="w-[580px]"
-									/>
+										fieldClassname="flex flex-col flex-1"
+										isCreatableSelect
+										placeholder="Selecione um cliente"
+										isLoading={loading.has("orders")}
+										value={suggestions
+											.map((cliente: Cliente) => ({
+												value: cliente.cliente_nome_ou_empresa,
+												label: cliente.cliente_nome_ou_empresa,
+											}))
+											.find(
+												(opt) => opt.value === formData.nome_cliente || null
+											)}
+										options={suggestions.map((cliente: Cliente) => ({
+											value: cliente.cliente_nome_ou_empresa,
+											label: cliente.cliente_nome_ou_empresa,
+										}))}
+										onChange={(option: OnChangeValue<Option, false>) => {
+											setFilters({
+												...filters,
+												fnome_cliente: option?.value.toString() ?? "",
+											});
+										}}
+									>
+										{suggestions.map((cliente) => (
+											<option
+												key={cliente.cliente_id}
+												value={cliente.cliente_nome_ou_empresa}
+											>
+												{cliente.cliente_nome_ou_empresa}
+											</option>
+										))}
+									</SmartField>
 
 									<SmartField
 										fieldName="ftel"
@@ -647,11 +652,14 @@ export default function Orders() {
 										inputWidth="w-[220px]"
 									>
 										<option value="todos">Todos</option>
-										<option value="pendente">Pendente</option>
-										<option value="producao">Em Produção</option>
-										<option value="enviado">Enviado</option>
-										<option value="entregue">Entregue</option>
-										<option value="cancelado">Cancelado</option>
+										{options.status?.map((status) => (
+											<option
+												key={status.stapedido_id}
+												value={status.stapedido_id}
+											>
+												{status.stapedido_nome}
+											</option>
+										))}
 									</SmartField>
 
 									<SmartField
@@ -724,22 +732,7 @@ export default function Orders() {
 
 								<div className="flex justify-between mb-8">
 									<SmartField
-										fieldName="fpagamento"
-										fieldText="Método de Pagamento"
-										isSelect
-										value={filters.fpagamento}
-										onChange={handleChange}
-										// isLoading={loading.has("options")}
-										inputWidth="w-[220px]"
-									>
-										<option value="">Todos</option>
-										<option value="pix">Pix</option>
-										<option value="debito">Cartão de Débito</option>
-										<option value="credito">Cartão de Crédito</option>
-									</SmartField>
-
-									<SmartField
-										isDate
+										type="date"
 										fieldName="fprev_entrega"
 										fieldText="Previsão de entrega"
 										value={filters.fprev_entrega}
@@ -748,7 +741,7 @@ export default function Orders() {
 									/>
 
 									<SmartField
-										isDate
+										type="date"
 										fieldName="fdt_cadastro"
 										fieldText="Data de Cadastro"
 										value={filters.fdt_cadastro}
@@ -802,14 +795,13 @@ export default function Orders() {
 								<thead>
 									<tr className="bg-verdePigmento text-white shadow-thead">
 										{[
-											"Nº",
+											"ID",
 											"Cliente",
 											"Data",
 											"Status",
 											"Previsão de Entrega",
 											"Itens do Pedido",
 											"Valor Total",
-											"Método de Pagamento",
 											"Telefone",
 											"CEP",
 											"Endereço",
@@ -836,7 +828,7 @@ export default function Orders() {
 												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
 											</td>
 										</tr>
-									) : exemploPedidos.length === 0 ? (
+									) : pedidos.length === 0 ? (
 										<tr>
 											<td colSpan={9} className="text-center py-4">
 												Nenhum pedido encontrado
@@ -844,7 +836,7 @@ export default function Orders() {
 										</tr>
 									) : (
 										//Tabela Dados
-										exemploPedidos.map((pedido, index) => (
+										pedidos.map((pedido, index) => (
 											<tr
 												key={pedido.pedido_id}
 												className={
@@ -855,7 +847,7 @@ export default function Orders() {
 													{pedido.pedido_id}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_nome}
+													{pedido.cliente_nome_ou_empresa}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{new Date(
@@ -871,26 +863,20 @@ export default function Orders() {
 													).toLocaleDateString("pt-BR")}
 												</td>
 												{/* Itens do Pedido */}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+														className="text-blue-600 cursor-pointer"
 														onClick={() => handleSeeOrderClick(pedido)}
+														title="Ver Itens"
 													>
 														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
 													</button>
 												</td>
-
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													R$ {pedido.pedido_valor_total.toFixed(2)}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.pedido_metodo_pagamento}
-												</td>
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_tel}
+													{pedido.cliente_telefone}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{pedido.pedido_cep}
@@ -912,38 +898,32 @@ export default function Orders() {
 												</td>
 
 												{/* Observações */}
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center">
 													<button
-														className="text-blue-600 cursor-pointer relative group top-4 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+														className="text-blue-600 cursor-pointer"
 														onClick={() => handleObsClick(pedido)}
+														title="Ver observações"
 													>
 														<Eye />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Ver
-														</div>
 													</button>
 												</td>
-
-												<td className="border border-black px-4 py-4 whitespace-nowrap">
+												<td className="border border-black p-4 text-center whitespace-nowrap">
 													<button
-														className="mr-4 text-black cursor-pointer relative group"
+														className="text-black cursor-pointer"
 														onClick={() => handleEditClick(pedido)}
+														title="Editar produto"
 													>
 														<PencilLine />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Editar
-														</div>
 													</button>
-
-													<button
-														className="text-red-500 cursor-pointer relative group"
-														onClick={() => handleDeleteClick(pedido)}
-													>
-														<Trash />
-														<div className="absolute right-0 bottom-5 mb-2 hidden group-hover:block bg-black text-white text-xs rounded py-1 px-2">
-															Excluir
-														</div>
-													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeleteClick(pedido)}
+															title="Excluir produto"
+														>
+															<Trash />
+														</button>
+													)}
 												</td>
 											</tr>
 										))
@@ -951,7 +931,7 @@ export default function Orders() {
 								</tbody>
 							</table>
 						</div>
-						{exemploPedidos.length !== 0 && (
+						{pedidos.length !== 0 && (
 							<div className="min-w-[966px] max-w-[73vw]">
 								<button
 									type="button"
@@ -1059,8 +1039,9 @@ export default function Orders() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Pedido:"
-					submitButtonText="Cancelar"
-					cancelButtonText="Editar"
+					leftButtonText="Editar"
+					rightButtonText="Cancelar"
+					loading={loading}
 					isLoading={loading.has("updateOrder")}
 					onExit={clearFormData}
 					onSubmit={handleUpdateOrder}
@@ -1081,13 +1062,30 @@ export default function Orders() {
 							fieldName="nome_cliente"
 							fieldText="Cliente"
 							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							placeholder="Digite o nome do Cliente"
-							autoComplete="name"
-							value={formData.nome_cliente}
-							onChange={handleChange}
-						/>
+							isCreatableSelect
+							placeholder="Selecione um cliente"
+							isLoading={loading.has("orders")}
+							defaultValue={formData.nome_cliente}
+							options={suggestions.map((cliente: Cliente) => ({
+								value: cliente.cliente_nome_ou_empresa,
+								label: cliente.cliente_nome_ou_empresa,
+							}))}
+							onChange={(newValue: any) =>
+								setFormData({
+									...formData,
+									nome_cliente: newValue.value ?? "",
+								})
+							}
+						>
+							{suggestions.map((cliente) => (
+								<option
+									key={cliente.cliente_id}
+									value={cliente.cliente_nome_ou_empresa}
+								>
+									{cliente.cliente_nome_ou_empresa}
+								</option>
+							))}
+						</SmartField>
 
 						<SmartField
 							fieldName="cep"
@@ -1205,7 +1203,7 @@ export default function Orders() {
 						/>
 
 						<SmartField
-							isDate
+							type="date"
 							required
 							fieldName="prev_entrega"
 							fieldText="Previsão de entrega"

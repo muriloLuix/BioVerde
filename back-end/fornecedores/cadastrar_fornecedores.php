@@ -1,15 +1,12 @@
-<?php 
-
+<?php
+header('Content-Type: application/json');
 session_start();
 include_once("../inc/funcoes.inc.php");
-
 
 if(!isset($_SESSION["user_id"])) {
     checkLoggedUSer($conn, $_SESSION['user_id']);
     exit;
 }
-
-header('Content-Type: application/json');
 
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
@@ -24,7 +21,7 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos
-$camposObrigatorios = ['nome_empresa', 'razao_social', 'email', 'tel', 'cnpj', 'responsavel', 'status', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
+$camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'responsavel', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) { 
     echo json_encode($validacaoDosCampos);
@@ -37,45 +34,37 @@ $emailCpfError = verifyCredentials(
     "fornecedores",                 
     $data['email'],          
     "fornecedor_email",         
-    $data['cnpj'],            
-    "fornecedor_CNPJ"         
+    $data['cpf_cnpj'],            
+    "fornecedor_cpf_ou_cnpj"         
 );
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();
 }
 
-$sta_id = verificarStatus($conn, $data['status']);
-if ($sta_id === null) { 
-    // Adicione mais informações de debug
-    error_log("Status inválido fornecido: " . $data['status']);
-    echo json_encode([
-        "success" => false, 
-        "message" => "Status inválido. O valor '".$data['status']."' não existe na tabela de status."
-    ]);
-    exit();
-}
+$estaAtivo = 1;
 
 // Cadastro do fornecedor
-$stmt = $conn->prepare("INSERT INTO fornecedores (fornecedor_nome, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_CNPJ, fornecedor_endereco, fornecedor_num_endereco, fornecedor_cidade, fornecedor_estado, fornecedor_cep, fornecedor_responsavel, fornecedor_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO fornecedores (fornecedor_nome_ou_empresa, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_cpf_ou_cnpj, fornecedor_tipo, fornecedor_endereco, fornecedor_num_endereco, fornecedor_cidade, fornecedor_estado, fornecedor_cep, fornecedor_responsavel, estaAtivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 if (!$stmt) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar a query: " . $conn->error]);
     exit();
 }
 
-$stmt->bind_param("sssssssssssi", 
-    $data['nome_empresa'], 
+$stmt->bind_param("ssssssssssssi", 
+    $data['nome_empresa_fornecedor'], 
     $data['razao_social'],
     $data['email'], 
     $data['tel'], 
-    $data['cnpj'], 
+    $data['cpf_cnpj'], 
+    $data['tipo'], 
     $data['endereco'], 
     $data['num_endereco'], 
     $data['cidade'], 
     $data['estado'], 
     $data['cep'], 
     $data['responsavel'], 
-    $sta_id
+    $estaAtivo
 );
 
 if ($stmt->execute()) {

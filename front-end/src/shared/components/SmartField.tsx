@@ -1,17 +1,18 @@
 import { useState } from "react";
-import { InputMask, InputMaskProps } from "primereact/inputmask";
+
+import { GroupBase } from "react-select";
+import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
-import { Form } from "radix-ui";
-import React from "react";
+import { InputMask, InputMaskProps } from "primereact/inputmask";
 import { Loader2, EyeOff, Eye } from "lucide-react";
+import { Form } from "radix-ui";
 
 type InputPropsBase = {
 	isSelect?: boolean;
 	isTextArea?: boolean;
 	isPassword?: boolean;
 	isPrice?: boolean;
-	isDate?: boolean;
-	isDatalist?: boolean;
+	isCreatableSelect?: boolean;
 	isNumEndereco?: boolean;
 	isLoading?: boolean;
 	error?: string;
@@ -26,12 +27,18 @@ type InputPropsBase = {
 	generatePassword?: () => void;
 };
 
+type OptionType = {
+	label: string;
+	value: string;
+};
+
 type InputProps =
 	| (InputPropsBase & InputMaskProps)
 	| (InputPropsBase &
 			React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement>)
 	| (InputPropsBase & React.TextareaHTMLAttributes<HTMLTextAreaElement>)
-	| (InputPropsBase & NumericFormatProps);
+	| (InputPropsBase & NumericFormatProps)
+	| (InputPropsBase & CreatableProps<OptionType, false, GroupBase<OptionType>>);
 
 type SmartFieldProps = InputProps;
 
@@ -51,8 +58,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
 	placeholderOption,
 	inputWidth,
 	isPassword,
-	isDate,
-	isDatalist,
+	isCreatableSelect,
 	generatePassword,
 	...rest
 }) => {
@@ -64,14 +70,14 @@ const SmartField: React.FC<SmartFieldProps> = ({
 	return (
 		<Form.Field
 			name={regex(fieldName)}
-			className={fieldClassname ? fieldClassname : "flex flex-col"}
+			className={fieldClassname ?? "flex flex-col"}
 		>
 			<Form.Label
 				htmlFor={regex(fieldName)}
 				className="flex justify-between items-center"
 			>
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
-				{isSelect || isPassword || isPrice || isDatalist ? (
+				{isSelect || isPassword || isPrice || isCreatableSelect ? (
 					error && (
 						<span
 							className={`text-red-500 ${
@@ -108,28 +114,24 @@ const SmartField: React.FC<SmartFieldProps> = ({
 				)}
 			</Form.Label>
 			{isSelect ? (
-				isLoading ? (
-					<div
-						className={`bg-white ${inputWidth} border border-separator rounded-lg p-2.5 flex justify-center outline-0`}
-					>
+				<select
+					{...(rest as React.SelectHTMLAttributes<HTMLSelectElement>)}
+					name={regex(fieldName)}
+					id={regex(fieldName)}
+					required={required}
+					className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
+				>
+					{isLoading ? (
 						<Loader2 className="animate-spin h-5 w-5" />
-					</div>
-				) : (
-					<select
-						{...(rest as React.SelectHTMLAttributes<HTMLSelectElement>)}
-						name={regex(fieldName)}
-						id={regex(fieldName)}
-						required={required}
-						className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
-					>
-						{placeholderOption && (
+					) : (
+						placeholderOption && (
 							<option value="" disabled>
 								{placeholderOption}
 							</option>
-						)}
-						{children}
-					</select>
-				)
+						)
+					)}
+					{children}
+				</select>
 			) : isPassword ? (
 				<div className="flex gap-7">
 					<div className="relative flex-1">
@@ -158,17 +160,47 @@ const SmartField: React.FC<SmartFieldProps> = ({
 						Gerar Senha
 					</button>
 				</div>
-			) : isDatalist ? (
+			) : isCreatableSelect ? (
 				<div className="relative">
-					<input
-						type="text"
-						{...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
-						name={regex(fieldName)}
-						id={regex(fieldName)}
-						required={required}
-						className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
+					<CreatableSelect
+						{...(rest as CreatableProps<
+							OptionType,
+							false,
+							GroupBase<OptionType>
+						>)}
+						isClearable
+						classNamePrefix={"react-select"}
+						isLoading={isLoading}
+						styles={{
+							control: (base) => ({
+								...base,
+								backgroundColor: "white",
+								borderRadius: "0.5rem",
+								padding: "0.25rem",
+								border: "1px solid #d1d5db",
+								boxShadow: "none",
+								"&:hover": {
+									borderColor: "#9ca3af",
+								},
+							}),
+							menu: (base) => ({
+								...base,
+								borderRadius: "0.5rem",
+								overflow: "hidden",
+							}),
+							option: (base, state) => ({
+								...base,
+								backgroundColor: state.isSelected
+									? "#4CAF50"
+									: state.isFocused
+									? "#A5D6A7"
+									: "white",
+								color: state.isSelected ? "white" : "#374151",
+								padding: "0.5rem",
+								cursor: "pointer",
+							}),
+						}}
 					/>
-					{children}
 				</div>
 			) : (
 				<Form.Control asChild>
@@ -203,15 +235,6 @@ const SmartField: React.FC<SmartFieldProps> = ({
 							decimalScale={2}
 							fixedDecimalScale
 							allowNegative={false}
-							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
-						/>
-					) : isDate ? (
-						<input
-							type="date"
-							{...(rest as React.InputHTMLAttributes<HTMLInputElement>)}
-							name={regex(fieldName)}
-							id={regex(fieldName)}
-							required={required}
 							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : (

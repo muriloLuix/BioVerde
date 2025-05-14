@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 include_once "../inc/funcoes.inc.php";
 
@@ -7,7 +7,8 @@ header('Content-Type: application/json');
 
 try {
     // Verificação de autenticação
-    if(!isset($_SESSION["user_id"])) {
+
+    if (!isset($_SESSION["user_id"])) {
         checkLoggedUSer($conn, $_SESSION['user_id']);
         exit;
     }
@@ -29,7 +30,7 @@ try {
     }
 
     // Validação dos campos obrigatórios
-    $camposObrigatorios = ['fornecedor_id', 'dnome_empresa', 'reason'];
+    $camposObrigatorios = ['dnum_pedido', 'dnome_cliente', 'reason'];
     foreach ($camposObrigatorios as $field) {
         if (empty($data[$field])) {
             throw new Exception("O campo '{$field}' é obrigatório para a exclusão.");
@@ -38,18 +39,22 @@ try {
 
     $user_id = $_SESSION['user_id'];
 
-    $fornecedor_id = (int)$data['fornecedor_id'];
-    if ($user_id <= 0) {
-        throw new Exception("ID do fornecedor inválido. Por favor, verifique os dados.");
+    $pedido_id = (int)$data['pedido_id'];
+    if ($pedido_id <= 0) {
+        throw new Exception("ID do pedido inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
     $conn->begin_transaction();
 
-    // 1. Deleta o usuário
-    $exclusao = deleteData($conn, $fornecedor_id, 'fornecedores', "fornecedor_id");
-    if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
+    $exclusaoPedido = deleteData($conn, $pedido_id, "pedidos", "pedido_id");
+    if (!$exclusaoPedido['success']) {
+        throw new Exception($exclusaoPedido['message'] ?? "Falha ao excluir o pedido.");
+    }
+
+    $exclusaoPedidoItens = deleteData($conn, $pedido_id, "pedido_item", "pedidoitem_id");
+    if (!$exclusaoPedidoItens['success']) {
+        throw new Exception($exclusaoPedidoItens['message'] ?? "Falha ao excluir os itens do pedido.");
     }
 
     // Commit da transação
@@ -60,29 +65,33 @@ try {
     // Resposta de sucesso simplificada para produção
     echo json_encode([
         'success' => true,
-        'message' => 'Fornecedor excluído com sucesso',
-        'deleted_id' => $fornecedor_id // Envia o ID do usuário excluído
+        'message' => 'Pedido excluído com sucesso',
+        'deleted_id' => $pedido_id
     ]);
 
-    salvarLog("O usuário ID {$user_id} excluiu o fornecedor {$data['dnome_empresa']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_FORNECEDOR);
-    
+    salvarLog("O usuário ID {$user_id} excluiu o pedido do produto {$data['dnum_pedido']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_PEDIDO);
 
-} catch (Exception $e) {
+
+}catch (Exception $e) {
     // Rollback em caso de erro
     if (isset($conn) && $conn) {
         $conn->rollback();
     }
-    
+
     error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
-    
+
     // Resposta de erro simplificada para produção
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'pedido_id' => $pedido_id,
+        'reason' => $data['reason'],
+        'dnum_pedido' => $data['dnum_pedido'],
     ]);
 
-    salvarLog("Falha ao excluir fornecedor {$data['dnome_empresa']}:" . $e->getMessage(),Acoes::EXCLUIR_FORNECEDOR, "erro"
-    );
-    
+    salvarLog("O usuário ID {$user_id} tentou excluir o pedido do produto {$data['dnum_pedido']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE, "erro");
+
     exit();
 }
+
+?>

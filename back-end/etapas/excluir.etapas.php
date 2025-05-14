@@ -1,6 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-
 session_start();
 include_once "../inc/funcoes.inc.php";
 
@@ -41,15 +39,15 @@ try {
 
     $user_id = $_SESSION['user_id'];
 
-    $step_id = (int) $data['step_id'];
-    if ($user_id <= 0) {
-        throw new Exception("ID do cliente inválido. Por favor, verifique os dados.");
+    $etor_id = (int) $data['etor_id'];
+    if ($etor_id <= 0) {
+        throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
     $conn->begin_transaction();
 
-    $exclusao = deleteData($conn, $step_id, "etapa_ordem", "etor_id");
+    $exclusao = deleteData($conn, $etor_id, "etapa_ordem", "etor_id");
     if (!$exclusao['success']) {
         throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
     }
@@ -63,7 +61,7 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $step_id 
+        'deleted_id' => $etor_id 
     ]);
 
     salvarLog("O usuário ID {$user_id} excluiu a etapa de produção do produto {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
@@ -81,7 +79,7 @@ try {
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
-        'step_id' => $step_id,
+        'etor_id' => $etor_id,
         'reason' => $data['reason'],
         'dproduct' => $data['dproduct'],
     ]);

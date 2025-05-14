@@ -102,7 +102,7 @@ function verificarNivel($conn, $nivel)
  */
 function verificarStatus($conn, $status)
 {
-    $stmt = $conn->prepare("SELECT sta_id, sta_nome FROM status WHERE sta_id = ?");
+    $stmt = $conn->prepare("SELECT staproduto_id, staproduto_nome FROM status_produto WHERE staproduto_nome = ?");
     if (!$stmt) {
         return null; // Retorna null em caso de erro na query
     }
@@ -117,7 +117,33 @@ function verificarStatus($conn, $status)
 
     $row = $result->fetch_assoc();
     $stmt->close();
-    return $row['sta_id']; // Retorna apenas o ID
+    return $row['staproduto_id']; // Retorna apenas o ID
+}
+
+/**
+ * Verifica se o tipo existe e retorna o ID do tipo.
+ * @param mysqli $conn conex o ao banco de dados
+ * @param string $tipo nome do tipo a ser verificado
+ * @return int|null retorna o ID do tipo ou null se houver erro na query ou se o tipo não existir
+ */
+function verificarTipo($conn, $tipo)
+{
+    $stmt = $conn->prepare("SELECT tproduto_id FROM tp_produto WHERE tproduto_nome = ?");
+    if (!$stmt) {
+        return null; // Retorna null em caso de erro na query
+    }
+
+    $stmt->bind_param("s", $tipo);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        return null; // Retorna null quando tipo não existe
+    }
+
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    return $row['tproduto_id']; // Retorna apenas o ID
 }
 
 /**
@@ -272,6 +298,47 @@ function buscarCargos($conn)
     }
 
     return $cargos;
+}
+
+
+function buscarStatusPedido($conn)
+{
+    $result = $conn->query("SELECT stapedido_id, stapedido_nome FROM status_pedido");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $statusPedido = [];
+    while ($row = $result->fetch_assoc()) {
+        $statusPedido[] = $row;
+    }
+
+    return $statusPedido;
+}
+
+/**
+ * Busca todos os status do produto registrados no banco de dados.
+ *
+ * @param mysqli $conn Conex o com o banco de dados.
+ *
+ * @return array Retorna um array com os status do produto, onde cada status
+ *         é representado por um array com as chaves 'staproduto_id' e 'staproduto_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os status.
+ */
+function buscarStatus($conn)
+{
+    $result = $conn->query("SELECT staproduto_id, staproduto_nome FROM status_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $status_produto = [];
+    while ($row = $result->fetch_assoc()) {
+        $status_produto[] = $row;
+    }
+
+    return $status_produto;
 }
 
 /**
@@ -681,13 +748,50 @@ function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $c
     return null;
 }
 
-function checkLoggedUser($conn, $sessionUserId){
-    if (!$sessionUserId){
+function checkLoggedUser($conn, $sessionUserId) {
+    header('Content-Type: application/json');
+
+    // 1) Sem sessão => 401
+    if (!$sessionUserId) {
         http_response_code(401);
-        echo json_encode(["loggedIn" => false, "message" => "Usuário não logado."]);
+        echo json_encode([
+            "loggedIn" => false,
+            "message"  => "Usuário não logado."
+        ]);
         exit;
     }
+
+    // 2) Checa flag de forced logout
+    $stmt = $conn->prepare("SELECT force_logout FROM usuarios WHERE user_id = ?");
+    $stmt->bind_param("i", $sessionUserId);
+    $stmt->execute();
+    $stmt->bind_result($flag);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($flag) {
+        // Reseta o flag para não ficar em loop
+        $upd = $conn->prepare("UPDATE usuarios SET force_logout = 0 WHERE user_id = ?");
+        $upd->bind_param("i", $sessionUserId);
+        $upd->execute();
+        $upd->close();
+
+        // Destroi sessão atual
+        session_unset();
+        session_destroy();
+
+        // Retorna 401 forçando re-login
+        http_response_code(401);
+        echo json_encode([
+            "loggedIn" => false,
+            "message"  => "Sua sessão expirou devido a alteração de permissões. Por favor, faça o login novamente."
+        ]);
+        exit;
+    }
+
+    // 3) Se chegar aqui, está tudo OK – continue normalmente
 }
+
 
 
 
@@ -847,31 +951,53 @@ function configurarSessaoSegura()
 
 // editar.usuario.php
 
-/**
- * Verifica conflitos de email/CPF (excluindo o próprio usuário)
+/*
+ * Verifica conflitos de email/CPF/CNPJ
  */
-function verificarConflitosAtualizacao($conn, $email, $cpf, $user_id)
+function verificarConflitosAtualizacao($conn, $tabela, $colunas, $valores, $chavePrimaria, $idIgnorar)
 {
-    $stmt = $conn->prepare("SELECT user_id FROM usuarios WHERE (user_email = ? OR user_CPF = ?) AND user_id != ?");
+    // Validação básica dos parâmetros
+    if (count($colunas) !== count($valores)) {
+        return ["success" => false, "message" => "Número de colunas e valores não correspondem."];
+    }
+
+    // Monta a cláusula WHERE dinamicamente
+    $condicoes = [];
+    $tipos = "";
+    $params = [];
+
+    foreach ($colunas as $i => $coluna) {
+        $condicoes[] = "$coluna = ?";
+        $tipos .= "s";
+        $params[] = $valores[$i];
+    }
+
+    $whereClause = implode(" OR ", $condicoes);
+    $whereClause = "($whereClause) AND $chavePrimaria != ?";
+
+    $tipos .= "i";
+    $params[] = $idIgnorar;
+
+    $query = "SELECT $chavePrimaria FROM $tabela WHERE $whereClause";
+
+    $stmt = $conn->prepare($query);
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
     }
-    $stmt->bind_param("ssi", $email, $cpf, $user_id);
+
+    // Usa o operador splat (...) para passar os parâmetros dinamicamente
+    $stmt->bind_param($tipos, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $conflito = $result->fetch_assoc();
-        return ["success" => false, "message" => "E-mail ou CPF já está em uso por outro usuário."];
+        return ["success" => false, "message" => "Um dos valores já está em uso por outro registro."];
     }
+
     return null;
 }
 
-
-
 // cadastrar_fornecedores.php
-
-
 /**
  * Envia um e-mail de confirmação de cadastro de fornecedor
  * @param string $email e-mail do fornecedor
@@ -894,10 +1020,10 @@ function enviarEmailFornecedor($email, $data)
                             <p style='font-size: 18px; line-height: 1.6;'>Em nome da BioVerde, gostariamos de agradecer pela confiança em nossos serviços.</p>
                             <p style='font-size: 18px; line-height: 1.6;'>Seguem abaixo os dados cadastrados no sistema:</p>
                             <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome da Empresa: </strong> " . $data['nome_empresa'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome da Empresa/Fornecedor: </strong> " . $data['nome_empresa_fornecedor'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Razão Social: </strong> " . $data['razao_social'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>E-mail: </strong> " . $data['email'] . "</p>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cnpj'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cpf_cnpj'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Endereço: </strong> " . $data['endereco'] . " - Número: " . $data['num_endereco'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Cidade: </strong> " . $data['cidade'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Estado: </strong> " . $data['estado'] . "</p>
@@ -943,7 +1069,7 @@ function enviarEmailCliente($email, $data)
                             <p style='font-size: 18px; line-height: 1.6;'>Em nome da BioVerde, gostariamos de agradecer pela confiança em nossos serviços.</p>
                             <p style='font-size: 18px; line-height: 1.6;'>Seguem abaixo os dados cadastrados no sistema:</p>
                             <div style='background-color: #f1f8e9; padding: 15px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome do Cliente: </strong> " . $data['nome_cliente'] . "</p>
+                                <p style='color: #2e7d32; font-size: 18px;'><strong>Nome do Cliente/Empresa: </strong> " . $data['nome_empresa_cliente'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>CPF/CNPJ: </strong> " . $data['cpf_cnpj'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>Telefone/Celular: </strong> " . $data['tel'] . "</p>
                                 <p style='color: #2e7d32; font-size: 18px;'><strong>E-mail: </strong> " . $data['email'] . "</p>
@@ -974,7 +1100,46 @@ function enviarEmailCliente($email, $data)
 }
 // filtro.cliente.php
 
+/**
+ * Verifica se o usuário logado tem pelo menos o nível mínimo.
+ * Retorna HTTP 403 se não autorizado.
+ *
+ * @param int $nivelMinimo
+ */
+function authorize(int $nivelMinimo): void {
+    if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] < $nivelMinimo) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode([
+            "success" => false
+        ]);
+        exit;
+    }
+}
+/**
+ * Retorna o nível mínimo exigido para o recurso, ou null se não definido.
+ *
+ * @param string $recurso
+ * @return int|null
+ */
+function getMinLevelFor(string $recurso): ?int {
 
+    $sql = "SELECT nivel_minimo FROM permissoes WHERE recurso = ?";
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('s', $recurso);
+    $stmt->execute();
+    $stmt->bind_result($nivelMinimo);
+
+    $result = null;
+    if ($stmt->fetch()) {
+        $result = (int)$nivelMinimo;
+    }
+    $stmt->close();
+    return $result;
+}
 
 
 ?>

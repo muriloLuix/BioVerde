@@ -22,29 +22,51 @@ if ($conn->connect_error) {
 }
 
 // Processa os dados de entrada
-$mapaFiltrosCliente = [
-    "fnome_cliente"   => ['coluna' => 'cliente_nome',         'tipo' => 'like'],
-    "fcpf_cnpj"       => 'cliente_cpf_cnpj',
-    "ftel"            => 'cliente_telefone',
-    "fcidade"         => ['coluna' => 'cliente_cidade',       'tipo' => 'like'],
-    "festado"         => ['coluna' => 'cliente_estado',       'tipo' => 'like'],
-    "fdataCadastro"   => 'cliente_data_cadastro',
-    "fstatus"         => 'status',
-];
-
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
+
+// Define o mapa de filtros para clientes
+$mapaFiltrosCliente = [
+    "fnome_cliente"   => ['coluna' => 'c.cliente_nome_ou_empresa', 'tipo' => 'like'],
+    "fcpf_cnpj"       => ['coluna' => 'c.cliente_cpf_ou_cnpj',     'tipo' => 'like'],
+    "ftel"            => ['coluna' => 'c.cliente_telefone',        'tipo' => 'like'],
+    "fcidade"         => ['coluna' => 'c.cliente_cidade',          'tipo' => 'like'],
+    "festado"         => ['coluna' => 'c.cliente_estado',          'tipo' => 'like'],
+    "fdataCadastro"   => ['coluna' => 'DATE(c.cliente_data_cadastro)', 'tipo' => '='],
+];
 
 // Gera os filtros
 $filtros = buildFilters($data, $mapaFiltrosCliente);
 
+// Trata o status manualmente para pegar "0" também
+if (isset($data['fstatus']) && $data['fstatus'] !== "") {
+    // garante inteiro 0 ou 1
+    $val = intval($data['fstatus']);
+    $filtros['where'][] = "c.estaAtivo = {$val}";
+}
+
 // Define estrutura da busca
 $buscaCliente = [
-    'select' => "cliente_id, cliente_nome, cliente_email, cliente_telefone, cliente_cpf_cnpj, cliente_cep, cliente_endereco, cliente_numendereco, cliente_estado, cliente_cidade, b.sta_nome, cliente_data_cadastro, pedido_id, cliente_observacoes",
-    'from' => "clientes a",
-    'joins' => [
-        "LEFT JOIN status b ON a.status = b.sta_id"
-    ],
+    'select' => "
+        c.cliente_id,
+        c.cliente_nome_ou_empresa,
+        CASE WHEN c.cliente_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END,
+        c.cliente_cpf_ou_cnpj,
+        c.cliente_email,
+        c.cliente_telefone,
+        c.cliente_cep,
+        c.cliente_endereco,
+        c.cliente_numendereco,
+        c.cliente_estado,
+        c.cliente_cidade,
+        CASE WHEN c.estaAtivo = 1 THEN 'ATIVO' ELSE 'INATIVO' END,
+        c.cliente_observacoes,
+        c.cliente_data_cadastro,
+        c.cliente_razao_social,
+        c.cliente_tipo,
+        c.estaAtivo
+    ",
+    'from' => "clientes c",
     'modificadores' => [
         'cliente_data_cadastro' => 'DATE(cliente_data_cadastro)'
     ]

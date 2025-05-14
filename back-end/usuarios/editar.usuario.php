@@ -46,8 +46,12 @@ try {
         throw new Exception("Usuário não encontrado");
     }
 
+
     // Conflitos de email/CPF
-    $conflito = verificarConflitosAtualizacao($conn, $data['email'], $data['cpf'], $data['user_id']);
+    $colunas = ["user_email", "user_CPF"];
+    $valores = [$data["email"], $data["cpf"]];
+    
+    $conflito = verificarConflitosAtualizacao($conn, "usuarios", $colunas, $valores, "user_id", $data["user_id"]);
     if ($conflito) {
         throw new Exception($conflito['message']);
     }
@@ -105,6 +109,12 @@ try {
         ['type' => 'INNER', 'join_table' => 'cargo c', 'on' => 'u.car_id = c.car_id'],
         ['type' => 'INNER', 'join_table' => 'niveis_acesso n', 'on' => 'u.nivel_id = n.nivel_id'],
     ];
+
+    // força o logout da pessoa que acabou de ter o nível (ou status) alterado
+    $stmt = $conn->prepare("UPDATE usuarios SET force_logout = 1 WHERE user_id = ?");
+    $stmt->bind_param("i", $data['user_id']);
+    $stmt->execute();
+    $stmt->close();
 
     $usuarioAtualizado = searchPersonPerID($conn, $data['user_id'], 'usuarios u', $fields, $joins);
 

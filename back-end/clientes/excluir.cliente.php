@@ -40,23 +40,17 @@ try {
     $user_id = $_SESSION['user_id'];
 
     $cliente_id = (int)$data['cliente_id'];
-    if ($user_id <= 0) {
+    if ($cliente_id <= 0) {
         throw new Exception("ID do cliente inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
     $conn->begin_transaction();
 
-    $camposExclusao = [
-        'cliex_excluido' => $data['dnome_cliente'],
-        'cliex_exclusao' => $user_id,
-        'cliex_motivo_exclusao' => $data['reason'],
-    ];
-
     // 1. Deleta o usuário
     $exclusao = deleteData($conn, $cliente_id, "clientes", "cliente_id");
     if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
+        throw new Exception($exclusao['message'] ?? "Falha ao excluir o cliente.");
     }
 
     // Commit da transação

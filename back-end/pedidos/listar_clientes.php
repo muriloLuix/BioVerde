@@ -10,10 +10,10 @@ if ($conn->connect_error) {
 $termo = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if ($termo === '') {
-    $stmt = $conn->prepare("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores");
+    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome_ou_empresa FROM clientes");
     $stmt->execute();
 } else {
-    $stmt = $conn->prepare("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores WHERE fornecedor_nome_ou_empresa LIKE ?");
+    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome_ou_empresa FROM clientes WHERE cliente_nome_ou_empresa LIKE ?");
     $search = "%$termo%";
     $stmt->bind_param("s", $search);
     $stmt->execute();
@@ -21,12 +21,12 @@ if ($termo === '') {
 
 
 $result = $stmt->get_result();
-$fornecedores = [];
+$clientes = [];
 
 while ($row = $result->fetch_assoc()) {
-    $fornecedores[] = $row;
+    $clientes[] = $row;
 }
 
-echo json_encode($fornecedores);
+echo json_encode($clientes);
 
 ?>

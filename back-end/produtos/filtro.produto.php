@@ -28,15 +28,9 @@ $data = json_decode($rawData, true);
 // Define o mapa de filtros para produtos
 $mapaFiltrosProduto = [
     "fnome_produto"     => ['coluna' => 'produto_nome', 'tipo' => 'like'],
-    "ffornecedor"       => ['coluna' => 'f.fornecedor_nome', 'tipo' => 'like'],
+    "ffornecedor"       => ['coluna' => 'f.fornecedor_nome_ou_empresa', 'tipo' => 'like'],
     "ftipo" => ['coluna' => 'p.tproduto_id'],
-    "flote"             => 'produto_lote',
-    "fquantidade"       => 'produto_quantidade',
-    "funid_medida"      => ['coluna' => 'p.uni_id'],
-    "fdt_producao"      => 'produto_dtProducao',
-    "fdt_validade"      => 'produto_validade',
-    "fdt_cadastro"      => 'produto_data_cadastro',
-    "fstatus"           => 'produto_status'
+    "fstatus"           => 'status_id'
 ];
 
 // Gera os filtros
@@ -44,16 +38,12 @@ $filtros = buildFilters($data, $mapaFiltrosProduto);
 
 // Define a estrutura da consulta de produtos
 $buscaProduto = [
-    'select' => "p.produto_id, p.produto_nome, t.tproduto_nome, p.produto_lote, p.produto_quantidade, u.uni_nome, p.produto_preco, f.fornecedor_nome, s.sta_nome, p.produto_dtProducao, p.produto_validade, p.produto_data_cadastro, p.produto_observacoes",
+    'select' => "p.produto_id, p.produto_nome, t.tproduto_nome, p.produto_preco, f.fornecedor_nome_ou_empresa, s.staproduto_nome, p.produto_observacoes",
     'from' => "produtos p",
     'joins' => [
         "LEFT JOIN fornecedores f ON p.id_fornecedor = f.fornecedor_id",
         "LEFT JOIN tp_produto t ON p.tproduto_id = t.tproduto_id",
-        "LEFT JOIN unidade_medida u ON p.uni_id = u.uni_id",
-        "LEFT JOIN status s ON p.produto_status = s.sta_id"
-    ],
-    'modificadores' => [
-        'produto_data_cadastro' => 'DATE(produto_data_cadastro)'
+        "LEFT JOIN status_produto s ON p.status_id = s.staproduto_id"
     ]
 ];
 

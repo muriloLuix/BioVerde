@@ -4,10 +4,8 @@ export function switchCpfCnpjMask(
   setCpfCnpjMask: (mask: string) => void
 ) {
   if (
-    name !== "cnpj" &&
     name !== "fcnpj" &&
-    name !== "fcpf_cnpj" &&
-    name !== "cpf_cnpj"
+    name !== "fcpf_cnpj" 
   )
     return;
 
