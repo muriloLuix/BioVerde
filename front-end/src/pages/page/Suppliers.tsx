@@ -215,20 +215,20 @@ export default function Suppliers() {
 
 				const [fornecedoresResponse, userLevelResponse] = await Promise.all([
 					axios.get(
-					"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-						},
-					}
+						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+							},
+						}
 					),
 					axios.get(
-					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
-					{
-						withCredentials: true,
-						headers: { "Content-Type": "application/json" },
-					}
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
 					),
 				]);
 
@@ -244,12 +244,14 @@ export default function Suppliers() {
 				}
 
 				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel)
+					setUserLevel(userLevelResponse.data.userLevel);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+					setMessage(
+						userLevelResponse.data.message ||
+							"Erro ao carregar nível do usuário"
+					);
 				}
-
 			} catch (error) {
 				setOpenNoticeModal(true);
 				setMessage("Erro ao conectar com o servidor");
@@ -661,7 +663,7 @@ export default function Suppliers() {
 												id="fdataCadastro"
 												value={filters.fdataCadastro}
 												onChange={handleChange}
-												className="bg-white border w-[250px] border-separator rounded-lg p-2.5 shadow-xl"
+												className="bg-white border w-[250px] border-separator rounded-lg p-2.5 "
 											/>
 										</Form.Control>
 									</Form.Field>
@@ -1145,7 +1147,10 @@ export default function Suppliers() {
 					rightButtonText="Cancelar"
 					loading={loading}
 					isLoading={loading.has("updateSupplier")}
-					onCancel={() => {clearFormData(); setSupplierType("juridica")}}
+					onCancel={() => {
+						clearFormData();
+						setSupplierType("juridica");
+					}}
 					onSubmit={handleUpdateSupplier}
 				>
 					{/* Linha Nome e razão social*/}
