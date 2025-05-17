@@ -1140,4 +1140,60 @@ function getMinLevelFor(string $recurso): ?int {
 }
 
 
+/**
+ * Mapeamento estático de dependências de chave-primária → [ tabela_referente => coluna_fk, … ]
+ */
+function getDependencyMap(): array {
+    return [
+        'lotes' => [              // quando for excluir de lotes:
+            'produtos'     => 'lote_id',
+            'movimentacoes'=> 'lote_id',
+        ],
+        'fornecedores' => [
+            'produtos'     => 'id_fornecedor',
+        ],
+        'usuarios' => [
+            'pedidos'      => 'user_id',
+            'logs'         => 'usuario_id',
+        ],
+        // … adicione conforme suas outras entidades
+    ];
+}
+
+/**
+ * Verifica se o registro $id em $table/$pkField está sendo referenciado
+ * em alguma tabela definida no getDependencyMap.
+ *
+ * @return array ['success'=>bool, 'message'=>string]
+ */
+function checkDependencies(mysqli $conn, string $table, string $pkField, int $id): array {
+    $map = getDependencyMap();
+
+    if (!isset($map[$table])) {
+        // Nenhuma dependência configurada → pode excluir
+        return ['success' => true, 'message' => ''];
+    }
+
+    foreach ($map[$table] as $depTable => $depFkColumn) {
+        $sql = "SELECT 1
+                  FROM `{$depTable}`
+                 WHERE `{$depFkColumn}` = ?
+                 LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $stmt->store_result();
+        if ($stmt->num_rows > 0) {
+            return [
+                'success' => false,
+                'message' => "Não é possível excluir. Existem registros em “{$depTable}” relacionados a este {$table}."
+            ];
+        }
+    }
+
+    return ['success' => true, 'message' => ''];
+}
+
+
+
 ?>
