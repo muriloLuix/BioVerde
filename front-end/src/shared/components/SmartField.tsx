@@ -1,11 +1,13 @@
 import { useState } from "react";
 
+import { Form } from "radix-ui";
 import { GroupBase } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
 import { Loader2, EyeOff, Eye } from "lucide-react";
-import { Form } from "radix-ui";
+
+import { Option } from "../../utils/types";
 
 type InputPropsBase = {
 	isSelect?: boolean;
@@ -27,22 +29,15 @@ type InputPropsBase = {
 	generatePassword?: () => void;
 };
 
-type OptionType = {
-	label: string;
-	value: string;
-};
-
 type InputProps =
 	| (InputPropsBase & InputMaskProps)
 	| (InputPropsBase &
 			React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement>)
 	| (InputPropsBase & React.TextareaHTMLAttributes<HTMLTextAreaElement>)
 	| (InputPropsBase & NumericFormatProps)
-	| (InputPropsBase & CreatableProps<OptionType, false, GroupBase<OptionType>>);
+	| (InputPropsBase & CreatableProps<Option, false, GroupBase<Option>>);
 
-type SmartFieldProps = InputProps;
-
-const SmartField: React.FC<SmartFieldProps> = ({
+const SmartField = ({
 	isSelect,
 	isTextArea,
 	isPrice,
@@ -60,7 +55,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
 	isCreatableSelect,
 	generatePassword,
 	...rest
-}) => {
+}: InputProps) => {
 	const [isHidden, setIsHidden] = useState(false);
 
 	const regex = (text: string) =>
@@ -162,11 +157,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
 			) : isCreatableSelect ? (
 				<div className="relative">
 					<CreatableSelect
-						{...(rest as CreatableProps<
-							OptionType,
-							false,
-							GroupBase<OptionType>
-						>)}
+						{...(rest as CreatableProps<Option, false, GroupBase<Option>>)}
 						isClearable
 						classNamePrefix={"react-select"}
 						isLoading={isLoading}
@@ -242,7 +233,7 @@ const SmartField: React.FC<SmartFieldProps> = ({
 							name={regex(fieldName)}
 							id={regex(fieldName)}
 							required={required}
-							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
+							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}
 				</Form.Control>

@@ -1,5 +1,10 @@
-import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
+
+import axios from "axios";
+import { Tabs, Form } from "radix-ui";
+import { InputMaskChangeEvent } from "primereact/inputmask";
+import { useNavigate } from "react-router-dom";
+import { OnChangeValue } from "react-select";
 import {
 	Eye,
 	PencilLine,
@@ -9,27 +14,19 @@ import {
 	FilterX,
 	Printer,
 } from "lucide-react";
-import { InputMaskChangeEvent } from "primereact/inputmask";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
+import { Option, OrderStatus } from "../../utils/types";
+import { cepApi } from "../../utils/cepApi";
 import {
 	SmartField,
 	ConfirmationModal,
 	Modal,
 	NoticeModal,
 } from "../../shared";
-import { cepApi } from "../../utils/cepApi";
-import { OnChangeValue } from "react-select";
 
 interface Estado {
 	estado_id: number;
 	pedido_estado: string;
-}
-
-interface Status {
-	stapedido_id: number;
-	stapedido_nome: string;
 }
 
 interface Cliente {
@@ -71,10 +68,6 @@ interface PedidoItem {
 	pedidoitem_preco: number;
 	pedidoitem_subtotal: number;
 }
-interface Option {
-	value: string | number;
-	label: string;
-}
 
 export default function Orders() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -102,7 +95,7 @@ export default function Orders() {
 	});
 	const [formData, setFormData] = useState({
 		pedido_id: 0,
-		nome_cliente: { value: "", label: "" },
+		nome_cliente: "",
 		tel: "",
 		cep: "",
 		status: "",
@@ -115,7 +108,7 @@ export default function Orders() {
 	});
 	const [options, setOptions] = useState<{
 		estados: Estado[];
-		status: Status[];
+		status: OrderStatus[];
 		unidades_medida: Unidade[];
 	}>({
 		estados: [],
@@ -191,34 +184,35 @@ export default function Orders() {
 		try {
 			setLoading((prev) => new Set([...prev, "orders", "options"]));
 
-			const [optionsResponse, pedidosResponse, userLevelResponse] = await Promise.all([
-				axios.get(
-					"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-							"Content-Type": "application/json",
-						},
-					}
-				),
-				axios.get(
-					"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-						},
-					}
-				),
-				axios.get(
-					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-					{
-						withCredentials: true,
-						headers: { "Content-Type": "application/json" },
-					}
-				),
-			]);
+			const [optionsResponse, pedidosResponse, userLevelResponse] =
+				await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+								"Content-Type": "application/json",
+							},
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+							},
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
+					),
+				]);
 
 			console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
 			console.log("Resposta do back-end Options:", optionsResponse.data);
@@ -242,12 +236,13 @@ export default function Orders() {
 			}
 
 			if (userLevelResponse.data.success) {
-				setUserLevel(userLevelResponse.data.userLevel)
+				setUserLevel(userLevelResponse.data.userLevel);
 			} else {
 				setOpenNoticeModal(true);
-				setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				setMessage(
+					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
 			}
-
 		} catch (error) {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
@@ -320,26 +315,15 @@ export default function Orders() {
 			return date.toISOString().split("T")[0];
 		};
 
-		const clienteSelecionado = suggestions.find(
-			(f) => f.cliente_nome_ou_empresa === pedido.cliente_nome_ou_empresa
-		);
-
 		setFormData({
 			pedido_id: pedido.pedido_id,
-			nome_cliente: clienteSelecionado
-			? {
-					value: clienteSelecionado.cliente_nome_ou_empresa,
-					label: clienteSelecionado.cliente_nome_ou_empresa,
-			  }
-			: {
-					value: pedido.cliente_nome_ou_empresa ?? "",
-					label: pedido.cliente_nome_ou_empresa ?? "",
-			  },
+			nome_cliente: pedido.cliente_nome_ou_empresa,
 			tel: pedido.pedido_telefone,
 			cep: pedido.pedido_cep,
-			status: options.status
-				.find((status) => status.stapedido_nome === pedido.stapedido_nome)
-				?.stapedido_id.toString() ?? "",
+			status:
+				options.status
+					.find((status) => status.stapedido_nome === pedido.stapedido_nome)
+					?.stapedido_id.toString() ?? "",
 			endereco: pedido.pedido_endereco,
 			num_endereco: pedido.pedido_num_endereco,
 			estado: pedido.pedido_estado,
@@ -539,15 +523,16 @@ export default function Orders() {
 
 	//Limpar FormData
 	const clearFormData = () => {
-		setFormData((prev) =>
-			Object.fromEntries(
-				Object.entries(prev).map(([key, value]) => {
-					if (key === "nome_cliente") {
-						return [key, { value: "", label: "" }];
-					}
-					return [key, typeof value === "number" ? 0 : ""];
-				})
-			) as typeof prev
+		setFormData(
+			(prev) =>
+				Object.fromEntries(
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "nome_cliente") {
+							return [key, { value: "", label: "" }];
+						}
+						return [key, typeof value === "number" ? 0 : ""];
+					})
+				) as typeof prev
 		);
 	};
 

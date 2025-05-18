@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
+
+import axios from "axios";
 import { Tabs, Form } from "radix-ui";
+import { useNavigate } from "react-router-dom";
+import { InputMaskChangeEvent } from "primereact/inputmask";
 import {
 	Search,
 	PencilLine,
@@ -9,36 +13,21 @@ import {
 	Printer,
 	X,
 } from "lucide-react";
-import { InputMaskChangeEvent } from "primereact/inputmask";
-import axios from "axios";
-import { ConfirmationModal } from "../../shared";
-import { SmartField } from "../../shared";
-import { Modal } from "../../shared";
-import { NoticeModal } from "../../shared";
-import { useNavigate } from "react-router-dom";
+
 import useVerificarNivelAcesso from "../../hooks/useVerificarNivelAcesso";
+import { AccessLevel, JobPosition, User } from "../../utils/types";
+import {
+	ConfirmationModal,
+	SmartField,
+	Modal,
+	NoticeModal,
+} from "../../shared";
 
-interface Cargo {
-	car_id: number;
-	car_nome: string;
+interface UserOptions {
+	cargos: JobPosition[];
+	niveis: AccessLevel[];
 }
 
-interface NivelAcesso {
-	nivel_id: number;
-	nivel_nome: string;
-}
-
-interface Usuario {
-	user_id: number;
-	user_nome: string;
-	user_email: string;
-	user_telefone: string;
-	user_CPF: string;
-	car_nome: string;
-	nivel_nome: string;
-	user_dtcadastro: string;
-	estaAtivo: number;
-}
 export default function UsersPage() {
 	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
 	const [relatorioContent, setRelatorioContent] = useState<string>("");
@@ -51,7 +40,7 @@ export default function UsersPage() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+	const [usuarios, setUsuarios] = useState<User[]>([]);
 	const navigate = useNavigate();
 	const [errors, setErrors] = useState({
 		position: false,
@@ -69,13 +58,7 @@ export default function UsersPage() {
 		password: "",
 		status: "1",
 	});
-	const [options, setOptions] = useState<{
-		cargos: Cargo[];
-		niveis: NivelAcesso[];
-	}>({
-		cargos: [],
-		niveis: [],
-	});
+	const [options, setOptions] = useState<UserOptions>();
 	const [filters, setFilters] = useState({
 		fname: "",
 		fcargo: "",
@@ -189,7 +172,7 @@ export default function UsersPage() {
 	};
 
 	//função para puxar os dados do usuario que será editado
-	const handleEditClick = (usuario: Usuario) => {
+	const handleEditClick = (usuario: User) => {
 		setFormData({
 			user_id: usuario.user_id,
 			name: usuario.user_nome,
@@ -205,7 +188,7 @@ export default function UsersPage() {
 	};
 
 	//função para puxar o nome do usuário que será excluido
-	const handleDeleteClick = (usuario: Usuario) => {
+	const handleDeleteClick = (usuario: User) => {
 		setDeleteUser({
 			user_id: usuario.user_id,
 			dname: usuario.user_nome,
@@ -648,7 +631,7 @@ export default function UsersPage() {
 										inputWidth="w-[280px]"
 									>
 										<option value="">Todos</option>
-										{options.cargos.map((cargo) => (
+										{options?.cargos.map((cargo) => (
 											<option key={cargo.car_id} value={cargo.car_nome}>
 												{cargo.car_nome}
 											</option>
@@ -682,7 +665,7 @@ export default function UsersPage() {
 										inputWidth="w-[200px]"
 									>
 										<option value="">Todos</option>
-										{options.niveis.map((nivel) => (
+										{options?.niveis.map((nivel) => (
 											<option key={nivel.nivel_id} value={nivel.nivel_nome}>
 												{nivel.nivel_nome}
 											</option>
@@ -971,7 +954,7 @@ export default function UsersPage() {
 									placeholderOption="Selecione o cargo"
 									inputWidth="w-[275px]"
 								>
-									{options.cargos.map((cargo) => (
+									{options?.cargos.map((cargo) => (
 										<option key={cargo.car_id} value={cargo.car_nome}>
 											{cargo.car_nome}
 										</option>
@@ -992,7 +975,7 @@ export default function UsersPage() {
 									placeholderOption="Selecione o nível de acesso"
 									inputWidth="w-[275px]"
 								>
-									{options.niveis.map((nivel) => (
+									{options?.niveis.map((nivel) => (
 										<option key={nivel.nivel_id} value={nivel.nivel_nome}>
 											{nivel.nivel_nome}
 										</option>
@@ -1187,7 +1170,7 @@ export default function UsersPage() {
 							onChange={handleChange}
 							inputWidth="w-[300px]"
 						>
-							{options.cargos.map((cargo) => (
+							{options?.cargos.map((cargo) => (
 								<option key={cargo.car_id} value={cargo.car_nome}>
 									{cargo.car_nome}
 								</option>
@@ -1202,7 +1185,7 @@ export default function UsersPage() {
 							onChange={handleChange}
 							inputWidth="w-[300px]"
 						>
-							{options.niveis.map((nivel) => (
+							{options?.niveis.map((nivel) => (
 								<option key={nivel.nivel_id} value={nivel.nivel_nome}>
 									{nivel.nivel_nome}
 								</option>

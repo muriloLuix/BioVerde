@@ -1,5 +1,9 @@
-import { Tabs, Form } from "radix-ui";
 import { useState, useEffect } from "react";
+
+import axios from "axios";
+import { Tabs, Form } from "radix-ui";
+import { useNavigate } from "react-router-dom";
+import { InputMaskChangeEvent } from "primereact/inputmask";
 import {
 	Search,
 	PencilLine,
@@ -8,34 +12,16 @@ import {
 	FilterX,
 	Printer,
 } from "lucide-react";
-import { InputMaskChangeEvent } from "primereact/inputmask";
-import axios from "axios";
 
-import { SmartField } from "../../shared";
-import { ConfirmationModal } from "../../shared";
-import { Modal } from "../../shared";
-import { NoticeModal } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { useNavigate } from "react-router-dom";
-
-interface Fornecedor {
-	fornecedor_id: number;
-	fornecedor_nome_ou_empresa: string;
-	fornecedor_razao_social: string;
-	fornecedor_email: string;
-	fornecedor_telefone: string;
-	fornecedor_tipo: string;
-	fornecedor_cpf_ou_cnpj: string;
-	fornecedor_endereco: string;
-	fornecedor_num_endereco: string;
-	fornecedor_cidade: string;
-	fornecedor_estado: string;
-	fornecedor_cep: string;
-	fornecedor_responsavel: string;
-	fornecedor_dtcadastro: string;
-	estaAtivo: number;
-}
+import { Supplier } from "../../utils/types";
+import {
+	SmartField,
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+} from "../../shared";
 
 export default function Suppliers() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -49,7 +35,7 @@ export default function Suppliers() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
 	const [errors, setErrors] = useState({
 		states: false,
 	});
@@ -175,7 +161,7 @@ export default function Suppliers() {
 	};
 
 	//função para puxar os dados do fornecedor que será editado
-	const handleEditClick = (fornecedor: Fornecedor) => {
+	const handleEditClick = (fornecedor: Supplier) => {
 		setFormData({
 			fornecedor_id: fornecedor.fornecedor_id,
 			nome_empresa_fornecedor: fornecedor.fornecedor_nome_ou_empresa,
@@ -199,7 +185,7 @@ export default function Suppliers() {
 	console.log(formData);
 
 	//função para puxar o nome do fornecedor que será excluido
-	const handleDeleteClick = (fornecedor: Fornecedor) => {
+	const handleDeleteClick = (fornecedor: Supplier) => {
 		setDeleteSupplier({
 			fornecedor_id: fornecedor.fornecedor_id,
 			dnome_empresa: fornecedor.fornecedor_nome_ou_empresa,

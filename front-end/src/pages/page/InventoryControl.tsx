@@ -14,6 +14,7 @@ import {
 	Printer,
 } from "lucide-react";
 
+import { Option, Product, ProductType, ProductStatus } from "../../utils/types";
 import {
 	SmartField,
 	Modal,
@@ -21,37 +22,14 @@ import {
 	ConfirmationModal,
 } from "../../shared";
 
-interface Tipo {
-	tproduto_id: number;
-	tproduto_nome: string;
-}
-interface Status {
-	staproduto_id: number;
-	staproduto_nome: string;
-}
-// interface Lote {
-// 	lote_id: number;
-// }
-
-interface Produto {
-	produto_id: number;
-	produto_nome: string;
-	tproduto_nome: string;
-	produto_preco: string;
-	lote_id: number;
-	fornecedor_nome_ou_empresa: string;
-	produto_observacoes: string;
-	staproduto_nome: string;
+interface ProductOptions {
+	tipos: ProductType[];
+	status: ProductStatus[];
 }
 
 interface Fornecedor {
 	fornecedor_id: number;
 	fornecedor_nome_ou_empresa: string;
-}
-
-interface Option {
-	value: string | number;
-	label: string;
 }
 
 export default function InventoryControl() {
@@ -67,7 +45,7 @@ export default function InventoryControl() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	const [produtos, setProdutos] = useState<Produto[]>([]);
+	const [produtos, setProdutos] = useState<Product[]>([]);
 	const [errors, setErrors] = useState({
 		type: false,
 		status: false,
@@ -81,13 +59,10 @@ export default function InventoryControl() {
 		lote: 0,
 		status: "",
 		preco: 0.0,
-		fornecedor: { value: "", label: "" },
+		fornecedor: "",
 		obs: "",
 	});
-	const [options, setOptions] = useState({
-		tipos: [] as Tipo[],
-		status: [] as Status[],
-	});
+	const [options, setOptions] = useState<ProductOptions>();
 	const [filters, setFilters] = useState({
 		fnome_produto: "",
 		ffornecedor: "",
@@ -157,38 +132,24 @@ export default function InventoryControl() {
 	};
 
 	//função para puxar os dados do produto que será editado
-	const handleEditClick = (produto: Produto) => {
+	const handleEditClick = (produto: Product) => {
 		console.log("Dados completos do produto:", produto);
-
-		console.log("Dados do produto:", produto.staproduto_nome);
-
-		const fornecedorSelecionado = suggestions.find(
-			(f) => f.fornecedor_nome_ou_empresa === produto.fornecedor_nome_ou_empresa
-		);
 
 		// Encontra o tipo correspondente nas opções carregadas
 		setFormData({
 			produto_id: produto.produto_id ?? 0,
 			nome_produto: produto.produto_nome,
 			tipo:
-				options.tipos
+				options?.tipos
 					.find((tipo) => tipo.tproduto_nome === produto.tproduto_nome)
 					?.tproduto_id.toString() ?? "",
 			status:
-				options.status
+				options?.status
 					.find((status) => status.staproduto_nome === produto.staproduto_nome)
 					?.staproduto_id.toString() ?? "",
 			lote: produto.lote_id,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
-			fornecedor: fornecedorSelecionado
-			? {
-					value: fornecedorSelecionado.fornecedor_nome_ou_empresa,
-					label: fornecedorSelecionado.fornecedor_nome_ou_empresa,
-			  }
-			: {
-					value: produto.fornecedor_nome_ou_empresa ?? "",
-					label: produto.fornecedor_nome_ou_empresa ?? "",
-			  },
+			fornecedor: produto.fornecedor_nome_ou_empresa,
 			obs: produto.produto_observacoes,
 		});
 
@@ -196,7 +157,7 @@ export default function InventoryControl() {
 	};
 
 	//função para puxar o nome do produto que será excluido
-	const handleDeleteClick = (produto: Produto) => {
+	const handleDeleteClick = (produto: Product) => {
 		setDeleteProduct({
 			produto_id: produto.produto_id,
 			dnome_produto: produto.produto_nome,
@@ -211,20 +172,20 @@ export default function InventoryControl() {
 
 			const [productsAndOptions, userLevelResponse] = await Promise.all([
 				axios.get(
-				"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
-				{
-					withCredentials: true,
-					headers: {
-						Accept: "application/json",
-					},
-				}
+					"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+						},
+					}
 				),
 				axios.get(
-				"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
-				{
-					withCredentials: true,
-					headers: { "Content-Type": "application/json" },
-				}
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
 				),
 			]);
 
@@ -244,10 +205,12 @@ export default function InventoryControl() {
 			}
 
 			if (userLevelResponse.data.success) {
-				setUserLevel(userLevelResponse.data.userLevel)
+				setUserLevel(userLevelResponse.data.userLevel);
 			} else {
 				setOpenNoticeModal(true);
-				setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				setMessage(
+					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
 			}
 		} catch (error) {
 			setOpenNoticeModal(true);
@@ -537,19 +500,20 @@ export default function InventoryControl() {
 
 	//Limpar FormData
 	const clearFormData = () => {
-		setFormData((prev) =>
-			Object.fromEntries(
-				Object.entries(prev).map(([key, value]) => {
-					if (key === "fornecedor") {
-						return [key, { value: "", label: "" }];
-					}
-					return [key, typeof value === "number" ? 0 : ""];
-				})
-			) as typeof prev
+		setFormData(
+			(prev) =>
+				Object.fromEntries(
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "fornecedor") {
+							return [key, { value: "", label: "" }];
+						}
+						return [key, typeof value === "number" ? 0 : ""];
+					})
+				) as typeof prev
 		);
 	};
 
-	const handleObsClick = (produto: Produto) => {
+	const handleObsClick = (produto: Product) => {
 		setCurrentObs(produto.produto_observacoes);
 		setOpenObsModal(true);
 	};
@@ -641,7 +605,7 @@ export default function InventoryControl() {
 								inputWidth="w-full"
 							>
 								<option>Todos</option>
-								{options.tipos.map((tipo) => (
+								{options?.tipos.map((tipo) => (
 									<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
 										{tipo.tproduto_nome}
 									</option>
@@ -658,7 +622,7 @@ export default function InventoryControl() {
 								inputWidth="w-full"
 							>
 								<option>Todos</option>
-								{options.status.map((status) => (
+								{options?.status.map((status) => (
 									<option
 										key={status.staproduto_id}
 										value={status.staproduto_id}
@@ -760,8 +724,7 @@ export default function InventoryControl() {
 															value
 														)}
 													</td>
-												))
-											}
+												))}
 											<td className="border border-black p-4 text-center whitespace-nowrap">
 												<button
 													className="text-black cursor-pointer"
@@ -858,7 +821,7 @@ export default function InventoryControl() {
 										{fornecedor.fornecedor_nome_ou_empresa}
 									</option>
 								))}
-							</SmartField> 
+							</SmartField>
 						</div>
 
 						<div className="flex gap-x-15 mb-8 items-center">
@@ -873,7 +836,7 @@ export default function InventoryControl() {
 								placeholderOption="Selecione o Tipo"
 								inputWidth="w-[200px]"
 							>
-								{options.tipos.map((tipo) => (
+								{options?.tipos.map((tipo) => (
 									<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
 										{tipo.tproduto_nome}
 									</option>
@@ -901,7 +864,7 @@ export default function InventoryControl() {
 								placeholderOption="Selecione o Status"
 								inputWidth="w-[190px]"
 							>
-								{options.status.map((status) => (
+								{options?.status.map((status) => (
 									<option
 										key={status.staproduto_id}
 										value={status.staproduto_nome}
@@ -1022,7 +985,7 @@ export default function InventoryControl() {
 						isLoading={loading.has("products")}
 						inputWidth="w-[200px]"
 					>
-						{options.tipos?.map((tipo) => (
+						{options?.tipos?.map((tipo) => (
 							<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
 								{tipo.tproduto_nome}
 							</option>
@@ -1049,7 +1012,7 @@ export default function InventoryControl() {
 						isLoading={loading.has("products")}
 						inputWidth="w-[150px]"
 					>
-						{options.status?.map((status) => (
+						{options?.status?.map((status) => (
 							<option key={status.staproduto_id} value={status.staproduto_id}>
 								{status.staproduto_nome}
 							</option>

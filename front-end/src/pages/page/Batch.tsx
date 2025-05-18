@@ -2,20 +2,12 @@ import { useState, useRef } from "react";
 
 import { Tabs } from "radix-ui";
 import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule } from "ag-grid-community";
+import { AllCommunityModule, ColDef } from "ag-grid-community";
+
 import { Modal, SmartField } from "../../shared";
+import { Batch } from "../../utils/types";
 
-interface IRow {
-	id: number;
-	produtos: string[];
-	quantidade: number[];
-	dataDeFabricacao: Date;
-	dataDeValidade: Date;
-	observacao: string;
-}
-
-const Batch = () => {
+const Batchs = () => {
 	const [activeTab, setActiveTab] = useState("list");
 	const [handleModal, setHandleModal] = useState(false);
 
@@ -36,7 +28,7 @@ const Batch = () => {
 		},
 		{ field: "observacao", width: 300 },
 	]);
-	const [rowData, setRowData] = useState<IRow[]>([
+	const [rowData, setRowData] = useState<Batch[]>([
 		{
 			id: 1,
 			produtos: ["banana", "pera"],
@@ -137,4 +129,4 @@ const Batch = () => {
 	);
 };
 
-export default Batch;
+export default Batchs;
