@@ -14,7 +14,13 @@ import {
 	Printer,
 } from "lucide-react";
 
-import { Option, Product, ProductType, ProductStatus } from "../../utils/types";
+import {
+	Option,
+	Product,
+	ProductType,
+	ProductStatus,
+	Supplier,
+} from "../../utils/types";
 import {
 	SmartField,
 	Modal,
@@ -25,11 +31,6 @@ import {
 interface ProductOptions {
 	tipos: ProductType[];
 	status: ProductStatus[];
-}
-
-interface Fornecedor {
-	fornecedor_id: number;
-	fornecedor_nome_ou_empresa: string;
 }
 
 export default function InventoryControl() {
@@ -43,7 +44,7 @@ export default function InventoryControl() {
 	const [message, setMessage] = useState("");
 	const [userLevel, setUserLevel] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
-	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
+	const [suggestions, setSuggestions] = useState<Supplier[]>([]);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [produtos, setProdutos] = useState<Product[]>([]);
 	const [errors, setErrors] = useState({
@@ -504,9 +505,6 @@ export default function InventoryControl() {
 			(prev) =>
 				Object.fromEntries(
 					Object.entries(prev).map(([key, value]) => {
-						if (key === "fornecedor") {
-							return [key, { value: "", label: "" }];
-						}
 						return [key, typeof value === "number" ? 0 : ""];
 					})
 				) as typeof prev
@@ -573,7 +571,7 @@ export default function InventoryControl() {
 						className="h-1/6 w-full flex"
 						onSubmit={handleFilterSubmit}
 					>
-						<div className="w-4/5 flex items-center gap-8">
+						<div className="w-4/5 flex items-center gap-4">
 							<SmartField
 								fieldName="fnome_produto"
 								fieldText="Nome do Produto"
@@ -596,44 +594,65 @@ export default function InventoryControl() {
 							/>
 
 							<SmartField
+								isSelect
+								isClearable
 								fieldName="ftipo"
 								fieldText="Tipo"
-								isSelect
-								value={filters.ftipo}
-								onChange={handleChange}
+								placeholder="Selecione tipo"
 								isLoading={loading.has("products")}
-								inputWidth="w-full"
-							>
-								<option>Todos</option>
-								{options?.tipos.map((tipo) => (
-									<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-										{tipo.tproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								value={
+									options?.tipos
+										.map((tipo) => ({
+											value: tipo.tproduto_id,
+											label: tipo.tproduto_nome,
+										}))
+										.find((opt) => opt.value.toString() === filters.ftipo) ||
+									null
+								}
+								onChange={(option: OnChangeValue<Option, false>) => {
+									setFilters({
+										...filters,
+										ftipo: option?.value.toString() ?? "",
+									});
+								}}
+								options={options?.tipos.map((tipo) => ({
+									value: tipo.tproduto_id,
+									label: tipo.tproduto_nome,
+								}))}
+							/>
 
 							<SmartField
-								fieldName="fstatus"
-								fieldText="Status"
 								isSelect
-								value={filters.fstatus}
-								onChange={handleChange}
+								isClearable
+								fieldName="status"
+								fieldText="Status"
+								placeholder="Selecione status"
 								isLoading={loading.has("products")}
-								inputWidth="w-full"
-							>
-								<option>Todos</option>
-								{options?.status.map((status) => (
-									<option
-										key={status.staproduto_id}
-										value={status.staproduto_id}
-									>
-										{status.staproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								value={
+									options?.status
+										.map((stt: ProductStatus) => ({
+											value: stt.staproduto_nome,
+											label: stt.staproduto_nome,
+										}))
+										.find(
+											(option: OnChangeValue<Option, false>) =>
+												option?.value === filters.fstatus
+										) || null
+								}
+								options={options?.status.map((stt: ProductStatus) => ({
+									value: stt.staproduto_nome,
+									label: stt.staproduto_nome,
+								}))}
+								onChange={(option: OnChangeValue<Option, false>) => {
+									setFilters({
+										...filters,
+										fstatus: option?.value.toString() ?? "",
+									});
+								}}
+							/>
 						</div>
-						<Form.Submit className="w-1/5" asChild>
-							<div className="flex items-center justify-end gap-6">
+						<Form.Submit asChild>
+							<div className="w-1/5 flex items-center justify-end gap-2">
 								<button
 									type="submit"
 									className="bg-verdeMedio hover:bg-verdeEscuro flex items-center justify-center px-5 py-3 gap-2 rounded-full cursor-pointer text-white"
@@ -677,8 +696,8 @@ export default function InventoryControl() {
 										"Nome Produto",
 										"Tipo",
 										"Preço",
-										"Status",
 										"Fornecedor",
+										"Status",
 										"Observações",
 										"Ações",
 									].map((header) => (
@@ -790,19 +809,20 @@ export default function InventoryControl() {
 							/>
 
 							<SmartField
+								isCreatableSelect
 								fieldName="fornecedor"
 								fieldText="Fornecedor"
 								fieldClassname="flex flex-col flex-1"
-								isCreatableSelect
+								inputWidth="min-w-3xs"
 								placeholder="Selecione um fornecedor"
 								isLoading={loading.has("products")}
 								value={suggestions
-									.map((fornecedor: Fornecedor) => ({
+									.map((fornecedor: Supplier) => ({
 										value: fornecedor.fornecedor_nome_ou_empresa,
 										label: fornecedor.fornecedor_nome_ou_empresa,
 									}))
 									.find((opt) => opt.value === formData.fornecedor)}
-								options={suggestions.map((fornecedor: Fornecedor) => ({
+								options={suggestions.map((fornecedor: Supplier) => ({
 									value: fornecedor.fornecedor_nome_ou_empresa,
 									label: fornecedor.fornecedor_nome_ou_empresa,
 								}))}
@@ -812,40 +832,43 @@ export default function InventoryControl() {
 										fornecedor: option?.value.toString() ?? "",
 									});
 								}}
-							>
-								{suggestions.map((fornecedor) => (
-									<option
-										key={fornecedor.fornecedor_id}
-										value={fornecedor.fornecedor_nome_ou_empresa}
-									>
-										{fornecedor.fornecedor_nome_ou_empresa}
-									</option>
-								))}
-							</SmartField>
+							/>
 						</div>
 
 						<div className="flex gap-x-15 mb-8 items-center">
 							<SmartField
+								isSelect
+								isClearable
 								fieldName="tipo"
 								fieldText="Tipo"
-								isSelect
-								value={formData.tipo}
-								onChange={handleChange}
+								fieldClassname="flex flex-col flex-2"
+								placeholder="Selecione um tipo"
 								isLoading={loading.has("products")}
-								error={errors.type ? "*" : undefined}
-								placeholderOption="Selecione o Tipo"
-								inputWidth="w-[200px]"
-							>
-								{options?.tipos.map((tipo) => (
-									<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
-										{tipo.tproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								value={options?.tipos
+									.map((tipo: ProductType) => ({
+										value: tipo.tproduto_nome,
+										label: tipo.tproduto_nome,
+									}))
+									.find(
+										(option: OnChangeValue<Option, false>) =>
+											option?.value === formData.tipo
+									)}
+								options={options?.tipos.map((tipo: ProductType) => ({
+									value: tipo.tproduto_nome,
+									label: tipo.tproduto_nome,
+								}))}
+								onChange={(option: OnChangeValue<Option, false>) => {
+									setFormData({
+										...formData,
+										tipo: option?.value.toString() ?? "",
+									});
+								}}
+							/>
 
 							<SmartField
 								fieldName="lote"
 								fieldText="Lote"
+								fieldClassname="flex flex-col flex-1"
 								type="number"
 								required
 								placeholder="Nº do Lote"
@@ -855,29 +878,38 @@ export default function InventoryControl() {
 							/>
 
 							<SmartField
+								isSelect
+								isClearable
 								fieldName="status"
 								fieldText="Status"
-								isSelect
-								value={formData.status}
-								error={errors.status ? "*" : undefined}
-								onChange={handleChange}
-								placeholderOption="Selecione o Status"
-								inputWidth="w-[190px]"
-							>
-								{options?.status.map((status) => (
-									<option
-										key={status.staproduto_id}
-										value={status.staproduto_nome}
-									>
-										{status.staproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								placeholder="Selecione um status"
+								isLoading={loading.has("products")}
+								value={options?.status
+									.map((stt: ProductStatus) => ({
+										value: stt.staproduto_nome,
+										label: stt.staproduto_nome,
+									}))
+									.find(
+										(option: OnChangeValue<Option, false>) =>
+											option?.value === formData.status
+									)}
+								options={options?.status.map((stt: ProductStatus) => ({
+									value: stt.staproduto_nome,
+									label: stt.staproduto_nome,
+								}))}
+								onChange={(option: OnChangeValue<Option, false>) => {
+									setFormData({
+										...formData,
+										status: option?.value.toString() ?? "",
+									});
+								}}
+							/>
 
 							<SmartField
 								isPrice
 								fieldName="preco"
 								fieldText="Preço"
+								fieldClassname="flex flex-col flex-1"
 								type="text"
 								placeholder="Preço"
 								error={errors.price ? "*" : undefined}
@@ -962,7 +994,7 @@ export default function InventoryControl() {
 						placeholder="Selecione um fornecedor"
 						isLoading={loading.has("products")}
 						defaultValue={formData.fornecedor}
-						options={suggestions.map((fornecedor: Fornecedor) => ({
+						options={suggestions.map((fornecedor: Supplier) => ({
 							value: fornecedor.fornecedor_nome_ou_empresa,
 							label: fornecedor.fornecedor_nome_ou_empresa,
 						}))}

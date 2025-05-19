@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 import { Form } from "radix-ui";
-import { GroupBase } from "react-select";
+import Select, { GroupBase, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
-import { Loader2, EyeOff, Eye } from "lucide-react";
+import { EyeOff, Eye } from "lucide-react";
 
 import { Option } from "../../utils/types";
 
@@ -19,7 +19,6 @@ type InputPropsBase = {
 	isLoading?: boolean;
 	error?: string;
 	inputWidth?: string;
-	placeholderOption?: string;
 	withInputMask?: boolean;
 	required?: boolean;
 	fieldName: string;
@@ -49,7 +48,6 @@ const SmartField = ({
 	fieldText,
 	isLoading,
 	error,
-	placeholderOption,
 	inputWidth,
 	isPassword,
 	isCreatableSelect,
@@ -108,24 +106,50 @@ const SmartField = ({
 				)}
 			</Form.Label>
 			{isSelect ? (
-				<select
-					{...(rest as React.SelectHTMLAttributes<HTMLSelectElement>)}
-					name={regex(fieldName)}
-					id={regex(fieldName)}
-					required={required}
-					className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
-				>
-					{isLoading ? (
-						<Loader2 className="animate-spin h-5 w-5" />
-					) : (
-						placeholderOption && (
-							<option value="" disabled>
-								{placeholderOption}
-							</option>
-						)
-					)}
-					{children}
-				</select>
+				<div className="relative">
+					<Select
+						{...(rest as Props<Option, false, GroupBase<Option>>)}
+						name={regex(fieldName)}
+						id={regex(fieldName)}
+						required={required}
+						classNamePrefix="react-select"
+						className={`react-select-container ${inputWidth}`}
+						isLoading={isLoading}
+						closeMenuOnSelect
+						menuShouldScrollIntoView
+						hideSelectedOptions
+						styles={{
+							control: (base) => ({
+								...base,
+								backgroundColor: "white",
+								borderRadius: "0.5rem",
+								padding: "0.25rem",
+								border: "1px solid #d1d5db",
+								boxShadow: "none",
+								minHeight: "45.6px",
+								"&:hover": {
+									borderColor: "#9ca3af",
+								},
+							}),
+							menu: (base) => ({
+								...base,
+								borderRadius: "0.5rem",
+								overflow: "hidden",
+							}),
+							option: (base, state) => ({
+								...base,
+								backgroundColor: state.isSelected
+									? "#4CAF50"
+									: state.isFocused
+									? "#A5D6A7"
+									: "white",
+								color: state.isSelected ? "white" : "#374151",
+								padding: "0.5rem",
+								cursor: "pointer",
+							}),
+						}}
+					/>
+				</div>
 			) : isPassword ? (
 				<div className="flex gap-4">
 					<div className="relative">
