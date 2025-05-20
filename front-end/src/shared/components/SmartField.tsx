@@ -18,7 +18,7 @@ type InputPropsBase = {
 	isNumEndereco?: boolean;
 	isLoading?: boolean;
 	error?: string;
-	value?: string;
+	value?: string | number;
 	inputWidth?: string;
 	options?: Option[];
 	withInputMask?: boolean;
@@ -28,9 +28,6 @@ type InputPropsBase = {
 	fieldText: string;
 	children?: React.ReactNode;
 	generatePassword?: () => void;
-	onChange?: (
-		e: | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-	) => void;
 	onChangeSelect?: (
 		e: { target: { name: string; value: string } }
 	) => void;
@@ -253,7 +250,7 @@ const SmartField = ({
 							name={regex(fieldName)}
 							id={regex(fieldName)}
 							required={required}
-							value={value}
+							value={String(value)}
 							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : isPrice ? (

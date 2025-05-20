@@ -12,10 +12,10 @@ import {
 	FilterX,
 	Printer, X,
 } from "lucide-react";
-
+// import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier, CustomEvent } from "../../utils/types";
+import { Supplier, SelectEvent } from "../../utils/types";
 import {
 	SmartField,
 	ConfirmationModal,
@@ -72,6 +72,8 @@ export default function Suppliers() {
 		dnome_empresa: "",
 		reason: "",
 	});
+	
+	// useVerificarNivelAcesso();
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -113,7 +115,7 @@ export default function Suppliers() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
-			| CustomEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 

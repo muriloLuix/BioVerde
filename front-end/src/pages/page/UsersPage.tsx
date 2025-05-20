@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
-import { AccessLevel, JobPosition, User, CustomEvent } from "../../utils/types";
+import { AccessLevel, JobPosition, User, SelectEvent } from "../../utils/types";
 import {
 	ConfirmationModal,
 	SmartField,
@@ -113,7 +113,7 @@ export default function UsersPage() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
-			| CustomEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -628,7 +628,6 @@ export default function UsersPage() {
 										isSelect
 										isLoading={loading.has("options")}
 										value={filters.fcargo}
-										onChange={handleChange}
 										placeholder="Selecione o Cargo"
 										inputWidth="w-[280px]"
 										onChangeSelect={handleChange}

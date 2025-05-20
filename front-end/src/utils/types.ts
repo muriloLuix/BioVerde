@@ -96,7 +96,7 @@ export interface Option {
 	label: string;
 }
 
-export interface CustomEvent {
+export interface SelectEvent {
   target: {
     name: string;
     value: string;

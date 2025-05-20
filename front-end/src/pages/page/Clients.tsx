@@ -22,7 +22,7 @@ import {
 } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Client } from "../../utils/types";
+import { Client, SelectEvent } from "../../utils/types";
 
 export default function Clients() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -118,6 +118,7 @@ export default function Clients() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -651,40 +652,42 @@ export default function Clients() {
 										fieldName="festado"
 										fieldText="Estado"
 										isSelect
+										isLoading={loading.has("options")}
 										value={filters.festado}
-										onChange={handleChange}
+										placeholder="Selecione"
 										autoComplete="address-level1"
 										inputWidth="w-[200px]"
-									>
-										<option value="">Todos</option>
-										<option value="AC">Acre</option>
-										<option value="AL">Alagoas</option>
-										<option value="AP">Amapá</option>
-										<option value="AM">Amazonas</option>
-										<option value="BA">Bahia</option>
-										<option value="CE">Ceará</option>
-										<option value="DF">Distrito Federal</option>
-										<option value="ES">Espírito Santo</option>
-										<option value="GO">Goiás</option>
-										<option value="MA">Maranhão</option>
-										<option value="MT">Mato Grosso</option>
-										<option value="MS">Mato Grosso do Sul</option>
-										<option value="MG">Minas Gerais</option>
-										<option value="PA">Pará</option>
-										<option value="PB">Paraíba</option>
-										<option value="PR">Paraná</option>
-										<option value="PE">Pernambuco</option>
-										<option value="PI">Piauí</option>
-										<option value="RJ">Rio de Janeiro</option>
-										<option value="RN">Rio Grande do Norte</option>
-										<option value="RS">Rio Grande do Sul</option>
-										<option value="RO">Rondônia</option>
-										<option value="RR">Roraima</option>
-										<option value="SC">Santa Catarina</option>
-										<option value="SP">São Paulo</option>
-										<option value="SE">Sergipe</option>
-										<option value="TO">Tocantins</option>
-									</SmartField>
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "AC", label: "Acre" },
+											{ value: "AL", label: "Alagoas" },
+											{ value: "AP", label: "Amapá" },
+											{ value: "AM", label: "Amazonas" },
+											{ value: "BA", label: "Bahia" },
+											{ value: "CE", label: "Ceará" },
+											{ value: "DF", label: "Distrito Federal" },
+											{ value: "ES", label: "Espírito Santo" },
+											{ value: "GO", label: "Goiás" },
+											{ value: "MA", label: "Maranhão" },
+											{ value: "MT", label: "Mato Grosso" },
+											{ value: "MS", label: "Mato Grosso do Sul" },
+											{ value: "MG", label: "Minas Gerais" },
+											{ value: "PA", label: "Pará" },
+											{ value: "PB", label: "Paraíba" },
+											{ value: "PR", label: "Paraná" },
+											{ value: "PE", label: "Pernambuco" },
+											{ value: "PI", label: "Piauí" },
+											{ value: "RJ", label: "Rio de Janeiro" },
+											{ value: "RN", label: "Rio Grande do Norte" },
+											{ value: "RS", label: "Rio Grande do Sul" },
+											{ value: "RO", label: "Rondônia" },
+											{ value: "RR", label: "Roraima" },
+											{ value: "SC", label: "Santa Catarina" },
+											{ value: "SP", label: "São Paulo" },
+											{ value: "SE", label: "Sergipe" },
+											{ value: "TO", label: "Tocantins" },
+										]}
+									/>
 								</div>
 
 								{/* Coluna Telefone e Status */}
@@ -708,14 +711,16 @@ export default function Clients() {
 										fieldName="fstatus"
 										fieldText="Status"
 										isSelect
+										isLoading={loading.has("options")}
 										value={filters.fstatus}
-										onChange={handleChange}
+										placeholder="Selecione"
 										inputWidth="w-[200px]"
-									>
-										<option value="">Todos</option>
-										<option value="1">Ativo</option>
-										<option value="0">Inativo</option>
-									</SmartField>
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "1", label: "Ativo" },
+											{ value: "0", label: "Inativo" },
+										]}
+									/>
 								</div>
 
 								{/* Coluna Data de Cadastro e Botão Filtrar */}
@@ -911,17 +916,20 @@ export default function Clients() {
 							<h2 className="text-3xl mb-8">Cadastro de clientes:</h2>
 
 							<div className="flex mb-8 gap-x-7 justify-between">
+
 								<SmartField
 									fieldName="tipo"
 									fieldText="Tipo"
+									isClearable={false}
 									isSelect
 									value={formData.tipo}
-									onChange={handleChange}
 									inputWidth="w-[220px]"
-								>
-									<option value="juridica">Pessoa Jurídica</option>
-									<option value="fisica">Pessoa Física</option>
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={[
+										{ value: "juridica", label: "Pessoa Jurídica" },
+										{ value: "fisica", label: "Pessoa Física" },
+									]}
+								/>
 
 								{clientType === "juridica" && (
 									<SmartField
@@ -1096,41 +1104,43 @@ export default function Clients() {
 									fieldName="estado"
 									fieldText="Estado"
 									isSelect
+									isLoading={loading.has("options")}
 									value={formData.estado}
-									onChange={handleChange}
+									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
-									placeholderOption="Selecione o Estado"
 									inputWidth="w-[200px]"
-								>
-									<option value="AC">Acre</option>
-									<option value="AL">Alagoas</option>
-									<option value="AP">Amapá</option>
-									<option value="AM">Amazonas</option>
-									<option value="BA">Bahia</option>
-									<option value="CE">Ceará</option>
-									<option value="DF">Distrito Federal</option>
-									<option value="ES">Espírito Santo</option>
-									<option value="GO">Goiás</option>
-									<option value="MA">Maranhão</option>
-									<option value="MT">Mato Grosso</option>
-									<option value="MS">Mato Grosso do Sul</option>
-									<option value="MG">Minas Gerais</option>
-									<option value="PA">Pará</option>
-									<option value="PB">Paraíba</option>
-									<option value="PR">Paraná</option>
-									<option value="PE">Pernambuco</option>
-									<option value="PI">Piauí</option>
-									<option value="RJ">Rio de Janeiro</option>
-									<option value="RN">Rio Grande do Norte</option>
-									<option value="RS">Rio Grande do Sul</option>
-									<option value="RO">Rondônia</option>
-									<option value="RR">Roraima</option>
-									<option value="SC">Santa Catarina</option>
-									<option value="SP">São Paulo</option>
-									<option value="SE">Sergipe</option>
-									<option value="TO">Tocantins</option>
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={[
+										{ value: "AC", label: "Acre" },
+										{ value: "AL", label: "Alagoas" },
+										{ value: "AP", label: "Amapá" },
+										{ value: "AM", label: "Amazonas" },
+										{ value: "BA", label: "Bahia" },
+										{ value: "CE", label: "Ceará" },
+										{ value: "DF", label: "Distrito Federal" },
+										{ value: "ES", label: "Espírito Santo" },
+										{ value: "GO", label: "Goiás" },
+										{ value: "MA", label: "Maranhão" },
+										{ value: "MT", label: "Mato Grosso" },
+										{ value: "MS", label: "Mato Grosso do Sul" },
+										{ value: "MG", label: "Minas Gerais" },
+										{ value: "PA", label: "Pará" },
+										{ value: "PB", label: "Paraíba" },
+										{ value: "PR", label: "Paraná" },
+										{ value: "PE", label: "Pernambuco" },
+										{ value: "PI", label: "Piauí" },
+										{ value: "RJ", label: "Rio de Janeiro" },
+										{ value: "RN", label: "Rio Grande do Norte" },
+										{ value: "RS", label: "Rio Grande do Sul" },
+										{ value: "RO", label: "Rondônia" },
+										{ value: "RR", label: "Roraima" },
+										{ value: "SC", label: "Santa Catarina" },
+										{ value: "SP", label: "São Paulo" },
+										{ value: "SE", label: "Sergipe" },
+										{ value: "TO", label: "Tocantins" },
+									]}
+								/>
 
 								<SmartField
 									fieldName="cidade"
@@ -1289,14 +1299,16 @@ export default function Clients() {
 						<SmartField
 							fieldName="tipo"
 							fieldText="Tipo"
+							inputWidth="w-[220px]"
+							isClearable={false}
 							isSelect
 							value={formData.tipo}
-							onChange={handleChange}
-							inputWidth="w-[220px]"
-						>
-							<option value="juridica">Pessoa Jurídica</option>
-							<option value="fisica">Pessoa Física</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "juridica", label: "Pessoa Jurídica" },
+								{ value: "fisica", label: "Pessoa Física" },
+							]}
+						/>
 					</div>
 
 					<div className="flex mb-6 gap-x-7 justify-between">
@@ -1369,13 +1381,16 @@ export default function Clients() {
 							fieldName="status"
 							fieldText="Status"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.status}
-							onChange={handleChange}
 							inputWidth="w-[150px]"
-						>
-							<option value="1">Ativo</option>
-							<option value="0">Inativo</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "1", label: "Ativo" },
+								{ value: "0", label: "Inativo" },
+							]}
+						/>
 
 						<SmartField
 							fieldName="cep"
@@ -1425,39 +1440,42 @@ export default function Clients() {
 							fieldName="estado"
 							fieldText="Estado"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.estado}
-							onChange={handleChange}
 							autoComplete="address-level1"
 							inputWidth="w-[195px]"
-						>
-							<option value="AC">Acre</option>
-							<option value="AL">Alagoas</option>
-							<option value="AP">Amapá</option>
-							<option value="AM">Amazonas</option>
-							<option value="BA">Bahia</option>
-							<option value="CE">Ceará</option>
-							<option value="DF">Distrito Federal</option>
-							<option value="ES">Espírito Santo</option>
-							<option value="GO">Goiás</option>
-							<option value="MA">Maranhão</option>
-							<option value="MT">Mato Grosso</option>
-							<option value="MS">Mato Grosso do Sul</option>
-							<option value="MG">Minas Gerais</option>
-							<option value="PA">Pará</option>
-							<option value="PB">Paraíba</option>
-							<option value="PR">Paraná</option>
-							<option value="PE">Pernambuco</option>
-							<option value="PI">Piauí</option>
-							<option value="RJ">Rio de Janeiro</option>
-							<option value="RN">Rio Grande do Norte</option>
-							<option value="RS">Rio Grande do Sul</option>
-							<option value="RO">Rondônia</option>
-							<option value="RR">Roraima</option>
-							<option value="SC">Santa Catarina</option>
-							<option value="SP">São Paulo</option>
-							<option value="SE">Sergipe</option>
-							<option value="TO">Tocantins</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "AC", label: "Acre" },
+								{ value: "AL", label: "Alagoas" },
+								{ value: "AP", label: "Amapá" },
+								{ value: "AM", label: "Amazonas" },
+								{ value: "BA", label: "Bahia" },
+								{ value: "CE", label: "Ceará" },
+								{ value: "DF", label: "Distrito Federal" },
+								{ value: "ES", label: "Espírito Santo" },
+								{ value: "GO", label: "Goiás" },
+								{ value: "MA", label: "Maranhão" },
+								{ value: "MT", label: "Mato Grosso" },
+								{ value: "MS", label: "Mato Grosso do Sul" },
+								{ value: "MG", label: "Minas Gerais" },
+								{ value: "PA", label: "Pará" },
+								{ value: "PB", label: "Paraíba" },
+								{ value: "PR", label: "Paraná" },
+								{ value: "PE", label: "Pernambuco" },
+								{ value: "PI", label: "Piauí" },
+								{ value: "RJ", label: "Rio de Janeiro" },
+								{ value: "RN", label: "Rio Grande do Norte" },
+								{ value: "RS", label: "Rio Grande do Sul" },
+								{ value: "RO", label: "Rondônia" },
+								{ value: "RR", label: "Roraima" },
+								{ value: "SC", label: "Santa Catarina" },
+								{ value: "SP", label: "São Paulo" },
+								{ value: "SE", label: "Sergipe" },
+								{ value: "TO", label: "Tocantins" },
+							]}
+						/>
 
 						<SmartField
 							fieldName="cidade"
