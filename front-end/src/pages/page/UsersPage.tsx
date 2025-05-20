@@ -654,7 +654,7 @@ export default function UsersPage() {
 										placeholder="Digite o CPF"
 										value={filters.fcpf}
 										onChange={handleChange}
-										inputWidth="w-[200px]"
+										inputWidth="w-[210px]"
 									/>
 
 									<SmartField
@@ -664,15 +664,16 @@ export default function UsersPage() {
 										isLoading={loading.has("options")}
 										value={filters.fnivel}
 										onChange={handleChange}
-										inputWidth="w-[200px]"
-									>
-										<option value="">Todos</option>
-										{options?.niveis.map((nivel) => (
-											<option key={nivel.nivel_id} value={nivel.nivel_nome}>
-												{nivel.nivel_nome}
-											</option>
-										))}
-									</SmartField>
+										placeholder="Selecione"
+										inputWidth="w-[210px]"
+										onChangeSelect={handleChange}
+										options={
+											options?.niveis.map((nivel) => ({
+												label: nivel.nivel_nome,
+												value: nivel.nivel_nome,
+											}))
+										}
+									/>
 								</div>
 
 								{/* Coluna Telefone e Nivel de Acesso */}
@@ -689,21 +690,22 @@ export default function UsersPage() {
 										autoComplete="tel"
 										value={filters.ftel}
 										onChange={handleChange}
-										inputWidth="w-[200px]"
+										inputWidth="w-[190px]"
 									/>
-
 									<SmartField
 										fieldName="fstatus"
 										fieldText="Status"
 										isSelect
+										isLoading={loading.has("options")}
 										value={filters.fstatus}
-										onChange={handleChange}
-										inputWidth="w-[200px]"
-									>
-										<option value="">Todos</option>
-										<option value="1">Ativo</option>
-										<option value="0">Inativo</option>
-									</SmartField>
+										placeholder="Selecione"
+										inputWidth="w-[190px]"
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "1", label: "Ativo" },
+											{ value: "0", label: "Inativo" },
+										]}
+									/>
 								</div>
 
 								{/* Coluna Data de Cadastro e Botão Pesquisar */}
@@ -1159,7 +1161,6 @@ export default function UsersPage() {
 							isClearable={false}
 							isLoading={loading.has("options")}
 							value={formData.status}
-							onChange={handleChange}
 							placeholder="Selecione o Status"
 							inputWidth="w-[190px]"
 							onChangeSelect={handleChange}
