@@ -18,7 +18,9 @@ type InputPropsBase = {
 	isNumEndereco?: boolean;
 	isLoading?: boolean;
 	error?: string;
+	value?: string;
 	inputWidth?: string;
+	options?: Option[];
 	withInputMask?: boolean;
 	required?: boolean;
 	fieldName: string;
@@ -26,6 +28,12 @@ type InputPropsBase = {
 	fieldText: string;
 	children?: React.ReactNode;
 	generatePassword?: () => void;
+	onChange?: (
+		e: | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+	) => void;
+	onChangeSelect?: (
+		e: { target: { name: string; value: string } }
+	) => void;
 };
 
 type InputProps =
@@ -44,13 +52,15 @@ const SmartField = ({
 	required,
 	fieldName,
 	fieldClassname,
-	children,
 	fieldText,
 	isLoading,
 	error,
 	inputWidth,
 	isPassword,
 	isCreatableSelect,
+	options,
+	value,
+	onChangeSelect,
 	generatePassword,
 	...rest
 }: InputProps) => {
@@ -108,24 +118,30 @@ const SmartField = ({
 			{isSelect ? (
 				<div className="relative">
 					<Select
+						isClearable
 						{...(rest as Props<Option, false, GroupBase<Option>>)}
 						name={regex(fieldName)}
 						id={regex(fieldName)}
-						required={required}
 						classNamePrefix="react-select"
 						className={`react-select-container ${inputWidth}`}
 						isLoading={isLoading}
 						closeMenuOnSelect
 						menuShouldScrollIntoView
 						hideSelectedOptions
+						options={options}
+						value={options?.find((opt) => opt.value === value) || null}
+						onChange={(selectedOption) => {
+							onChangeSelect?.({
+								target: {
+									name: fieldName,
+									value: String(selectedOption?.value || ""),
+								},
+							});
+						}}
 						styles={{
 							control: (base) => ({
 								...base,
-								backgroundColor: "white",
 								borderRadius: "0.5rem",
-								padding: "0.25rem",
-								border: "1px solid #d1d5db",
-								boxShadow: "none",
 								minHeight: "45.6px",
 								"&:hover": {
 									borderColor: "#9ca3af",
@@ -158,6 +174,7 @@ const SmartField = ({
 							type={isHidden ? "text" : "password"}
 							id={regex(fieldName)}
 							name={regex(fieldName)}
+							value={value}
 							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
 						/>
 						{/* Botão de Mostrar/Ocultar Senha */}
@@ -227,6 +244,7 @@ const SmartField = ({
 							id={regex(fieldName)}
 							name={regex(fieldName)}
 							required={required}
+							value={value}
 							className="bg-white border resize-none border-separator rounded-lg p-2.5 outline-0"
 						/>
 					) : withInputMask ? (
@@ -235,6 +253,7 @@ const SmartField = ({
 							name={regex(fieldName)}
 							id={regex(fieldName)}
 							required={required}
+							value={value}
 							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : isPrice ? (
@@ -249,6 +268,7 @@ const SmartField = ({
 							decimalScale={2}
 							fixedDecimalScale
 							allowNegative={false}
+							value={value}
 							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : (
@@ -257,6 +277,7 @@ const SmartField = ({
 							name={regex(fieldName)}
 							id={regex(fieldName)}
 							required={required}
+							value={value}
 							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}

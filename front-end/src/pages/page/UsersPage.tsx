@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import useVerificarNivelAcesso from "../../hooks/useVerificarNivelAcesso";
-import { AccessLevel, JobPosition, User } from "../../utils/types";
+import { AccessLevel, JobPosition, User, CustomEvent } from "../../utils/types";
 import {
 	ConfirmationModal,
 	SmartField,
@@ -63,7 +63,7 @@ export default function UsersPage() {
 		fname: "",
 		fcargo: "",
 		fcpf: "",
-		fnivel: "",
+		fnivel: "", 	
 		ftel: "",
 		fstatus: "",
 		fdataCadastro: "",
@@ -73,7 +73,7 @@ export default function UsersPage() {
 		dname: "",
 		reason: "",
 	});
-
+	console.log(formData)
 	useVerificarNivelAcesso();
 
 	useEffect(() => {
@@ -113,6 +113,7 @@ export default function UsersPage() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
+			| CustomEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -628,15 +629,16 @@ export default function UsersPage() {
 										isLoading={loading.has("options")}
 										value={filters.fcargo}
 										onChange={handleChange}
+										placeholder="Selecione o Cargo"
 										inputWidth="w-[280px]"
-									>
-										<option value="">Todos</option>
-										{options?.cargos.map((cargo) => (
-											<option key={cargo.car_id} value={cargo.car_nome}>
-												{cargo.car_nome}
-											</option>
-										))}
-									</SmartField>
+										onChangeSelect={handleChange}
+										options={
+											options?.cargos.map((cargo) => ({
+												label: cargo.car_nome,
+												value: cargo.car_nome,
+											}))
+										}
+									/>
 								</div>
 
 								{/* Coluna CPF e Cargo */}
@@ -947,19 +949,20 @@ export default function UsersPage() {
 									fieldName="cargo"
 									fieldText="Cargo"
 									isSelect
-									isLoading={loading.has("options")}
 									error={errors.position ? "*" : undefined}
+									isLoading={loading.has("options")}
 									value={formData.cargo}
 									onChange={handleChange}
-									placeholderOption="Selecione o cargo"
+									placeholder="Selecione o Cargo"
 									inputWidth="w-[275px]"
-								>
-									{options?.cargos.map((cargo) => (
-										<option key={cargo.car_id} value={cargo.car_nome}>
-											{cargo.car_nome}
-										</option>
-									))}
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={
+										options?.cargos.map((cargo) => ({
+											label: cargo.car_nome,
+											value: cargo.car_nome,
+										}))
+									}
+								/>
 							</div>
 
 							{/* Linha Nivel de Acesso e Senha*/}
@@ -972,15 +975,17 @@ export default function UsersPage() {
 									error={errors.level ? "*" : undefined}
 									value={formData.nivel}
 									onChange={handleChange}
-									placeholderOption="Selecione o nível de acesso"
+									placeholder="Selecione o nível de acesso"
 									inputWidth="w-[275px]"
-								>
-									{options?.niveis.map((nivel) => (
-										<option key={nivel.nivel_id} value={nivel.nivel_nome}>
-											{nivel.nivel_nome}
-										</option>
-									))}
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={
+										options?.niveis.map((nivel) => ({
+											label: nivel.nivel_nome,
+											value: nivel.nivel_nome,
+										}))
+									}
+								/>
+
 
 								<SmartField
 									isPassword
@@ -1151,46 +1156,60 @@ export default function UsersPage() {
 							fieldName="status"
 							fieldText="Status"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.status}
 							onChange={handleChange}
+							placeholder="Selecione o Status"
 							inputWidth="w-[190px]"
-						>
-							<option value="1">Ativo</option>
-							<option value="0">Inativo</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "1", label: "Ativo" },
+								{ value: "0", label: "Inativo" },
+							]}
+						/>
 					</div>
 
 					{/* Linha Cargo e Nivel de Acesso */}
 					<div className="flex gap-x-15 mb-10 items-center justify-between">
+
 						<SmartField
 							fieldName="cargo"
 							fieldText="Cargo"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.cargo}
 							onChange={handleChange}
+							placeholder="Selecione o Cargo"
 							inputWidth="w-[300px]"
-						>
-							{options?.cargos.map((cargo) => (
-								<option key={cargo.car_id} value={cargo.car_nome}>
-									{cargo.car_nome}
-								</option>
-							))}
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={
+								options?.cargos.map((cargo) => ({
+									label: cargo.car_nome,
+									value: cargo.car_nome,
+								}))
+							}
+						/>
 
 						<SmartField
 							fieldName="nivel"
 							fieldText="Nível de Acesso"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.nivel}
 							onChange={handleChange}
+							placeholder="Selecione o Nível"
 							inputWidth="w-[300px]"
-						>
-							{options?.niveis.map((nivel) => (
-								<option key={nivel.nivel_id} value={nivel.nivel_nome}>
-									{nivel.nivel_nome}
-								</option>
-							))}
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={
+								options?.niveis.map((nivel) => ({
+									label: nivel.nivel_nome,
+									value: nivel.nivel_nome,
+								}))
+							}
+						/>
 					</div>
 				</Modal>
 
