@@ -14,7 +14,7 @@ import {
 	X,
 } from "lucide-react";
 
-import useVerificarNivelAcesso from "../../hooks/useVerificarNivelAcesso";
+import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { AccessLevel, JobPosition, User, CustomEvent } from "../../utils/types";
 import {
 	ConfirmationModal,
@@ -73,7 +73,7 @@ export default function UsersPage() {
 		dname: "",
 		reason: "",
 	});
-	console.log(formData)
+
 	useVerificarNivelAcesso();
 
 	useEffect(() => {
@@ -976,7 +976,6 @@ export default function UsersPage() {
 									isLoading={loading.has("options")}
 									error={errors.level ? "*" : undefined}
 									value={formData.nivel}
-									onChange={handleChange}
 									placeholder="Selecione o nível de acesso"
 									inputWidth="w-[275px]"
 									onChangeSelect={handleChange}
