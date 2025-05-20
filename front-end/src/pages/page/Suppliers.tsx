@@ -1169,7 +1169,7 @@ export default function Suppliers() {
 					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
 							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-xl font-bold">Relatório de Usuários</h2>
+								<h2 className="text-xl font-bold">Relatório de Fornecedores</h2>
 								<button
 									onClick={() => setRelatorioModalOpen(false)}
 									className="text-gray-500 hover:text-gray-700"
@@ -1183,7 +1183,7 @@ export default function Suppliers() {
 									<iframe
 										src={relatorioContent}
 										className="w-full h-full min-h-[70vh] border"
-										title="Relatório de Usuários"
+										title="Relatório de Fornecedores"
 									/>
 								) : (
 									<p>Carregando relatório...</p>
