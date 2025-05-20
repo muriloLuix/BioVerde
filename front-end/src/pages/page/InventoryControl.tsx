@@ -11,7 +11,7 @@ import {
 	Loader2,
 	Eye,
 	FilterX,
-	Printer,
+	Printer, X,
 } from "lucide-react";
 
 import {
@@ -36,6 +36,8 @@ interface ProductOptions {
 export default function InventoryControl() {
 	const [activeTab, setActiveTab] = useState("list");
 	const [openEditModal, setOpenEditModal] = useState(false);
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
@@ -124,6 +126,43 @@ export default function InventoryControl() {
 					Object.keys(prevErrors).map((key) => [key, false])
 				) as typeof prevErrors
 		);
+	};
+
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/control.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+
+			const contentType = response.headers["content-type"];
+
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
 	};
 
 	//Capturar valor no campo de Preço
@@ -770,6 +809,7 @@ export default function InventoryControl() {
 						<button
 							type="button"
 							className="bg-verdeGrama px-5 py-3 rounded-full text-white cursor-pointer flex ml-auto mt-5 gap-2 hover:bg-[#246127]"
+							onClick={gerarRelatorio}
 							disabled={produtos.length === 0}
 						>
 							<Printer />
@@ -1077,6 +1117,51 @@ export default function InventoryControl() {
 					/>
 				</div>
 			</Modal>
+
+			{/* Modal de Relatório */}
+			{relatorioModalOpen && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+						<div className="flex justify-between items-center mb-4">
+							<h2 className="text-xl font-bold">Relatório de Usuários</h2>
+							<button
+								onClick={() => setRelatorioModalOpen(false)}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								<X size={24} />
+							</button>
+						</div>
+
+						<div className="flex-1 overflow-auto mb-4">
+							{relatorioContent ? (
+								<iframe
+									src={relatorioContent}
+									className="w-full h-full min-h-[70vh] border"
+									title="Relatório de Usuários"
+								/>
+							) : (
+								<p>Carregando relatório...</p>
+							)}
+						</div>
+
+						<div className="flex justify-end gap-4">
+							<a
+								href={relatorioContent}
+								download="relatorio_usuarios.pdf"
+								className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+							>
+								Baixar Relatório
+							</a>
+							<button
+								onClick={() => setRelatorioModalOpen(false)}
+								className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+							>
+								Fechar
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			<Modal
 				openModal={openDeleteModal}
