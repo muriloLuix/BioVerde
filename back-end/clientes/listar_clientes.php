@@ -18,6 +18,7 @@ try {
         "c.cliente_cep",
         "c.cliente_endereco",
         "c.cliente_numendereco",
+        "c.cliente_complemento",
         "c.cliente_estado",
         "c.cliente_cidade",
         "CASE WHEN c.estaAtivo = 1 THEN 'ATIVO' ELSE 'INATIVO' END",
