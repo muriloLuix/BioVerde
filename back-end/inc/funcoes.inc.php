@@ -740,7 +740,11 @@ function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $c
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        return ["success" => false, "message" => "O registro " . $valor1 . " e/ou " . $valor2 . " já existe no sistema."];
+        if ($valor2 !== null && $coluna2 !== null) {
+            return ["success" => false, "message" => "O registro " . $valor1 . " e/ou " . $valor2 . " já existe no sistema."];
+        } else {
+            return ["success" => false, "message" => "O registro " . $valor1 . " já existe no sistema."];
+        }
     }
 
     return null;

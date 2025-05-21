@@ -36,6 +36,7 @@ export default function UsersPage() {
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
+	const [openPositionModal, setOpenPositionModal] = useState(false);
 	const [message, setMessage] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
@@ -73,6 +74,8 @@ export default function UsersPage() {
 		dname: "",
 		reason: "",
 	});
+
+	console.log(formData)
 
 	useVerificarNivelAcesso();
 
@@ -198,41 +201,81 @@ export default function UsersPage() {
 		setOpenDeleteModal(true);
 	};
 
+	//Carrega os cargos e níveis de acesso
+	const fetchOptions = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "options"]));
+
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
+				{
+					withCredentials: true,
+					headers: {
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			if (response.data.success) {
+				setOptions({
+					cargos: response.data.cargos,
+					niveis: response.data.niveis,
+				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(response.data.message || "Erro ao carregar opções");
+			}
+		} catch (error) {
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+
+			if (axios.isAxiosError(error)) {
+				console.error(
+					"Erro na requisição (options):",
+					error.response?.data || error.message
+				);
+				if (error.response?.data?.message) {
+					setMessage(error.response.data.message);
+				}
+			} else {
+				console.error("Erro desconhecido (options):", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
 	//Carrega a lista de usuario e as opções nos selects ao renderizar a página
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				setLoading((prev) => new Set([...prev, "users", "options"]));
 
-				const [optionsResponse, usuariosResponse, userLevelResponse] =
-					await Promise.all([
-						axios.get(
-							"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
-							{
-								withCredentials: true,
-								headers: {
-									Accept: "application/json",
-									"Content-Type": "application/json",
-								},
-							}
-						),
-						axios.get(
-							"http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
-							{
-								withCredentials: true,
-								headers: {
-									Accept: "application/json",
-								},
-							}
-						),
-						axios.get(
-							"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-							{
-								withCredentials: true,
-								headers: { "Content-Type": "application/json" },
-							}
-						),
-					]);
+				const [usuariosResponse, userLevelResponse] = await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+							},
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
+					),
+				]);
+				
+				await fetchOptions();
 
 				if (userLevelResponse.data.success) {
 					setUserLevel(userLevelResponse.data.userLevel);
@@ -242,16 +285,6 @@ export default function UsersPage() {
 						userLevelResponse.data.message ||
 							"Erro ao carregar nível do usuário"
 					);
-				}
-
-				if (optionsResponse.data.success) {
-					setOptions({
-						cargos: optionsResponse.data.cargos,
-						niveis: optionsResponse.data.niveis,
-					});
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(optionsResponse.data.message || "Erro ao carregar opções");
 				}
 
 				if (usuariosResponse.data.success) {
@@ -390,6 +423,50 @@ export default function UsersPage() {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("submit");
+				return newLoading;
+			});
+		}
+	};
+
+	//Submit de cadastrar cargos
+	const handleRegisterPosition = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		setLoading((prev) => new Set([...prev, "registerPosition"]));
+		setSuccessMsg(false);
+
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/usuarios/cadastrar_cargo.php",
+				{ cargo: formData.cargo },
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+
+			console.log("Resposta do back-end:", response.data);
+
+			if (response.data.success) {
+				await fetchOptions();
+				setOpenPositionModal(false);
+				setSuccessMsg(true);
+				setMessage("Cargo cadastrado com sucesso!");
+			} else {
+				setMessage(response.data.message || "Erro ao cadastrar Cargo");
+				setSuccessMsg(false);
+			}
+		} catch (error) {
+			let errorMessage = "Erro ao conectar com o servidor";
+			if (axios.isAxiosError(error)) {
+				errorMessage = error.response?.data?.message || error.message;
+			}
+			setMessage(errorMessage);
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("registerPosition");
 				return newLoading;
 			});
 		}
@@ -956,13 +1033,23 @@ export default function UsersPage() {
 									onChange={handleChange}
 									placeholder="Selecione o Cargo"
 									inputWidth="w-[275px]"
-									onChangeSelect={handleChange}
-									options={
-										options?.cargos.map((cargo) => ({
+									onChangeSelect={(e) => {
+										if (e.target.value === "nova_opcao") {
+											setOpenPositionModal(true) 
+										} else {
+											handleChange(e);
+										}
+									}}
+									options={[
+										...(userLevel === "Administrador"
+											? [{ label: "Novo Cargo", value: "nova_opcao" }]
+											: []),
+										...(options?.cargos.map((cargo) => 
+										({
 											label: cargo.car_nome,
 											value: cargo.car_nome,
-										}))
-									}
+										})) || []),
+									]}
 								/>
 							</div>
 
@@ -1077,6 +1164,28 @@ export default function UsersPage() {
 						</div>
 					</div>
 				)}
+				{/* Modal de Cadastro de Cargo */}
+				<Modal
+					openModal={openPositionModal}
+					setOpenModal={setOpenPositionModal}
+					modalTitle="Cadastro de Cargo:"
+					leftButtonText="Salvar"
+					rightButtonText="Cancelar"
+					loading={loading}
+					isLoading={loading.has("registerPosition")}
+					onSubmit={handleRegisterPosition}
+				>
+					<SmartField
+						fieldName="cargo"
+						fieldText="Novo Cargo"
+						type="text"
+						placeholder="Digite o nome do Novo Cargo"
+						value={formData.cargo}
+						onChange={handleChange}
+						required
+						inputWidth="w-[400px] mb-5"
+					/>
+				</Modal>
 
 				{/* Modal de Edição */}
 				<Modal

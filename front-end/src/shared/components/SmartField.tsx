@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 import { Form } from "radix-ui";
-import Select, { GroupBase, Props } from "react-select";
+import Select, { GroupBase, Props, components, OptionProps  } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
-import { EyeOff, Eye } from "lucide-react";
+import { EyeOff, Eye, Plus } from "lucide-react";
 
 import { Option } from "../../utils/types";
 
@@ -63,8 +63,22 @@ const SmartField = ({
 }: InputProps) => {
 	const [isHidden, setIsHidden] = useState(false);
 
-	const regex = (text: string) =>
-		text.trim().toLowerCase().replace(/\s+/g, "-");
+	const regex = (text: string) => text.trim().toLowerCase().replace(/\s+/g, "-");
+
+	const CustomCreateOption = (props: OptionProps<{ label: string; value: string }, false>) => {
+		if (props.data.value === "nova_opcao") {
+			return (
+				<components.Option {...props}>
+					<div className="flex justify-center items-center gap-1 font-semibold text-black">
+						<Plus size={16} />
+						<span>{props.data.label}</span>
+					</div>
+				</components.Option>
+			);
+		}
+
+		return <components.Option {...props} />;
+	};
 
 	return (
 		<Form.Field
@@ -125,6 +139,7 @@ const SmartField = ({
 						closeMenuOnSelect
 						menuShouldScrollIntoView
 						hideSelectedOptions
+						components={{ Option: CustomCreateOption }}
 						options={options}
 						value={options?.find((opt) => opt.value === value) || null}
 						onChange={(selectedOption) => {
@@ -149,17 +164,22 @@ const SmartField = ({
 								borderRadius: "0.5rem",
 								overflow: "hidden",
 							}),
-							option: (base, state) => ({
-								...base,
-								backgroundColor: state.isSelected
-									? "#4CAF50"
-									: state.isFocused
-									? "#A5D6A7"
-									: "white",
-								color: state.isSelected ? "white" : "#374151",
-								padding: "0.5rem",
-								cursor: "pointer",
-							}),
+							option: (base, state) => {
+								const isNewOption = state.data.value === "nova_opcao";
+
+								return {
+									...base,
+									backgroundColor: state.isSelected
+										? "#4CAF50"
+										: state.isFocused
+										? "#A5D6A7"
+										: "white",
+									color: state.isSelected ? "white" : "#374151", // Texto um pouco mais escuro para destacar
+									padding: "0.5rem",
+									cursor: "pointer",
+									borderBottom: isNewOption ? "1px solid #ccc" : undefined, // linha separadora
+								};
+							},
 						}}
 					/>
 				</div>

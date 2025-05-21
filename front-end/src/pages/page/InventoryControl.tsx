@@ -783,12 +783,18 @@ export default function InventoryControl() {
 						</table>
 						<button
 							type="button"
-							className="bg-verdeGrama px-5 py-3 rounded-full text-white cursor-pointer flex ml-auto mt-5 gap-2 hover:bg-[#246127]"
+							className="bg-verdeGrama px-5 py-3 w-[190px] rounded-full text-white cursor-pointer ml-auto mt-5 gap-2 flex place-content-center hover:bg-[#246127]"
 							onClick={gerarRelatorio}
 							disabled={produtos.length === 0}
 						>
-							<Printer />
-							Gerar Relatório
+							{loading.has("reports") ? (
+								<Loader2 className="animate-spin h-6 w-6" />
+							) : (
+								<>
+									<Printer />
+									Gerar Relatório
+								</>
+							)}
 						</button>
 					</div>
 

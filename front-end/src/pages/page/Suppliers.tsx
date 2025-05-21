@@ -670,7 +670,7 @@ export default function Suppliers() {
 										isSelect
 										isLoading={loading.has("options")}
 										value={filters.fstatus}
-										placeholder="Selecione o Status"
+										placeholder="Selecione"
 										inputWidth="w-[250px]"
 										onChangeSelect={handleChange}
 										options={[
@@ -717,7 +717,7 @@ export default function Suppliers() {
 										isSelect
 										isLoading={loading.has("options")}
 										value={filters.festado}
-										placeholder="Selecione o Estado"
+										placeholder="Selecione"
 										autoComplete="address-level1"
 										inputWidth="w-[250px]"
 										onChangeSelect={handleChange}
@@ -889,9 +889,16 @@ export default function Suppliers() {
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
 									onClick={gerarRelatorio}
+									disabled={loading.size > 0}
 								>
-									<Printer />
-									Gerar Relatório
+									{loading.has("reports") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										<>
+											<Printer />
+											Gerar Relatório
+										</>
+									)}
 								</button>
 							</div>
 						)}
@@ -1099,7 +1106,7 @@ export default function Suppliers() {
 									isSelect
 									isLoading={loading.has("options")}
 									value={formData.estado}
-									placeholder="Selecione o Estado"
+									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
 									inputWidth="w-[220px]"

@@ -947,9 +947,16 @@ export default function Orders() {
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
 									onClick={gerarRelatorio}
+									disabled={loading.size > 0}
 								>
-									<Printer />
-									Gerar Relatório
+									{loading.has("reports") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										<>
+											<Printer />
+											Gerar Relatório
+										</>
+									)}
 								</button>
 							</div>
 						)}
