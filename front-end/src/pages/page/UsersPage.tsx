@@ -1226,7 +1226,7 @@ export default function UsersPage() {
 									].map((header) => (
 										<th
 											key={header}
-											className="border border-black px-4 py-4 whitespace-nowrap"
+											className="border border-black p-3 whitespace-nowrap"
 										>
 											{header}
 										</th>
@@ -1236,13 +1236,13 @@ export default function UsersPage() {
 							<tbody>
 								{loading.has("options") ? (
 									<tr>
-										<td colSpan={9} className="text-center py-4">
+										<td colSpan={9} className="text-center py-3">
 											<Loader2 className="animate-spin h-8 w-8 mx-auto" />
 										</td>
 									</tr>
 								) : options?.cargos.length === 0 ? (
 									<tr>
-										<td colSpan={9} className="text-center py-4">
+										<td colSpan={9} className="text-center py-3">
 											Nenhum cargo encontrado
 										</td>
 									</tr>
@@ -1253,7 +1253,7 @@ export default function UsersPage() {
 											key={cargo.car_id}
 											className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
 										>
-											<td className="border border-black p-4 text-center whitespace-nowrap">
+											<td className="border border-black p-3 text-center whitespace-nowrap">
 												{editingId === cargo.car_id ? (
 													<input
 														type="text"
@@ -1269,7 +1269,7 @@ export default function UsersPage() {
 													cargo.car_nome
 												)}
 											</td>
-											<td className="border border-black p-4 text-center whitespace-nowrap">
+											<td className="border border-black p-3 text-center whitespace-nowrap">
 												{editingId === cargo.car_id ? (
 													<>
 													<button
