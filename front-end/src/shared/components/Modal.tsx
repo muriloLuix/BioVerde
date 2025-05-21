@@ -10,6 +10,7 @@ type ModalProps = {
 	modalTitle: string | React.ReactNode;
 	modalSecondTitle?: string | React.ReactNode;
 	obsText?: string;
+	isObsModal?: boolean;
 	withExitButton?: boolean;
 	leftButtonText?: string;
 	rightButtonText?: string;
@@ -34,6 +35,7 @@ const Modal = ({
 	withExitButton,
 	modalWidth,
 	obsText,
+	isObsModal,
 	loading,
 	rightButtonText,
 	leftButtonText,
@@ -63,14 +65,17 @@ const Modal = ({
 					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
 						{withExitButton ? (
 							<>
-								{isOrderModal ? (
-									children
-								) : obsText ? (
-									<p className="text-gray-800 break-words">{obsText}</p>
+
+								{isObsModal ? (
+									obsText ? (
+										<p className="text-gray-800 break-words">{obsText}</p>
+									) : (
+										<p className="text-gray-800 break-words">
+											Não há nenhuma observação.
+										</p>
+									)
 								) : (
-									<p className="text-gray-800 break-words">
-										Não há nenhuma observação.
-									</p>
+									children
 								)}
 
 								<div

@@ -1164,20 +1164,78 @@ export default function UsersPage() {
 					modalTitle="Gerenciamento de Cargos:"
 					leftButtonText="Salvar"
 					rightButtonText="Cancelar"
+					withExitButton
 					loading={loading}
 					isLoading={loading.has("registerPosition")}
 					// onSubmit={handleRegisterPosition}
 				>
-					<SmartField
-						fieldName="cargo"
-						fieldText="Novo Cargo"
-						type="text"
-						placeholder="Digite o nome do Novo Cargo"
-						value={formData.cargo}
-						onChange={handleChange}
-						required
-						inputWidth="w-[400px] mb-5"
-					/>
+					<div className="min-w-[30vw] max-w-[50vw] overflow-auto max-h-[60vh] mb-5 mt-2">
+						<table className="w-full border-collapse">
+							{/* Tabela Cabeçalho */}
+							<thead>
+								<tr className="bg-verdePigmento text-white shadow-thead">
+									{[
+										"Cargo",
+										"Ações",
+									].map((header) => (
+										<th
+											key={header}
+											className="border border-black px-4 py-4 whitespace-nowrap"
+										>
+											{header}
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								{loading.has("options") ? (
+									<tr>
+										<td colSpan={9} className="text-center py-4">
+											<Loader2 className="animate-spin h-8 w-8 mx-auto" />
+										</td>
+									</tr>
+								) : options?.cargos.length === 0 ? (
+									<tr>
+										<td colSpan={9} className="text-center py-4">
+											Nenhum cargo encontrado
+										</td>
+									</tr>
+								) : (
+									//Tabela Dados
+									options?.cargos.map((cargo, index) => (
+										<tr
+											key={cargo.car_id}
+											className={
+												index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
+											}
+										>
+											<td className="border border-black p-4 text-center whitespace-nowrap">
+												{cargo.car_nome}
+											</td>
+											<td className="border border-black p-4 text-center whitespace-nowrap">
+												<button
+													className="text-black cursor-pointer"
+													onClick={() => handleEditPositionClick(cargo)}
+													title="Editar cargo"
+												>
+													<PencilLine />
+												</button>
+												{userLevel === "Administrador" && (
+													<button
+														className="text-red-500 cursor-pointer ml-3"
+														onClick={() => handleDeletePositionClick(cargo)}
+														title="Excluir cargo"
+													>
+														<Trash />
+													</button>
+												)}
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
 				</Modal>
 
 				{/* Modal de Edição */}
