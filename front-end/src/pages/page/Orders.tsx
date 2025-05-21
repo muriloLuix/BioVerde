@@ -969,14 +969,14 @@ export default function Orders() {
 							setOpenModal={setOpenOrderModal}
 							modalWidth="min-w-[700px]"
 							modalTitle={
-								<>
+								<span>
 									Nº do Pedido: <span className="font-normal">{numOrder}</span>
-								</>
+								</span>
 							}
 							modalSecondTitle={
-								<>
+								<span>
 									Cliente: <span className="font-normal">{clientOrder}</span>
-								</>
+								</span>
 							}
 							totalPedido={totalOrder}
 						>
