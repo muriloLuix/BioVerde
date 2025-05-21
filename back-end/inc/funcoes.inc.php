@@ -341,6 +341,21 @@ function buscarStatus($conn)
     return $status_produto;
 }
 
+function buscarProdutos($conn)
+{
+    $result = $conn->query("SELECT produto_id, produto_nome FROM produtos");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $produtos = [];
+    while ($row = $result->fetch_assoc()) {
+        $produtos[] = $row;
+    }
+
+    return $produtos;
+}
+
 /**
  * Busca todos os níveis de acesso registrados no banco de dados.
  *
