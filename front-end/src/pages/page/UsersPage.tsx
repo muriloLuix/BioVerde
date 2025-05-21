@@ -428,17 +428,14 @@ export default function UsersPage() {
 		}
 	};
 
-	//Submit de cadastrar cargos
-	const handleRegisterPosition = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "registerPosition"]));
+	const createPosition = async (cargoNome: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
 		setSuccessMsg(false);
 
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/usuarios/cadastrar_cargo.php",
-				{ cargo: formData.cargo },
+				{ cargo: cargoNome },
 				{
 					headers: { "Content-Type": "application/json" },
 					withCredentials: true,
@@ -449,7 +446,6 @@ export default function UsersPage() {
 
 			if (response.data.success) {
 				await fetchOptions();
-				setOpenPositionModal(false);
 				setSuccessMsg(true);
 				setMessage("Cargo cadastrado com sucesso!");
 			} else {
@@ -466,11 +462,12 @@ export default function UsersPage() {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
-				newLoading.delete("registerPosition");
+				newLoading.delete("options");
 				return newLoading;
 			});
 		}
 	};
+
 
 	//submit de Filtrar usuários
 	const handleFilterSubmit = async (e: React.FormEvent) => {
@@ -1027,30 +1024,25 @@ export default function UsersPage() {
 									fieldName="cargo"
 									fieldText="Cargo"
 									isSelect
+									isCreatableSelect
 									error={errors.position ? "*" : undefined}
 									isLoading={loading.has("options")}
 									value={formData.cargo}
 									onChange={handleChange}
 									placeholder="Selecione o Cargo"
+									creatableConfigName="Gerenciar Cargos"
 									inputWidth="w-[275px]"
-									onChangeSelect={(e) => {
-										if (e.target.value === "nova_opcao") {
-											setOpenPositionModal(true) 
-										} else {
-											handleChange(e);
-										}
-									}}
-									options={[
-										...(userLevel === "Administrador"
-											? [{ label: "Novo Cargo", value: "nova_opcao" }]
-											: []),
-										...(options?.cargos.map((cargo) => 
-										({
+									openManagementModal={() => setOpenPositionModal(true)}
+									onCreateNewOption={createPosition}
+									onChangeSelect={handleChange}
+									options={
+										options?.cargos.map((cargo) => ({
 											label: cargo.car_nome,
 											value: cargo.car_nome,
-										})) || []),
-									]}
+										}))
+									}
 								/>
+
 							</div>
 
 							{/* Linha Nivel de Acesso e Senha*/}
@@ -1164,16 +1156,17 @@ export default function UsersPage() {
 						</div>
 					</div>
 				)}
+
 				{/* Modal de Cadastro de Cargo */}
 				<Modal
 					openModal={openPositionModal}
 					setOpenModal={setOpenPositionModal}
-					modalTitle="Cadastro de Cargo:"
+					modalTitle="Gerenciamento de Cargos:"
 					leftButtonText="Salvar"
 					rightButtonText="Cancelar"
 					loading={loading}
 					isLoading={loading.has("registerPosition")}
-					onSubmit={handleRegisterPosition}
+					// onSubmit={handleRegisterPosition}
 				>
 					<SmartField
 						fieldName="cargo"
