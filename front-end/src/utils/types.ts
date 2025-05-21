@@ -36,7 +36,7 @@ export interface Supplier {
 	fornecedor_tipo: string;
 	fornecedor_cpf_ou_cnpj: string;
 	fornecedor_endereco: string;
-	fornecedor_num_endereco: string;
+	fornecedor_num_endereco: number;
 	fornecedor_cidade: string;
 	fornecedor_estado: string;
 	fornecedor_cep: string;
@@ -97,10 +97,8 @@ export interface Option {
 }
 
 export interface SelectEvent {
-  target: {
-    name: string;
-    value: string;
-  };
-};
-
-
+	target: {
+		name: string;
+		value: string;
+	};
+}

@@ -11,7 +11,8 @@ import {
 	Loader2,
 	Eye,
 	FilterX,
-	Printer, X,
+	Printer,
+	X,
 } from "lucide-react";
 
 import {
@@ -43,6 +44,7 @@ export default function Clients() {
 	const [clientes, setClientes] = useState<Client[]>([]);
 	const [errors, setErrors] = useState({
 		states: false,
+		addressNumber: false,
 	});
 	const [formData, setFormData] = useState({
 		cliente_id: 0,
@@ -55,7 +57,7 @@ export default function Clients() {
 		status: "1",
 		cep: "",
 		endereco: "",
-		num_endereco: "",
+		num_endereco: 0,
 		estado: "",
 		cidade: "",
 		obs: "",
@@ -220,7 +222,7 @@ export default function Clients() {
 			endereco: cliente.cliente_endereco,
 			estado: cliente.cliente_estado,
 			cidade: cliente.cliente_cidade,
-			num_endereco: cliente.cliente_numendereco,
+			num_endereco: Number(cliente.cliente_numendereco),
 			obs: cliente.cliente_observacoes,
 			tipo: cliente.cliente_tipo,
 		});
@@ -351,6 +353,7 @@ export default function Clients() {
 		// Validações
 		const errors = {
 			states: !formData.estado,
+			addressNumber: formData.num_endereco < 1,
 		};
 		setErrors(errors);
 
@@ -922,7 +925,6 @@ export default function Clients() {
 							<h2 className="text-3xl mb-8">Cadastro de clientes:</h2>
 
 							<div className="flex mb-8 gap-x-7 justify-between">
-
 								<SmartField
 									fieldName="tipo"
 									fieldText="Tipo"
@@ -1098,7 +1100,7 @@ export default function Clients() {
 									fieldName="num_endereco"
 									fieldText="Número"
 									required
-									type="text"
+									type="number"
 									placeholder="Número"
 									value={formData.num_endereco}
 									onChange={handleChange}
@@ -1434,7 +1436,7 @@ export default function Clients() {
 							fieldName="num_endereco"
 							fieldText="Número"
 							required
-							type="text"
+							type="number"
 							placeholder="Número"
 							value={formData.num_endereco}
 							onChange={handleChange}

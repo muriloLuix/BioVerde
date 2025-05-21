@@ -1,7 +1,12 @@
 import { useState } from "react";
 
 import { Form } from "radix-ui";
-import Select, { GroupBase, Props, components, OptionProps  } from "react-select";
+import Select, {
+	GroupBase,
+	Props,
+	components,
+	OptionProps,
+} from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
@@ -28,9 +33,7 @@ type InputPropsBase = {
 	fieldText: string;
 	children?: React.ReactNode;
 	generatePassword?: () => void;
-	onChangeSelect?: (
-		e: { target: { name: string; value: string } }
-	) => void;
+	onChangeSelect?: (e: { target: { name: string; value: string } }) => void;
 };
 
 type InputProps =
@@ -63,9 +66,12 @@ const SmartField = ({
 }: InputProps) => {
 	const [isHidden, setIsHidden] = useState(false);
 
-	const regex = (text: string) => text.trim().toLowerCase().replace(/\s+/g, "-");
+	const regex = (text: string) =>
+		text.trim().toLowerCase().replace(/\s+/g, "-");
 
-	const CustomCreateOption = (props: OptionProps<{ label: string; value: string }, false>) => {
+	const CustomCreateOption = (
+		props: OptionProps<{ label: string; value: string }, false>
+	) => {
 		if (props.data.value === "nova_opcao") {
 			return (
 				<components.Option {...props}>
@@ -286,7 +292,7 @@ const SmartField = ({
 							fixedDecimalScale
 							allowNegative={false}
 							value={value}
-							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
+							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					) : (
 						<input

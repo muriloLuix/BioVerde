@@ -10,7 +10,8 @@ import {
 	Trash,
 	Loader2,
 	FilterX,
-	Printer, X,
+	Printer,
+	X,
 } from "lucide-react";
 // import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
@@ -39,6 +40,7 @@ export default function Suppliers() {
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
 	const [errors, setErrors] = useState({
+		number: false,
 		states: false,
 	});
 	const [formData, setFormData] = useState({
@@ -54,7 +56,7 @@ export default function Suppliers() {
 		endereco: "",
 		estado: "",
 		cidade: "",
-		num_endereco: "",
+		num_endereco: 0,
 		status: "1",
 	});
 	const [filters, setFilters] = useState({
@@ -72,7 +74,7 @@ export default function Suppliers() {
 		dnome_empresa: "",
 		reason: "",
 	});
-	
+
 	// useVerificarNivelAcesso();
 
 	const navigate = useNavigate();
@@ -105,8 +107,6 @@ export default function Suppliers() {
 
 		checkAuth();
 	}, [navigate]);
-
-	console.log(formData);
 
 	//OnChange dos campos
 	const handleChange = (
@@ -223,8 +223,6 @@ export default function Suppliers() {
 		setSupplierType(fornecedor.fornecedor_tipo);
 		setOpenEditModal(true);
 	};
-
-	console.log(formData);
 
 	//função para puxar o nome do fornecedor que será excluido
 	const handleDeleteClick = (fornecedor: Supplier) => {
@@ -348,8 +346,10 @@ export default function Suppliers() {
 
 		// Validações
 		const errors = {
+			number: formData.num_endereco < 1,
 			states: !formData.estado,
 		};
+
 		setErrors(errors);
 
 		// Se algum erro for true, interrompe a execução
@@ -454,7 +454,20 @@ export default function Suppliers() {
 	// submit para atualizar o fornecedor após a edição dele
 	const handleUpdateSupplier = async (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("Dados sendo enviados:", formData); // <-- Adicione esta linha
+
+		console.log("Dados sendo enviados:", formData);
+
+		// Validações
+		const errors = {
+			number: formData.num_endereco < 1,
+			states: !formData.estado,
+		};
+
+		setErrors(errors);
+
+		if (Object.values(errors).some((error) => error)) {
+			return;
+		}
 
 		setLoading((prev) => new Set([...prev, "updateSupplier"]));
 		setSuccessMsg(false);
@@ -750,7 +763,7 @@ export default function Suppliers() {
 											{ value: "SE", label: "Sergipe" },
 											{ value: "TO", label: "Tocantins" },
 										]}
-									/>									
+									/>
 
 									<Form.Submit asChild>
 										<div className="flex gap-4 mt-8">
@@ -1091,7 +1104,7 @@ export default function Suppliers() {
 										fieldName="num_endereco"
 										fieldText="Número"
 										required
-										type="text"
+										type="number"
 										placeholder="Número"
 										value={formData.num_endereco}
 										onChange={handleChange}
@@ -1140,7 +1153,7 @@ export default function Suppliers() {
 										{ value: "SE", label: "Sergipe" },
 										{ value: "TO", label: "Tocantins" },
 									]}
-								/>	
+								/>
 
 								<SmartField
 									fieldName="cidade"
@@ -1435,7 +1448,7 @@ export default function Suppliers() {
 							fieldName="num_endereco"
 							fieldText="Número"
 							required
-							type="text"
+							type="number"
 							placeholder="Número"
 							value={formData.num_endereco}
 							onChange={handleChange}
@@ -1482,7 +1495,7 @@ export default function Suppliers() {
 								{ value: "SE", label: "Sergipe" },
 								{ value: "TO", label: "Tocantins" },
 							]}
-						/>	
+						/>
 
 						<SmartField
 							fieldName="cidade"

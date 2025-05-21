@@ -31,11 +31,25 @@ require '../../vendor/autoload.php';
  * @return array|null Retorna um array com chave 'success' e 'message' caso haja um erro,
  *         ou null caso todos os campos sejam válidos.
  */
-function validarCampos($data, $requiredFields)
-{
+function validarCampos($data, $requiredFields) {
     foreach ($requiredFields as $field) {
-        if (!isset($data[$field]) || empty($data[$field])) {
-            return ["success" => false, "message" => "O campo " . $field . " é obrigatório."];
+        if (isset($data[$field])) {
+
+            $camposNumericos = ["preco"];
+
+            if (trim($data[$field]) === ''){
+                return [
+                    "success" => false,
+                    "message" => "O campo '$field' é obrigatório."
+                ];
+            }
+
+            /*if (in_array($campo, $camposNumericos) && !is_numeric($data[$campo])) {
+                return [
+                    "success" => false,
+                    "message" => "O valor do campo '$campo' é inválido."
+                ];
+            } */           
         }
     }
     return null;

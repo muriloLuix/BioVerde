@@ -10,7 +10,8 @@ import {
 	Loader2,
 	Eye,
 	FilterX,
-	Printer, X,
+	Printer,
+	X,
 } from "lucide-react";
 
 import {
@@ -53,6 +54,7 @@ export default function InventoryControl() {
 		status: false,
 		price: false,
 		supplier: false,
+		batch: false,
 	});
 	const [formData, setFormData] = useState({
 		produto_id: 0,
@@ -80,7 +82,7 @@ export default function InventoryControl() {
 	useEffect(() => {
 		fetchData();
 	}, []);
-	
+
 	//OnChange dos campos
 	const handleChange = (
 		event:
@@ -152,7 +154,9 @@ export default function InventoryControl() {
 
 	//Capturar valor no campo de Preço
 	const handlePriceChange = ({ value }: { value: string }) => {
-		setFormData({ ...formData, preco: parseFloat(value) });
+		const formattedValue = parseFloat(value);
+
+		setFormData({ ...formData, preco: formattedValue });
 		setErrors((errors) => ({ ...errors, price: false }));
 	};
 
@@ -193,33 +197,33 @@ export default function InventoryControl() {
 
 	const fetchData = async () => {
 		try {
-		
 			setLoading((prev) => new Set([...prev, "products", "options"]));
 
-			const [productsAndOptions, userLevelResponse, suppliersResponse] = await Promise.all([
-				axios.get(
-					"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-						},
-					}
-				),
-				axios.get(
-					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-					{
-						withCredentials: true,
-						headers: { "Content-Type": "application/json" },
-					}
-				),
-				axios.get(
-					"http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php", 
-					{
-						params: { q: "" }, 
-					}
-				),
-			]);
+			const [productsAndOptions, userLevelResponse, suppliersResponse] =
+				await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+							},
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php",
+						{
+							params: { q: "" },
+						}
+					),
+				]);
 
 			console.log("Resposta do back-end:", productsAndOptions.data);
 
@@ -323,8 +327,9 @@ export default function InventoryControl() {
 		const errors = {
 			status: !formData.status,
 			type: !formData.tipo,
-			price: !formData.preco,
+			price: formData.preco < 0.0,
 			supplier: !formData.fornecedor,
+			batch: formData.lote < 1,
 		};
 		setErrors(errors);
 
@@ -439,6 +444,7 @@ export default function InventoryControl() {
 			status: false,
 			price: !formData.preco,
 			supplier: !formData.fornecedor,
+			batch: formData.lote < 1,
 		};
 		setErrors(errors);
 
@@ -640,12 +646,10 @@ export default function InventoryControl() {
 								value={filters.ftipo}
 								inputWidth="w-[200px]"
 								onChangeSelect={handleChange}
-								options={
-									options?.tipos.map((tipo) => ({
-										label: tipo.tproduto_nome,
-										value: String(tipo.tproduto_id),
-									}))
-								}
+								options={options?.tipos.map((tipo) => ({
+									label: tipo.tproduto_nome,
+									value: String(tipo.tproduto_id),
+								}))}
 							/>
 
 							<SmartField
@@ -657,12 +661,10 @@ export default function InventoryControl() {
 								placeholder="Selecione"
 								inputWidth="w-[180px]"
 								onChangeSelect={handleChange}
-								options={
-									options?.status.map((status) => ({
-										label: status.staproduto_nome,
-										value: String(status.staproduto_id),
-									}))
-								}
+								options={options?.status.map((status) => ({
+									label: status.staproduto_nome,
+									value: String(status.staproduto_id),
+								}))}
 							/>
 						</div>
 						<Form.Submit asChild>
@@ -839,17 +841,14 @@ export default function InventoryControl() {
 								value={formData.fornecedor}
 								placeholder="Selecione o fornecedor"
 								onChangeSelect={handleChange}
-								options={
-									fornecedores?.map((fornecedor) => ({
-										label: fornecedor.fornecedor_nome_ou_empresa,
-										value: fornecedor.fornecedor_nome_ou_empresa,
-									}))
-								}
+								options={fornecedores?.map((fornecedor) => ({
+									label: fornecedor.fornecedor_nome_ou_empresa,
+									value: fornecedor.fornecedor_nome_ou_empresa,
+								}))}
 							/>
 						</div>
 
 						<div className="flex gap-x-15 mb-8 items-center">
-
 							<SmartField
 								fieldName="tipo"
 								fieldText="Tipo"
@@ -860,12 +859,10 @@ export default function InventoryControl() {
 								value={formData.tipo}
 								placeholder="Selecione"
 								onChangeSelect={handleChange}
-								options={
-									options?.tipos.map((tipo) => ({
-										label: tipo.tproduto_nome,
-										value: String(tipo.tproduto_id),
-									}))
-								}
+								options={options?.tipos.map((tipo) => ({
+									label: tipo.tproduto_nome,
+									value: tipo.tproduto_nome,
+								}))}
 							/>
 
 							<SmartField
@@ -908,12 +905,10 @@ export default function InventoryControl() {
 								value={formData.status}
 								placeholder="Selecione"
 								onChangeSelect={handleChange}
-								options={
-									options?.status.map((status) => ({
-										label: status.staproduto_nome,
-										value: String(status.staproduto_id),
-									}))
-								}
+								options={options?.status.map((status) => ({
+									label: status.staproduto_nome,
+									value: status.staproduto_nome,
+								}))}
 							/>
 
 							<SmartField
@@ -1007,17 +1002,14 @@ export default function InventoryControl() {
 						value={formData.fornecedor}
 						placeholder="Selecione o fornecedor"
 						onChangeSelect={handleChange}
-						options={
-							fornecedores?.map((fornecedor) => ({
-								label: fornecedor.fornecedor_nome_ou_empresa,
-								value: fornecedor.fornecedor_nome_ou_empresa,
-							}))
-						}
+						options={fornecedores?.map((fornecedor) => ({
+							label: fornecedor.fornecedor_nome_ou_empresa,
+							value: fornecedor.fornecedor_nome_ou_empresa,
+						}))}
 					/>
 				</div>
 
 				<div className="flex gap-x-15 mb-6 items-center">
-
 					<SmartField
 						fieldName="tipo"
 						fieldText="Tipo"
@@ -1028,12 +1020,10 @@ export default function InventoryControl() {
 						value={formData.tipo}
 						placeholder="Selecione"
 						onChangeSelect={handleChange}
-						options={
-							options?.tipos?.map((tipo) => ({
-								label: tipo.tproduto_nome,
-								value: String(tipo.tproduto_id),
-							}))
-						}
+						options={options?.tipos?.map((tipo) => ({
+							label: tipo.tproduto_nome,
+							value: String(tipo.tproduto_id),
+						}))}
 					/>
 
 					<SmartField
@@ -1057,12 +1047,10 @@ export default function InventoryControl() {
 						value={formData.status}
 						placeholder="Selecione"
 						onChangeSelect={handleChange}
-						options={
-							options?.status?.map((status) => ({
-								label: status.staproduto_nome,
-								value: String(status.staproduto_id),
-							}))
-						}
+						options={options?.status?.map((status) => ({
+							label: status.staproduto_nome,
+							value: String(status.staproduto_id),
+						}))}
 					/>
 
 					<SmartField
