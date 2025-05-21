@@ -92,6 +92,15 @@ export interface OrderStatus {
 }
 
 export interface Option {
-	value: string | number;
+	value: string;
 	label: string;
 }
+
+export interface SelectEvent {
+  target: {
+    name: string;
+    value: string;
+  };
+};
+
+

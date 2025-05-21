@@ -10,12 +10,12 @@ import {
 	Trash,
 	Loader2,
 	FilterX,
-	Printer,
+	Printer, X,
 } from "lucide-react";
-
+// import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier } from "../../utils/types";
+import { Supplier, SelectEvent } from "../../utils/types";
 import {
 	SmartField,
 	ConfirmationModal,
@@ -25,6 +25,8 @@ import {
 
 export default function Suppliers() {
 	const [activeTab, setActiveTab] = useState("list");
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
 	const [cpfCnpjMask, setCpfCnpjMask] = useState("");
 	const [supplierType, setSupplierType] = useState("juridica");
 	const [openEditModal, setOpenEditModal] = useState(false);
@@ -70,6 +72,8 @@ export default function Suppliers() {
 		dnome_empresa: "",
 		reason: "",
 	});
+	
+	// useVerificarNivelAcesso();
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -111,6 +115,7 @@ export default function Suppliers() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -158,6 +163,43 @@ export default function Suppliers() {
 					Object.keys(prevErrors).map((key) => [key, false])
 				) as typeof prevErrors
 		);
+	};
+
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/for.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+
+			const contentType = response.headers["content-type"];
+
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
 	};
 
 	//função para puxar os dados do fornecedor que será editado
@@ -626,14 +668,16 @@ export default function Suppliers() {
 										fieldName="fstatus"
 										fieldText="Status"
 										isSelect
+										isLoading={loading.has("options")}
 										value={filters.fstatus}
-										onChange={handleChange}
+										placeholder="Selecione"
 										inputWidth="w-[250px]"
-									>
-										<option value="">Todos</option>
-										<option value="1">Ativo</option>
-										<option value="0">Inativo</option>
-									</SmartField>
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "1", label: "Ativo" },
+											{ value: "0", label: "Inativo" },
+										]}
+									/>
 
 									{/* Input do tipo date não funciona com o SmartField (verificar depois solução) */}
 									<Form.Field name="fdataCadastro" className="flex flex-col">
@@ -671,40 +715,42 @@ export default function Suppliers() {
 										fieldName="festado"
 										fieldText="Estado"
 										isSelect
+										isLoading={loading.has("options")}
 										value={filters.festado}
-										onChange={handleChange}
+										placeholder="Selecione"
 										autoComplete="address-level1"
 										inputWidth="w-[250px]"
-									>
-										<option value="">Todos</option>
-										<option value="AC">Acre</option>
-										<option value="AL">Alagoas</option>
-										<option value="AP">Amapá</option>
-										<option value="AM">Amazonas</option>
-										<option value="BA">Bahia</option>
-										<option value="CE">Ceará</option>
-										<option value="DF">Distrito Federal</option>
-										<option value="ES">Espírito Santo</option>
-										<option value="GO">Goiás</option>
-										<option value="MA">Maranhão</option>
-										<option value="MT">Mato Grosso</option>
-										<option value="MS">Mato Grosso do Sul</option>
-										<option value="MG">Minas Gerais</option>
-										<option value="PA">Pará</option>
-										<option value="PB">Paraíba</option>
-										<option value="PR">Paraná</option>
-										<option value="PE">Pernambuco</option>
-										<option value="PI">Piauí</option>
-										<option value="RJ">Rio de Janeiro</option>
-										<option value="RN">Rio Grande do Norte</option>
-										<option value="RS">Rio Grande do Sul</option>
-										<option value="RO">Rondônia</option>
-										<option value="RR">Roraima</option>
-										<option value="SC">Santa Catarina</option>
-										<option value="SP">São Paulo</option>
-										<option value="SE">Sergipe</option>
-										<option value="TO">Tocantins</option>
-									</SmartField>
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "AC", label: "Acre" },
+											{ value: "AL", label: "Alagoas" },
+											{ value: "AP", label: "Amapá" },
+											{ value: "AM", label: "Amazonas" },
+											{ value: "BA", label: "Bahia" },
+											{ value: "CE", label: "Ceará" },
+											{ value: "DF", label: "Distrito Federal" },
+											{ value: "ES", label: "Espírito Santo" },
+											{ value: "GO", label: "Goiás" },
+											{ value: "MA", label: "Maranhão" },
+											{ value: "MT", label: "Mato Grosso" },
+											{ value: "MS", label: "Mato Grosso do Sul" },
+											{ value: "MG", label: "Minas Gerais" },
+											{ value: "PA", label: "Pará" },
+											{ value: "PB", label: "Paraíba" },
+											{ value: "PR", label: "Paraná" },
+											{ value: "PE", label: "Pernambuco" },
+											{ value: "PI", label: "Piauí" },
+											{ value: "RJ", label: "Rio de Janeiro" },
+											{ value: "RN", label: "Rio Grande do Norte" },
+											{ value: "RS", label: "Rio Grande do Sul" },
+											{ value: "RO", label: "Rondônia" },
+											{ value: "RR", label: "Roraima" },
+											{ value: "SC", label: "Santa Catarina" },
+											{ value: "SP", label: "São Paulo" },
+											{ value: "SE", label: "Sergipe" },
+											{ value: "TO", label: "Tocantins" },
+										]}
+									/>									
 
 									<Form.Submit asChild>
 										<div className="flex gap-4 mt-8">
@@ -842,9 +888,17 @@ export default function Suppliers() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+									onClick={gerarRelatorio}
+									disabled={loading.size > 0}
 								>
-									<Printer />
-									Gerar Relatório
+									{loading.has("reports") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										<>
+											<Printer />
+											Gerar Relatório
+										</>
+									)}
 								</button>
 							</div>
 						)}
@@ -877,14 +931,16 @@ export default function Suppliers() {
 								<SmartField
 									fieldName="tipo"
 									fieldText="Tipo"
+									isClearable={false}
 									isSelect
 									value={formData.tipo}
-									onChange={handleChange}
 									inputWidth="w-[220px]"
-								>
-									<option value="juridica">Pessoa Jurídica</option>
-									<option value="fisica">Pessoa Física</option>
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={[
+										{ value: "juridica", label: "Pessoa Jurídica" },
+										{ value: "fisica", label: "Pessoa Física" },
+									]}
+								/>
 
 								{supplierType === "juridica" && (
 									<SmartField
@@ -1048,41 +1104,43 @@ export default function Suppliers() {
 									fieldName="estado"
 									fieldText="Estado"
 									isSelect
+									isLoading={loading.has("options")}
 									value={formData.estado}
-									onChange={handleChange}
+									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
-									placeholderOption="Selecione o Estado"
 									inputWidth="w-[220px]"
-								>
-									<option value="AC">Acre</option>
-									<option value="AL">Alagoas</option>
-									<option value="AP">Amapá</option>
-									<option value="AM">Amazonas</option>
-									<option value="BA">Bahia</option>
-									<option value="CE">Ceará</option>
-									<option value="DF">Distrito Federal</option>
-									<option value="ES">Espírito Santo</option>
-									<option value="GO">Goiás</option>
-									<option value="MA">Maranhão</option>
-									<option value="MT">Mato Grosso</option>
-									<option value="MS">Mato Grosso do Sul</option>
-									<option value="MG">Minas Gerais</option>
-									<option value="PA">Pará</option>
-									<option value="PB">Paraíba</option>
-									<option value="PR">Paraná</option>
-									<option value="PE">Pernambuco</option>
-									<option value="PI">Piauí</option>
-									<option value="RJ">Rio de Janeiro</option>
-									<option value="RN">Rio Grande do Norte</option>
-									<option value="RS">Rio Grande do Sul</option>
-									<option value="RO">Rondônia</option>
-									<option value="RR">Roraima</option>
-									<option value="SC">Santa Catarina</option>
-									<option value="SP">São Paulo</option>
-									<option value="SE">Sergipe</option>
-									<option value="TO">Tocantins</option>
-								</SmartField>
+									onChangeSelect={handleChange}
+									options={[
+										{ value: "AC", label: "Acre" },
+										{ value: "AL", label: "Alagoas" },
+										{ value: "AP", label: "Amapá" },
+										{ value: "AM", label: "Amazonas" },
+										{ value: "BA", label: "Bahia" },
+										{ value: "CE", label: "Ceará" },
+										{ value: "DF", label: "Distrito Federal" },
+										{ value: "ES", label: "Espírito Santo" },
+										{ value: "GO", label: "Goiás" },
+										{ value: "MA", label: "Maranhão" },
+										{ value: "MT", label: "Mato Grosso" },
+										{ value: "MS", label: "Mato Grosso do Sul" },
+										{ value: "MG", label: "Minas Gerais" },
+										{ value: "PA", label: "Pará" },
+										{ value: "PB", label: "Paraíba" },
+										{ value: "PR", label: "Paraná" },
+										{ value: "PE", label: "Pernambuco" },
+										{ value: "PI", label: "Piauí" },
+										{ value: "RJ", label: "Rio de Janeiro" },
+										{ value: "RN", label: "Rio Grande do Norte" },
+										{ value: "RS", label: "Rio Grande do Sul" },
+										{ value: "RO", label: "Rondônia" },
+										{ value: "RR", label: "Roraima" },
+										{ value: "SC", label: "Santa Catarina" },
+										{ value: "SP", label: "São Paulo" },
+										{ value: "SE", label: "Sergipe" },
+										{ value: "TO", label: "Tocantins" },
+									]}
+								/>	
 
 								<SmartField
 									fieldName="cidade"
@@ -1123,6 +1181,51 @@ export default function Suppliers() {
 					successMsg={successMsg}
 					message={message}
 				/>
+
+				{/* Modal de Relatório */}
+				{relatorioModalOpen && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+							<div className="flex justify-between items-center mb-4">
+								<h2 className="text-xl font-bold">Relatório de Fornecedores</h2>
+								<button
+									onClick={() => setRelatorioModalOpen(false)}
+									className="text-gray-500 hover:text-gray-700"
+								>
+									<X size={24} />
+								</button>
+							</div>
+
+							<div className="flex-1 overflow-auto mb-4">
+								{relatorioContent ? (
+									<iframe
+										src={relatorioContent}
+										className="w-full h-full min-h-[70vh] border"
+										title="Relatório de Fornecedores"
+									/>
+								) : (
+									<p>Carregando relatório...</p>
+								)}
+							</div>
+
+							<div className="flex justify-end gap-4">
+								<a
+									href={relatorioContent}
+									download="relatorio_usuarios.pdf"
+									className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+								>
+									Baixar Relatório
+								</a>
+								<button
+									onClick={() => setRelatorioModalOpen(false)}
+									className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+								>
+									Fechar
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 
 				{/* Modal de Edição */}
 				<Modal
@@ -1202,13 +1305,15 @@ export default function Suppliers() {
 							fieldName="tipo"
 							fieldText="Tipo"
 							fieldClassname="flex flex-col w-full"
+							isClearable={false}
 							isSelect
 							value={formData.tipo}
-							onChange={handleChange}
-						>
-							<option value="juridica">Pessoa Jurídica</option>
-							<option value="fisica">Pessoa Física</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "juridica", label: "Pessoa Jurídica" },
+								{ value: "fisica", label: "Pessoa Física" },
+							]}
+						/>
 
 						{supplierType === "juridica" && (
 							<SmartField
@@ -1265,13 +1370,16 @@ export default function Suppliers() {
 							fieldName="status"
 							fieldText="Status"
 							isSelect
+							isClearable={false}
+							isLoading={loading.has("options")}
 							value={formData.status}
-							onChange={handleChange}
 							fieldClassname="flex flex-col w-full"
-						>
-							<option value="1">Ativo</option>
-							<option value="0">Inativo</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "1", label: "Ativo" },
+								{ value: "0", label: "Inativo" },
+							]}
+						/>
 
 						<SmartField
 							fieldName="tel"
@@ -1339,40 +1447,42 @@ export default function Suppliers() {
 							fieldName="estado"
 							fieldText="Estado"
 							isSelect
-							value={formData.estado}
-							onChange={handleChange}
-							autoComplete="address-level1"
+							isClearable={false}
 							isLoading={loading.has("options")}
+							value={formData.estado}
+							autoComplete="address-level1"
 							inputWidth="w-[200px]"
-						>
-							<option value="AC">Acre</option>
-							<option value="AL">Alagoas</option>
-							<option value="AP">Amapá</option>
-							<option value="AM">Amazonas</option>
-							<option value="BA">Bahia</option>
-							<option value="CE">Ceará</option>
-							<option value="DF">Distrito Federal</option>
-							<option value="ES">Espírito Santo</option>
-							<option value="GO">Goiás</option>
-							<option value="MA">Maranhão</option>
-							<option value="MT">Mato Grosso</option>
-							<option value="MS">Mato Grosso do Sul</option>
-							<option value="MG">Minas Gerais</option>
-							<option value="PA">Pará</option>
-							<option value="PB">Paraíba</option>
-							<option value="PR">Paraná</option>
-							<option value="PE">Pernambuco</option>
-							<option value="PI">Piauí</option>
-							<option value="RJ">Rio de Janeiro</option>
-							<option value="RN">Rio Grande do Norte</option>
-							<option value="RS">Rio Grande do Sul</option>
-							<option value="RO">Rondônia</option>
-							<option value="RR">Roraima</option>
-							<option value="SC">Santa Catarina</option>
-							<option value="SP">São Paulo</option>
-							<option value="SE">Sergipe</option>
-							<option value="TO">Tocantins</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "AC", label: "Acre" },
+								{ value: "AL", label: "Alagoas" },
+								{ value: "AP", label: "Amapá" },
+								{ value: "AM", label: "Amazonas" },
+								{ value: "BA", label: "Bahia" },
+								{ value: "CE", label: "Ceará" },
+								{ value: "DF", label: "Distrito Federal" },
+								{ value: "ES", label: "Espírito Santo" },
+								{ value: "GO", label: "Goiás" },
+								{ value: "MA", label: "Maranhão" },
+								{ value: "MT", label: "Mato Grosso" },
+								{ value: "MS", label: "Mato Grosso do Sul" },
+								{ value: "MG", label: "Minas Gerais" },
+								{ value: "PA", label: "Pará" },
+								{ value: "PB", label: "Paraíba" },
+								{ value: "PR", label: "Paraná" },
+								{ value: "PE", label: "Pernambuco" },
+								{ value: "PI", label: "Piauí" },
+								{ value: "RJ", label: "Rio de Janeiro" },
+								{ value: "RN", label: "Rio Grande do Norte" },
+								{ value: "RS", label: "Rio Grande do Sul" },
+								{ value: "RO", label: "Rondônia" },
+								{ value: "RR", label: "Roraima" },
+								{ value: "SC", label: "Santa Catarina" },
+								{ value: "SP", label: "São Paulo" },
+								{ value: "SE", label: "Sergipe" },
+								{ value: "TO", label: "Tocantins" },
+							]}
+						/>	
 
 						<SmartField
 							fieldName="cidade"

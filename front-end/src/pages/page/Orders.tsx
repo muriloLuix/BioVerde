@@ -4,7 +4,6 @@ import axios from "axios";
 import { Tabs, Form } from "radix-ui";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { useNavigate } from "react-router-dom";
-import { OnChangeValue } from "react-select";
 import {
 	Eye,
 	PencilLine,
@@ -12,10 +11,10 @@ import {
 	Search,
 	Loader2,
 	FilterX,
-	Printer,
+	Printer, X,
 } from "lucide-react";
 
-import { Option, OrderStatus } from "../../utils/types";
+import { OrderStatus, SelectEvent } from "../../utils/types";
 import { cepApi } from "../../utils/cepApi";
 import {
 	SmartField,
@@ -72,13 +71,15 @@ interface PedidoItem {
 export default function Orders() {
 	const [activeTab, setActiveTab] = useState("list");
 	const [openEditModal, setOpenEditModal] = useState(false);
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
 	const [currentObs, setCurrentObs] = useState("");
 	const [userLevel, setUserLevel] = useState("");
-	const [suggestions, setSuggestions] = useState<Cliente[]>([]);
+	const [clientes, setClientes] = useState<Cliente[]>([]);
 	const [openOrderModal, setOpenOrderModal] = useState(false);
 	const [numOrder, setNumOrder] = useState(0);
 	const [clientOrder, setClientOrder] = useState("");
@@ -88,11 +89,6 @@ export default function Orders() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [pedidos, setPedidos] = useState<Pedido[]>([]);
-	const [errors, setErrors] = useState({
-		status: false,
-		unit: false,
-		states: false,
-	});
 	const [formData, setFormData] = useState({
 		pedido_id: 0,
 		nome_cliente: "",
@@ -133,21 +129,9 @@ export default function Orders() {
 		reason: "",
 	});
 
-	//Função para buscar os clientes cadastrados e fazer a listagem deles
-	const fetchClientes = (query: string) => {
-		axios
-			.get("http://localhost/BioVerde/back-end/pedidos/listar_clientes.php", {
-				params: { q: query },
-			})
-			.then((res) => {
-				console.log(res.data);
-				setSuggestions(res.data);
-			})
-			.catch((err) => {
-				console.error(err);
-				setSuggestions([]);
-			});
-	};
+	useEffect(() => {
+		fetchData();
+	}, []);
 
 	const navigate = useNavigate();
 	useEffect(() => {
@@ -184,7 +168,7 @@ export default function Orders() {
 		try {
 			setLoading((prev) => new Set([...prev, "orders", "options"]));
 
-			const [optionsResponse, pedidosResponse, userLevelResponse] =
+			const [optionsResponse, pedidosResponse, userLevelResponse, clientsResponse] =
 				await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
@@ -210,6 +194,12 @@ export default function Orders() {
 						{
 							withCredentials: true,
 							headers: { "Content-Type": "application/json" },
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/pedidos/listar_clientes.php",
+						{
+							params: { q: "" }, 
 						}
 					),
 				]);
@@ -243,6 +233,17 @@ export default function Orders() {
 					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
 				);
 			}
+
+			if (clientsResponse.data.success) {
+				setClientes(clientsResponse.data.clientes ?? []);
+			} else {
+				setOpenNoticeModal(true);
+				setClientes([]);
+				setMessage(
+					clientsResponse.data.message || "Erro ao carregar clientes"
+				);
+			}
+
 		} catch (error) {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
@@ -266,11 +267,6 @@ export default function Orders() {
 			});
 		}
 	};
-
-	useEffect(() => {
-		fetchData();
-		fetchClientes("");
-	}, []);
 
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
@@ -352,6 +348,7 @@ export default function Orders() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -365,12 +362,43 @@ export default function Orders() {
 			setDeleteOrder({ ...deleteOrder, [name]: value });
 		}
 
-		setErrors(
-			(prevErrors) =>
-				Object.fromEntries(
-					Object.keys(prevErrors).map((key) => [key, false])
-				) as typeof prevErrors
-		);
+	};
+
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/ped.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+
+			const contentType = response.headers["content-type"];
+
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
 	};
 
 	// submit de Filtrar pedidos
@@ -588,41 +616,24 @@ export default function Orders() {
 										inputWidth="w-[120px]"
 									/>
 
+
 									<SmartField
 										fieldName="fnome_cliente"
 										fieldText="Cliente"
-										fieldClassname="flex flex-col flex-1"
-										isCreatableSelect
-										placeholder="Selecione um cliente"
+										isSelect
 										isLoading={loading.has("orders")}
-										value={suggestions
-											.map((cliente: Cliente) => ({
-												value: cliente.cliente_nome_ou_empresa,
+										value={filters.fnome_cliente}
+										onChange={handleChange}
+										placeholder="Selecione o cliente"
+										fieldClassname="flex flex-col flex-1"
+										onChangeSelect={handleChange}
+										options={
+											clientes?.map((cliente) => ({
 												label: cliente.cliente_nome_ou_empresa,
+												value: cliente.cliente_nome_ou_empresa,
 											}))
-											.find(
-												(opt) => opt.value === formData.nome_cliente || null
-											)}
-										options={suggestions.map((cliente: Cliente) => ({
-											value: cliente.cliente_nome_ou_empresa,
-											label: cliente.cliente_nome_ou_empresa,
-										}))}
-										onChange={(option: OnChangeValue<Option, false>) => {
-											setFilters({
-												...filters,
-												fnome_cliente: option?.value.toString() ?? "",
-											});
-										}}
-									>
-										{suggestions.map((cliente) => (
-											<option
-												key={cliente.cliente_id}
-												value={cliente.cliente_nome_ou_empresa}
-											>
-												{cliente.cliente_nome_ou_empresa}
-											</option>
-										))}
-									</SmartField>
+										}
+									/>
 
 									<SmartField
 										fieldName="ftel"
@@ -640,26 +651,7 @@ export default function Orders() {
 									/>
 								</div>
 
-								<div className="flex justify-between">
-									<SmartField
-										fieldName="fstatus"
-										fieldText="Status"
-										isSelect
-										value={filters.fstatus}
-										onChange={handleChange}
-										isLoading={loading.has("options")}
-										inputWidth="w-[220px]"
-									>
-										<option value="todos">Todos</option>
-										{options.status?.map((status) => (
-											<option
-												key={status.stapedido_id}
-												value={status.stapedido_id}
-											>
-												{status.stapedido_nome}
-											</option>
-										))}
-									</SmartField>
+								<div className="flex gap-x-15 justify-between">
 
 									<SmartField
 										fieldName="fcep"
@@ -674,48 +666,49 @@ export default function Orders() {
 										value={filters.fcep}
 										onChange={handleChange}
 										onBlur={handleCepBlur}
-										inputWidth="w-[220px]"
+										fieldClassname="flex flex-col flex-1"
 									/>
 
 									<SmartField
 										fieldName="festado"
 										fieldText="Estado"
 										isSelect
-										value={filters.festado}
-										onChange={handleChange}
-										autoComplete="address-level1"
 										isLoading={loading.has("options")}
-										inputWidth="w-[220px]"
-									>
-										<option value="">Todos</option>
-										<option value="AC">Acre</option>
-										<option value="AL">Alagoas</option>
-										<option value="AP">Amapá</option>
-										<option value="AM">Amazonas</option>
-										<option value="BA">Bahia</option>
-										<option value="CE">Ceará</option>
-										<option value="DF">Distrito Federal</option>
-										<option value="ES">Espírito Santo</option>
-										<option value="GO">Goiás</option>
-										<option value="MA">Maranhão</option>
-										<option value="MT">Mato Grosso</option>
-										<option value="MS">Mato Grosso do Sul</option>
-										<option value="MG">Minas Gerais</option>
-										<option value="PA">Pará</option>
-										<option value="PB">Paraíba</option>
-										<option value="PR">Paraná</option>
-										<option value="PE">Pernambuco</option>
-										<option value="PI">Piauí</option>
-										<option value="RJ">Rio de Janeiro</option>
-										<option value="RN">Rio Grande do Norte</option>
-										<option value="RS">Rio Grande do Sul</option>
-										<option value="RO">Rondônia</option>
-										<option value="RR">Roraima</option>
-										<option value="SC">Santa Catarina</option>
-										<option value="SP">São Paulo</option>
-										<option value="SE">Sergipe</option>
-										<option value="TO">Tocantins</option>
-									</SmartField>
+										value={filters.festado}
+										placeholder="Selecione o Estado"
+										autoComplete="address-level1"
+										fieldClassname="flex flex-col flex-1"
+										onChangeSelect={handleChange}
+										options={[
+											{ value: "AC", label: "Acre" },
+											{ value: "AL", label: "Alagoas" },
+											{ value: "AP", label: "Amapá" },
+											{ value: "AM", label: "Amazonas" },
+											{ value: "BA", label: "Bahia" },
+											{ value: "CE", label: "Ceará" },
+											{ value: "DF", label: "Distrito Federal" },
+											{ value: "ES", label: "Espírito Santo" },
+											{ value: "GO", label: "Goiás" },
+											{ value: "MA", label: "Maranhão" },
+											{ value: "MT", label: "Mato Grosso" },
+											{ value: "MS", label: "Mato Grosso do Sul" },
+											{ value: "MG", label: "Minas Gerais" },
+											{ value: "PA", label: "Pará" },
+											{ value: "PB", label: "Paraíba" },
+											{ value: "PR", label: "Paraná" },
+											{ value: "PE", label: "Pernambuco" },
+											{ value: "PI", label: "Piauí" },
+											{ value: "RJ", label: "Rio de Janeiro" },
+											{ value: "RN", label: "Rio Grande do Norte" },
+											{ value: "RS", label: "Rio Grande do Sul" },
+											{ value: "RO", label: "Rondônia" },
+											{ value: "RR", label: "Roraima" },
+											{ value: "SC", label: "Santa Catarina" },
+											{ value: "SP", label: "São Paulo" },
+											{ value: "SE", label: "Sergipe" },
+											{ value: "TO", label: "Tocantins" },
+										]}
+									/>
 
 									<SmartField
 										fieldName="fcidade"
@@ -725,18 +718,36 @@ export default function Orders() {
 										value={filters.fcidade}
 										onChange={handleChange}
 										autoComplete="address-level2"
-										inputWidth="w-[220px]"
+										fieldClassname="flex flex-col flex-1"
 									/>
 								</div>
 
 								<div className="flex justify-between mb-8">
+
+									<SmartField
+										fieldName="fstatus"
+										fieldText="Status"
+										isSelect
+										isLoading={loading.has("options")}
+										value={filters.fstatus}
+										placeholder="Selecione"
+										inputWidth="w-[220px]"
+										onChangeSelect={handleChange}
+										options={
+											options?.status.map((status) => ({
+												label: status.stapedido_nome,
+												value: String(status.stapedido_id),
+											}))
+										}
+									/>
+
 									<SmartField
 										type="date"
 										fieldName="fprev_entrega"
 										fieldText="Previsão de entrega"
 										value={filters.fprev_entrega}
 										onChange={handleChange}
-										inputWidth="w-[220px]"
+										inputWidth="w-[200px]"
 									/>
 
 									<SmartField
@@ -745,7 +756,7 @@ export default function Orders() {
 										fieldText="Data de Cadastro"
 										value={filters.fdt_cadastro}
 										onChange={handleChange}
-										inputWidth="w-[220px]"
+										inputWidth="w-[200px]"
 									/>
 
 									<Form.Submit asChild>
@@ -935,9 +946,17 @@ export default function Orders() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
+									onClick={gerarRelatorio}
+									disabled={loading.size > 0}
 								>
-									<Printer />
-									Gerar Relatório
+									{loading.has("reports") ? (
+										<Loader2 className="animate-spin h-6 w-6" />
+									) : (
+										<>
+											<Printer />
+											Gerar Relatório
+										</>
+									)}
 								</button>
 							</div>
 						)}
@@ -1013,6 +1032,51 @@ export default function Orders() {
 							</div>
 						</Modal>
 
+						{/* Modal de Relatório */}
+						{relatorioModalOpen && (
+							<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+								<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+									<div className="flex justify-between items-center mb-4">
+										<h2 className="text-xl font-bold">Relatório de Pedidos</h2>
+										<button
+											onClick={() => setRelatorioModalOpen(false)}
+											className="text-gray-500 hover:text-gray-700"
+										>
+											<X size={24} />
+										</button>
+									</div>
+
+									<div className="flex-1 overflow-auto mb-4">
+										{relatorioContent ? (
+											<iframe
+												src={relatorioContent}
+												className="w-full h-full min-h-[70vh] border"
+												title="Relatório de Pedidos"
+											/>
+										) : (
+											<p>Carregando relatório...</p>
+										)}
+									</div>
+
+									<div className="flex justify-end gap-4">
+										<a
+											href={relatorioContent}
+											download="relatorio_usuarios.pdf"
+											className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+										>
+											Baixar Relatório
+										</a>
+										<button
+											onClick={() => setRelatorioModalOpen(false)}
+											className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+										>
+											Fechar
+										</button>
+									</div>
+								</div>
+							</div>
+						)}
+
 						{/* Modal de Observações */}
 						<Modal
 							withExitButton
@@ -1060,20 +1124,19 @@ export default function Orders() {
 						<SmartField
 							fieldName="nome_cliente"
 							fieldText="Cliente"
-							fieldClassname="flex flex-col flex-1"
-							isCreatableSelect
-							placeholder="Selecione um cliente"
+							isSelect
+							isClearable={false}
 							isLoading={loading.has("orders")}
-							defaultValue={formData.nome_cliente}
-							options={suggestions.map((cliente: Cliente) => ({
-								value: cliente.cliente_nome_ou_empresa,
-								label: cliente.cliente_nome_ou_empresa,
-							}))}
-							onChange={(newValue: any) =>
-								setFormData({
-									...formData,
-									nome_cliente: newValue.value ?? "",
-								})
+							value={formData.nome_cliente}
+							onChange={handleChange}
+							placeholder="Selecione o cliente"
+							fieldClassname="flex flex-col flex-1"
+							onChangeSelect={handleChange}
+							options={
+								clientes?.map((cliente) => ({
+									label: cliente.cliente_nome_ou_empresa,
+									value: cliente.cliente_nome_ou_empresa,
+								}))
 							}
 						/>
 
@@ -1124,42 +1187,43 @@ export default function Orders() {
 							fieldName="estado"
 							fieldText="Estado"
 							isSelect
-							value={formData.estado}
-							onChange={handleChange}
-							autoComplete="address-level1"
+							isClearable={false}
 							isLoading={loading.has("options")}
-							error={errors.states ? "*" : undefined}
-							placeholderOption="Selecione o Estado"
+							value={formData.estado}
+							placeholder="Selecione o Estado"
+							autoComplete="address-level1"
 							inputWidth="w-[200px]"
-						>
-							<option value="AC">Acre</option>
-							<option value="AL">Alagoas</option>
-							<option value="AP">Amapá</option>
-							<option value="AM">Amazonas</option>
-							<option value="BA">Bahia</option>
-							<option value="CE">Ceará</option>
-							<option value="DF">Distrito Federal</option>
-							<option value="ES">Espírito Santo</option>
-							<option value="GO">Goiás</option>
-							<option value="MA">Maranhão</option>
-							<option value="MT">Mato Grosso</option>
-							<option value="MS">Mato Grosso do Sul</option>
-							<option value="MG">Minas Gerais</option>
-							<option value="PA">Pará</option>
-							<option value="PB">Paraíba</option>
-							<option value="PR">Paraná</option>
-							<option value="PE">Pernambuco</option>
-							<option value="PI">Piauí</option>
-							<option value="RJ">Rio de Janeiro</option>
-							<option value="RN">Rio Grande do Norte</option>
-							<option value="RS">Rio Grande do Sul</option>
-							<option value="RO">Rondônia</option>
-							<option value="RR">Roraima</option>
-							<option value="SC">Santa Catarina</option>
-							<option value="SP">São Paulo</option>
-							<option value="SE">Sergipe</option>
-							<option value="TO">Tocantins</option>
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "AC", label: "Acre" },
+								{ value: "AL", label: "Alagoas" },
+								{ value: "AP", label: "Amapá" },
+								{ value: "AM", label: "Amazonas" },
+								{ value: "BA", label: "Bahia" },
+								{ value: "CE", label: "Ceará" },
+								{ value: "DF", label: "Distrito Federal" },
+								{ value: "ES", label: "Espírito Santo" },
+								{ value: "GO", label: "Goiás" },
+								{ value: "MA", label: "Maranhão" },
+								{ value: "MT", label: "Mato Grosso" },
+								{ value: "MS", label: "Mato Grosso do Sul" },
+								{ value: "MG", label: "Minas Gerais" },
+								{ value: "PA", label: "Pará" },
+								{ value: "PB", label: "Paraíba" },
+								{ value: "PR", label: "Paraná" },
+								{ value: "PE", label: "Pernambuco" },
+								{ value: "PI", label: "Piauí" },
+								{ value: "RJ", label: "Rio de Janeiro" },
+								{ value: "RN", label: "Rio Grande do Norte" },
+								{ value: "RS", label: "Rio Grande do Sul" },
+								{ value: "RO", label: "Rondônia" },
+								{ value: "RR", label: "Roraima" },
+								{ value: "SC", label: "Santa Catarina" },
+								{ value: "SP", label: "São Paulo" },
+								{ value: "SE", label: "Sergipe" },
+								{ value: "TO", label: "Tocantins" },
+							]}
+						/>
 
 						<SmartField
 							fieldName="cidade"
@@ -1206,17 +1270,20 @@ export default function Orders() {
 							fieldName="status"
 							fieldText="Status"
 							isSelect
-							value={formData.status}
-							onChange={handleChange}
+							isClearable={false}
 							isLoading={loading.has("options")}
+							value={formData.status}
+							placeholder="Selecione"
 							inputWidth="w-[250px]"
-						>
-							{options.status?.map((status) => (
-								<option key={status.stapedido_id} value={status.stapedido_id}>
-									{status.stapedido_nome}
-								</option>
-							))}
-						</SmartField>
+							onChangeSelect={handleChange}
+							options={
+								options?.status.map((status) => ({
+									label: status.stapedido_nome,
+									value: String(status.stapedido_id),
+								}))
+							}
+						/>
+
 					</div>
 
 					<div className="flex mb-5">

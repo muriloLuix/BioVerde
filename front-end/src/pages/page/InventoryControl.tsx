@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
 import axios from "axios";
-import { OnChangeValue } from "react-select";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { Tabs, Form } from "radix-ui";
 import {
@@ -11,10 +10,16 @@ import {
 	Loader2,
 	Eye,
 	FilterX,
-	Printer,
+	Printer, X,
 } from "lucide-react";
 
-import { Option, Product, ProductType, ProductStatus } from "../../utils/types";
+import {
+	Product,
+	ProductType,
+	ProductStatus,
+	Supplier,
+	SelectEvent,
+} from "../../utils/types";
 import {
 	SmartField,
 	Modal,
@@ -27,14 +32,11 @@ interface ProductOptions {
 	status: ProductStatus[];
 }
 
-interface Fornecedor {
-	fornecedor_id: number;
-	fornecedor_nome_ou_empresa: string;
-}
-
 export default function InventoryControl() {
 	const [activeTab, setActiveTab] = useState("list");
 	const [openEditModal, setOpenEditModal] = useState(false);
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openObsModal, setOpenObsModal] = useState(false);
@@ -43,7 +45,7 @@ export default function InventoryControl() {
 	const [message, setMessage] = useState("");
 	const [userLevel, setUserLevel] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
-	const [suggestions, setSuggestions] = useState<Fornecedor[]>([]);
+	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [produtos, setProdutos] = useState<Product[]>([]);
 	const [errors, setErrors] = useState({
@@ -75,25 +77,10 @@ export default function InventoryControl() {
 		reason: "",
 	});
 
-	//Função para buscar os fornecedores cadastrados e fazer a listagem deles
-	const fetchFornecedores = (query: string) => {
-		axios
-			.get(
-				"http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php",
-				{
-					params: { q: query },
-				}
-			)
-			.then((res) => {
-				console.log(res.data);
-				setSuggestions(res.data);
-			})
-			.catch((err) => {
-				console.error(err);
-				setSuggestions([]);
-			});
-	};
-
+	useEffect(() => {
+		fetchData();
+	}, []);
+	
 	//OnChange dos campos
 	const handleChange = (
 		event:
@@ -101,6 +88,7 @@ export default function InventoryControl() {
 					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 			  >
 			| InputMaskChangeEvent
+			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
@@ -123,6 +111,43 @@ export default function InventoryControl() {
 					Object.keys(prevErrors).map((key) => [key, false])
 				) as typeof prevErrors
 		);
+	};
+
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/control.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+
+			const contentType = response.headers["content-type"];
+
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
 	};
 
 	//Capturar valor no campo de Preço
@@ -168,9 +193,10 @@ export default function InventoryControl() {
 
 	const fetchData = async () => {
 		try {
-			setLoading((prev) => new Set([...prev, "products"]));
+		
+			setLoading((prev) => new Set([...prev, "products", "options"]));
 
-			const [productsAndOptions, userLevelResponse] = await Promise.all([
+			const [productsAndOptions, userLevelResponse, suppliersResponse] = await Promise.all([
 				axios.get(
 					"http://localhost/BioVerde/back-end/produtos/listar_produtos.php",
 					{
@@ -185,6 +211,12 @@ export default function InventoryControl() {
 					{
 						withCredentials: true,
 						headers: { "Content-Type": "application/json" },
+					}
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/produtos/listar_fornecedores.php", 
+					{
+						params: { q: "" }, 
 					}
 				),
 			]);
@@ -210,6 +242,16 @@ export default function InventoryControl() {
 				setOpenNoticeModal(true);
 				setMessage(
 					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
+			}
+
+			if (suppliersResponse.data.success) {
+				setFornecedores(suppliersResponse.data.fornecedores ?? []);
+			} else {
+				setOpenNoticeModal(true);
+				setFornecedores([]);
+				setMessage(
+					suppliersResponse.data.message || "Erro ao carregar fornecedores"
 				);
 			}
 		} catch (error) {
@@ -386,11 +428,6 @@ export default function InventoryControl() {
 		}
 	};
 
-	useEffect(() => {
-		fetchData();
-		fetchFornecedores("");
-	}, []);
-
 	// submit para atualizar o produto após a edição dele
 	const handleUpdateProduct = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -504,9 +541,6 @@ export default function InventoryControl() {
 			(prev) =>
 				Object.fromEntries(
 					Object.entries(prev).map(([key, value]) => {
-						if (key === "fornecedor") {
-							return [key, { value: "", label: "" }];
-						}
 						return [key, typeof value === "number" ? 0 : ""];
 					})
 				) as typeof prev
@@ -573,7 +607,7 @@ export default function InventoryControl() {
 						className="h-1/6 w-full flex"
 						onSubmit={handleFilterSubmit}
 					>
-						<div className="w-4/5 flex items-center gap-8">
+						<div className="w-4/5 flex items-center gap-4">
 							<SmartField
 								fieldName="fnome_produto"
 								fieldText="Nome do Produto"
@@ -582,6 +616,7 @@ export default function InventoryControl() {
 								value={filters.fnome_produto}
 								onChange={handleChange}
 								inputWidth="w-full"
+								fieldClassname="flex flex-col flex-1"
 							/>
 
 							<SmartField
@@ -593,47 +628,45 @@ export default function InventoryControl() {
 								value={filters.ffornecedor}
 								onChange={handleChange}
 								inputWidth="w-full"
+								fieldClassname="flex flex-col flex-1"
 							/>
 
 							<SmartField
 								fieldName="ftipo"
 								fieldText="Tipo"
+								placeholder="Selecione"
 								isSelect
+								isLoading={loading.has("options")}
 								value={filters.ftipo}
-								onChange={handleChange}
-								isLoading={loading.has("products")}
-								inputWidth="w-full"
-							>
-								<option>Todos</option>
-								{options?.tipos.map((tipo) => (
-									<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-										{tipo.tproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								inputWidth="w-[200px]"
+								onChangeSelect={handleChange}
+								options={
+									options?.tipos.map((tipo) => ({
+										label: tipo.tproduto_nome,
+										value: String(tipo.tproduto_id),
+									}))
+								}
+							/>
 
 							<SmartField
 								fieldName="fstatus"
 								fieldText="Status"
 								isSelect
+								isLoading={loading.has("options")}
 								value={filters.fstatus}
-								onChange={handleChange}
-								isLoading={loading.has("products")}
-								inputWidth="w-full"
-							>
-								<option>Todos</option>
-								{options?.status.map((status) => (
-									<option
-										key={status.staproduto_id}
-										value={status.staproduto_id}
-									>
-										{status.staproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								placeholder="Selecione"
+								inputWidth="w-[180px]"
+								onChangeSelect={handleChange}
+								options={
+									options?.status.map((status) => ({
+										label: status.staproduto_nome,
+										value: String(status.staproduto_id),
+									}))
+								}
+							/>
 						</div>
-						<Form.Submit className="w-1/5" asChild>
-							<div className="flex items-center justify-end gap-6">
+						<Form.Submit asChild>
+							<div className="w-1/5 flex flex-col items-center justify-center gap-3">
 								<button
 									type="submit"
 									className="bg-verdeMedio hover:bg-verdeEscuro flex items-center justify-center px-5 py-3 gap-2 rounded-full cursor-pointer text-white"
@@ -677,8 +710,8 @@ export default function InventoryControl() {
 										"Nome Produto",
 										"Tipo",
 										"Preço",
-										"Status",
 										"Fornecedor",
+										"Status",
 										"Observações",
 										"Ações",
 									].map((header) => (
@@ -750,11 +783,18 @@ export default function InventoryControl() {
 						</table>
 						<button
 							type="button"
-							className="bg-verdeGrama px-5 py-3 rounded-full text-white cursor-pointer flex ml-auto mt-5 gap-2 hover:bg-[#246127]"
+							className="bg-verdeGrama px-5 py-3 w-[190px] rounded-full text-white cursor-pointer ml-auto mt-5 gap-2 flex place-content-center hover:bg-[#246127]"
+							onClick={gerarRelatorio}
 							disabled={produtos.length === 0}
 						>
-							<Printer />
-							Gerar Relatório
+							{loading.has("reports") ? (
+								<Loader2 className="animate-spin h-6 w-6" />
+							) : (
+								<>
+									<Printer />
+									Gerar Relatório
+								</>
+							)}
 						</button>
 					</div>
 
@@ -781,7 +821,7 @@ export default function InventoryControl() {
 							<SmartField
 								fieldName="nome_produto"
 								fieldText="Nome do Produto"
-								fieldClassname="flex flex-col flex-2"
+								fieldClassname="flex flex-col flex-1"
 								required
 								type="text"
 								placeholder="Digite o nome do produto"
@@ -792,60 +832,46 @@ export default function InventoryControl() {
 							<SmartField
 								fieldName="fornecedor"
 								fieldText="Fornecedor"
-								fieldClassname="flex flex-col flex-1"
-								isCreatableSelect
-								placeholder="Selecione um fornecedor"
-								isLoading={loading.has("products")}
-								value={suggestions
-									.map((fornecedor: Fornecedor) => ({
-										value: fornecedor.fornecedor_nome_ou_empresa,
+								isSelect
+								isLoading={loading.has("options")}
+								error={errors.supplier ? "*" : undefined}
+								inputWidth="w-[300px]"
+								value={formData.fornecedor}
+								placeholder="Selecione o fornecedor"
+								onChangeSelect={handleChange}
+								options={
+									fornecedores?.map((fornecedor) => ({
 										label: fornecedor.fornecedor_nome_ou_empresa,
+										value: fornecedor.fornecedor_nome_ou_empresa,
 									}))
-									.find((opt) => opt.value === formData.fornecedor)}
-								options={suggestions.map((fornecedor: Fornecedor) => ({
-									value: fornecedor.fornecedor_nome_ou_empresa,
-									label: fornecedor.fornecedor_nome_ou_empresa,
-								}))}
-								onChange={(option: OnChangeValue<Option, false>) => {
-									setFormData({
-										...formData,
-										fornecedor: option?.value.toString() ?? "",
-									});
-								}}
-							>
-								{suggestions.map((fornecedor) => (
-									<option
-										key={fornecedor.fornecedor_id}
-										value={fornecedor.fornecedor_nome_ou_empresa}
-									>
-										{fornecedor.fornecedor_nome_ou_empresa}
-									</option>
-								))}
-							</SmartField>
+								}
+							/>
 						</div>
 
 						<div className="flex gap-x-15 mb-8 items-center">
+
 							<SmartField
 								fieldName="tipo"
 								fieldText="Tipo"
 								isSelect
-								value={formData.tipo}
-								onChange={handleChange}
-								isLoading={loading.has("products")}
+								isLoading={loading.has("options")}
 								error={errors.type ? "*" : undefined}
-								placeholderOption="Selecione o Tipo"
-								inputWidth="w-[200px]"
-							>
-								{options?.tipos.map((tipo) => (
-									<option key={tipo.tproduto_id} value={tipo.tproduto_nome}>
-										{tipo.tproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								inputWidth="w-[220px]"
+								value={formData.tipo}
+								placeholder="Selecione"
+								onChangeSelect={handleChange}
+								options={
+									options?.tipos.map((tipo) => ({
+										label: tipo.tproduto_nome,
+										value: String(tipo.tproduto_id),
+									}))
+								}
+							/>
 
 							<SmartField
 								fieldName="lote"
 								fieldText="Lote"
+								fieldClassname="flex flex-col flex-1"
 								type="number"
 								required
 								placeholder="Nº do Lote"
@@ -854,30 +880,47 @@ export default function InventoryControl() {
 								inputWidth="w-[150px]"
 							/>
 
+							{/* <SmartField
+								fieldName="lote"
+								fieldText="Lote"
+								isSelect
+								isLoading={loading.has("options")}
+								error={errors.batch ? "*" : undefined}
+								inputWidth="w-[150px]"
+								value={formData.lote}
+								placeholder="Selecione"
+								onChangeSelect={handleChange}
+								options={
+									options?.lotes.map((lote) => ({
+										label: lote.lote_id,
+										value: lote.lote_id,
+									}))
+								}
+							/> */}
+
 							<SmartField
 								fieldName="status"
 								fieldText="Status"
 								isSelect
-								value={formData.status}
+								isLoading={loading.has("options")}
 								error={errors.status ? "*" : undefined}
-								onChange={handleChange}
-								placeholderOption="Selecione o Status"
-								inputWidth="w-[190px]"
-							>
-								{options?.status.map((status) => (
-									<option
-										key={status.staproduto_id}
-										value={status.staproduto_nome}
-									>
-										{status.staproduto_nome}
-									</option>
-								))}
-							</SmartField>
+								inputWidth="w-[180px]"
+								value={formData.status}
+								placeholder="Selecione"
+								onChangeSelect={handleChange}
+								options={
+									options?.status.map((status) => ({
+										label: status.staproduto_nome,
+										value: String(status.staproduto_id),
+									}))
+								}
+							/>
 
 							<SmartField
 								isPrice
 								fieldName="preco"
 								fieldText="Preço"
+								fieldClassname="flex flex-col flex-1"
 								type="text"
 								placeholder="Preço"
 								error={errors.price ? "*" : undefined}
@@ -957,40 +1000,41 @@ export default function InventoryControl() {
 					<SmartField
 						fieldName="fornecedor"
 						fieldText="Fornecedor"
+						isClearable={false}
+						isSelect
+						isLoading={loading.has("options")}
 						fieldClassname="flex flex-col flex-1"
-						isCreatableSelect
-						placeholder="Selecione um fornecedor"
-						isLoading={loading.has("products")}
-						defaultValue={formData.fornecedor}
-						options={suggestions.map((fornecedor: Fornecedor) => ({
-							value: fornecedor.fornecedor_nome_ou_empresa,
-							label: fornecedor.fornecedor_nome_ou_empresa,
-						}))}
-						onChange={(newValue: any) =>
-							setFormData({
-								...formData,
-								fornecedor: newValue?.value || "",
-							})
+						value={formData.fornecedor}
+						placeholder="Selecione o fornecedor"
+						onChangeSelect={handleChange}
+						options={
+							fornecedores?.map((fornecedor) => ({
+								label: fornecedor.fornecedor_nome_ou_empresa,
+								value: fornecedor.fornecedor_nome_ou_empresa,
+							}))
 						}
 					/>
 				</div>
 
 				<div className="flex gap-x-15 mb-6 items-center">
+
 					<SmartField
 						fieldName="tipo"
 						fieldText="Tipo"
+						isClearable={false}
 						isSelect
-						value={formData.tipo}
-						onChange={handleChange}
-						isLoading={loading.has("products")}
+						isLoading={loading.has("options")}
 						inputWidth="w-[200px]"
-					>
-						{options?.tipos?.map((tipo) => (
-							<option key={tipo.tproduto_id} value={tipo.tproduto_id}>
-								{tipo.tproduto_nome}
-							</option>
-						))}
-					</SmartField>
+						value={formData.tipo}
+						placeholder="Selecione"
+						onChangeSelect={handleChange}
+						options={
+							options?.tipos?.map((tipo) => ({
+								label: tipo.tproduto_nome,
+								value: String(tipo.tproduto_id),
+							}))
+						}
+					/>
 
 					<SmartField
 						fieldName="lote"
@@ -1006,18 +1050,20 @@ export default function InventoryControl() {
 					<SmartField
 						fieldName="status"
 						fieldText="Status"
+						isClearable={false}
 						isSelect
-						value={formData.status}
-						onChange={handleChange}
-						isLoading={loading.has("products")}
+						isLoading={loading.has("options")}
 						inputWidth="w-[150px]"
-					>
-						{options?.status?.map((status) => (
-							<option key={status.staproduto_id} value={status.staproduto_id}>
-								{status.staproduto_nome}
-							</option>
-						))}
-					</SmartField>
+						value={formData.status}
+						placeholder="Selecione"
+						onChangeSelect={handleChange}
+						options={
+							options?.status?.map((status) => ({
+								label: status.staproduto_nome,
+								value: String(status.staproduto_id),
+							}))
+						}
+					/>
 
 					<SmartField
 						isPrice
@@ -1045,6 +1091,51 @@ export default function InventoryControl() {
 					/>
 				</div>
 			</Modal>
+
+			{/* Modal de Relatório */}
+			{relatorioModalOpen && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+						<div className="flex justify-between items-center mb-4">
+							<h2 className="text-xl font-bold">Relatório de Estoque</h2>
+							<button
+								onClick={() => setRelatorioModalOpen(false)}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								<X size={24} />
+							</button>
+						</div>
+
+						<div className="flex-1 overflow-auto mb-4">
+							{relatorioContent ? (
+								<iframe
+									src={relatorioContent}
+									className="w-full h-full min-h-[70vh] border"
+									title="Relatório de Estoque"
+								/>
+							) : (
+								<p>Carregando relatório...</p>
+							)}
+						</div>
+
+						<div className="flex justify-end gap-4">
+							<a
+								href={relatorioContent}
+								download="relatorio_usuarios.pdf"
+								className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+							>
+								Baixar Relatório
+							</a>
+							<button
+								onClick={() => setRelatorioModalOpen(false)}
+								className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+							>
+								Fechar
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			<Modal
 				openModal={openDeleteModal}
