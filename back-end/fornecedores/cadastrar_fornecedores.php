@@ -45,13 +45,13 @@ if ($emailCpfError) {
 $estaAtivo = 1;
 
 // Cadastro do fornecedor
-$stmt = $conn->prepare("INSERT INTO fornecedores (fornecedor_nome_ou_empresa, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_cpf_ou_cnpj, fornecedor_tipo, fornecedor_endereco, fornecedor_num_endereco, fornecedor_cidade, fornecedor_estado, fornecedor_cep, fornecedor_responsavel, estaAtivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO fornecedores (fornecedor_nome_ou_empresa, fornecedor_razao_social, fornecedor_email, fornecedor_telefone, fornecedor_cpf_ou_cnpj, fornecedor_tipo, fornecedor_endereco, fornecedor_num_endereco, fornecedor_complemento, fornecedor_cidade, fornecedor_estado, fornecedor_cep, fornecedor_responsavel, estaAtivo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 if (!$stmt) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar a query: " . $conn->error]);
     exit();
 }
 
-$stmt->bind_param("ssssssssssssi", 
+$stmt->bind_param("sssssssssssssi", 
     $data['nome_empresa_fornecedor'], 
     $data['razao_social'],
     $data['email'], 
@@ -60,6 +60,7 @@ $stmt->bind_param("ssssssssssssi",
     $data['tipo'], 
     $data['endereco'], 
     $data['num_endereco'], 
+    $data['complemento'], 
     $data['cidade'], 
     $data['estado'], 
     $data['cep'], 

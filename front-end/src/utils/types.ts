@@ -24,6 +24,7 @@ export interface Client {
 	cliente_cidade: string;
 	cliente_observacoes: string;
 	cliente_data_cadastro: string;
+	cliente_complemento: string;
 	estaAtivo: number;
 }
 
@@ -42,6 +43,7 @@ export interface Supplier {
 	fornecedor_cep: string;
 	fornecedor_responsavel: string;
 	fornecedor_dtcadastro: string;
+	fornecedor_complemento: string;
 	estaAtivo: number;
 }
 

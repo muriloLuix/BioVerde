@@ -20,6 +20,7 @@ try {
         "f.fornecedor_cep", 
         "f.fornecedor_endereco", 
         "f.fornecedor_num_endereco", 
+        "f.fornecedor_complemento", 
         "f.fornecedor_cidade", 
         "f.fornecedor_estado", 
         "CASE WHEN f.estaAtivo = 1 THEN 'ATIVO' ELSE 'INATIVO' END", 

@@ -76,6 +76,7 @@ export default function UsersPage() {
 		reason: "",
 	});
 
+	//Verifica nível de acesso do usuário
 	useVerificarNivelAcesso();
 
 	/* ----- useEffects e Requisições via Axios ----- */
