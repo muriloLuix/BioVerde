@@ -38,9 +38,9 @@ const ConfirmationModal = ({
         </button>
       </AlertDialog.Trigger>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
+        <AlertDialog.Overlay className="bg-black/50 fixed inset-0 z-100" />
         <AlertDialog.Content
-          className={`fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-brancoSal rounded-xl shadow-lg`}
+          className={`fixed z-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 bg-brancoSal rounded-xl shadow-lg`}
         >
           <AlertDialog.Title className="text-xl font-[inter] font-bold">
             {confirmationModalTitle}

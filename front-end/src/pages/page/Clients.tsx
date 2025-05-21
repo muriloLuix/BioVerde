@@ -905,6 +905,7 @@ export default function Clients() {
 						{/* Modal de Observações */}
 						<Modal
 							withExitButton
+							isObsModal
 							openModal={openObsModal}
 							setOpenModal={setOpenObsModal}
 							modalWidth="min-w-[300px] max-w-[500px]"

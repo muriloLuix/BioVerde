@@ -91,6 +91,11 @@ export interface OrderStatus {
 	stapedido_nome: string;
 }
 
+export interface PositionType {
+	car_id: number;
+	car_nome: string;
+}
+
 export interface Option {
 	value: string;
 	label: string;

@@ -969,14 +969,14 @@ export default function Orders() {
 							setOpenModal={setOpenOrderModal}
 							modalWidth="min-w-[700px]"
 							modalTitle={
-								<>
+								<span>
 									Nº do Pedido: <span className="font-normal">{numOrder}</span>
-								</>
+								</span>
 							}
 							modalSecondTitle={
-								<>
+								<span>
 									Cliente: <span className="font-normal">{clientOrder}</span>
-								</>
+								</span>
 							}
 							totalPedido={totalOrder}
 						>
@@ -1080,6 +1080,7 @@ export default function Orders() {
 						{/* Modal de Observações */}
 						<Modal
 							withExitButton
+							isObsModal
 							openModal={openObsModal}
 							setOpenModal={setOpenObsModal}
 							modalWidth="min-w-[300px] max-w-[500px]"

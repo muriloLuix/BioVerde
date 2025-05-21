@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 import axios from "axios";
+import { checkAuth } from "../../utils/checkAuth";
 import { Tabs, Form } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 
 import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
-import { AccessLevel, JobPosition, User, SelectEvent } from "../../utils/types";
+import { AccessLevel, JobPosition, User, SelectEvent, PositionType } from "../../utils/types";
 import {
 	ConfirmationModal,
 	SmartField,
@@ -37,12 +38,12 @@ export default function UsersPage() {
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openPositionModal, setOpenPositionModal] = useState(false);
+	const [openPostionConfirmModal, setOpenPostionConfirmModal] = useState(false);
 	const [message, setMessage] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [usuarios, setUsuarios] = useState<User[]>([]);
-	const navigate = useNavigate();
 	const [errors, setErrors] = useState({
 		position: false,
 		level: false,
@@ -75,180 +76,15 @@ export default function UsersPage() {
 		reason: "",
 	});
 
-	console.log(formData)
-
 	useVerificarNivelAcesso();
 
+	/* ----- useEffects e Requisições via Axios ----- */
+
+	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
+	const navigate = useNavigate();
 	useEffect(() => {
-		const checkAuth = async () => {
-			try {
-				const response = await axios.get(
-					"http://localhost/BioVerde/back-end/auth/check_session.php",
-					{ withCredentials: true }
-				);
-
-				if (!response.data.loggedIn) {
-					setMessage("Sessão expirada. Por favor, faça login novamente.");
-					setOpenNoticeModal(true);
-
-					setTimeout(() => {
-						navigate("/");
-					}, 1900);
-				}
-			} catch (error) {
-				console.error("Erro ao verificar sessão:", error);
-				setMessage("Sessão expirada. Por favor, faça login novamente.");
-				setOpenNoticeModal(true);
-
-				setTimeout(() => {
-					navigate("/");
-				}, 1900);
-			}
-		};
-
-		checkAuth();
+		checkAuth({ navigate, setMessage, setOpenNoticeModal});
 	}, [navigate]);
-
-	//OnChange dos campos
-	const handleChange = (
-		event:
-			| React.ChangeEvent<
-					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-			  >
-			| InputMaskChangeEvent
-			| SelectEvent
-	) => {
-		const { name, value } = event.target;
-
-		if (name in formData) {
-			setFormData({ ...formData, [name]: value });
-		}
-		if (name in filters) {
-			setFilters({ ...filters, [name]: value });
-		}
-		if (name in deleteUser) {
-			setDeleteUser({ ...deleteUser, [name]: value });
-		}
-
-		setErrors(
-			(prevErrors) =>
-				Object.fromEntries(
-					Object.keys(prevErrors).map((key) => [key, false])
-				) as typeof prevErrors
-		);
-	};
-
-	const gerarRelatorio = async () => {
-		setLoading((prev) => new Set([...prev, "reports"]));
-
-		try {
-			const response = await axios.get(
-				"http://localhost/BioVerde/back-end/rel/usu.rel.php",
-				{
-					responseType: "blob",
-					withCredentials: true,
-				}
-			);
-
-			const contentType = response.headers["content-type"];
-
-			if (contentType !== "application/pdf") {
-				const errorText = await response.data.text();
-				throw new Error(`Erro ao gerar relatório: ${errorText}`);
-			}
-
-			const fileURL = URL.createObjectURL(
-				new Blob([response.data], { type: "application/pdf" })
-			);
-			setRelatorioContent(fileURL);
-			setRelatorioModalOpen(true);
-		} catch (error) {
-			console.error("Erro ao gerar relatório:", error);
-			setMessage("Erro ao gerar relatório");
-			setOpenNoticeModal(true);
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("reports");
-				return newLoading;
-			});
-		}
-	};
-
-	//função para puxar os dados do usuario que será editado
-	const handleEditClick = (usuario: User) => {
-		setFormData({
-			user_id: usuario.user_id,
-			name: usuario.user_nome,
-			email: usuario.user_email,
-			tel: usuario.user_telefone,
-			cpf: usuario.user_CPF,
-			cargo: usuario.car_nome,
-			nivel: usuario.nivel_nome,
-			status: String(usuario.estaAtivo),
-			password: "",
-		});
-		setOpenEditModal(true);
-	};
-
-	//função para puxar o nome do usuário que será excluido
-	const handleDeleteClick = (usuario: User) => {
-		setDeleteUser({
-			user_id: usuario.user_id,
-			dname: usuario.user_nome,
-			reason: "",
-		});
-		setOpenDeleteModal(true);
-	};
-
-	//Carrega os cargos e níveis de acesso
-	const fetchOptions = async () => {
-		try {
-			setLoading((prev) => new Set([...prev, "options"]));
-
-			const response = await axios.get(
-				"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
-				{
-					withCredentials: true,
-					headers: {
-						Accept: "application/json",
-						"Content-Type": "application/json",
-					},
-				}
-			);
-
-			if (response.data.success) {
-				setOptions({
-					cargos: response.data.cargos,
-					niveis: response.data.niveis,
-				});
-			} else {
-				setOpenNoticeModal(true);
-				setMessage(response.data.message || "Erro ao carregar opções");
-			}
-		} catch (error) {
-			setOpenNoticeModal(true);
-			setMessage("Erro ao conectar com o servidor");
-
-			if (axios.isAxiosError(error)) {
-				console.error(
-					"Erro na requisição (options):",
-					error.response?.data || error.message
-				);
-				if (error.response?.data?.message) {
-					setMessage(error.response.data.message);
-				}
-			} else {
-				console.error("Erro desconhecido (options):", error);
-			}
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("options");
-				return newLoading;
-			});
-		}
-	};
 
 	//Carrega a lista de usuario e as opções nos selects ao renderizar a página
 	useEffect(() => {
@@ -324,35 +160,25 @@ export default function UsersPage() {
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
 		try {
-			setLoading((prev) => new Set([...prev, "users", "options"]));
+			setLoading((prev) => new Set([...prev, "users"]));
 
-			const [optionsResponse, usuariosResponse] = await Promise.all([
-				axios.get(
-					"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
-					{ withCredentials: true }
-				),
-				axios.get(
-					"http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
-					{ withCredentials: true }
-				),
-			]);
+			const usuariosResponse = await axios.get(
+				"http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
+				{ withCredentials: true }
+			);
 
-			if (optionsResponse.data.success && usuariosResponse.data.success) {
-				setOptions({
-					cargos: optionsResponse.data.cargos,
-					niveis: optionsResponse.data.niveis,
-				});
+			if (usuariosResponse.data.success) {
 				setUsuarios(usuariosResponse.data.usuarios);
 				return true;
 			} else {
 				const errorMessage =
-					optionsResponse.data.message ||
 					usuariosResponse.data.message ||
 					"Erro ao carregar dados";
 				setMessage(errorMessage);
 				setOpenNoticeModal(true);
 				return false;
 			}
+
 		} catch (error) {
 			let errorMessage = "Erro ao conectar com o servidor";
 			if (axios.isAxiosError(error)) {
@@ -364,10 +190,161 @@ export default function UsersPage() {
 		} finally {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
-				["users", "options"].forEach((item) => newLoading.delete(item));
+				newLoading.delete("users");
 				return newLoading;
 			});
 		}
+	};
+
+	//Carrega os cargos e níveis de acesso
+	const fetchOptions = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "options"]));
+
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
+				{
+					withCredentials: true,
+					headers: {
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			if (response.data.success) {
+				setOptions({
+					cargos: response.data.cargos,
+					niveis: response.data.niveis,
+				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(response.data.message || "Erro ao carregar opções");
+			}
+		} catch (error) {
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+
+			if (axios.isAxiosError(error)) {
+				console.error(
+					"Erro na requisição (options):",
+					error.response?.data || error.message
+				);
+				if (error.response?.data?.message) {
+					setMessage(error.response.data.message);
+				}
+			} else {
+				console.error("Erro desconhecido (options):", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Função de Filtro de Usuários ----- */
+
+	const handleFilterSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		setLoading((prev) => new Set([...prev, "filterSubmit"]));
+		setSuccessMsg(false);
+
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/usuarios/filtro.usuario.php",
+				filters,
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+
+			console.log("Resposta do back-end:", response.data);
+
+			if (response.data.success) {
+				setUsuarios(response.data.usuarios);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(
+					response.data.message || "Nenhum usuário encontrado com esse filtro"
+				);
+			}
+		} catch (error) {
+			if (axios.isAxiosError(error) && error.response) {
+				setMessage(error.response.data.message || "Erro no servidor");
+				console.error("Erro na resposta:", error.response.data);
+			} else {
+				setMessage("Erro ao conectar com o servidor");
+				console.error("Erro na requisição:", error);
+			}
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("filterSubmit");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Funções para CRUD de Usuários ----- */
+
+	//OnChange dos campos
+	const handleChange = (
+		event:
+			| React.ChangeEvent<
+					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+			  >
+			| InputMaskChangeEvent
+			| SelectEvent
+	) => {
+		const { name, value } = event.target;
+
+		if (name in formData) {
+			setFormData({ ...formData, [name]: value });
+		}
+		if (name in filters) {
+			setFilters({ ...filters, [name]: value });
+		}
+		if (name in deleteUser) {
+			setDeleteUser({ ...deleteUser, [name]: value });
+		}
+
+		setErrors(
+			(prevErrors) =>
+				Object.fromEntries(
+					Object.keys(prevErrors).map((key) => [key, false])
+				) as typeof prevErrors
+		);
+	};
+
+	//função para puxar os dados do usuario que será editado
+	const handleEditClick = (usuario: User) => {
+		setFormData({
+			user_id: usuario.user_id,
+			name: usuario.user_nome,
+			email: usuario.user_email,
+			tel: usuario.user_telefone,
+			cpf: usuario.user_CPF,
+			cargo: usuario.car_nome,
+			nivel: usuario.nivel_nome,
+			status: String(usuario.estaAtivo),
+			password: "",
+		});
+		setOpenEditModal(true);
+	};
+
+	//função para puxar o nome do usuário que será excluido
+	const handleDeleteClick = (usuario: User) => {
+		setDeleteUser({
+			user_id: usuario.user_id,
+			dname: usuario.user_nome,
+			reason: "",
+		});
+		setOpenDeleteModal(true);
 	};
 
 	//Submit de cadastrar usuários
@@ -423,94 +400,6 @@ export default function UsersPage() {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("submit");
-				return newLoading;
-			});
-		}
-	};
-
-	//Submit de cadastrar cargos
-	const handleRegisterPosition = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "registerPosition"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/usuarios/cadastrar_cargo.php",
-				{ cargo: formData.cargo },
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await fetchOptions();
-				setOpenPositionModal(false);
-				setSuccessMsg(true);
-				setMessage("Cargo cadastrado com sucesso!");
-			} else {
-				setMessage(response.data.message || "Erro ao cadastrar Cargo");
-				setSuccessMsg(false);
-			}
-		} catch (error) {
-			let errorMessage = "Erro ao conectar com o servidor";
-			if (axios.isAxiosError(error)) {
-				errorMessage = error.response?.data?.message || error.message;
-			}
-			setMessage(errorMessage);
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("registerPosition");
-				return newLoading;
-			});
-		}
-	};
-
-	//submit de Filtrar usuários
-	const handleFilterSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "filterSubmit"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/usuarios/filtro.usuario.php",
-				filters,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				setUsuarios(response.data.usuarios);
-			} else {
-				setOpenNoticeModal(true);
-				setMessage(
-					response.data.message || "Nenhum usuário encontrado com esse filtro"
-				);
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("filterSubmit");
 				return newLoading;
 			});
 		}
@@ -619,6 +508,199 @@ export default function UsersPage() {
 		}
 	};
 
+	/* ----- Funções para CRUD de Cargos ----- */
+
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [deletedId, setDeletedId] = useState<number | null>(null);
+	const [editedValue, setEditedValue] = useState<string>("");
+
+	const handleEditPosition = (cargo: PositionType) => {
+		setEditingId(cargo.car_id);
+		setEditedValue(cargo.car_nome);
+	};
+
+	const handleDeletePosition = (cargo: PositionType) => {
+		setDeletedId(cargo.car_id);
+		setOpenPostionConfirmModal(true)
+	};
+
+	const createPosition = async (cargoNome: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		setSuccessMsg(false);
+
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/usuarios/cadastrar_cargo.php",
+				{ cargo: cargoNome },
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+
+			console.log("Resposta do back-end:", response.data);
+
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Cargo cadastrado com sucesso!");
+			} else {
+				setMessage(response.data.message || "Erro ao cadastrar Cargo");
+				setSuccessMsg(false);
+			}
+		} catch (error) {
+			let errorMessage = "Erro ao conectar com o servidor";
+			if (axios.isAxiosError(error)) {
+				errorMessage = error.response?.data?.message || error.message;
+			}
+			setMessage(errorMessage);
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+	console.log(deletedId)
+
+	const updatePosition = async (id: number, editedValue: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		setSuccessMsg(false);
+
+		try {
+			const dataToSend = {
+				car_id: id,
+				car_nome: editedValue,
+			};
+
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/usuarios/editar_cargo.php",
+				dataToSend,
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+
+			console.log("Resposta do back-end:", response.data);
+
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Cargo atualizado com sucesso!");
+			} else {
+				setMessage(response.data.message || "Erro ao atualizar cargo.");
+			}
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				setMessage(error.response?.data?.message || "Erro no servidor");
+				console.error("Erro na resposta:", error.response?.data);
+			} else {
+				setMessage("Erro ao conectar com o servidor");
+				console.error("Erro na requisição:", error);
+			}
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null); 
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		};
+	};
+
+	const deletePosition = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		setLoading((prev) => new Set([...prev, "deletePosition"]));
+		setSuccessMsg(false);
+
+		try {
+
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/usuarios/excluir_cargo.php",
+				{
+					car_id: deletedId
+				},
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+
+			if (response.data.success) {
+				await fetchOptions();
+				setOpenPostionConfirmModal(false);
+				setSuccessMsg(true);
+				setMessage("Cargo excluído com sucesso!");
+			} else {
+				setMessage(response.data.message || "Erro ao excluir cargo.");
+			}
+		} catch (error) {
+			let errorMessage = "Erro ao conectar com o servidor";
+			if (axios.isAxiosError(error)) {
+				errorMessage = error.response?.data?.message || "Erro no servidor";
+				console.error("Erro na resposta:", error.response?.data);
+			} else {
+				console.error("Erro na requisição:", error);
+			}
+			setMessage(errorMessage);
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deletePosition");
+				return newLoading;
+			});
+		}
+	}
+
+	/* ----- Outras Funções ----- */
+
+	//Gerar Relatório
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/usu.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+
+			const contentType = response.headers["content-type"];
+
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
+	};
+
+	//Gerar Senha Aleatória
 	const generatePassword = () => {
 		const charset =
 			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -643,6 +725,8 @@ export default function UsersPage() {
 				) as typeof prev
 		);
 	};
+
+	/* ----- Return da Página ----- */
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
@@ -1027,30 +1111,25 @@ export default function UsersPage() {
 									fieldName="cargo"
 									fieldText="Cargo"
 									isSelect
+									isCreatableSelect
 									error={errors.position ? "*" : undefined}
 									isLoading={loading.has("options")}
 									value={formData.cargo}
 									onChange={handleChange}
 									placeholder="Selecione o Cargo"
+									creatableConfigName="Gerenciar Cargos"
 									inputWidth="w-[275px]"
-									onChangeSelect={(e) => {
-										if (e.target.value === "nova_opcao") {
-											setOpenPositionModal(true) 
-										} else {
-											handleChange(e);
-										}
-									}}
-									options={[
-										...(userLevel === "Administrador"
-											? [{ label: "Novo Cargo", value: "nova_opcao" }]
-											: []),
-										...(options?.cargos.map((cargo) => 
-										({
+									openManagementModal={() => setOpenPositionModal(true)}
+									onCreateNewOption={createPosition}
+									onChangeSelect={handleChange}
+									options={
+										options?.cargos.map((cargo) => ({
 											label: cargo.car_nome,
 											value: cargo.car_nome,
-										})) || []),
-									]}
+										}))
+									}
 								/>
+
 							</div>
 
 							{/* Linha Nivel de Acesso e Senha*/}
@@ -1111,6 +1190,8 @@ export default function UsersPage() {
 						{/* Fim aba de cadastro de usuários*/}
 					</Tabs.Content>
 				</Tabs.Root>
+				
+				{/* ----- Modais ----- */}
 
 				{/* Modal de Avisos */}
 				<NoticeModal
@@ -1120,72 +1201,132 @@ export default function UsersPage() {
 					message={message}
 				/>
 
-				{/* Modal de Relatório */}
-				{relatorioModalOpen && (
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-xl font-bold">Relatório de Usuários</h2>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="text-gray-500 hover:text-gray-700"
-								>
-									<X size={24} />
-								</button>
-							</div>
-
-							<div className="flex-1 overflow-auto mb-4">
-								{relatorioContent ? (
-									<iframe
-										src={relatorioContent}
-										className="w-full h-full min-h-[70vh] border"
-										title="Relatório de Usuários"
-									/>
-								) : (
-									<p>Carregando relatório...</p>
-								)}
-							</div>
-
-							<div className="flex justify-end gap-4">
-								<a
-									href={relatorioContent}
-									download="relatorio_usuarios.pdf"
-									className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
-								>
-									Baixar Relatório
-								</a>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-								>
-									Fechar
-								</button>
-							</div>
-						</div>
-					</div>
-				)}
 				{/* Modal de Cadastro de Cargo */}
 				<Modal
 					openModal={openPositionModal}
 					setOpenModal={setOpenPositionModal}
-					modalTitle="Cadastro de Cargo:"
+					modalTitle="Gerenciamento de Cargos:"
 					leftButtonText="Salvar"
 					rightButtonText="Cancelar"
+					withExitButton
+					withXButton
 					loading={loading}
 					isLoading={loading.has("registerPosition")}
-					onSubmit={handleRegisterPosition}
+					// onSubmit={handleRegisterPosition}
 				>
-					<SmartField
-						fieldName="cargo"
-						fieldText="Novo Cargo"
-						type="text"
-						placeholder="Digite o nome do Novo Cargo"
-						value={formData.cargo}
-						onChange={handleChange}
-						required
-						inputWidth="w-[400px] mb-5"
-					/>
+					<div className="min-w-[30vw] max-w-[50vw] overflow-auto h-[60vh] mb-5 mt-2">
+						<table className="w-full border-collapse">
+							{/* Tabela Cabeçalho */}
+							<thead>
+								<tr className="bg-verdePigmento text-white shadow-thead">
+									{[
+										"Cargo",
+										"Ações",
+									].map((header) => (
+										<th
+											key={header}
+											className="border border-black px-4 py-4 whitespace-nowrap"
+										>
+											{header}
+										</th>
+									))}
+								</tr>
+							</thead>
+							<tbody>
+								{loading.has("options") ? (
+									<tr>
+										<td colSpan={9} className="text-center py-4">
+											<Loader2 className="animate-spin h-8 w-8 mx-auto" />
+										</td>
+									</tr>
+								) : options?.cargos.length === 0 ? (
+									<tr>
+										<td colSpan={9} className="text-center py-4">
+											Nenhum cargo encontrado
+										</td>
+									</tr>
+								) : (
+									//Tabela Dados
+									options?.cargos.map((cargo, index) => (
+										<tr
+											key={cargo.car_id}
+											className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+										>
+											<td className="border border-black p-4 text-center whitespace-nowrap">
+												{editingId === cargo.car_id ? (
+													<input
+														type="text"
+														className="border p-1"
+														value={editedValue}
+														onChange={(e) => setEditedValue(e.target.value)}
+														onKeyDown={(e) => {
+															if (e.key === "Enter") updatePosition(cargo.car_id, editedValue);
+														}}
+														autoFocus
+													/>
+												) : (
+													cargo.car_nome
+												)}
+											</td>
+											<td className="border border-black p-4 text-center whitespace-nowrap">
+												{editingId === cargo.car_id ? (
+													<>
+													<button
+														className="ml-2 cursor-pointer"
+														onClick={() => updatePosition(cargo.car_id, editedValue)}
+														title="Salvar"
+													>
+														✔
+													</button>
+													<button
+														className="ml-2 cursor-pointer"
+														onClick={() => setEditingId(null)}
+														title="Cancelar"
+													>
+														❌ 
+													</button>
+													</>
+												) : (
+													<>
+													<button
+														className="text-black cursor-pointer"
+														onClick={() => handleEditPosition(cargo)}
+														title="Editar cargo"
+													>
+														<PencilLine />
+													</button>
+													{userLevel === "Administrador" && (
+														<button
+															className="text-red-500 cursor-pointer ml-3"
+															onClick={() => handleDeletePosition(cargo)}
+															title="Excluir cargo"
+														>
+														<Trash />
+														</button>
+													)}
+													</>
+												)}
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
 				</Modal>
+
+				{/* Alert para confirmar exclusão do cargo */}
+				<ConfirmationModal
+					openModal={openPostionConfirmModal}
+					setOpenModal={setOpenPostionConfirmModal}
+					confirmationModalTitle="Tem certeza que deseja excluir o cargo?"
+					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+					onConfirm={deletePosition}
+					loading={loading}
+					isLoading={loading.has("deletePosition")}
+					confirmationLeftButtonText="Cancelar"
+					confirmationRightButtonText="Sim, excluir cargo"
+				/>
 
 				{/* Modal de Edição */}
 				<Modal
@@ -1374,6 +1515,51 @@ export default function UsersPage() {
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir usuário"
 				/>
+
+				{/* Modal de Relatório */}
+				{relatorioModalOpen && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+							<div className="flex justify-between items-center mb-4">
+								<h2 className="text-xl font-bold">Relatório de Usuários</h2>
+								<button
+									onClick={() => setRelatorioModalOpen(false)}
+									className="text-gray-500 hover:text-gray-700"
+								>
+									<X size={24} />
+								</button>
+							</div>
+
+							<div className="flex-1 overflow-auto mb-4">
+								{relatorioContent ? (
+									<iframe
+										src={relatorioContent}
+										className="w-full h-full min-h-[70vh] border"
+										title="Relatório de Usuários"
+									/>
+								) : (
+									<p>Carregando relatório...</p>
+								)}
+							</div>
+
+							<div className="flex justify-end gap-4">
+								<a
+									href={relatorioContent}
+									download="relatorio_usuarios.pdf"
+									className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+								>
+									Baixar Relatório
+								</a>
+								<button
+									onClick={() => setRelatorioModalOpen(false)}
+									className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+								>
+									Fechar
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);
