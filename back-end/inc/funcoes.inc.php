@@ -33,23 +33,42 @@ require '../../vendor/autoload.php';
  */
 function validarCampos($data, $requiredFields) {
     foreach ($requiredFields as $field) {
+
+        // verifica se esta nulo
         if (isset($data[$field])) {
-
-            $camposNumericos = ["preco"];
-
-            if (trim($data[$field]) === ''){
+            
+            // verifica se o valor veio vazio
+            if (trim($data[$field]) === '') {
                 return [
                     "success" => false,
                     "message" => "O campo '$field' é obrigatório."
                 ];
             }
+            
+            $textFields = ["nome_produto", "nome_empresa_fornecedor", "nome_empresa_cliente"];
 
-            /*if (in_array($campo, $camposNumericos) && !is_numeric($data[$campo])) {
+            // verifica se tem algum numero nos nomes
+            if (in_array($field, $textFields) && is_numeric($data[$field])) {
                 return [
                     "success" => false,
-                    "message" => "O valor do campo '$campo' é inválido."
+                    "message" => "O valor inserido no campo '$field' é inválido."
                 ];
-            } */           
+            }
+
+            // verifica se tem algum caracter especial nos nomes
+            if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
+                return [
+                    "success" => false,
+                    "message" => "O campo '$field' contém caracteres inválidos."
+                ];
+            }
+
+            if (is_numeric($data[$field]) && floatval($data[$field]) <= 0) {
+                return [
+                    "success" => false,
+                    "message" => "O valor inserido no campo '$field' é inválido."
+                ];
+            }
         }
     }
     return null;

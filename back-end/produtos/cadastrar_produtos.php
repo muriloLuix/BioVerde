@@ -26,7 +26,7 @@ $data = json_decode($rawData, true);
 
 
 // Validação dos campos obrigatórios
-$camposObrigatorios = ['nome_produto', 'tipo', 'status', 'preco', 'fornecedor'];
+$camposObrigatorios = ['nome_produto', 'tipo', 'status', 'preco', 'fornecedor', 'lote'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 
 if ($validacaoDosCampos !== null) {

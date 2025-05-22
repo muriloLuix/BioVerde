@@ -54,7 +54,6 @@ export default function InventoryControl() {
 		status: false,
 		price: false,
 		supplier: false,
-		batch: false,
 	});
 	const [formData, setFormData] = useState({
 		produto_id: 0,
@@ -329,7 +328,6 @@ export default function InventoryControl() {
 			type: !formData.tipo,
 			price: formData.preco < 0.0,
 			supplier: !formData.fornecedor,
-			batch: formData.lote < 1,
 		};
 		setErrors(errors);
 
@@ -444,7 +442,6 @@ export default function InventoryControl() {
 			status: false,
 			price: !formData.preco,
 			supplier: !formData.fornecedor,
-			batch: formData.lote < 1,
 		};
 		setErrors(errors);
 

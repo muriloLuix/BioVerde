@@ -40,7 +40,6 @@ export default function Suppliers() {
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
 	const [errors, setErrors] = useState({
-		number: false,
 		states: false,
 	});
 	const [formData, setFormData] = useState({
@@ -346,7 +345,6 @@ export default function Suppliers() {
 
 		// Validações
 		const errors = {
-			number: formData.num_endereco < 1,
 			states: !formData.estado,
 		};
 
@@ -459,7 +457,6 @@ export default function Suppliers() {
 
 		// Validações
 		const errors = {
-			number: formData.num_endereco < 1,
 			states: !formData.estado,
 		};
 

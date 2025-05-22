@@ -44,7 +44,6 @@ export default function Clients() {
 	const [clientes, setClientes] = useState<Client[]>([]);
 	const [errors, setErrors] = useState({
 		states: false,
-		addressNumber: false,
 	});
 	const [formData, setFormData] = useState({
 		cliente_id: 0,
@@ -353,7 +352,6 @@ export default function Clients() {
 		// Validações
 		const errors = {
 			states: !formData.estado,
-			addressNumber: formData.num_endereco < 1,
 		};
 		setErrors(errors);
 
