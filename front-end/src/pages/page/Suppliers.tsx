@@ -16,7 +16,7 @@ import {
 // import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier, SelectEvent } from "../../utils/types";
+import { Supplier, SelectEvent, PlaceData } from "../../utils/types";
 import {
 	SmartField,
 	ConfirmationModal,
@@ -39,6 +39,7 @@ export default function Suppliers() {
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
+	const [places, setPlaces] = useState<PlaceData[]>();
 	const [errors, setErrors] = useState({
 		states: false,
 	});
@@ -77,6 +78,7 @@ export default function Suppliers() {
 	// useVerificarNivelAcesso();
 
 	const navigate = useNavigate();
+
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
@@ -238,26 +240,37 @@ export default function Suppliers() {
 			try {
 				setLoading((prev) => new Set([...prev, "suppliers", "options"]));
 
-				const [fornecedoresResponse, userLevelResponse] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-				]);
+				const [fornecedoresResponse, userLevelResponse, ufResponse] =
+					await Promise.all([
+						axios.get(
+							"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+							{
+								withCredentials: true,
+								headers: {
+									Accept: "application/json",
+								},
+							}
+						),
+						axios.get(
+							"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+							{
+								withCredentials: true,
+								headers: { "Content-Type": "application/json" },
+							}
+						),
+						axios.get(
+							"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+						),
+					]);
 
 				console.log("Resposta do back-end:", fornecedoresResponse.data);
+
+				if (ufResponse.status === 200) {
+					setPlaces(ufResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
 
 				if (fornecedoresResponse.data.success) {
 					setFornecedores(fornecedoresResponse.data.fornecedores || []);
@@ -731,35 +744,10 @@ export default function Suppliers() {
 										autoComplete="address-level1"
 										inputWidth="w-[250px]"
 										onChangeSelect={handleChange}
-										options={[
-											{ value: "AC", label: "Acre" },
-											{ value: "AL", label: "Alagoas" },
-											{ value: "AP", label: "Amapá" },
-											{ value: "AM", label: "Amazonas" },
-											{ value: "BA", label: "Bahia" },
-											{ value: "CE", label: "Ceará" },
-											{ value: "DF", label: "Distrito Federal" },
-											{ value: "ES", label: "Espírito Santo" },
-											{ value: "GO", label: "Goiás" },
-											{ value: "MA", label: "Maranhão" },
-											{ value: "MT", label: "Mato Grosso" },
-											{ value: "MS", label: "Mato Grosso do Sul" },
-											{ value: "MG", label: "Minas Gerais" },
-											{ value: "PA", label: "Pará" },
-											{ value: "PB", label: "Paraíba" },
-											{ value: "PR", label: "Paraná" },
-											{ value: "PE", label: "Pernambuco" },
-											{ value: "PI", label: "Piauí" },
-											{ value: "RJ", label: "Rio de Janeiro" },
-											{ value: "RN", label: "Rio Grande do Norte" },
-											{ value: "RS", label: "Rio Grande do Sul" },
-											{ value: "RO", label: "Rondônia" },
-											{ value: "RR", label: "Roraima" },
-											{ value: "SC", label: "Santa Catarina" },
-											{ value: "SP", label: "São Paulo" },
-											{ value: "SE", label: "Sergipe" },
-											{ value: "TO", label: "Tocantins" },
-										]}
+										options={places?.map((place) => ({
+											label: place.nome,
+											value: place.sigla,
+										}))}
 									/>
 
 									<Form.Submit asChild>
@@ -1121,35 +1109,11 @@ export default function Suppliers() {
 									error={errors.states ? "*" : undefined}
 									inputWidth="w-[220px]"
 									onChangeSelect={handleChange}
-									options={[
-										{ value: "AC", label: "Acre" },
-										{ value: "AL", label: "Alagoas" },
-										{ value: "AP", label: "Amapá" },
-										{ value: "AM", label: "Amazonas" },
-										{ value: "BA", label: "Bahia" },
-										{ value: "CE", label: "Ceará" },
-										{ value: "DF", label: "Distrito Federal" },
-										{ value: "ES", label: "Espírito Santo" },
-										{ value: "GO", label: "Goiás" },
-										{ value: "MA", label: "Maranhão" },
-										{ value: "MT", label: "Mato Grosso" },
-										{ value: "MS", label: "Mato Grosso do Sul" },
-										{ value: "MG", label: "Minas Gerais" },
-										{ value: "PA", label: "Pará" },
-										{ value: "PB", label: "Paraíba" },
-										{ value: "PR", label: "Paraná" },
-										{ value: "PE", label: "Pernambuco" },
-										{ value: "PI", label: "Piauí" },
-										{ value: "RJ", label: "Rio de Janeiro" },
-										{ value: "RN", label: "Rio Grande do Norte" },
-										{ value: "RS", label: "Rio Grande do Sul" },
-										{ value: "RO", label: "Rondônia" },
-										{ value: "RR", label: "Roraima" },
-										{ value: "SC", label: "Santa Catarina" },
-										{ value: "SP", label: "São Paulo" },
-										{ value: "SE", label: "Sergipe" },
-										{ value: "TO", label: "Tocantins" },
-									]}
+									options={places?.map((place) => ({
+										label: place.nome,
+										value: place.sigla,
+									}))}
+									isDisabled={!!formData.cep}
 								/>
 
 								<SmartField
@@ -1162,6 +1126,7 @@ export default function Suppliers() {
 									onChange={handleChange}
 									autoComplete="address-level2"
 									inputWidth="w-[220px]"
+									disabled={formData.cep.trim() !== ""}
 								/>
 							</div>
 

@@ -23,7 +23,7 @@ import {
 } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Client, SelectEvent } from "../../utils/types";
+import { Client, PlaceData, SelectEvent } from "../../utils/types";
 
 export default function Clients() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -75,6 +75,7 @@ export default function Clients() {
 		dnome_cliente: "",
 		reason: "",
 	});
+	const [places, setPlaces] = useState<PlaceData[]>();
 
 	const handleObsClick = (cliente: Client) => {
 		setCurrentObs(cliente.cliente_observacoes);
@@ -82,6 +83,7 @@ export default function Clients() {
 	};
 
 	const navigate = useNavigate();
+
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
@@ -244,26 +246,37 @@ export default function Clients() {
 			try {
 				setLoading((prev) => new Set([...prev, "clients", "options"]));
 
-				const [clientesResponse, userLevelResponse] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-				]);
+				const [clientesResponse, userLevelResponse, placeResponse] =
+					await Promise.all([
+						axios.get(
+							"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+							{
+								withCredentials: true,
+								headers: {
+									Accept: "application/json",
+								},
+							}
+						),
+						axios.get(
+							"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+							{
+								withCredentials: true,
+								headers: { "Content-Type": "application/json" },
+							}
+						),
+						axios.get(
+							"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+						),
+					]);
 
 				console.log("Resposta do back-end:", clientesResponse.data);
+
+				if (placeResponse.status === 200) {
+					setPlaces(placeResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
 
 				if (clientesResponse.data.success) {
 					setClientes(clientesResponse.data.clientes || []);
@@ -659,35 +672,10 @@ export default function Clients() {
 										autoComplete="address-level1"
 										inputWidth="w-[200px]"
 										onChangeSelect={handleChange}
-										options={[
-											{ value: "AC", label: "Acre" },
-											{ value: "AL", label: "Alagoas" },
-											{ value: "AP", label: "Amapá" },
-											{ value: "AM", label: "Amazonas" },
-											{ value: "BA", label: "Bahia" },
-											{ value: "CE", label: "Ceará" },
-											{ value: "DF", label: "Distrito Federal" },
-											{ value: "ES", label: "Espírito Santo" },
-											{ value: "GO", label: "Goiás" },
-											{ value: "MA", label: "Maranhão" },
-											{ value: "MT", label: "Mato Grosso" },
-											{ value: "MS", label: "Mato Grosso do Sul" },
-											{ value: "MG", label: "Minas Gerais" },
-											{ value: "PA", label: "Pará" },
-											{ value: "PB", label: "Paraíba" },
-											{ value: "PR", label: "Paraná" },
-											{ value: "PE", label: "Pernambuco" },
-											{ value: "PI", label: "Piauí" },
-											{ value: "RJ", label: "Rio de Janeiro" },
-											{ value: "RN", label: "Rio Grande do Norte" },
-											{ value: "RS", label: "Rio Grande do Sul" },
-											{ value: "RO", label: "Rondônia" },
-											{ value: "RR", label: "Roraima" },
-											{ value: "SC", label: "Santa Catarina" },
-											{ value: "SP", label: "São Paulo" },
-											{ value: "SE", label: "Sergipe" },
-											{ value: "TO", label: "Tocantins" },
-										]}
+										options={places?.map((place) => ({
+											label: place.nome,
+											value: place.sigla,
+										}))}
 									/>
 								</div>
 
@@ -1117,35 +1105,11 @@ export default function Clients() {
 									error={errors.states ? "*" : undefined}
 									inputWidth="w-[200px]"
 									onChangeSelect={handleChange}
-									options={[
-										{ value: "AC", label: "Acre" },
-										{ value: "AL", label: "Alagoas" },
-										{ value: "AP", label: "Amapá" },
-										{ value: "AM", label: "Amazonas" },
-										{ value: "BA", label: "Bahia" },
-										{ value: "CE", label: "Ceará" },
-										{ value: "DF", label: "Distrito Federal" },
-										{ value: "ES", label: "Espírito Santo" },
-										{ value: "GO", label: "Goiás" },
-										{ value: "MA", label: "Maranhão" },
-										{ value: "MT", label: "Mato Grosso" },
-										{ value: "MS", label: "Mato Grosso do Sul" },
-										{ value: "MG", label: "Minas Gerais" },
-										{ value: "PA", label: "Pará" },
-										{ value: "PB", label: "Paraíba" },
-										{ value: "PR", label: "Paraná" },
-										{ value: "PE", label: "Pernambuco" },
-										{ value: "PI", label: "Piauí" },
-										{ value: "RJ", label: "Rio de Janeiro" },
-										{ value: "RN", label: "Rio Grande do Norte" },
-										{ value: "RS", label: "Rio Grande do Sul" },
-										{ value: "RO", label: "Rondônia" },
-										{ value: "RR", label: "Roraima" },
-										{ value: "SC", label: "Santa Catarina" },
-										{ value: "SP", label: "São Paulo" },
-										{ value: "SE", label: "Sergipe" },
-										{ value: "TO", label: "Tocantins" },
-									]}
+									options={places?.map((place) => ({
+										label: place.nome,
+										value: place.sigla,
+									}))}
+									isDisabled={!!formData.cep}
 								/>
 
 								<SmartField
@@ -1158,6 +1122,7 @@ export default function Clients() {
 									onChange={handleChange}
 									autoComplete="address-level2"
 									inputWidth="w-[200px]"
+									disabled={formData.cep.trim() !== ""}
 								/>
 							</div>
 

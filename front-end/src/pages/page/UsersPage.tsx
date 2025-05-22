@@ -64,7 +64,7 @@ export default function UsersPage() {
 		fname: "",
 		fcargo: "",
 		fcpf: "",
-		fnivel: "", 	
+		fnivel: "",
 		ftel: "",
 		fstatus: "",
 		fdataCadastro: "",
@@ -75,7 +75,7 @@ export default function UsersPage() {
 		reason: "",
 	});
 
-	console.log(formData)
+	console.log(formData);
 
 	useVerificarNivelAcesso();
 
@@ -274,7 +274,7 @@ export default function UsersPage() {
 						}
 					),
 				]);
-				
+
 				await fetchOptions();
 
 				if (userLevelResponse.data.success) {
@@ -708,12 +708,10 @@ export default function UsersPage() {
 										placeholder="Selecione o Cargo"
 										inputWidth="w-[280px]"
 										onChangeSelect={handleChange}
-										options={
-											options?.cargos.map((cargo) => ({
-												label: cargo.car_nome,
-												value: cargo.car_nome,
-											}))
-										}
+										options={options?.cargos.map((cargo) => ({
+											label: cargo.car_nome,
+											value: cargo.car_nome,
+										}))}
 									/>
 								</div>
 
@@ -743,12 +741,10 @@ export default function UsersPage() {
 										placeholder="Selecione"
 										inputWidth="w-[210px]"
 										onChangeSelect={handleChange}
-										options={
-											options?.niveis.map((nivel) => ({
-												label: nivel.nivel_nome,
-												value: nivel.nivel_nome,
-											}))
-										}
+										options={options?.niveis.map((nivel) => ({
+											label: nivel.nivel_nome,
+											value: nivel.nivel_nome,
+										}))}
 									/>
 								</div>
 
@@ -1035,7 +1031,7 @@ export default function UsersPage() {
 									inputWidth="w-[275px]"
 									onChangeSelect={(e) => {
 										if (e.target.value === "nova_opcao") {
-											setOpenPositionModal(true) 
+											setOpenPositionModal(true);
 										} else {
 											handleChange(e);
 										}
@@ -1044,8 +1040,7 @@ export default function UsersPage() {
 										...(userLevel === "Administrador"
 											? [{ label: "Novo Cargo", value: "nova_opcao" }]
 											: []),
-										...(options?.cargos.map((cargo) => 
-										({
+										...(options?.cargos.map((cargo) => ({
 											label: cargo.car_nome,
 											value: cargo.car_nome,
 										})) || []),
@@ -1065,14 +1060,11 @@ export default function UsersPage() {
 									placeholder="Selecione o nível de acesso"
 									inputWidth="w-[275px]"
 									onChangeSelect={handleChange}
-									options={
-										options?.niveis.map((nivel) => ({
-											label: nivel.nivel_nome,
-											value: nivel.nivel_nome,
-										}))
-									}
+									options={options?.niveis.map((nivel) => ({
+										label: nivel.nivel_nome,
+										value: nivel.nivel_nome,
+									}))}
 								/>
-
 
 								<SmartField
 									isPassword
@@ -1280,7 +1272,6 @@ export default function UsersPage() {
 
 					{/* Linha Cargo e Nivel de Acesso */}
 					<div className="flex gap-x-15 mb-10 items-center justify-between">
-
 						<SmartField
 							fieldName="cargo"
 							fieldText="Cargo"
@@ -1292,12 +1283,10 @@ export default function UsersPage() {
 							placeholder="Selecione o Cargo"
 							inputWidth="w-[300px]"
 							onChangeSelect={handleChange}
-							options={
-								options?.cargos.map((cargo) => ({
-									label: cargo.car_nome,
-									value: cargo.car_nome,
-								}))
-							}
+							options={options?.cargos.map((cargo) => ({
+								label: cargo.car_nome,
+								value: cargo.car_nome,
+							}))}
 						/>
 
 						<SmartField
@@ -1311,12 +1300,10 @@ export default function UsersPage() {
 							placeholder="Selecione o Nível"
 							inputWidth="w-[300px]"
 							onChangeSelect={handleChange}
-							options={
-								options?.niveis.map((nivel) => ({
-									label: nivel.nivel_nome,
-									value: nivel.nivel_nome,
-								}))
-							}
+							options={options?.niveis.map((nivel) => ({
+								label: nivel.nivel_nome,
+								value: nivel.nivel_nome,
+							}))}
 						/>
 					</div>
 				</Modal>

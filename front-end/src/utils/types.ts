@@ -102,3 +102,9 @@ export interface SelectEvent {
 		value: string;
 	};
 }
+
+export interface PlaceData {
+	id: number;
+	sigla: string;
+	nome: string;
+}

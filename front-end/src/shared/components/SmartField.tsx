@@ -301,7 +301,7 @@ const SmartField = ({
 							id={regex(fieldName)}
 							required={required}
 							value={value}
-							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
+							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] disabled:opacity-60 disabled:bg-gray-200`}
 						/>
 					)}
 				</Form.Control>
