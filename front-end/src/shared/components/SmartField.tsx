@@ -26,6 +26,7 @@ type InputPropsBase = {
 	fieldName: string;
 	fieldClassname?: string;
 	fieldText: string;
+	userLevel?: string;
 	children?: React.ReactNode;
 	creatableConfigName?: string;
 	openManagementModal?: () => void;
@@ -59,6 +60,7 @@ const SmartField = ({
 	isPassword,
 	isCreatableSelect,
 	options,
+	userLevel,
 	value,
 	creatableConfigName,
 	onChangeSelect,
@@ -83,14 +85,16 @@ const SmartField = ({
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
 				{isSelect || isPassword || isPrice || isCreatableSelect ? (
 					<div className="flex items-center pb-1 gap-2">
-						{isCreatableSelect && 
-							<button 
-								title={creatableConfigName}
-								onClick={openManagementModal}
-							>
-								<Settings size={20} className="text-gray-600 cursor-pointer" />
-							</button>
-						}
+						{userLevel === "Administrador" && (
+							isCreatableSelect && (
+								<button 
+									title={creatableConfigName}
+									onClick={openManagementModal}
+								>
+									<Settings size={20} className="text-gray-600 cursor-pointer" />
+								</button>
+							) 
+						)}
 						{error && (
 						<span
 							className={`text-red-500 ${

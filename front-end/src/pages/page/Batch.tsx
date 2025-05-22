@@ -14,6 +14,7 @@ interface BatchForm {
     lote_quantidade: string;
     lote_obs: string;
     produto_id: number;
+    produto_nome: string;
     uni_id: number;
 }
 
@@ -36,19 +37,22 @@ const Batchs = () => {
         lote_quantidade: "",
         lote_obs: "",
         produto_id: 0,
+        produto_nome: "",
         uni_id: 0,
     });
 
     const handleChange = (
-        event:
-            | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        event: 
+            | React.ChangeEvent<
+                HTMLInputElement | HTMLTextAreaElement
+              > 
             | SelectEvent
     ) => {
-        const {name, value} = event.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+
+        const { name, value } = event.target;
+        if (name in formData) {
+			setFormData({ ...formData, [name]: value });
+		}
     };
 
     // Função que busca as opções de produto
@@ -109,21 +113,14 @@ const Batchs = () => {
     // Definição de colunas e dados estáticos (você pode também buscar do backend aqui)
     const gridRef = useRef<AgGridReact>(null);
     const [columnDefs] = useState<ColDef[]>([
-        {field: "id", filter: true, width: 100},
-        {field: "produtos", filter: true, width: 230},
-        {field: "quantidade", width: 150},
-        {
-            field: "dataDeFabricacao",
-            filter: "agDateColumnFilter",
-            width: 200,
-        },
-        {
-            field: "dataDeValidade",
-            filter: "agDateColumnFilter",
-            width: 200,
-        },
-        {field: "observacao", width: 300},
+        { field: "lote_id", headerName: "Id", filter: true, width: 100 },
+        { field: "produto_nome", headerName: "Produtos", filter: true, width: 230 },
+        { field: "lote_quantidade", headerName: "Quantidade", width: 150 },
+        { field: "lote_dtFabricacao", headerName: "Data De Fabricação", width: 200 },
+        { field: "lote_dtExpiracao", headerName: "Data De Validade", width: 200 },
+        { field: "lote_obs", headerName: "Observação", width: 300 },
     ]);
+
     const [rowData, setRowData] = useState<Batch[]>([]);
 
     const fetchLotes = async () => {
@@ -142,11 +139,15 @@ const Batchs = () => {
             );
 
             if (response.data.success) {
-                const lotesConvertidos = response.data.lotes.map((lote: any) => ({
-                    ...lote,
-                    dataDeFabricacao: new Date(lote.dataDeFabricacao),
-                    dataDeValidade: new Date(lote.dataDeValidade),
+                const lotesConvertidos = response.data.lotes.map((lote: BatchForm) => ({
+                    id: lote.lote_id,
+                    produtos: lote.produto_nome,
+                    quantidade: lote.lote_quantidade,
+                    dataDeFabricacao: lote.lote_dtFabricacao,
+                    dataDeValidade: lote.lote_dtExpiracao,
+                    observacao: lote.lote_obs,
                 }));
+
                 setRowData(lotesConvertidos);
             } else {
                 setOpenNoticeModal(true);
@@ -169,7 +170,6 @@ const Batchs = () => {
             });
         }
     };
-
 
     return (
         <div className="h-screen w-full flex-1 p-6 pl-[280px]">
@@ -208,7 +208,7 @@ const Batchs = () => {
                             rightButtonText="Cancelar"
                         >
                             <SmartField
-                                fieldName="produto"
+                                fieldName="produto_nome"
                                 fieldText="Produto"
                                 isSelect
                                 placeholder="Selecione o produto"
@@ -222,7 +222,7 @@ const Batchs = () => {
                                         : []
                                 }
 
-                                value={formData.produto}
+                                value={formData.produto_nome}
                                 onChangeSelect={handleChange}
                             />
                             <SmartField

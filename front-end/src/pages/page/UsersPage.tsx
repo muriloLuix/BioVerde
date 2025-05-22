@@ -1112,7 +1112,7 @@ export default function UsersPage() {
 									fieldName="cargo"
 									fieldText="Cargo"
 									isSelect
-									isCreatableSelect
+									isCreatableSelect={userLevel === "Administrador" ? true : false}
 									error={errors.position ? "*" : undefined}
 									isLoading={loading.has("options")}
 									value={formData.cargo}
@@ -1120,6 +1120,7 @@ export default function UsersPage() {
 									placeholder="Selecione o Cargo"
 									creatableConfigName="Gerenciar Cargos"
 									inputWidth="w-[275px]"
+									userLevel={userLevel}
 									openManagementModal={() => setOpenPositionModal(true)}
 									onCreateNewOption={createPosition}
 									onChangeSelect={handleChange}
@@ -1213,7 +1214,6 @@ export default function UsersPage() {
 					withXButton
 					loading={loading}
 					isLoading={loading.has("registerPosition")}
-					// onSubmit={handleRegisterPosition}
 				>
 					<div className="min-w-[30vw] max-w-[50vw] overflow-auto h-[60vh] mb-5 mt-2">
 						<table className="w-full border-collapse">
