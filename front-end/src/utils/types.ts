@@ -3,6 +3,7 @@ export interface Product {
 	produto_nome: string;
 	tproduto_nome: string;
 	produto_preco: string;
+	lote_nome: number;
 	lote_id: number;
 	fornecedor_nome_ou_empresa: string;
 	produto_observacoes: string;
@@ -60,17 +61,24 @@ export interface User {
 }
 
 export interface Batch {
-	id: number;
-	produtos: string[];
-	quantidade: number[];
-	dataDeFabricacao: Date;
-	dataDeValidade: Date;
-	observacao: string;
+	lote_id: number;
+    lote_dtFabricacao: Date;
+    lote_dtExpiracao: Date;
+    lote_quantidade: string;
+    lote_obs: string;
+    produto_nome: string;
+    uni_sigla: string;
 }
 
 export interface JobPosition {
 	car_id: number;
 	car_nome: string;
+}
+
+export interface Unit {
+	uni_id: number;
+	uni_nome: string;
+	uni_sigla: string;
 }
 
 export interface AccessLevel {

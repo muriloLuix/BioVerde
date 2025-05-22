@@ -13,9 +13,13 @@ try {
     // Buscar produtos
     $produtos = buscarProdutos($conn);
 
+    $unidade_medida = unidMedida($conn);
+
     echo json_encode([
         "success" => true,
-        "produtos" => $produtos
+        "produtos" => $produtos,
+        "unidade_medida" => $unidade_medida
+
     ]);
 
 } catch (Exception $e) {

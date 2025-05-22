@@ -45,7 +45,8 @@ if ($verifyName !== null) {
 }
 
 // Verificar ID do status
-$sta_id = verificarStatus($conn, $data['status']);
+$status = (int)$data['status'];
+$sta_id = verificarStatus($conn, $status);
 if ($sta_id === null) {
     error_log("Status inválido fornecido: " . $data['status']);
     echo json_encode([
@@ -76,12 +77,13 @@ if (!$fornecedor) {
 $fornecedor_id = $fornecedor['fornecedor_id'];
 
 // Verificar ID do tipo
-$tp_id = verificarTipo($conn, $data['tipo']);
+$tipo = (int)$data['tipo'];
+$tp_id = verificarTipo($conn, $tipo);
 if ($tp_id === null) {
     error_log("Tipo inválido fornecido: " . $data['tipo']);
     echo json_encode([
         "success" => false,
-        "message" => "Tipo inválido. O valor '" . $data['tipo'] . "' não existe na tabela de status."
+        "message" => "Tipo inválido. O valor '" . $data['tipo'] . "' não existe na tabela de tipos de produtos."
     ]);
     exit();
 }

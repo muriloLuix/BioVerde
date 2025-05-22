@@ -18,6 +18,7 @@ import {
 	ProductType,
 	ProductStatus,
 	Supplier,
+	Batch,
 	SelectEvent,
 } from "../../utils/types";
 import {
@@ -30,6 +31,7 @@ import {
 interface ProductOptions {
 	tipos: ProductType[];
 	status: ProductStatus[];
+	lotes: Batch[];
 }
 
 export default function InventoryControl() {
@@ -80,6 +82,8 @@ export default function InventoryControl() {
 	useEffect(() => {
 		fetchData();
 	}, []);
+
+	console.log(formData)
 	
 	//OnChange dos campos
 	const handleChange = (
@@ -172,7 +176,10 @@ export default function InventoryControl() {
 				options?.status
 					.find((status) => status.staproduto_nome === produto.staproduto_nome)
 					?.staproduto_id.toString() ?? "",
-			lote: produto.lote_id,
+			lote: 
+				options?.lotes
+					.find((lote) => lote.lote_id === produto.lote_id)
+					?.lote_id ?? 0,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
 			fornecedor: produto.fornecedor_nome_ou_empresa,
 			obs: produto.produto_observacoes,
@@ -193,7 +200,6 @@ export default function InventoryControl() {
 
 	const fetchData = async () => {
 		try {
-		
 			setLoading((prev) => new Set([...prev, "products", "options"]));
 
 			const [productsAndOptions, userLevelResponse, suppliersResponse] = await Promise.all([
@@ -228,6 +234,7 @@ export default function InventoryControl() {
 				setOptions({
 					tipos: productsAndOptions.data.tp_produto ?? [],
 					status: productsAndOptions.data.status_produto ?? [],
+					lotes: productsAndOptions.data.lotes ?? [],
 				});
 			} else {
 				setOpenNoticeModal(true);
