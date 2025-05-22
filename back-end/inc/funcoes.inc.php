@@ -47,19 +47,21 @@ function validarCampos($data, $requiredFields) {
             
             $textFields = ["nome_produto", "nome_empresa_fornecedor", "nome_empresa_cliente"];
 
-            // verifica se tem algum numero nos nomes
+            // em pessoas fisicas e produtos, verifica se tem algum numero nos nomes
             if (in_array($field, $textFields) && is_numeric($data[$field])) {
-                return [
-                    "success" => false,
-                    "message" => "O valor inserido no campo '$field' é inválido."
-                ];
+                if($data["tipo"] === "fisica" || $field === "nome_produto"){
+                    return [
+                        "success" => false,
+                        "message" => "O valor inserido no campo '$field' é inválido"
+                    ];
+                }
             }
-
+            
             // verifica se tem algum caracter especial nos nomes
             if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
                 return [
                     "success" => false,
-                    "message" => "O campo '$field' contém caracteres inválidos."
+                    "message" => "O campo '$field' contém caracteres inválidos"
                 ];
             }
 
@@ -67,7 +69,7 @@ function validarCampos($data, $requiredFields) {
             if (is_numeric($data[$field]) && floatval($data[$field]) <= 0) {
                 return [
                     "success" => false,
-                    "message" => "O valor inserido no campo '$field' é inválido."
+                    "message" => "O valor inserido no campo '$field' é inválido"
                 ];
             }
         }
