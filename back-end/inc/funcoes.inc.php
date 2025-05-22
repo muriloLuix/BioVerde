@@ -36,7 +36,7 @@ function validarCampos($data, $requiredFields) {
 
         // verifica se esta nulo
         if (isset($data[$field])) {
-            
+
             // verifica se o valor veio vazio
             if (trim($data[$field]) === '') {
                 return [
@@ -63,6 +63,7 @@ function validarCampos($data, $requiredFields) {
                 ];
             }
 
+            // verifica se tem valores negativos
             if (is_numeric($data[$field]) && floatval($data[$field]) <= 0) {
                 return [
                     "success" => false,
