@@ -10,7 +10,7 @@ import Select, {
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
-import { EyeOff, Eye, Plus } from "lucide-react";
+import { EyeOff, Eye, Settings } from "lucide-react";
 
 import { Option } from "../../utils/types";
 
@@ -31,7 +31,10 @@ type InputPropsBase = {
 	fieldName: string;
 	fieldClassname?: string;
 	fieldText: string;
+	userLevel?: string;
 	children?: React.ReactNode;
+	creatableConfigName?: string;
+	openManagementModal?: () => void;
 	generatePassword?: () => void;
 	onChangeSelect?: (e: { target: { name: string; value: string } }) => void;
 };
@@ -59,8 +62,12 @@ const SmartField = ({
 	isPassword,
 	isCreatableSelect,
 	options,
+	userLevel,
 	value,
+	creatableConfigName,
 	onChangeSelect,
+	onCreateNewOption,
+	openManagementModal,
 	generatePassword,
 	...rest
 }: InputProps) => {
@@ -96,8 +103,8 @@ const SmartField = ({
 				className="flex justify-between items-center"
 			>
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
-				{isSelect || isPassword || isPrice || isCreatableSelect ? (
-					error && (
+				<div className="flex items-center pb-1 gap-2">
+					{error && (
 						<span
 							className={`text-red-500 ${
 								error === "*" ? "text-base" : "text-xs"
@@ -105,89 +112,149 @@ const SmartField = ({
 						>
 							{error}
 						</span>
-					)
-				) : (
-					<>
-						<Form.Message
-							className="text-red-500 text-base"
-							match="valueMissing"
-						>
-							*
-						</Form.Message>
-						<Form.Message className="text-red-500 text-xs" match="typeMismatch">
-							Insira um e-mail válido*
-						</Form.Message>
-						<Form.Message
-							className="text-red-500 text-xs"
-							match="patternMismatch"
-						>
-							Formato inválido*
-						</Form.Message>
-						<Form.Message
-							className="text-red-500 text-xs"
-							match="rangeUnderflow"
-						>
-							Valor inválido*
-						</Form.Message>
-					</>
-				)}
+					)}
+
+					<Form.Message className="text-red-500 text-base" match="valueMissing">
+						*
+					</Form.Message>
+					<Form.Message className="text-red-500 text-xs" match="typeMismatch">
+						Insira um e-mail válido*
+					</Form.Message>
+					<Form.Message
+						className="text-red-500 text-xs"
+						match="patternMismatch"
+					>
+						Formato inválido*
+					</Form.Message>
+					<Form.Message className="text-red-500 text-xs" match="rangeUnderflow">
+						Valor inválido*
+					</Form.Message>
+
+					{userLevel === "Administrador" && isCreatableSelect && (
+						<button title={creatableConfigName} onClick={openManagementModal}>
+							<Settings size={20} className="text-gray-600 cursor-pointer" />
+						</button>
+					)}
+				</div>
 			</Form.Label>
 			{isSelect ? (
 				<div className="relative">
-					<Select
-						isClearable
-						{...(rest as Props<Option, false, GroupBase<Option>>)}
-						name={regex(fieldName)}
-						id={regex(fieldName)}
-						classNamePrefix="react-select"
-						className={`react-select-container ${inputWidth}`}
-						isLoading={isLoading}
-						closeMenuOnSelect
-						menuShouldScrollIntoView
-						hideSelectedOptions
-						components={{ Option: CustomCreateOption }}
-						options={options}
-						value={options?.find((opt) => opt.value === value) || null}
-						onChange={(selectedOption) => {
-							onChangeSelect?.({
-								target: {
-									name: fieldName,
-									value: String(selectedOption?.value || ""),
-								},
-							});
-						}}
-						styles={{
-							control: (base) => ({
-								...base,
-								borderRadius: "0.5rem",
-								minHeight: "45.6px",
-								"&:hover": {
-									borderColor: "#9ca3af",
-								},
-							}),
-							menu: (base) => ({
-								...base,
-								borderRadius: "0.5rem",
-								overflow: "hidden",
-							}),
-							option: (base, state) => {
-								const isNewOption = state.data.value === "nova_opcao";
+					{isCreatableSelect ? (
+						<CreatableSelect
+							isClearable
+							{...(rest as CreatableProps<Option, false, GroupBase<Option>>)}
+							name={regex(fieldName)}
+							id={regex(fieldName)}
+							classNamePrefix="react-select"
+							className={`react-select-container ${inputWidth}`}
+							isLoading={isLoading}
+							closeMenuOnSelect
+							menuShouldScrollIntoView
+							hideSelectedOptions
+							noOptionsMessage={() => "Nenhuma opção encontrada"}
+							loadingMessage={() => "Carregando..."}
+							formatCreateLabel={(inputValue) => `Criar "${inputValue}"`}
+							options={options}
+							value={options?.find((opt) => opt.value === value) || null}
+							onChange={(selectedOption) => {
+								onChangeSelect?.({
+									target: {
+										name: fieldName,
+										value: String(selectedOption?.value || ""),
+									},
+								});
+							}}
+							onCreateOption={async (inputValue) => {
+								if (onCreateNewOption) {
+									await onCreateNewOption(inputValue);
+								}
 
-								return {
+								onChangeSelect?.({
+									target: {
+										name: fieldName,
+										value: inputValue,
+									},
+								});
+							}}
+							styles={{
+								control: (base) => ({
+									...base,
+									borderRadius: "0.5rem",
+									minHeight: "45.6px",
+									"&:hover": {
+										borderColor: "#9ca3af",
+									},
+								}),
+								menu: (base) => ({
+									...base,
+									borderRadius: "0.5rem",
+									overflow: "hidden",
+								}),
+								option: (base, state) => ({
 									...base,
 									backgroundColor: state.isSelected
 										? "#4CAF50"
 										: state.isFocused
 										? "#A5D6A7"
 										: "white",
-									color: state.isSelected ? "white" : "#374151", // Texto um pouco mais escuro para destacar
+									color: state.isSelected ? "white" : "#374151",
 									padding: "0.5rem",
 									cursor: "pointer",
-									borderBottom: isNewOption ? "1px solid #ccc" : undefined, // linha separadora
-								};
-							},
-						}}
-					/>
+								}),
+							}}
+						/>
+					) : (
+						<Select
+							isClearable
+							{...(rest as Props<Option, false, GroupBase<Option>>)}
+							name={regex(fieldName)}
+							id={regex(fieldName)}
+							classNamePrefix="react-select"
+							className={`react-select-container ${inputWidth}`}
+							isLoading={isLoading}
+							closeMenuOnSelect
+							menuShouldScrollIntoView
+							hideSelectedOptions
+							noOptionsMessage={() => "Nenhuma opção encontrada"}
+							loadingMessage={() => "Carregando..."}
+							options={options}
+							value={options?.find((opt) => opt.value === value) || null}
+							onChange={(selectedOption) => {
+								onChangeSelect?.({
+									target: {
+										name: fieldName,
+										value: String(selectedOption?.value || ""),
+									},
+								});
+							}}
+							styles={{
+								control: (base) => ({
+									...base,
+									borderRadius: "0.5rem",
+									minHeight: "45.6px",
+									"&:hover": {
+										borderColor: "#9ca3af",
+									},
+								}),
+								menu: (base) => ({
+									...base,
+									borderRadius: "0.5rem",
+									overflow: "hidden",
+								}),
+								option: (base, state) => ({
+									...base,
+									backgroundColor: state.isSelected
+										? "#4CAF50"
+										: state.isFocused
+										? "#A5D6A7"
+										: "white",
+									color: state.isSelected ? "white" : "#374151",
+									padding: "0.5rem",
+									cursor: "pointer",
+								}),
+							}}
+						/>
+					)}
 				</div>
 			) : isPassword ? (
 				<div className="flex gap-4">
@@ -217,44 +284,6 @@ const SmartField = ({
 					>
 						Gerar Senha
 					</button>
-				</div>
-			) : isCreatableSelect ? (
-				<div className="relative">
-					<CreatableSelect
-						{...(rest as CreatableProps<Option, false, GroupBase<Option>>)}
-						isClearable
-						classNamePrefix={"react-select"}
-						isLoading={isLoading}
-						styles={{
-							control: (base) => ({
-								...base,
-								backgroundColor: "white",
-								borderRadius: "0.5rem",
-								padding: "0.25rem",
-								border: "1px solid #d1d5db",
-								boxShadow: "none",
-								"&:hover": {
-									borderColor: "#9ca3af",
-								},
-							}),
-							menu: (base) => ({
-								...base,
-								borderRadius: "0.5rem",
-								overflow: "hidden",
-							}),
-							option: (base, state) => ({
-								...base,
-								backgroundColor: state.isSelected
-									? "#4CAF50"
-									: state.isFocused
-									? "#A5D6A7"
-									: "white",
-								color: state.isSelected ? "white" : "#374151",
-								padding: "0.5rem",
-								cursor: "pointer",
-							}),
-						}}
-					/>
 				</div>
 			) : (
 				<Form.Control asChild>

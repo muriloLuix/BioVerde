@@ -3,6 +3,7 @@ export interface Product {
 	produto_nome: string;
 	tproduto_nome: string;
 	produto_preco: string;
+	lote_nome: number;
 	lote_id: number;
 	fornecedor_nome_ou_empresa: string;
 	produto_observacoes: string;
@@ -24,6 +25,7 @@ export interface Client {
 	cliente_cidade: string;
 	cliente_observacoes: string;
 	cliente_data_cadastro: string;
+	cliente_complemento: string;
 	estaAtivo: number;
 }
 
@@ -42,6 +44,7 @@ export interface Supplier {
 	fornecedor_cep: string;
 	fornecedor_responsavel: string;
 	fornecedor_dtcadastro: string;
+	fornecedor_complemento: string;
 	estaAtivo: number;
 }
 
@@ -58,17 +61,41 @@ export interface User {
 }
 
 export interface Batch {
-	id: number;
-	produtos: string[];
-	quantidade: number[];
-	dataDeFabricacao: Date;
-	dataDeValidade: Date;
-	observacao: string;
+	lote_id: number;
+	lote_codigo: string;
+	lote_dtFabricacao: Date;
+	lote_dtExpiracao: Date;
+	lote_quantInicial: string;
+	lote_quantAtual: string;
+	fornecedor_nome_ou_empresa: string;
+	tproduto_nome: string;
+	staproduto_nome: string;
+	lote_obs: string;
+	produto_nome: string;
+	uni_sigla: string;
+	classificacao_nome: string;
+	localArmazenamento_nome: string;
 }
 
 export interface JobPosition {
 	car_id: number;
 	car_nome: string;
+}
+
+export interface Storage {
+	localArmazenamento_id: number;
+	localArmazenamento_nome: string;
+}
+
+export interface Classification {
+	classificacao_id: number;
+	classificacao_nome: string;
+}
+
+export interface Unit {
+	uni_id: number;
+	uni_nome: string;
+	uni_sigla: string;
 }
 
 export interface AccessLevel {
@@ -91,6 +118,11 @@ export interface OrderStatus {
 	stapedido_nome: string;
 }
 
+export interface PositionType {
+	car_id: number;
+	car_nome: string;
+}
+
 export interface Option {
 	value: string;
 	label: string;
@@ -111,4 +143,13 @@ export interface UF {
 export interface City {
 	id: number;
 	nome: string;
+}
+export interface Logs {
+	log_id: number;
+	log_user_nome: string;
+	log_datahora: string;
+	log_pag_id: string;
+	log_url: string;
+	log_acao: string;
+	log_conteudo: string;
 }

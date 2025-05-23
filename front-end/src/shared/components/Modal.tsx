@@ -1,5 +1,5 @@
 import { Dialog, Form } from "radix-ui";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 type ModalProps = {
 	openModal: boolean;
@@ -10,12 +10,16 @@ type ModalProps = {
 	modalTitle: string | React.ReactNode;
 	modalSecondTitle?: string | React.ReactNode;
 	obsText?: string;
+	isObsModal?: boolean;
 	withExitButton?: boolean;
+	withXButton?: boolean;
 	leftButtonText?: string;
 	rightButtonText?: string;
 	modalWidth?: string;
 	loading?: Set<string>;
 	isLoading?: boolean;
+	isRegister?: boolean;
+	registerButtonText?: string;
 	isOrderModal?: boolean;
 	totalPedido?: number;
 	onCancel?: () => void;
@@ -34,11 +38,15 @@ const Modal = ({
 	withExitButton,
 	modalWidth,
 	obsText,
+	isObsModal,
 	rightButtonText,
 	leftButtonText,
 	isOrderModal,
 	isLoading,
 	totalPedido,
+	withXButton,
+	isRegister,
+	registerButtonText,
 	onCancel,
 	onSubmit,
 	onDelete,
@@ -53,23 +61,33 @@ const Modal = ({
 			<Dialog.Portal>
 				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
 				<Dialog.Content
-					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-xl shadow-lg`}
+					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg max-h-[90vh] overflow-auto custom-scrollbar-modal`}
 				>
-					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between">
-						<span>{modalTitle}</span>
-						<span>{modalSecondTitle}</span>
+					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between items-center">
+						{modalTitle}
+						{withXButton ? (
+							<Dialog.Close asChild>
+								<button className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200">
+									<X />
+								</button>
+							</Dialog.Close>
+						) : (
+							modalSecondTitle
+						)}
 					</Dialog.Title>
 					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
 						{withExitButton ? (
 							<>
-								{isOrderModal ? (
-									children
-								) : obsText ? (
-									<p className="text-gray-800 break-words">{obsText}</p>
+								{isObsModal ? (
+									obsText ? (
+										<p className="text-gray-800 break-words">{obsText}</p>
+									) : (
+										<p className="text-gray-800 break-words">
+											Não há nenhuma observação.
+										</p>
+									)
 								) : (
-									<p className="text-gray-800 break-words">
-										Não há nenhuma observação.
-									</p>
+									children
 								)}
 
 								<div
@@ -114,6 +132,7 @@ const Modal = ({
 											<button
 												type="submit"
 												className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+												disabled={!!loading?.size}
 											>
 												{isLoading ? (
 													<Loader2 className="animate-spin h-6 w-6" />

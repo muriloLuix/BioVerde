@@ -19,6 +19,7 @@ import {
 	ProductType,
 	ProductStatus,
 	Supplier,
+	Batch,
 	SelectEvent,
 } from "../../utils/types";
 import {
@@ -31,6 +32,7 @@ import {
 interface ProductOptions {
 	tipos: ProductType[];
 	status: ProductStatus[];
+	lotes: Batch[];
 }
 
 export default function InventoryControl() {
@@ -175,7 +177,9 @@ export default function InventoryControl() {
 				options?.status
 					.find((status) => status.staproduto_nome === produto.staproduto_nome)
 					?.staproduto_id.toString() ?? "",
-			lote: produto.lote_id,
+			lote:
+				options?.lotes.find((lote) => lote.lote_id === produto.lote_id)
+					?.lote_id ?? 0,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
 			fornecedor: produto.fornecedor_nome_ou_empresa,
 			obs: produto.produto_observacoes,
@@ -231,6 +235,7 @@ export default function InventoryControl() {
 				setOptions({
 					tipos: productsAndOptions.data.tp_produto ?? [],
 					status: productsAndOptions.data.status_produto ?? [],
+					lotes: productsAndOptions.data.lotes ?? [],
 				});
 			} else {
 				setOpenNoticeModal(true);
@@ -585,14 +590,14 @@ export default function InventoryControl() {
 						Adicionar Novo Produto
 					</Tabs.Trigger>
 
-					<Tabs.Trigger
+					{/* <Tabs.Trigger
 						value="prices"
 						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "prices" ? "select animation-tab" : ""
 						}`}
 					>
 						Histórico de Preços
-					</Tabs.Trigger>
+					</Tabs.Trigger> */}
 
 					<Tabs.Trigger
 						value="movements"
@@ -800,6 +805,7 @@ export default function InventoryControl() {
 					{/* Modal de Observações */}
 					<Modal
 						withExitButton
+						isObsModal
 						openModal={openObsModal}
 						setOpenModal={setOpenObsModal}
 						modalWidth="min-w-[300px] max-w-[500px]"

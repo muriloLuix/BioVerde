@@ -59,6 +59,7 @@ export default function Suppliers() {
 		estado: "",
 		cidade: "",
 		num_endereco: 0,
+		complemento: "",
 		status: "1",
 	});
 	const [filters, setFilters] = useState({
@@ -236,6 +237,7 @@ export default function Suppliers() {
 			estado: fornecedor.fornecedor_estado,
 			cidade: fornecedor.fornecedor_cidade,
 			num_endereco: fornecedor.fornecedor_num_endereco,
+			complemento: fornecedor.fornecedor_complemento,
 			tipo: fornecedor.fornecedor_tipo,
 		});
 		setSupplierType(fornecedor.fornecedor_tipo);
@@ -611,10 +613,11 @@ export default function Suppliers() {
 		setFormData(
 			(prev) =>
 				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "tipo") return [key, "juridica"];
+						if (key === "status") return [key, "1"];
+						return [key, typeof value === "number" ? 0 : ""];
+					})
 				) as typeof prev
 		);
 	};
@@ -863,6 +866,7 @@ export default function Suppliers() {
 											"CEP",
 											"Endereço",
 											"Nº",
+											"Complemento",
 											"Cidade",
 											"Estado",
 											"Status",
@@ -901,7 +905,7 @@ export default function Suppliers() {
 												}
 											>
 												{Object.values(fornecedor)
-													.slice(0, 13)
+													.slice(0, 14)
 													.map((value, idx) => (
 														<td
 															key={idx}
@@ -990,6 +994,7 @@ export default function Suppliers() {
 									isSelect
 									value={formData.tipo}
 									inputWidth="w-[220px]"
+									placeholder="Selecione"
 									onChangeSelect={handleChange}
 									options={[
 										{ value: "juridica", label: "Pessoa Jurídica" },
@@ -1079,18 +1084,17 @@ export default function Suppliers() {
 								)}
 							</div>
 
-							<div className="flex mb-10 gap-x-15 ">
+							<div className="flex mb-10 gap-x-7">
 								<SmartField
 									fieldName="responsavel"
 									fieldText="Responsável"
-									fieldClassname="flex flex-col w-full"
 									required
 									type="text"
 									placeholder="Digite o responsável"
 									autoComplete="name"
 									value={formData.responsavel}
 									onChange={handleChange}
-									inputWidth="w-[400px]"
+									inputWidth="w-[250px]"
 								/>
 
 								<SmartField
@@ -1107,7 +1111,7 @@ export default function Suppliers() {
 									autoComplete="tel"
 									value={formData.tel}
 									onChange={handleChange}
-									inputWidth="w-[220px]"
+									inputWidth="w-[190px]"
 								/>
 
 								<SmartField
@@ -1125,35 +1129,44 @@ export default function Suppliers() {
 									value={formData.cep}
 									onChange={handleChange}
 									onBlur={handleCepBlur}
-									inputWidth="w-[220px]"
+									inputWidth="w-[150px]"
+								/>
+
+								<SmartField
+									fieldName="endereco"
+									fieldText="Endereço"
+									fieldClassname="flex flex-col flex-1"
+									required
+									type="text"
+									placeholder="Endereço Completo"
+									value={formData.endereco}
+									onChange={handleChange}
+									autoComplete="street-address"
 								/>
 							</div>
 
-							<div className="flex mb-10 gap-x-15 ">
-								<div className="flex w-full justify-between">
-									<SmartField
-										fieldName="endereco"
-										fieldText="Endereço"
-										required
-										type="text"
-										placeholder="Endereço Completo"
-										value={formData.endereco}
-										onChange={handleChange}
-										autoComplete="street-address"
-										inputWidth="w-[290px]"
-									/>
-									<SmartField
-										fieldName="num_endereco"
-										fieldText="Número"
-										required
-										type="number"
-										placeholder="Número"
-										value={formData.num_endereco}
-										onChange={handleChange}
-										autoComplete="address-line1"
-										inputWidth="w-[90px]"
-									/>
-								</div>
+							<div className="flex mb-10 gap-x-7">
+								<SmartField
+									fieldName="num_endereco"
+									fieldText="Número"
+									required
+									type="number"
+									placeholder="Número"
+									value={formData.num_endereco}
+									onChange={handleChange}
+									autoComplete="address-line1"
+									inputWidth="w-[90px]"
+								/>
+
+								<SmartField
+									fieldName="complemento"
+									fieldText="Complemento"
+									fieldClassname="flex flex-col flex-1"
+									type="text"
+									placeholder="Complemento"
+									value={formData.complemento}
+									onChange={handleChange}
+								/>
 
 								<SmartField
 									fieldName="estado"
@@ -1164,7 +1177,7 @@ export default function Suppliers() {
 									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
-									inputWidth="w-[220px]"
+									fieldClassname="flex flex-col flex-1"
 									onChangeSelect={handleChange}
 									options={ufs?.map((uf: UF) => ({
 										label: uf.nome,
@@ -1304,7 +1317,7 @@ export default function Suppliers() {
 								<SmartField
 									fieldName="razao_social"
 									fieldText="Razão Social"
-									fieldClassname="flex flex-col w-full"
+									inputWidth="w-[400px]"
 									required
 									type="text"
 									placeholder="Digite a Razão Social da Empresa"
@@ -1319,7 +1332,7 @@ export default function Suppliers() {
 							<SmartField
 								fieldName="nome_empresa_fornecedor"
 								fieldText="Nome do Fornecedor"
-								fieldClassname="flex flex-col w-full"
+								inputWidth="w-[740px]"
 								required
 								type="text"
 								placeholder="Digite o Nome do Fornecedor"
@@ -1328,6 +1341,20 @@ export default function Suppliers() {
 								onChange={handleChange}
 							/>
 						)}
+
+						<SmartField
+							fieldName="tipo"
+							fieldText="Tipo"
+							inputWidth="w-[170px]"
+							isClearable={false}
+							isSelect
+							value={formData.tipo}
+							onChangeSelect={handleChange}
+							options={[
+								{ value: "juridica", label: "Pessoa Jurídica" },
+								{ value: "fisica", label: "Pessoa Física" },
+							]}
+						/>
 					</div>
 
 					{/* Linha Email, telefone e cnpj*/}
@@ -1344,20 +1371,6 @@ export default function Suppliers() {
 							inputWidth="w-[300px]"
 						/>
 
-						<SmartField
-							fieldName="tipo"
-							fieldText="Tipo"
-							fieldClassname="flex flex-col w-full"
-							isClearable={false}
-							isSelect
-							value={formData.tipo}
-							onChangeSelect={handleChange}
-							options={[
-								{ value: "juridica", label: "Pessoa Jurídica" },
-								{ value: "fisica", label: "Pessoa Física" },
-							]}
-						/>
-
 						{supplierType === "juridica" && (
 							<SmartField
 								fieldName="cpf_cnpj"
@@ -1370,7 +1383,7 @@ export default function Suppliers() {
 								autoClear={false}
 								pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
 								placeholder="Digite o CNPJ"
-								fieldClassname="flex flex-col w-full"
+								inputWidth="w-[170px]"
 								value={formData.cpf_cnpj}
 								onChange={handleChange}
 							/>
@@ -1388,27 +1401,26 @@ export default function Suppliers() {
 								autoClear={false}
 								pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
 								placeholder="Digite o CPF"
-								fieldClassname="flex flex-col w-full"
+								inputWidth="w-[170px]"
 								value={formData.cpf_cnpj}
 								onChange={handleChange}
 							/>
 						)}
-					</div>
 
-					<div className="flex mb-7 gap-x-10 ">
 						<SmartField
 							fieldName="responsavel"
 							fieldText="Responsável"
-							fieldClassname="flex flex-col w-full"
 							required
 							type="text"
 							placeholder="Digite o responsável"
 							autoComplete="name"
 							value={formData.responsavel}
 							onChange={handleChange}
-							inputWidth="w-[300px]"
+							fieldClassname="flex flex-col flex-1"
 						/>
+					</div>
 
+					<div className="flex mb-7 gap-x-10 ">
 						<SmartField
 							fieldName="status"
 							fieldText="Status"
@@ -1416,7 +1428,7 @@ export default function Suppliers() {
 							isClearable={false}
 							isLoading={loading.has("options")}
 							value={formData.status}
-							fieldClassname="flex flex-col w-full"
+							inputWidth="w-[140px]"
 							onChangeSelect={handleChange}
 							options={[
 								{ value: "1", label: "Ativo" },
@@ -1458,10 +1470,7 @@ export default function Suppliers() {
 							onBlur={handleCepBlur}
 							inputWidth="w-[170px]"
 						/>
-					</div>
 
-					{/* Linha Nivel de Acesso e Senha*/}
-					<div className="flex mb-9 gap-x-10 ">
 						<SmartField
 							fieldName="endereco"
 							fieldText="Endereço"
@@ -1471,9 +1480,12 @@ export default function Suppliers() {
 							value={formData.endereco}
 							onChange={handleChange}
 							autoComplete="street-address"
-							inputWidth="w-[300px]"
+							fieldClassname="flex flex-col flex-1"
 						/>
+					</div>
 
+					{/* Linha Nivel de Acesso e Senha*/}
+					<div className="flex mb-9 gap-x-10 ">
 						<SmartField
 							fieldName="num_endereco"
 							fieldText="Número"
@@ -1484,6 +1496,16 @@ export default function Suppliers() {
 							onChange={handleChange}
 							autoComplete="address-line1"
 							inputWidth="w-[90px]"
+						/>
+
+						<SmartField
+							fieldName="complemento"
+							fieldText="Complemento"
+							fieldClassname="flex flex-col flex-1"
+							type="text"
+							placeholder="Complemento"
+							value={formData.complemento}
+							onChange={handleChange}
 						/>
 
 						<SmartField
@@ -1518,7 +1540,7 @@ export default function Suppliers() {
 							placeholder="Selecione"
 							autoComplete="address-level2"
 							error={errors.states ? "*" : undefined}
-							inputWidth="w-[200px]"
+							fieldClassname="flex flex-col flex-1"
 							onChangeSelect={handleChange}
 							options={cities?.map((city: City) => ({
 								label: city.nome,

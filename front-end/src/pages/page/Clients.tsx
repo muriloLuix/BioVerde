@@ -58,6 +58,7 @@ export default function Clients() {
 		cep: "",
 		endereco: "",
 		num_endereco: 0,
+		complemento: "",
 		estado: "",
 		cidade: "",
 		obs: "",
@@ -249,6 +250,7 @@ export default function Clients() {
 			estado: cliente.cliente_estado,
 			cidade: cliente.cliente_cidade,
 			num_endereco: Number(cliente.cliente_numendereco),
+			complemento: cliente.cliente_complemento,
 			obs: cliente.cliente_observacoes,
 			tipo: cliente.cliente_tipo,
 		});
@@ -602,10 +604,11 @@ export default function Clients() {
 		setFormData(
 			(prev) =>
 				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => [
-						key,
-						typeof value === "number" ? 0 : "",
-					])
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "tipo") return [key, "juridica"];
+						if (key === "status") return [key, "1"];
+						return [key, typeof value === "number" ? 0 : ""];
+					})
 				) as typeof prev
 		);
 	};
@@ -846,6 +849,7 @@ export default function Clients() {
 											"CEP",
 											"Endereço",
 											"Nº",
+											"Complemento",
 											"Estado",
 											"Cidade",
 											"Status",
@@ -885,7 +889,7 @@ export default function Clients() {
 												}
 											>
 												{Object.values(cliente)
-													.slice(0, 12)
+													.slice(0, 13)
 													.map((value, idx) => (
 														<td
 															key={idx}
@@ -954,6 +958,7 @@ export default function Clients() {
 						{/* Modal de Observações */}
 						<Modal
 							withExitButton
+							isObsModal
 							openModal={openObsModal}
 							setOpenModal={setOpenObsModal}
 							modalWidth="min-w-[300px] max-w-[500px]"
@@ -1061,7 +1066,7 @@ export default function Clients() {
 										autoComplete="name"
 										value={formData.nome_empresa_cliente}
 										onChange={handleChange}
-										inputWidth="w-[472px]"
+										fieldClassname="flex flex-col flex-1"
 									/>
 								)}
 
@@ -1089,7 +1094,7 @@ export default function Clients() {
 										autoComplete="email"
 										value={formData.email}
 										onChange={handleChange}
-										inputWidth="w-[250px]"
+										inputWidth="w-[240px]"
 									/>
 								)}
 
@@ -1155,6 +1160,16 @@ export default function Clients() {
 								/>
 
 								<SmartField
+									fieldName="complemento"
+									fieldText="Complemento"
+									inputWidth="w-[160px]"
+									type="text"
+									placeholder="Complemento"
+									value={formData.complemento}
+									onChange={handleChange}
+								/>
+
+								<SmartField
 									fieldName="estado"
 									fieldText="Estado"
 									isSelect
@@ -1163,7 +1178,7 @@ export default function Clients() {
 									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
-									inputWidth="w-[200px]"
+									inputWidth="w-[180px]"
 									onChangeSelect={handleChange}
 									options={ufs?.map((uf: UF) => ({
 										label: uf.nome,
@@ -1188,7 +1203,7 @@ export default function Clients() {
 									placeholder="Selecione"
 									autoComplete="address-level2"
 									error={errors.states ? "*" : undefined}
-									inputWidth="w-[200px]"
+									inputWidth="w-[180px]"
 									onChangeSelect={handleChange}
 									options={cities?.map((city: City) => ({
 										label: city.nome,
@@ -1297,7 +1312,7 @@ export default function Clients() {
 					}}
 					onSubmit={handleUpdateClient}
 				>
-					<div className="flex mb-6 gap-x-8 justify-between">
+					<div className="flex mb-6 gap-x-7 justify-between">
 						{clientType === "juridica" && (
 							<>
 								<SmartField
@@ -1477,6 +1492,16 @@ export default function Clients() {
 							onChange={handleChange}
 							autoComplete="address-line1"
 							inputWidth="w-[90px]"
+						/>
+
+						<SmartField
+							fieldName="complemento"
+							fieldText="Complemento"
+							inputWidth="w-[160px]"
+							type="text"
+							placeholder="Complemento"
+							value={formData.complemento}
+							onChange={handleChange}
 						/>
 
 						<SmartField

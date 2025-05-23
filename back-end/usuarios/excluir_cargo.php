@@ -29,28 +29,16 @@ try {
         throw new Exception("Formato de dados inválido. Por favor, verifique os dados enviados.");
     }
 
-    // Validação dos campos obrigatórios
-    $camposObrigatorios = ['produto_id', 'dnome_produto', 'reason'];
-    foreach ($camposObrigatorios as $field) {
-        if (empty($data[$field])) {
-            throw new Exception("O campo '{$field}' é obrigatório para a exclusão.");
-        }
-    }
 
-    $user_id = $_SESSION['user_id'];
-
-    $produto_id = (int) $data['produto_id'];
-    if ($user_id <= 0) {
-        throw new Exception("ID do fornecedor inválido. Por favor, verifique os dados.");
-    }
+    $car_id = (int) $data['car_id'];
 
     // Início da transação
     $conn->begin_transaction();
 
     // 1. Deleta o usuário
-    $exclusao = deleteData($conn, $produto_id, 'produtos', "produto_id");
+    $exclusao = deleteData($conn, $car_id, 'cargo', "car_id");
     if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
+        throw new Exception($exclusao['message'] ?? "Falha ao excluir o cargo.");
     }
 
     // Commit da transação
@@ -62,10 +50,8 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $produto_id // Envia o ID do usuário excluído
+        'deleted_id' => $car_id 
     ]);
-
-    salvarLog("O usuário, ID: {$user_id}, excluiu o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO);
 
 } catch (Exception $e) {
     // Rollback em caso de erro
@@ -75,14 +61,11 @@ try {
 
     error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
     
-
     // Resposta de erro simplificada para produção
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
-
-    salvarLog("O usuário, ID: {$user_id}, tentou excluir o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO, "erro");
 
     exit();
 }

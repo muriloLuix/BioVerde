@@ -139,23 +139,25 @@ function verificarNivel($conn, $nivel)
  */
 function verificarStatus($conn, $status)
 {
-    $stmt = $conn->prepare("SELECT staproduto_id, staproduto_nome FROM status_produto WHERE staproduto_nome = ?");
+    $stmt = $conn->prepare("SELECT staproduto_id FROM status_produto WHERE staproduto_id = ?");
     if (!$stmt) {
-        return null; // Retorna null em caso de erro na query
+        return null;
     }
 
-    $stmt->bind_param("s", $status);
+    $status = (int)$status; 
+    $stmt->bind_param("i", $status);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        return null; // Retorna null quando status não existe
+        return null;
     }
 
     $row = $result->fetch_assoc();
     $stmt->close();
-    return $row['staproduto_id']; // Retorna apenas o ID
+    return $row['staproduto_id'];
 }
+
 
 /**
  * Verifica se o tipo existe e retorna o ID do tipo.
@@ -165,12 +167,13 @@ function verificarStatus($conn, $status)
  */
 function verificarTipo($conn, $tipo)
 {
-    $stmt = $conn->prepare("SELECT tproduto_id FROM tp_produto WHERE tproduto_nome = ?");
+    $stmt = $conn->prepare("SELECT tproduto_id FROM tp_produto WHERE tproduto_id = ?");
     if (!$stmt) {
         return null; // Retorna null em caso de erro na query
     }
 
-    $stmt->bind_param("s", $tipo);
+    $tipo = (int)$tipo;
+    $stmt->bind_param("i", $tipo);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -378,6 +381,36 @@ function buscarStatus($conn)
     return $status_produto;
 }
 
+function buscarProdutos($conn)
+{
+    $result = $conn->query("SELECT produto_id, produto_nome FROM produtos");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $produtos = [];
+    while ($row = $result->fetch_assoc()) {
+        $produtos[] = $row;
+    }
+
+    return $produtos;
+}
+
+function buscarFornecedores($conn)
+{
+    $result = $conn->query("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores");
+    if (!$result) {
+        throw new Exception("Erro ao buscar fornecedor: " . $conn->error);
+    }
+
+    $fornecedores = [];
+    while ($row = $result->fetch_assoc()) {
+        $fornecedores[] = $row;
+    }
+
+    return $fornecedores;
+}
+
 /**
  * Busca todos os níveis de acesso registrados no banco de dados.
  *
@@ -403,6 +436,34 @@ function buscarNiveisAcesso($conn)
     return $niveis;
 }
 
+function buscarClassificacaoProduto($conn){
+    $result = $conn->query("SELECT classificacao_id, classificacao_nome FROM classificacao_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o Classificacao do Produto: " . $conn->error);
+    }
+
+    $classificacao = [];
+    while ($row = $result->fetch_assoc()) {
+        $classificacao[] = $row;
+    }
+
+    return $classificacao;
+}
+
+function buscarLocaisArmazenamento($conn){
+    $result = $conn->query("SELECT localArmazenamento_id, localArmazenamento_nome FROM locais_armazenamento");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o Locais de Armazenamento: " . $conn->error);
+    }
+
+    $localArmazenado = [];
+    while ($row = $result->fetch_assoc()) {
+        $localArmazenado[] = $row;
+    }
+
+    return $localArmazenado;
+}
+
 function buscarTipoProduto($conn){
     $result = $conn->query("SELECT tproduto_id, tproduto_nome FROM tp_produto");
     if (!$result) {
@@ -417,10 +478,11 @@ function buscarTipoProduto($conn){
     return $tproduto_id;
 }
 
-function buscarUnidadeMedida($conn){
-    $result = $conn->query("SELECT uni_id, uni_sigla FROM unidade_medida");
+function buscarUnidadeMedida($conn)
+{
+    $result = $conn->query("SELECT uni_id, uni_sigla, uni_nome FROM unidade_medida");
     if (!$result) {
-        throw new Exception("Erro ao buscar a unidade de medida: " . $conn->error);
+        throw new Exception("Erro ao buscar unidade de medida: " . $conn->error);
     }
 
     $unidade_medida = [];
