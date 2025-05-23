@@ -65,9 +65,14 @@ export interface Batch {
     lote_dtFabricacao: Date;
     lote_dtExpiracao: Date;
     lote_quantidade: string;
+	fornecedor_nome_ou_empresa: string;
+	tproduto_nome: string;
+	staproduto_nome: string;
     lote_obs: string;
     produto_nome: string;
     uni_sigla: string;
+	lote_classificacao: string;
+    lote_localArmazenado: string;
 }
 
 export interface JobPosition {

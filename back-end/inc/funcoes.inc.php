@@ -359,6 +359,21 @@ function buscarProdutos($conn)
     return $produtos;
 }
 
+function buscarFornecedores($conn)
+{
+    $result = $conn->query("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores");
+    if (!$result) {
+        throw new Exception("Erro ao buscar fornecedor: " . $conn->error);
+    }
+
+    $fornecedores = [];
+    while ($row = $result->fetch_assoc()) {
+        $fornecedores[] = $row;
+    }
+
+    return $fornecedores;
+}
+
 function unidMedida($conn)
 {
     $result = $conn->query("SELECT uni_id, uni_sigla FROM unidade_medida");

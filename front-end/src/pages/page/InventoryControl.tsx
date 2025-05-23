@@ -589,14 +589,14 @@ export default function InventoryControl() {
 						Adicionar Novo Produto
 					</Tabs.Trigger>
 
-					<Tabs.Trigger
+					{/* <Tabs.Trigger
 						value="prices"
 						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "prices" ? "select animation-tab" : ""
 						}`}
 					>
 						Histórico de Preços
-					</Tabs.Trigger>
+					</Tabs.Trigger> */}
 
 					<Tabs.Trigger
 						value="movements"
