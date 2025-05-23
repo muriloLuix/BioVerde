@@ -1236,7 +1236,7 @@ function checkDependencies(mysqli $conn, string $table, string $pkField, int $id
 }
 
 
-function verifyDocuments(string $document, string $personType): array {
+function verifyDocuments(string $document, string | null $personType): array {
     // Remove tudo que não é número
     $cleanDocument = preg_replace('/\D/', '', $document);
 
@@ -1250,7 +1250,7 @@ function verifyDocuments(string $document, string $personType): array {
 
     $characters = str_split($cleanDocument);
 
-    if($personType === "fisica"){
+    if($personType === "fisica" || $personType === null){
 
         // Primeiro dígito verificador
         $total = 0;

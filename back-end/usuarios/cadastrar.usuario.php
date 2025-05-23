@@ -44,6 +44,12 @@ if ($nivel_id === null) {
     exit();
 }
 
+$verifiedDocuments = verifyDocuments($data['cpf'], null);
+if ($verifiedDocuments["success"] === false) {
+    echo json_encode($verifiedDocuments);
+    exit();
+}
+
 // Verificar email e CPF
 $emailCpfError = verifyCredentials(
     $conn,

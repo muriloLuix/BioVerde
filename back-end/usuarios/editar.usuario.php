@@ -35,6 +35,12 @@ try {
     if ($validacao) {
         throw new Exception($validacao['message']);
     }
+    
+    $verifiedDocuments = verifyDocuments($data['cpf'], null);
+    if ($verifiedDocuments["success"] === false) {
+        echo json_encode($verifiedDocuments);
+        exit();
+    }
 
     // Validação de email
     if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
