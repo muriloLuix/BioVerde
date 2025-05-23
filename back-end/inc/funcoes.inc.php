@@ -41,7 +41,7 @@ function validarCampos($data, $requiredFields) {
             if (trim($data[$field]) === '') {
                 return [
                     "success" => false,
-                    "message" => "O campo '$field' é obrigatório."
+                    "message" => "O campo '$field' é obrigatório! Insira um texto válido"
                 ];
             }
             
@@ -52,7 +52,7 @@ function validarCampos($data, $requiredFields) {
                 if($data["tipo"] === "fisica" || $field === "nome_produto"){
                     return [
                         "success" => false,
-                        "message" => "O valor inserido no campo '$field' é inválido"
+                        "message" => "O valor inserido no campo '$field' é inválido! Insira um texto válido"
                     ];
                 }
             }
@@ -61,7 +61,7 @@ function validarCampos($data, $requiredFields) {
             if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
                 return [
                     "success" => false,
-                    "message" => "O campo '$field' contém caracteres inválidos"
+                    "message" => "O campo '$field' contém caracteres inválidos!"
                 ];
             }
 
@@ -69,10 +69,11 @@ function validarCampos($data, $requiredFields) {
             if (is_numeric($data[$field]) && floatval($data[$field]) <= 0) {
                 return [
                     "success" => false,
-                    "message" => "O valor inserido no campo '$field' é inválido"
+                    "message" => "O valor inserido no campo '$field' é inválido! Insira um valor positivo"
                 ];
             }
         }
+
     }
     return null;
 }
@@ -1232,6 +1233,59 @@ function checkDependencies(mysqli $conn, string $table, string $pkField, int $id
     }
 
     return ['success' => true, 'message' => ''];
+}
+
+
+function verifyDocuments(string $document, string $personType): array {
+    // Remove tudo que não é número
+    $cleanDocument = preg_replace('/\D/', '', $document);
+
+    if($personType === "fisica"){
+        // Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
+        if (preg_match('/^(\d)\1{10}$/', $cleanDocument)) {
+            return [
+                'success' => false,
+                'message' => "CPF inválido!"
+            ];
+        }
+
+        $characters = str_split($cleanDocument);
+
+        // Primeiro dígito verificador
+        $total = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $total += (int)$characters[$i] * (10 - $i);
+        }
+
+        $rest = $total % 11;
+        $firstDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        // Segundo dígito verificador
+        $total = 0;
+        for ($i = 0; $i < 10; $i++) {
+            $total += (int)$characters[$i] * (11 - $i);
+        }
+
+        $rest = $total % 11;
+        $secondDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        // Comparando com os dois últimos dígitos do CPF
+        $valid = ((int)$characters[9] === $firstDigit) && ((int)$characters[10] === $secondDigit);
+
+        return
+         $valid ? 
+         [
+            'success' => true,
+            'message' => "CPF válido!"
+        ] : [
+            'success' => false,
+            'message' => "CPF inválido!"
+        ];
+    }
+
+    if($personType === "juridica"){
+        return ['success' => false, 'message' => "Erro"];
+    }
 }
 
 

@@ -1,3 +1,6 @@
+import { Dispatch, SetStateAction } from "react";
+import { PlaceData2 } from "./types";
+
 type CepResponse = {
 	erro?: boolean;
 	logradouro: string;
@@ -11,7 +14,8 @@ export async function cepApi(
 	setFormData: React.Dispatch<React.SetStateAction<any>>,
 	setOpenModal: (open: boolean) => void,
 	setMessage: (msg: string) => void,
-	setSuccessMsg: (sucessMsg: boolean) => void
+	setSuccessMsg: (sucessMsg: boolean) => void,
+	setCities: Dispatch<SetStateAction<PlaceData2[] | undefined>>
 ) {
 	const cepLimpo = cep.replace(/\D/g, "");
 
@@ -22,24 +26,37 @@ export async function cepApi(
 	setSuccessMsg(false);
 
 	try {
-		const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-		const data: CepResponse = await response.json();
+		const cep = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+		const cities = await fetch(
+			`https://servicodados.ibge.gov.br/api/v1/localidades/municipios`
+		);
 
-		if (data.erro) {
+		const cepData: CepResponse = await cep.json();
+		const citiesData = await cities.json();
+
+		if (cepData.erro) {
 			setOpenModal(true);
-			setMessage("CEP não encontrado.");
-			return data.erro;
+			setMessage("CEP não encontrado!");
+			return cepData.erro;
 		}
+
+		if (!citiesData) {
+			setOpenModal(true);
+			setMessage("Cidades não foram encontradas!");
+			return;
+		}
+
+		setCities(citiesData);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		setFormData((prevData: any) => ({
 			...prevData,
-			endereco: data.logradouro,
-			estado: data.uf,
-			cidade: data.localidade,
+			endereco: cepData.logradouro,
+			estado: cepData.uf,
+			cidade: cepData.localidade,
 		}));
 
-		return data;
+		return cepData;
 	} catch (error) {
 		console.error("Erro ao buscar o CEP:", error);
 		alert("Erro ao buscar o CEP. Tente novamente.");

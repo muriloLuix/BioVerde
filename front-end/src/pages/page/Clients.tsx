@@ -23,7 +23,7 @@ import {
 } from "../../shared";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Client, PlaceData, SelectEvent } from "../../utils/types";
+import { Client, UF, City, SelectEvent } from "../../utils/types";
 
 export default function Clients() {
 	const [activeTab, setActiveTab] = useState("list");
@@ -75,7 +75,8 @@ export default function Clients() {
 		dnome_cliente: "",
 		reason: "",
 	});
-	const [places, setPlaces] = useState<PlaceData[]>();
+	const [ufs, setUfs] = useState<UF[]>();
+	const [cities, setCities] = useState<City[]>();
 
 	const handleObsClick = (cliente: Client) => {
 		setCurrentObs(cliente.cliente_observacoes);
@@ -244,39 +245,41 @@ export default function Clients() {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				setLoading((prev) => new Set([...prev, "clients", "options"]));
+				setLoading(
+					(prev) => new Set([...prev, "clients", "options", "ufs", "cities"])
+				);
 
-				const [clientesResponse, userLevelResponse, placeResponse] =
-					await Promise.all([
-						axios.get(
-							"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
-							{
-								withCredentials: true,
-								headers: {
-									Accept: "application/json",
-								},
-							}
-						),
-						axios.get(
-							"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-							{
-								withCredentials: true,
-								headers: { "Content-Type": "application/json" },
-							}
-						),
-						axios.get(
-							"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
-						),
-					]);
+				const [
+					clientesResponse,
+					userLevelResponse,
+					ufsResponse,
+					citiesResponse,
+				] = await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+						{
+							withCredentials: true,
+							headers: {
+								Accept: "application/json",
+							},
+						}
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+					),
+				]);
 
 				console.log("Resposta do back-end:", clientesResponse.data);
-
-				if (placeResponse.status === 200) {
-					setPlaces(placeResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar UFs");
-				}
 
 				if (clientesResponse.data.success) {
 					setClientes(clientesResponse.data.clientes || []);
@@ -296,6 +299,20 @@ export default function Clients() {
 							"Erro ao carregar nível do usuário"
 					);
 				}
+
+				if (ufsResponse.status === 200) {
+					setUfs(ufsResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
+
+				if (citiesResponse.status === 200) {
+					setCities(citiesResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar municípios");
+				}
 			} catch (error) {
 				setOpenNoticeModal(true);
 				setMessage("Erro ao conectar com o servidor");
@@ -314,7 +331,9 @@ export default function Clients() {
 			} finally {
 				setLoading((prev) => {
 					const newLoading = new Set(prev);
-					["clients", "options"].forEach((item) => newLoading.delete(item));
+					["clients", "options", "ufs", "cities"].forEach((item) =>
+						newLoading.delete(item)
+					);
 					return newLoading;
 				});
 			}
@@ -564,7 +583,8 @@ export default function Clients() {
 			setFormData,
 			setOpenNoticeModal,
 			setMessage,
-			setSuccessMsg
+			setSuccessMsg,
+			setCities
 		);
 	};
 
@@ -579,6 +599,22 @@ export default function Clients() {
 					])
 				) as typeof prev
 		);
+	};
+
+	const handleCities = async (id: number | undefined) => {
+		if (formData.estado) {
+			try {
+				const response = await axios.get(
+					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
+				);
+
+				if (response.status === 200) {
+					setCities(response.data);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
 	};
 
 	return (
@@ -635,14 +671,27 @@ export default function Clients() {
 									/>
 
 									<SmartField
-										fieldName="fcidade"
-										fieldText="Cidade"
-										type="text"
-										placeholder="Cidade"
-										autoComplete="address-level2"
-										value={filters.fcidade}
-										onChange={handleChange}
+										fieldName="festado"
+										fieldText="Estado"
+										isSelect
+										isLoading={loading.has("options")}
+										value={filters.festado}
+										placeholder="Selecione"
+										autoComplete="address-level1"
 										inputWidth="w-[280px]"
+										onChangeSelect={handleChange}
+										options={ufs?.map((uf: UF) => ({
+											label: uf.nome,
+											value: uf.sigla,
+										}))}
+										onBlur={() => {
+											const uf = ufs?.find(
+												(uf: UF) => formData.estado === uf.sigla
+											);
+
+											handleCities(uf?.id);
+										}}
+										isDisabled={!ufs}
 									/>
 								</div>
 
@@ -663,39 +712,26 @@ export default function Clients() {
 									/>
 
 									<SmartField
-										fieldName="festado"
-										fieldText="Estado"
+										fieldName="fcidade"
+										fieldText="Cidade"
 										isSelect
-										isLoading={loading.has("options")}
-										value={filters.festado}
+										isLoading={loading.has("cities")}
+										value={filters.fcidade}
 										placeholder="Selecione"
-										autoComplete="address-level1"
+										autoComplete="address-level2"
+										error={errors.states ? "*" : undefined}
 										inputWidth="w-[200px]"
 										onChangeSelect={handleChange}
-										options={places?.map((place) => ({
-											label: place.nome,
-											value: place.sigla,
+										options={cities?.map((city: City) => ({
+											label: city.nome,
+											value: city.nome,
 										}))}
+										isDisabled={!cities}
 									/>
 								</div>
 
 								{/* Coluna Telefone e Status */}
 								<div className="flex flex-col gap-7 mb-10 justify-between">
-									<SmartField
-										fieldName="ftel"
-										fieldText="Telefone"
-										withInputMask
-										unstyled
-										type="tel"
-										mask="(99) 9999?9-9999"
-										autoClear={false}
-										placeholder="Digite o Telefone"
-										autoComplete="tel"
-										value={filters.ftel}
-										onChange={handleChange}
-										inputWidth="w-[200px]"
-									/>
-
 									<SmartField
 										fieldName="fstatus"
 										fieldText="Status"
@@ -709,6 +745,21 @@ export default function Clients() {
 											{ value: "1", label: "Ativo" },
 											{ value: "0", label: "Inativo" },
 										]}
+									/>
+
+									<SmartField
+										fieldName="ftel"
+										fieldText="Telefone"
+										withInputMask
+										unstyled
+										type="tel"
+										mask="(99) 9999?9-9999"
+										autoClear={false}
+										placeholder="Digite o Telefone"
+										autoComplete="tel"
+										value={filters.ftel}
+										onChange={handleChange}
+										inputWidth="w-[200px]"
 									/>
 								</div>
 
@@ -1098,31 +1149,43 @@ export default function Clients() {
 									fieldName="estado"
 									fieldText="Estado"
 									isSelect
-									isLoading={loading.has("options")}
+									isLoading={loading.has("ufs")}
 									value={formData.estado}
 									placeholder="Selecione"
 									autoComplete="address-level1"
 									error={errors.states ? "*" : undefined}
 									inputWidth="w-[200px]"
 									onChangeSelect={handleChange}
-									options={places?.map((place) => ({
-										label: place.nome,
-										value: place.sigla,
+									options={ufs?.map((uf: UF) => ({
+										label: uf.nome,
+										value: uf.sigla,
 									}))}
+									onBlur={() => {
+										const uf = ufs?.find(
+											(uf: UF) => formData.estado === uf.sigla
+										);
+
+										handleCities(uf?.id);
+									}}
 									isDisabled={!!formData.cep}
 								/>
 
 								<SmartField
 									fieldName="cidade"
 									fieldText="Cidade"
-									required
-									type="text"
-									placeholder="Cidade"
+									isSelect
+									isLoading={loading.has("cities")}
 									value={formData.cidade}
-									onChange={handleChange}
+									placeholder="Selecione"
 									autoComplete="address-level2"
+									error={errors.states ? "*" : undefined}
 									inputWidth="w-[200px]"
-									disabled={formData.cep.trim() !== ""}
+									onChangeSelect={handleChange}
+									options={cities?.map((city: City) => ({
+										label: city.nome,
+										value: city.nome,
+									}))}
+									isDisabled={!!formData.cep || !cities}
 								/>
 							</div>
 
@@ -1411,53 +1474,41 @@ export default function Clients() {
 							fieldName="estado"
 							fieldText="Estado"
 							isSelect
-							isClearable={false}
-							isLoading={loading.has("options")}
+							isLoading={loading.has("ufs")}
 							value={formData.estado}
+							placeholder="Selecione"
 							autoComplete="address-level1"
-							inputWidth="w-[195px]"
+							error={errors.states ? "*" : undefined}
+							inputWidth="w-[200px]"
 							onChangeSelect={handleChange}
-							options={[
-								{ value: "AC", label: "Acre" },
-								{ value: "AL", label: "Alagoas" },
-								{ value: "AP", label: "Amapá" },
-								{ value: "AM", label: "Amazonas" },
-								{ value: "BA", label: "Bahia" },
-								{ value: "CE", label: "Ceará" },
-								{ value: "DF", label: "Distrito Federal" },
-								{ value: "ES", label: "Espírito Santo" },
-								{ value: "GO", label: "Goiás" },
-								{ value: "MA", label: "Maranhão" },
-								{ value: "MT", label: "Mato Grosso" },
-								{ value: "MS", label: "Mato Grosso do Sul" },
-								{ value: "MG", label: "Minas Gerais" },
-								{ value: "PA", label: "Pará" },
-								{ value: "PB", label: "Paraíba" },
-								{ value: "PR", label: "Paraná" },
-								{ value: "PE", label: "Pernambuco" },
-								{ value: "PI", label: "Piauí" },
-								{ value: "RJ", label: "Rio de Janeiro" },
-								{ value: "RN", label: "Rio Grande do Norte" },
-								{ value: "RS", label: "Rio Grande do Sul" },
-								{ value: "RO", label: "Rondônia" },
-								{ value: "RR", label: "Roraima" },
-								{ value: "SC", label: "Santa Catarina" },
-								{ value: "SP", label: "São Paulo" },
-								{ value: "SE", label: "Sergipe" },
-								{ value: "TO", label: "Tocantins" },
-							]}
+							options={ufs?.map((uf: UF) => ({
+								label: uf.nome,
+								value: uf.sigla,
+							}))}
+							onBlur={() => {
+								const uf = ufs?.find((uf: UF) => formData.estado === uf.sigla);
+
+								handleCities(uf?.id);
+							}}
+							isDisabled={!!formData.cep || !ufs}
 						/>
 
 						<SmartField
 							fieldName="cidade"
 							fieldText="Cidade"
-							required
-							type="text"
-							placeholder="Cidade"
+							isSelect
+							isLoading={loading.has("cities")}
 							value={formData.cidade}
-							onChange={handleChange}
+							placeholder="Selecione"
 							autoComplete="address-level2"
+							error={errors.states ? "*" : undefined}
 							inputWidth="w-[195px]"
+							onChangeSelect={handleChange}
+							options={cities?.map((city: City) => ({
+								label: city.nome,
+								value: city.nome,
+							}))}
+							isDisabled={!!formData.cidade || !cities}
 						/>
 					</div>
 

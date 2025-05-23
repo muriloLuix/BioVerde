@@ -34,7 +34,6 @@ const Modal = ({
 	withExitButton,
 	modalWidth,
 	obsText,
-	loading,
 	rightButtonText,
 	leftButtonText,
 	isOrderModal,
@@ -113,26 +112,25 @@ const Modal = ({
 									<>
 										<Form.Submit>
 											<button
-											type="submit"
-											className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-											disabled={!!loading?.size}
+												type="submit"
+												className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
 											>
-											{isLoading ? (
-												<Loader2 className="animate-spin h-6 w-6" />
-											) : (
-												leftButtonText
-											)}
+												{isLoading ? (
+													<Loader2 className="animate-spin h-6 w-6" />
+												) : (
+													leftButtonText
+												)}
 											</button>
 										</Form.Submit>
 
 										<Dialog.Close asChild>
 											<button
-											type="button"
-											onClick={onCancel}
-											className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-											aria-label="Close"
+												type="button"
+												onClick={onCancel}
+												className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
+												aria-label="Close"
 											>
-											{rightButtonText}
+												{rightButtonText}
 											</button>
 										</Dialog.Close>
 									</>

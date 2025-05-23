@@ -103,8 +103,12 @@ export interface SelectEvent {
 	};
 }
 
-export interface PlaceData {
+export interface UF {
 	id: number;
 	sigla: string;
+	nome: string;
+}
+export interface City {
+	id: number;
 	nome: string;
 }
