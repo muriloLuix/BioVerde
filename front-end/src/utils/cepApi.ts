@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { PlaceData2 } from "./types";
+import { City } from "./types";
 
 type CepResponse = {
 	erro?: boolean;
@@ -15,7 +15,8 @@ export async function cepApi(
 	setOpenModal: (open: boolean) => void,
 	setMessage: (msg: string) => void,
 	setSuccessMsg: (sucessMsg: boolean) => void,
-	setCities: Dispatch<SetStateAction<PlaceData2[] | undefined>>
+	setCities: Dispatch<SetStateAction<City[] | undefined>>,
+	setErrors: Dispatch<SetStateAction<any>>
 ) {
 	const cepLimpo = cep.replace(/\D/g, "");
 
@@ -37,12 +38,14 @@ export async function cepApi(
 		if (cepData.erro) {
 			setOpenModal(true);
 			setMessage("CEP não encontrado!");
+			setErrors((err: any) => ({ ...err, isCepValid: true }));
 			return cepData.erro;
 		}
 
 		if (!citiesData) {
 			setOpenModal(true);
 			setMessage("Cidades não foram encontradas!");
+			setErrors((err: any) => ({ ...err, isCepValid: true }));
 			return;
 		}
 

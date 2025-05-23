@@ -43,6 +43,7 @@ export default function Suppliers() {
 	const [cities, setCities] = useState<City[]>();
 	const [errors, setErrors] = useState({
 		states: false,
+		isCepValid: false,
 	});
 	const [formData, setFormData] = useState({
 		fornecedor_id: 0,
@@ -211,6 +212,16 @@ export default function Suppliers() {
 
 	//função para puxar os dados do fornecedor que será editado
 	const handleEditClick = (fornecedor: Supplier) => {
+		cepApi(
+			fornecedor.fornecedor_cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+
 		setFormData({
 			fornecedor_id: fornecedor.fornecedor_id,
 			nome_empresa_fornecedor: fornecedor.fornecedor_nome_ou_empresa,
@@ -379,11 +390,12 @@ export default function Suppliers() {
 		e.preventDefault();
 
 		// Validações
-		const errors = {
+		const err = {
 			states: !formData.estado,
+			isCepValid: errors.isCepValid,
 		};
 
-		setErrors(errors);
+		setErrors(err);
 
 		// Se algum erro for true, interrompe a execução
 		if (Object.values(errors).some((error) => error)) {
@@ -490,22 +502,14 @@ export default function Suppliers() {
 
 		console.log("Dados sendo enviados:", formData);
 
-		// Validações
-		const errors = {
-			states: !formData.estado,
-		};
-
-		setErrors(errors);
-
-		if (Object.values(errors).some((error) => error)) {
-			return;
-		}
-
 		setLoading((prev) => new Set([...prev, "updateSupplier"]));
 		setSuccessMsg(false);
 
 		try {
-			const response = await axios.post(
+			if (Object.values(errors).some((error) => error)) {
+				return;
+			}
+			const response = await axios.patch(
 				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
 				formData,
 				{
@@ -597,7 +601,8 @@ export default function Suppliers() {
 			setOpenNoticeModal,
 			setMessage,
 			setSuccessMsg,
-			setCities
+			setCities,
+			setErrors
 		);
 	};
 

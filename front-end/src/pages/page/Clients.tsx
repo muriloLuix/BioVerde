@@ -44,6 +44,7 @@ export default function Clients() {
 	const [clientes, setClientes] = useState<Client[]>([]);
 	const [errors, setErrors] = useState({
 		states: false,
+		isCepValid: false,
 	});
 	const [formData, setFormData] = useState({
 		cliente_id: 0,
@@ -171,7 +172,7 @@ export default function Clients() {
 		);
 	};
 
-	const gerarRelatorio = async () => {
+	const generateReportatorio = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -208,9 +209,32 @@ export default function Clients() {
 		}
 	};
 
+	//Função para chamar a api de CEP
+	const handleCepBlur = () => {
+		cepApi(
+			formData.cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+	};
+
 	//função para puxar os dados do cliente que será editado
 	const handleEditClick = (cliente: Client) => {
 		console.log("Dados completos do cliente:", cliente);
+
+		cepApi(
+			cliente.cliente_cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
 
 		setFormData({
 			cliente_id: cliente.cliente_id,
@@ -381,21 +405,14 @@ export default function Clients() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Validações
-		const errors = {
-			states: !formData.estado,
-		};
-		setErrors(errors);
-
-		// Se algum erro for true, interrompe a execução
-		if (Object.values(errors).some((error) => error)) {
-			return;
-		}
-
 		setLoading((prev) => new Set([...prev, "submit"]));
 		setSuccessMsg(false);
 
 		try {
+			if (Object.values(errors).some((error) => error)) {
+				return;
+			}
+
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/clientes/cadastrar_clientes.php",
 				formData,
@@ -493,7 +510,11 @@ export default function Clients() {
 		setSuccessMsg(false);
 
 		try {
-			const response = await axios.post(
+			if (Object.values(errors).some((error) => error)) {
+				return;
+			}
+
+			const response = await axios.patch(
 				"http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
 				formData,
 				{
@@ -574,18 +595,6 @@ export default function Clients() {
 				return newLoading;
 			});
 		}
-	};
-
-	//Função para chamar a api de CEP
-	const handleCepBlur = () => {
-		cepApi(
-			formData.cep,
-			setFormData,
-			setOpenNoticeModal,
-			setMessage,
-			setSuccessMsg,
-			setCities
-		);
 	};
 
 	//Limpar FormData
@@ -928,7 +937,7 @@ export default function Clients() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={gerarRelatorio}
+									onClick={generateReportatorio}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
