@@ -8,7 +8,7 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    $cols = array("lote_id", "lote_dtFabricacao", "lote_dtExpiracao", "lote_quantidade", "lote_localArmazenado", "lote_classificacao", "lote_obs", "p.produto_nome", "u.uni_sigla", "t.tproduto_nome", "s.staproduto_nome", "f.fornecedor_nome_ou_empresa");
+    $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantInicial", "lote_quantAtual", "lote_obs", "p.produto_nome", "u.uni_sigla", "t.tproduto_nome", "f.fornecedor_nome_ou_empresa", "c.classificacao_nome", "a.localArmazenamento_nome" );
 
     $joins = [
         [
@@ -28,13 +28,18 @@ try {
         ],
         [
             "type" => "INNER",
-            "join_table" => "status_produto s",
-            "on" => "l.staproduto_id = s.staproduto_id"
+            "join_table" => "fornecedores f",
+            "on" => "l.fornecedor_id = f.fornecedor_id"
         ],
         [
             "type" => "INNER",
-            "join_table" => "fornecedores f",
-            "on" => "l.fornecedor_id = f.fornecedor_id"
+            "join_table" => "classificacao_produto c",
+            "on" => "l.classificacao_id = c.classificacao_id"
+        ],
+        [
+            "type" => "INNER",
+            "join_table" => "locais_armazenamento a",
+            "on" => "l.localArmazenamento_id = a.localArmazenamento_id"
         ],
     ];
 
@@ -46,9 +51,11 @@ try {
 
     $tp_produto = buscarTipoProduto($conn);
 
-    $status_produto = buscarStatus($conn);
-
     $fornecedores = buscarFornecedores($conn);
+
+    $classficacao = buscarClassificacaoProduto($conn);
+
+    $localArmazenado = buscarLocaisArmazenamento($conn);
 
     echo json_encode([
         "success" => true,
@@ -56,8 +63,9 @@ try {
         "produtos" => $produtos,
         "unidade_medida" => $unidade_medida,
         "tp_produto" => $tp_produto,
-        "status_produto" => $status_produto,
-        "fornecedores" => $fornecedores
+        "fornecedores" => $fornecedores,
+        "classificacao" => $classficacao,
+        "localArmazenado" => $localArmazenado
     ]);
 
 } catch (Exception $e) {

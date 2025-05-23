@@ -62,22 +62,34 @@ export interface User {
 
 export interface Batch {
 	lote_id: number;
+	lote_codigo: string;
     lote_dtFabricacao: Date;
     lote_dtExpiracao: Date;
-    lote_quantidade: string;
+    lote_quantInicial: string;
+    lote_quantAtual: string;
 	fornecedor_nome_ou_empresa: string;
 	tproduto_nome: string;
 	staproduto_nome: string;
     lote_obs: string;
     produto_nome: string;
     uni_sigla: string;
-	lote_classificacao: string;
-    lote_localArmazenado: string;
+	classificacao_nome: string;
+    localArmazenamento_nome: string;
 }
 
 export interface JobPosition {
 	car_id: number;
 	car_nome: string;
+}
+
+export interface Storage {
+	localArmazenamento_id: number;
+	localArmazenamento_nome: string;
+}
+
+export interface Classification {
+	classificacao_id: number;
+	classificacao_nome: string;
 }
 
 export interface Unit {

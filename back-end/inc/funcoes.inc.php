@@ -374,21 +374,6 @@ function buscarFornecedores($conn)
     return $fornecedores;
 }
 
-function unidMedida($conn)
-{
-    $result = $conn->query("SELECT uni_id, uni_sigla FROM unidade_medida");
-    if (!$result) {
-        throw new Exception("Erro ao buscar unidade de medida: " . $conn->error);
-    }
-
-    $unidade_medida = [];
-    while ($row = $result->fetch_assoc()) {
-        $unidade_medida[] = $row;
-    }
-
-    return $unidade_medida;
-}
-
 /**
  * Busca todos os níveis de acesso registrados no banco de dados.
  *
@@ -414,6 +399,34 @@ function buscarNiveisAcesso($conn)
     return $niveis;
 }
 
+function buscarClassificacaoProduto($conn){
+    $result = $conn->query("SELECT classificacao_id, classificacao_nome FROM classificacao_produto");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o Classificacao do Produto: " . $conn->error);
+    }
+
+    $classificacao = [];
+    while ($row = $result->fetch_assoc()) {
+        $classificacao[] = $row;
+    }
+
+    return $classificacao;
+}
+
+function buscarLocaisArmazenamento($conn){
+    $result = $conn->query("SELECT localArmazenamento_id, localArmazenamento_nome FROM locais_armazenamento");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o Locais de Armazenamento: " . $conn->error);
+    }
+
+    $localArmazenado = [];
+    while ($row = $result->fetch_assoc()) {
+        $localArmazenado[] = $row;
+    }
+
+    return $localArmazenado;
+}
+
 function buscarTipoProduto($conn){
     $result = $conn->query("SELECT tproduto_id, tproduto_nome FROM tp_produto");
     if (!$result) {
@@ -428,10 +441,11 @@ function buscarTipoProduto($conn){
     return $tproduto_id;
 }
 
-function buscarUnidadeMedida($conn){
-    $result = $conn->query("SELECT uni_id, uni_sigla FROM unidade_medida");
+function buscarUnidadeMedida($conn)
+{
+    $result = $conn->query("SELECT uni_id, uni_sigla, uni_nome FROM unidade_medida");
     if (!$result) {
-        throw new Exception("Erro ao buscar a unidade de medida: " . $conn->error);
+        throw new Exception("Erro ao buscar unidade de medida: " . $conn->error);
     }
 
     $unidade_medida = [];

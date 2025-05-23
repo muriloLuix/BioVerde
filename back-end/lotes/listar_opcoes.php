@@ -13,21 +13,24 @@ try {
     // Buscar produtos
     $produtos = buscarProdutos($conn);
 
-    $unidade_medida = unidMedida($conn);
+    $unidade_medida = buscarUnidadeMedida($conn);
 
     $tp_produto = buscarTipoProduto($conn);
 
-    $status_produto = buscarStatus($conn);
-
     $fornecedores = buscarFornecedores($conn);
+
+    $classificacao = buscarClassificacaoProduto($conn);
+
+    $localArmazenado = buscarLocaisArmazenamento($conn);
 
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,
         "unidade_medida" => $unidade_medida,
         "tp_produto" => $tp_produto,
-        "status_produto" => $status_produto,
-        "fornecedores" => $fornecedores
+        "fornecedores" => $fornecedores,
+        "classificacao" => $classificacao,
+        "localArmazenado" => $localArmazenado
     ]);
 
 } catch (Exception $e) {

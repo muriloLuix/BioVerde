@@ -18,6 +18,8 @@ type ModalProps = {
 	modalWidth?: string;
 	loading?: Set<string>;
 	isLoading?: boolean;
+	isRegister?: boolean;
+	registerButtonText?: string;
 	isOrderModal?: boolean;
 	totalPedido?: number;
 	onCancel?: () => void;
@@ -44,6 +46,8 @@ const Modal = ({
 	isLoading,
 	totalPedido,
 	withXButton,
+	isRegister,
+	registerButtonText,
 	onCancel,
 	onSubmit,
 	onDelete,
@@ -58,7 +62,7 @@ const Modal = ({
 			<Dialog.Portal>
 				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
 				<Dialog.Content
-					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-xl shadow-lg`}
+					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg max-h-[90vh] overflow-auto custom-scrollbar-modal`}
 				>
 					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between items-center">
 						{modalTitle}
@@ -124,34 +128,52 @@ const Modal = ({
 								}}
 							>
 								{children}
-								<div className="flex justify-end items-center gap-3 m-2">
-									<>
-										<Form.Submit>
+									{isRegister ? (
+										<Form.Submit asChild>
+											<div className="flex place-content-center mt-6">
 											<button
-											type="submit"
-											className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-											disabled={!!loading?.size}
+												type="submit"
+												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
+												// disabled={loading.size > 0}
 											>
-											{isLoading ? (
-												<Loader2 className="animate-spin h-6 w-6" />
-											) : (
-												leftButtonText
-											)}
+												{isLoading ? (
+													<Loader2 className="animate-spin h-6 w-6" />
+												) : (
+													registerButtonText
+												)}
 											</button>
+											</div>
 										</Form.Submit>
+									) : (
+										<div className="flex justify-end items-center gap-3 m-2">
+											<>
+												<Form.Submit>
+													<button
+													type="submit"
+													className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+													disabled={!!loading?.size}
+													>
+													{isLoading ? (
+														<Loader2 className="animate-spin h-6 w-6" />
+													) : (
+														leftButtonText
+													)}
+													</button>
+												</Form.Submit>
 
-										<Dialog.Close asChild>
-											<button
-											type="button"
-											onClick={onCancel}
-											className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-											aria-label="Close"
-											>
-											{rightButtonText}
-											</button>
-										</Dialog.Close>
-									</>
-								</div>
+												<Dialog.Close asChild>
+													<button
+													type="button"
+													onClick={onCancel}
+													className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
+													aria-label="Close"
+													>
+													{rightButtonText}
+													</button>
+												</Dialog.Close>
+											</>
+										</div>
+									)}
 							</Form.Root>
 						)}
 					</Dialog.Description>

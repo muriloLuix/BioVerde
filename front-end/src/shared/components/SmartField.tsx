@@ -83,19 +83,8 @@ const SmartField = ({
 				className="flex justify-between items-center"
 			>
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
-				{isSelect || isPassword || isPrice || isCreatableSelect ? (
-					<div className="flex items-center pb-1 gap-2">
-						{userLevel === "Administrador" && (
-							isCreatableSelect && (
-								<button 
-									title={creatableConfigName}
-									onClick={openManagementModal}
-								>
-									<Settings size={20} className="text-gray-600 cursor-pointer" />
-								</button>
-							) 
-						)}
-						{error && (
+				<div className="flex items-center pb-1 gap-2">
+					{error && (
 						<span
 							className={`text-red-500 ${
 							error === "*" ? "text-base" : "text-xs"
@@ -103,33 +92,41 @@ const SmartField = ({
 						>
 							{error}
 						</span>
-						)}
-					</div>
-				) : (
-					<>
-						<Form.Message
-							className="text-red-500 text-base"
-							match="valueMissing"
-						>
-							*
-						</Form.Message>
-						<Form.Message className="text-red-500 text-xs" match="typeMismatch">
-							Insira um e-mail válido*
-						</Form.Message>
-						<Form.Message
-							className="text-red-500 text-xs"
-							match="patternMismatch"
-						>
-							Formato inválido*
-						</Form.Message>
-						<Form.Message
-							className="text-red-500 text-xs"
-							match="rangeUnderflow"
-						>
-							Valor inválido*
-						</Form.Message>
-					</>
-				)}
+					)}
+
+					<Form.Message
+						className="text-red-500 text-base"
+						match="valueMissing"
+					>
+						*
+					</Form.Message>
+					<Form.Message className="text-red-500 text-xs" match="typeMismatch">
+						Insira um e-mail válido*
+					</Form.Message>
+					<Form.Message
+						className="text-red-500 text-xs"
+						match="patternMismatch"
+					>
+						Formato inválido*
+					</Form.Message>
+					<Form.Message
+						className="text-red-500 text-xs"
+						match="rangeUnderflow"
+					>
+						Valor inválido*
+					</Form.Message>
+
+					{userLevel === "Administrador" && (
+						isCreatableSelect && (
+							<button 
+								title={creatableConfigName}
+								onClick={openManagementModal}
+							>
+								<Settings size={20} className="text-gray-600 cursor-pointer" />
+							</button>
+						) 
+					)}
+				</div>
 			</Form.Label>
 			{isSelect ? (
 				<div className="relative">
