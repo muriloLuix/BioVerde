@@ -1,76 +1,95 @@
-import React, { useState, useEffect, useRef } from "react";
-import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ColDef, ValueFormatterParams } from "ag-grid-community";
-import axios from "axios";
-import { Tabs } from "radix-ui";
-import { useNavigate } from "react-router-dom";
-import { NoticeModal } from "../../shared";
+import {useState, useEffect, useRef} from "react";
+import {AgGridReact} from "ag-grid-react";
 import {
-    Eye
-} from "lucide-react";
-
-interface Log {
-    log_id: number;
-    log_user_nome: string;
-    log_datahora: string;
-    log_pag_id: string;
-    log_url: string;
-    log_acao: string;
-    log_conteudo: string;
-}
+    AllCommunityModule,
+    ColDef,
+    themeQuartz,
+    ValueFormatterParams
+} from "ag-grid-community";
+import axios from "axios";
+import {Tabs} from "radix-ui";
+import {useNavigate} from "react-router-dom";
+import {Modal, NoticeModal} from "../../shared";
+import {Eye} from "lucide-react";
+import {Logs} from "../../utils/types.ts";
+import {agGridTranslation} from "../../utils/agGridTranslation.ts";
+import {
+    overlayLoadingTemplate,
+    overlayNoRowsTemplate
+} from "../../utils/gridOverlays.ts";
 
 function formatDateBR(value?: string): string {
     if (!value) return "";
     const d = new Date(value.replace(" ", "T"));
     return d.toLocaleString("pt-BR", {
-        day:   "2-digit",
+        day: "2-digit",
         month: "2-digit",
-        year:  "numeric",
-        hour:   "2-digit",
+        year: "numeric",
+        hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
+        second: "2-digit"
     });
 }
 
 export default function Orders() {
     const [activeTab, setActiveTab] = useState("list");
     const [loading, setLoading] = useState<Set<string>>(new Set());
-    const [rowData, setRowData] = useState<Log[]>([]);
+    const [rowData, setRowData] = useState<Logs[]>([]);
     const [openNoticeModal, setOpenNoticeModal] = useState(false);
+    const [openLogModal, setOpenModal] = useState(false);
     const [message, setMessage] = useState("");
+    const [selectedLog, setSelectedLog] = useState<Logs | null>(null);
     const gridRef = useRef<AgGridReact>(null);
     const navigate = useNavigate();
 
+    const handleViewClick = (log: Logs) => {
+        setSelectedLog(log);
+        setOpenModal(true);
+    };
+
     const columnDefs: ColDef[] = [
-        { field: "log_id",        headerName: "Id",        filter: true, width: 100 },
-        { field: "log_user_nome", headerName: "Usuário",   filter: true, width: 230 },
+        {field: "log_id", headerName: "Id", filter: true, flex: 0.5},
+        {field: "log_user_nome", headerName: "Usuário", filter: true, flex: 1},
         {
             field: "log_datahora",
             headerName: "Data/hora",
-            width: 170,
+            flex: 1,
             valueFormatter: (params: ValueFormatterParams) =>
                 formatDateBR(params.value as string),
         },
-        { field: "log_pag_id",    headerName: "Página",    width: 200 },
-        { field: "log_url",       headerName: "URL",       width: 200 },
-        { field: "log_acao",      headerName: "Ação",      width: 300 },
-        { field: "log_conteudo",  headerName: "Conteúdo",  width: 300 },
+        {field: "log_pag_id", headerName: "Página", flex: 1},
+        {field: "log_url", headerName: "URL", flex: 1},
+        {field: "log_acao", headerName: "Ação", flex: 1.2},
+        {field: "log_conteudo", headerName: "Conteúdo", flex: 2},
         {
             headerName: "Ações",
-            width: 100,
-            cellRendererFramework: (params) => (
-                <Eye
-                    size={18}
-                    className="cursor-pointer text-verdePigmento"
-                    onClick={() => {
-                        // Exemplo: console.log(params.data);
-                        // aqui você pode abrir um modal ou redirecionar
-                        console.log("Visualizar log:", params.data);
-                    }}
-                />
+            field: "acoes",
+            cellRenderer: (params: any) => (
+                <div
+                    className="flex gap-2 mt-2.5 items-center justify-center"
+                    onClick={() => handleViewClick(params.data)}
+                >
+                    <Eye
+                        size={18}
+                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                    />
+                </div>
             ),
+            pinned: "right",
+            sortable: false,
+            filter: false,
+            width: 100,
         },
     ];
+
+    const myTheme = themeQuartz.withParams({
+        spacing: 9,
+        headerBackgroundColor: "#89C988",
+        foregroundColor: "#1B1B1B",
+        rowHoverColor: "#E2FBE2",
+        oddRowBackgroundColor: "#f5f5f5",
+        fontFamily: '"Inter", sans-serif'
+    });
 
     useEffect(() => {
         fetchData();
@@ -81,7 +100,7 @@ export default function Orders() {
             try {
                 const resp = await axios.get(
                     "http://localhost/BioVerde/back-end/auth/check_session.php",
-                    { withCredentials: true }
+                    {withCredentials: true}
                 );
                 if (!resp.data.loggedIn) {
                     setMessage("Sessão expirada. Por favor, faça login novamente.");
@@ -99,10 +118,10 @@ export default function Orders() {
 
     const fetchData = async () => {
         try {
-            setLoading(prev => new Set([...prev, "logs"]));
+            setLoading((prev) => new Set([...prev, "logs"]));
             const resp = await axios.get(
                 "http://localhost/BioVerde/back-end/log/listar_log.php",
-                { withCredentials: true, headers: { Accept: "application/json" } }
+                {withCredentials: true, headers: {Accept: "application/json"}}
             );
             if (resp.data.success) {
                 setRowData(resp.data.logs);
@@ -115,7 +134,7 @@ export default function Orders() {
             setOpenNoticeModal(true);
             setMessage("Erro ao conectar com o servidor");
         } finally {
-            setLoading(prev => {
+            setLoading((prev) => {
                 const next = new Set(prev);
                 next.delete("logs");
                 return next;
@@ -149,15 +168,65 @@ export default function Orders() {
                     value="list"
                     className="h-full w-full flex flex-col py-2 px-4"
                 >
-                    <AgGridReact
-                        modules={[AllCommunityModule]}
-                        ref={gridRef}
-                        rowData={rowData}
-                        columnDefs={columnDefs}
-                        pagination
-                        paginationPageSize={20}
-                    />
+                    <div className="flex justify-end mb-3">
+                        <button
+                            onClick={() => {
+                                const params = {
+                                    fileName: "logs.csv",
+                                    columnSeparator: ";",
+                                };
+                                gridRef.current?.api.exportDataAsCsv(params);
+                            }}
+                            className="bg-verdePigmento hover:bg-green-700 text-white font-semibold py-2 px-4 rounded cursor-pointer"
+                        >
+                            Exportar CSV
+                        </button>
+                    </div>
+
+                    <div className="h-[75vh]">
+                        <AgGridReact
+                            modules={[AllCommunityModule]}
+                            theme={myTheme}
+                            ref={gridRef}
+                            rowData={rowData}
+                            defaultColDef={{resizable: true}}
+                            columnDefs={columnDefs}
+                            localeText={agGridTranslation}
+                            pagination
+                            paginationPageSize={15}
+                            paginationPageSizeSelector={[10, 25, 50, 100]}
+                            loading={loading.has("logs")}
+                            overlayLoadingTemplate={overlayLoadingTemplate}
+                            overlayNoRowsTemplate={overlayNoRowsTemplate}
+                        />
+                    </div>
                 </Tabs.Content>
+
+                <Modal
+                    openModal={openLogModal}
+                    setOpenModal={setOpenModal}
+                    modalTitle="Visualizar Log"
+                    modalWidth="w-1/2"
+                    isLoading={false}
+                    isRegister={true}
+                    registerButtonText="Fechar"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        setOpenModal(false);
+                    }}
+                >
+
+                    {selectedLog && (
+                        <div className="space-y-2 text-gray-800">
+                            <p><strong>Usuário:</strong> {selectedLog.log_user_nome}</p>
+                            <p><strong>Data/hora:</strong> {formatDateBR(selectedLog.log_datahora)}</p>
+                            <p><strong>Página:</strong> {selectedLog.log_pag_id}</p>
+                            <p><strong>URL:</strong> {selectedLog.log_url}</p>
+                            <p><strong>Ação:</strong> {selectedLog.log_acao}</p>
+                            <p><strong>Conteúdo:</strong> {selectedLog.log_conteudo}</p>
+                        </div>
+                    )}
+                </Modal>
             </Tabs.Root>
 
             <NoticeModal

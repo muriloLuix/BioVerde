@@ -135,4 +135,12 @@ export interface SelectEvent {
   };
 };
 
-
+export interface Logs {
+	log_id: number;
+	log_user_nome: string;
+	log_datahora: string;
+	log_pag_id: string;
+	log_url: string;
+	log_acao: string;
+	log_conteudo: string;
+}
