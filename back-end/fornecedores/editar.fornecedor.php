@@ -35,8 +35,16 @@ try {
     // Validação dos campos obrigatórios
     $camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'responsavel', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
+
     if ($validacaoDosCampos !== null) { 
         echo json_encode($validacaoDosCampos);
+        exit();    
+    }
+
+    $verifiedDocuments = verifyDocuments($data['cpf_cnpj'], $data['tipo']);
+
+    if ($verifiedDocuments['success'] === false) { 
+        echo json_encode($verifiedDocuments);
         exit();    
     }
 

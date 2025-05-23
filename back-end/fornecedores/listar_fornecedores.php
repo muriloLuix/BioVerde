@@ -8,6 +8,8 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
+    $verifiedDocuments = verifyDocuments("121.551.469-73", "fisica");
+
     $cols = [
 
         "f.fornecedor_id", 

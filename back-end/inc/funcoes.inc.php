@@ -1240,16 +1240,17 @@ function verifyDocuments(string $document, string $personType): array {
     // Remove tudo que não é número
     $cleanDocument = preg_replace('/\D/', '', $document);
 
-    if($personType === "fisica"){
-        // Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
-        if (preg_match('/^(\d)\1{10}$/', $cleanDocument)) {
-            return [
-                'success' => false,
-                'message' => "CPF inválido!"
-            ];
-        }
+    // Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
+    if (preg_match('/^(\d)\1{10}$/', $cleanDocument)) {
+        return [
+            'success' => false,
+            'message' => "CPF inválido!"
+        ];
+    }
 
-        $characters = str_split($cleanDocument);
+    $characters = str_split($cleanDocument);
+
+    if($personType === "fisica"){
 
         // Primeiro dígito verificador
         $total = 0;
@@ -1273,18 +1274,61 @@ function verifyDocuments(string $document, string $personType): array {
         $valid = ((int)$characters[9] === $firstDigit) && ((int)$characters[10] === $secondDigit);
 
         return
-         $valid ? 
-         [
-            'success' => true,
-            'message' => "CPF válido!"
-        ] : [
-            'success' => false,
-            'message' => "CPF inválido!"
-        ];
+            $valid ? 
+                [
+                    'success' => true,
+                    'message' => "CPF válido!"
+                ] : [
+                    'success' => false,
+                    'message' => "CPF inválido!"
+                ];
     }
 
     if($personType === "juridica"){
-        return ['success' => false, 'message' => "Erro"];
+
+        $total = 0;
+        $times = 2;
+        for($i = 11; $i >= 0; $i--){
+
+            if($times > 9){
+                $times = 2;
+            }
+
+            $total += (int)$characters[$i] * $times;
+
+            $times++;
+        }
+
+        $rest = $total % 11;
+        $firstDigit = ($rest < 2) ? 0 : 11 - $rest;
+        
+        $total = 0;
+        $times = 2;
+        for($i = 12; $i >= 0; $i--){
+
+            if($times > 9){
+                $times = 2;
+            }
+
+            $total += (int)$characters[$i] * $times;
+
+            $times++;
+        }
+
+        $rest = $total % 11;
+        $secondDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        $isValid = ((int)$characters[12] === $firstDigit) && ((int)$characters[13] === $secondDigit);
+
+        return 
+            $isValid ? 
+                [
+                    'success' => true, 
+                    'message' => "CNPJ válido!"
+                ] : [
+                    'success' => false, 
+                    'message' => "CNPJ inválido!"
+                ];
     }
 }
 

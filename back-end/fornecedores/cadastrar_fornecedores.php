@@ -23,10 +23,17 @@ $data = json_decode($rawData, true);
 // Validação dos campos
 $camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'responsavel', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
+$verifiedDocuments = verifyDocuments($data['cpf_cnpj'], $data['tipo']);
+
 if ($validacaoDosCampos !== null) { 
     echo json_encode($validacaoDosCampos);
     exit();    
 }
+if ($verifiedDocuments["success"] === false) {
+    echo json_encode($verifiedDocuments);
+    exit();
+}
+
 
 // Verificar email e CNPJ
 $emailCpfError = verifyCredentials(
