@@ -1,11 +1,6 @@
-<?php 
-ini_set("display_errors",1);
+<?php
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
-// configurarSessaoSegura();
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
 

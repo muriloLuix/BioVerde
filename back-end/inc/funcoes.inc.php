@@ -1,9 +1,8 @@
 <?php
-
+/**************** HEADERS ************************/
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
 include("../cors.php");
 include("ambiente.inc.php");
 include("../log/log.php");
@@ -19,19 +18,21 @@ require '../../vendor/phpmailer/phpmailer/src/Exception.php';
 require '../../vendor/phpmailer/phpmailer/src/PHPMailer.php';
 require '../../vendor/phpmailer/phpmailer/src/SMTP.php';
 require '../../vendor/autoload.php';
+/************************************************/
 
 /********************************* FUNÇÕES AUXILIARES *************************************/
 
 /**
  * Valida se todos os campos obrigatórios estão presentes em um array de dados.
- * 
+ *
  * @param array $data Array de dados a ser validado.
  * @param array $requiredFields Array com os campos obrigatórios que devem ser verificados.
- * 
+ *
  * @return array|null Retorna um array com chave 'success' e 'message' caso haja um erro,
  *         ou null caso todos os campos sejam válidos.
  */
-function validarCampos($data, $requiredFields) {
+function validarCampos($data, $requiredFields)
+{
     foreach ($requiredFields as $field) {
 
         // verifica se esta nulo
@@ -44,19 +45,19 @@ function validarCampos($data, $requiredFields) {
                     "message" => "O campo '$field' é obrigatório! Insira um texto válido"
                 ];
             }
-            
+
             $textFields = ["nome_produto", "nome_empresa_fornecedor", "nome_empresa_cliente"];
 
             // em pessoas fisicas e produtos, verifica se tem algum numero nos nomes
             if (in_array($field, $textFields) && is_numeric($data[$field])) {
-                if($data["tipo"] === "fisica" || $field === "nome_produto"){
+                if ($data["tipo"] === "fisica" || $field === "nome_produto") {
                     return [
                         "success" => false,
                         "message" => "O valor inserido no campo '$field' é inválido! Insira um texto válido"
                     ];
                 }
             }
-            
+
             // verifica se tem algum caracter especial nos nomes
             if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
                 return [
@@ -80,11 +81,11 @@ function validarCampos($data, $requiredFields) {
 
 /**
  * Verifica se um cargo existe na base de dados e retorna seu ID.
- * 
+ *
  * @param mysqli $conn Conex o com o banco de dados.
  * @param string $cargo Nome do cargo a ser verificado.
- * 
- * @return array|integer Retorna um array com chave 'success' e 'message' caso 
+ *
+ * @return array|integer Retorna um array com chave 'success' e 'message' caso
  *         haja um erro, ou o ID do cargo como inteiro caso ele seja encontrado.
  */
 function verificarCargo($conn, $cargo)
@@ -144,7 +145,7 @@ function verificarStatus($conn, $status)
         return null;
     }
 
-    $status = (int)$status; 
+    $status = (int)$status;
     $stmt->bind_param("i", $status);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -189,10 +190,10 @@ function verificarTipo($conn, $tipo)
 /**
  * Exclui um registro de uma tabela
  *
- * @param mysqli $conn      conexão com o banco de dados
- * @param int    $id        ID do registro a ser excluido
- * @param string $tabela    nome da tabela que contem o registro
- * @param string $pk        nome da chave primaria da tabela
+ * @param mysqli $conn conexão com o banco de dados
+ * @param int $id ID do registro a ser excluido
+ * @param string $tabela nome da tabela que contem o registro
+ * @param string $pk nome da chave primaria da tabela
  *
  * @return array            resposta com um sucesso boolean e uma mensagem de erro
  */
@@ -230,12 +231,12 @@ function deleteData($conn, $id, $tabela, $pk)
 /**
  * Envia um e-mail com base nos parâmetros informados
  *
- * @param array|null $from      informações de quem está enviando o e-mail
+ * @param array|null $from informações de quem está enviando o e-mail
  *                               deve conter "email" e "name" (opcional)
- * @param string     $to        e-mail do destinatário
- * @param string     $subject   assunto do e-mail
- * @param string     $htmlMessage conteúdo do e-mail em HTML
- * @param string     $plainMessage conteúdo do e-mail em texto puro (opcional)
+ * @param string $to e-mail do destinatário
+ * @param string $subject assunto do e-mail
+ * @param string $htmlMessage conteúdo do e-mail em HTML
+ * @param string $plainMessage conteúdo do e-mail em texto puro (opcional)
  *
  * @return array               resposta com um sucesso boolean e uma mensagem de erro
  */
@@ -341,6 +342,16 @@ function buscarCargos($conn)
 }
 
 
+/**
+ * Busca todos os status do pedido registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os status do pedido, onde cada status
+ *         é representado por um array com as chaves 'stapedido_id' e 'stapedido_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os status.
+ */
 function buscarStatusPedido($conn)
 {
     $result = $conn->query("SELECT stapedido_id, stapedido_nome FROM status_pedido");
@@ -381,6 +392,16 @@ function buscarStatus($conn)
     return $status_produto;
 }
 
+/**
+ * Busca todos os produtos registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os produtos, onde cada produto
+ *         é representado por um array com as chaves 'produto_id' e 'produto_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os produtos.
+ */
 function buscarProdutos($conn)
 {
     $result = $conn->query("SELECT produto_id, produto_nome FROM produtos");
@@ -396,6 +417,16 @@ function buscarProdutos($conn)
     return $produtos;
 }
 
+/**
+ * Busca todos os fornecedores registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os fornecedores, onde cada fornecedor
+ *         é representado por um array com as chaves 'fornecedor_id' e 'fornecedor_nome_ou_empresa'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os fornecedores.
+ */
 function buscarFornecedores($conn)
 {
     $result = $conn->query("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores");
@@ -436,7 +467,19 @@ function buscarNiveisAcesso($conn)
     return $niveis;
 }
 
-function buscarClassificacaoProduto($conn){
+
+/**
+ * Busca todas as classificações de produtos registradas no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com as classifica oes de produtos, onde cada
+ *         classifica o   representada por um array com as chaves 'classificacao_id' e 'classificacao_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar as classifica oes de produtos.
+ */
+function buscarClassificacaoProduto($conn)
+{
     $result = $conn->query("SELECT classificacao_id, classificacao_nome FROM classificacao_produto");
     if (!$result) {
         throw new Exception("Erro ao buscar o Classificacao do Produto: " . $conn->error);
@@ -450,7 +493,19 @@ function buscarClassificacaoProduto($conn){
     return $classificacao;
 }
 
-function buscarLocaisArmazenamento($conn){
+/**
+ * Busca todas as localizações de armazenamento registradas no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com as localiza es de armazenamento, onde cada
+ *         localização é representada por um array com as chaves 'localArmazenamento_id'
+ *         e 'localArmazenamento_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar as localiza es de armazenamento.
+ */
+function buscarLocaisArmazenamento($conn)
+{
     $result = $conn->query("SELECT localArmazenamento_id, localArmazenamento_nome FROM locais_armazenamento");
     if (!$result) {
         throw new Exception("Erro ao buscar o Locais de Armazenamento: " . $conn->error);
@@ -464,7 +519,18 @@ function buscarLocaisArmazenamento($conn){
     return $localArmazenado;
 }
 
-function buscarTipoProduto($conn){
+/**
+ * Busca todas as classificações de produtos registradas no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com as classifica oes de produtos, onde cada
+ *         classificação é representada por um array com as chaves 'tproduto_id' e 'tproduto_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar as classifica oes de produtos.
+ */
+function buscarTipoProduto($conn)
+{
     $result = $conn->query("SELECT tproduto_id, tproduto_nome FROM tp_produto");
     if (!$result) {
         throw new Exception("Erro ao buscar o tipo do produto: " . $conn->error);
@@ -478,6 +544,16 @@ function buscarTipoProduto($conn){
     return $tproduto_id;
 }
 
+/**
+ * Busca todas as unidades de medida registradas no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com as unidades de medida, onde cada unidade
+ *         é representada por um array com as chaves 'uni_id', 'uni_sigla' e 'uni_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar as unidades de medida.
+ */
 function buscarUnidadeMedida($conn)
 {
     $result = $conn->query("SELECT uni_id, uni_sigla, uni_nome FROM unidade_medida");
@@ -493,6 +569,16 @@ function buscarUnidadeMedida($conn)
     return $unidade_medida;
 }
 
+/**
+ * Envia um e-mail com o código de recuperação de senha para o e-mail do usuário.
+ *
+ * @param string $email E-mail do usuário.
+ * @param int $codigo Código de recuperação de senha.
+ *
+ * @return array Retorna um array com as informações sobre o envio do e-mail:
+ *         - 'success': boolean que indica se o e-mail foi enviado com sucesso.
+ *         - 'message': string com a mensagem de erro, caso haja.
+ */
 function enviarEmailRecuperacao($email, $codigo)
 {
     $html = "        <html>
@@ -519,9 +605,7 @@ function enviarEmailRecuperacao($email, $codigo)
                 </div>
             </div>
         </body>
-        </html>"
-
-    ;
+        </html>";
 
     return sendEmail(
         null,
@@ -600,15 +684,16 @@ function updateData($conn, $table, $fields, $id, $idField)
 
 /**
  * Verifica se um registro existe na base de dados.
- * 
+ *
  * @param mysqli $conn conexao com o banco de dados
  * @param int $id ID do registro a ser verificado
  * @param string $pk nome da chave primaria da tabela
  * @param string $tabela nome da tabela que contem o registro
- * 
+ *
  * @return bool retorna true se o registro existir, false caso contrario
  */
-function verifyExist($conn, $id, $pk, $tabela){
+function verifyExist($conn, $id, $pk, $tabela)
+{
     $stmt = $conn->prepare('SELECT ' . $pk . ' FROM ' . $tabela . ' WHERE ' . $pk . ' = ?');
     if (!$stmt) {
         return ["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error];
@@ -623,18 +708,19 @@ function verifyExist($conn, $id, $pk, $tabela){
 
 /**
  * Busca dados em uma tabela do banco de dados.
- * 
+ *
  * @param mysqli $conn conex o com o banco de dados
  * @param string $table nome da tabela que cont m os dados a serem buscados
  * @param string $fields campos a serem buscados na tabela (separados por v rgula)
  * @param array $inner par metros de inner join (opcional)
  *                      - join_table: nome da tabela a ser feita a inner join
  *                      - on: condicional da inner join
- * 
+ *
  * @return array retorna um array com os dados encontrados
  * @throws Exception caso haja erro ao buscar os dados
  */
-function search($conn, $table, $fields, $joins = []) {
+function search($conn, $table, $fields, $joins = [])
+{
     $sql = "SELECT $fields FROM $table";
 
     if (!empty($joins) && is_array($joins)) {
@@ -661,13 +747,14 @@ function search($conn, $table, $fields, $joins = []) {
 
 /**
  * Busca um usuário pelo seu ID
- * 
+ *
  * @param mysqli $conn Conex o com o banco de dados
  * @param int $user_id ID do usu rio a ser buscado
- * 
+ *
  * @return array|null Associativo com os dados do usu rio, ou null se n o encontrado
  */
-function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field = 'user_id') {
+function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field = 'user_id')
+{
     $sql = "SELECT $fields FROM $table";
 
     if (!empty($joins) && is_array($joins)) {
@@ -694,24 +781,20 @@ function searchPersonPerID($conn, $id, $table, $fields, $joins = [], $id_field =
 }
 
 /**
- * Executa uma consulta com base em um array de parâmetros.
+ * Executa uma consulta com base em um array de configura o e outro de filtros.
  *
- * @param mysqli $conn Conex o com o banco de dados.
- * @param array $base Array com as informações da consulta base.
- *      - select: Campos a serem consultados.
- *      - from: Tabela a ser consultada.
- *      - joins: Array de JOINs a serem aplicados (opcional).
- *          - type: Tipo do JOIN (INNER, LEFT, RIGHT).
- *          - join_table: Tabela a ser JOINada.
- *          - on: Condi o para o JOIN.
- *      - modificadores: Array com modifica es específicas para cada campo
- *          (opcional).
- * @param array $filtros Array com as informações de filtragem.
- *      - where: Condi es WHERE a serem aplicadas (opcional).
- *      - valores: Valores a serem bindados para a consulta (opcional).
- *      - tipos: Tipos dos valores a serem bindados (opcional).
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param array $base Array com configura es da consulta.
+ *      - select: String com as colunas a serem selecionadas.
+ *      - from: String com a tabela a ser consultada.
+ *      - joins: Array com os JOINs a serem aplicados.
+ *      - modificadores: Array com modifica es para as cláusulas WHERE.
+ * @param array $filtros Array com os filtros a serem aplicados.
+ *      - where: Array com as condi es WHERE a serem aplicadas.
+ *      - valores: Array com os valores a serem bindados para a consulta.
+ *      - tipos: String com os tipos dos valores a serem bindados.
  *
- * @return array|null Retorna um array com os registros encontrados, ou null se n o encontrado.
+ * @return array Matriz com os registros encontrados.
  */
 function findFilters($conn, array $base, array $filtros)
 {
@@ -724,7 +807,7 @@ function findFilters($conn, array $base, array $filtros)
         }
     }
 
-    // Aplica cláusulas WHERE com modificações específicas
+    // Aplica cláusulas WHERE com modifica es específicas
     if (!empty($filtros['where'])) {
         $modifiedWhere = [];
 
@@ -808,17 +891,18 @@ function buildFilters(array $data, array $mapaFiltros)
 
 /**
  * Verifica se um registro existe na base de dados com base em dois valores.
- * 
+ *
  * @param mysqli $conn Conex o com o banco de dados
  * @param string $valor1 Valor a ser verificado na primeira coluna
  * @param string $valor2 Valor a ser verificado na segunda coluna (opcional)
  * @param string $tabela Nome da tabela que cont m o registro
  * @param string $coluna1 Nome da primeira coluna a ser verificada
  * @param string $coluna2 Nome da segunda coluna a ser verificada (opcional)
- * 
+ *
  * @return array|null Retorna um array com uma mensagem de erro se o registro for encontrado, ou null se n o houver registro.
  */
-function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $coluna2 = null) {
+function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $coluna2 = null)
+{
     if ($valor2 !== null && $coluna2 !== null) {
         $sql = "SELECT * FROM $tabela WHERE $coluna1 = ? OR $coluna2 = ?";
         $stmt = $conn->prepare($sql);
@@ -849,15 +933,26 @@ function verifyCredentials($conn, $tabela, $valor1, $coluna1, $valor2 = null, $c
     return null;
 }
 
-function checkLoggedUser($conn, $sessionUserId) {
+/**
+ * Verifica se o usuário está logado e se a flag de forced logout está ativada.
+ * Se a flag estiver ativada, reseta o flag, destroi a sessão atual e
+ * retorna 401 forçando re-login.
+ *
+ * Caso contrário, permite o fluxo normal do sistema.
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param int $sessionUserId ID do usuário logado
+ */
+function checkLoggedUser($conn, $sessionUserId)
+{
     header('Content-Type: application/json');
 
-    // 1) Sem sessão => 401
+    // 1) Sem sess o => 401
     if (!$sessionUserId) {
         http_response_code(401);
         echo json_encode([
             "loggedIn" => false,
-            "message"  => "Usuário não logado."
+            "message" => "Usu rio n o logado."
         ]);
         exit;
     }
@@ -871,37 +966,41 @@ function checkLoggedUser($conn, $sessionUserId) {
     $stmt->close();
 
     if ($flag) {
-        // Reseta o flag para não ficar em loop
+        // Reseta o flag para n o ficar em loop
         $upd = $conn->prepare("UPDATE usuarios SET force_logout = 0 WHERE user_id = ?");
         $upd->bind_param("i", $sessionUserId);
         $upd->execute();
         $upd->close();
 
-        // Destroi sessão atual
+        // Destroi sess o atual
         session_unset();
         session_destroy();
 
-        // Retorna 401 forçando re-login
+        // Retorna 401 for ando re-login
         http_response_code(401);
         echo json_encode([
             "loggedIn" => false,
-            "message"  => "Sua sessão expirou devido a alteração de permissões. Por favor, faça o login novamente."
+            "message" => "Sua sess o expirou devido  altera o de permiss es. Por favor, fa a o login novamente."
         ]);
         exit;
     }
 
-    // 3) Se chegar aqui, está tudo OK – continue normalmente
+    // 3) Se chegar aqui, est  tudo OK  continue normalmente
 }
-
-
-
 
 /******************************************************************************/
 
-// listar_usuarios.php
-
 // nova.senha.php
 
+/**
+ * Verifica se a senha atual é igual à nova senha informada.
+ *
+ * @param object $conn Conexão com o banco de dados
+ * @param string $email Email do usuário
+ * @param string $novaSenha Nova senha informada
+ *
+ * @return boolean true se a senha atual for igual à nova senha, false caso contr rio
+ */
 function verificarSenhaAtual($conn, $email, $novaSenha)
 {
     $sql = "SELECT user_senha FROM usuarios WHERE user_email = ?";
@@ -914,7 +1013,7 @@ function verificarSenhaAtual($conn, $email, $novaSenha)
         $res->bind_result($senhaArmazenada);
         $res->fetch();
 
-        // Verificar se a nova senha é igual à atual
+        // Verificar se a nova senha   igual   atual
         if (password_verify($novaSenha, $senhaArmazenada)) {
             return true;
         }
@@ -922,6 +1021,15 @@ function verificarSenhaAtual($conn, $email, $novaSenha)
     return false;
 }
 
+/**
+ * Atualiza a senha do usu rio com o email informado.
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $email Email do usuário
+ * @param string $novaSenha Nova senha informada
+ *
+ * @return boolean true se a senha for atualizada com sucesso, false caso contr rio
+ */
 function atualizarSenha($conn, $email, $novaSenha)
 {
     $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
@@ -940,7 +1048,13 @@ function atualizarSenha($conn, $email, $novaSenha)
 
 // recuperar.senha.php
 
-
+/**
+ * Gera um código alfanumérico de tamanho informado (padrão 6 caracteres).
+ *
+ * @param int $tamanho Tamanho do código a ser gerado
+ *
+ * @return string Código gerado
+ */
 function gerarCodigoRecuperacao($tamanho = 6)
 {
     $alfabeto = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -952,6 +1066,14 @@ function gerarCodigoRecuperacao($tamanho = 6)
 }
 
 
+/**
+ * Verifica se o e-mail informado existe no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $email E-mail a ser verificado
+ *
+ * @return boolean true se o e-mail existir, false caso contrário
+ */
 function verificarEmailExiste($conn, $email)
 {
     $sql = "SELECT user_email FROM usuarios WHERE user_email = ?";
@@ -967,6 +1089,15 @@ function verificarEmailExiste($conn, $email)
     return $existe;
 }
 
+/**
+ * Atualiza o código de recuperação para o e-mail informado.
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $email E-mail a ter o código de recuperação atualizado
+ * @param string $codigo Código de recuperação a ser atualizado
+ *
+ * @return boolean true se o código foi atualizado, false caso contrário
+ */
 function atualizarCodigoRecuperacao($conn, $email, $codigo)
 {
     $update_sql = "UPDATE usuarios SET codigo_recuperacao = ? WHERE user_email = ?";
@@ -983,6 +1114,14 @@ function atualizarCodigoRecuperacao($conn, $email, $codigo)
 
 // verificar-codigo.php
 
+/**
+ * Verifica se o código de recuperação informado existe no banco de dados e se ainda é válido.
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $codigo Código de recuperação a ser verificado
+ *
+ * @return boolean true se o código for válido, false caso contrário
+ */
 function verificarCodigoRecuperacao($conn, $codigo)
 {
 
@@ -1008,6 +1147,16 @@ function verificarCodigoRecuperacao($conn, $codigo)
 
 // login.php
 
+/**
+ * Verifica credenciais de acesso
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $email Email do usuário
+ * @param string $password Senha do usuário
+ *
+ * @return array Associativo com informações do usuário,
+ *               ou um array com erro (success=false)
+ */
 function verificarCredenciais($conn, $email, $password)
 {
     $sql = "SELECT user_id, user_nome, user_senha FROM usuarios WHERE user_email = ?";
@@ -1040,20 +1189,24 @@ function verificarCredenciais($conn, $email, $password)
     ];
 }
 
-function configurarSessaoSegura()
-{
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 0);
-    ini_set('session.cookie_samesite', 'Lax');
-    ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_lifetime', 0);
-    ini_set('session.gc_maxlifetime', 1800);
-}
-
 // editar.usuario.php
 
-/*
- * Verifica conflitos de email/CPF/CNPJ
+
+/**
+ * Verifica se há conflitos com os valores atualizados em uma tabela.
+ * Verifica se os valores passados (colunas e valores) já estão em uso
+ * em outra linha da tabela, exceto pela linha cujo ID é o $idIgnorar.
+ * Retorna null se não houver conflito, ou um array com "success" como false
+ * e "message" com a mensagem de erro.
+ *
+ * @param mysqli $conn conexão com o banco de dados
+ * @param string $tabela nome da tabela a ser verificada
+ * @param array $colunas colunas a serem verificadas
+ * @param array $valores valores a serem verificados
+ * @param string $chavePrimaria nome da chave primária da tabela
+ * @param int $idIgnorar ID da linha a ser ignorada na verificação
+ *
+ * @return array|null retorna null se não houver conflito, ou um array com a chave "success" como false e "message" com a mensagem de erro
  */
 function verificarConflitosAtualizacao($conn, $tabela, $colunas, $valores, $chavePrimaria, $idIgnorar)
 {
@@ -1107,7 +1260,7 @@ function verificarConflitosAtualizacao($conn, $tabela, $colunas, $valores, $chav
  */
 function enviarEmailFornecedor($email, $data)
 {
-        $html= "
+    $html = "
                 <html>
                 <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
                     <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
@@ -1153,10 +1306,17 @@ function enviarEmailFornecedor($email, $data)
 
 // cadastrar_clientes.php
 
+/**
+ * Envia um e-mail de confirmação de cadastro de cliente
+ *
+ * @param string $email E-mail do cliente
+ * @param array $data Dados do cliente, incluindo informações pessoais e de contato
+ * @return bool|array Retorna true se o e-mail for enviado com sucesso ou um array com a chave "success" como false e "message" com a mensagem de erro
+ */
 function enviarEmailCliente($email, $data)
 {
-
     $html = "
+        <html>
                 <html>
                 <body style='font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0;'>
                     <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);'>
@@ -1199,6 +1359,7 @@ function enviarEmailCliente($email, $data)
         $html
     );
 }
+
 // filtro.cliente.php
 
 /**
@@ -1207,7 +1368,8 @@ function enviarEmailCliente($email, $data)
  *
  * @param int $nivelMinimo
  */
-function authorize(int $nivelMinimo): void {
+function authorize(int $nivelMinimo): void
+{
     if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] < $nivelMinimo) {
         http_response_code(403);
         header('Content-Type: application/json');
@@ -1217,13 +1379,15 @@ function authorize(int $nivelMinimo): void {
         exit;
     }
 }
+
 /**
  * Retorna o nível mínimo exigido para o recurso, ou null se não definido.
  *
  * @param string $recurso
  * @return int|null
  */
-function getMinLevelFor(string $recurso): ?int {
+function getMinLevelFor(string $recurso): ?int
+{
 
     $sql = "SELECT nivel_minimo FROM permissoes WHERE recurso = ?";
     $stmt = $conn->prepare($sql);
@@ -1244,37 +1408,51 @@ function getMinLevelFor(string $recurso): ?int {
 
 
 /**
- * Mapeamento estático de dependências de chave-primária → [ tabela_referente => coluna_fk, … ]
+ * Retorna um mapa de dependências entre tabelas.
+ * A chave é o nome da tabela e o valor é um array com as tabelas que dependem dela.
+ * Cada dependência é representada por um par chave-valor, onde a chave é o nome da tabela
+ * dependente e o valor é o nome da coluna que faz a referência à tabela principal.
+ *
+ * @return array
  */
-function getDependencyMap(): array {
+function getDependencyMap(): array
+{
     return [
         'lotes' => [
-            'produtos'     => 'lote_id',
-            'movimentacoes'=> 'lote_id',
+            'produtos' => 'lote_id',
+            'movimentacoes' => 'lote_id',
         ],
         'fornecedores' => [
-            'produtos'     => 'id_fornecedor',
+            'produtos' => 'id_fornecedor',
         ],
         'usuarios' => [
             'movimentacoes_estoque' => 'user_id'
         ],
         'produtos' => [
-            'lote'=> 'produto_id',
+            'lote' => 'produto_id',
             'pedido_item' => 'produto_id',
         ],
         'clientes' => [
-            'pedidos'      => 'cliente_id',
+            'pedidos' => 'cliente_id',
         ]
     ];
 }
 
+
+/* <<<<<<<<<<<<<<  ✨ Windsurf Command 🌟 >>>>>>>>>>>>>>>> */
 /**
- * Verifica se o registro $id em $table/$pkField está sendo referenciado
- * em alguma tabela definida no getDependencyMap.
+ * Verifica as dependências de uma tabela antes de excluir um registro.
  *
- * @return array ['success'=>bool, 'message'=>string]
+ * @param mysqli $conn Conexão com o banco de dados.
+ * @param string $table Nome da tabela principal.
+ * @param string $pkField Nome do campo da chave primária.
+ * @param int $id ID do registro a ser verificado.
+ *
+ * @return array Retorna um array com 'success' indicando se a exclusão é segura,
+ *               e 'message' com a mensagem de erro, se houver.
  */
-function checkDependencies(mysqli $conn, string $table, string $pkField, int $id): array {
+function checkDependencies(mysqli $conn, string $table, string $pkField, int $id): array
+{
     $map = getDependencyMap();
 
     if (!isset($map[$table])) {
@@ -1302,8 +1480,20 @@ function checkDependencies(mysqli $conn, string $table, string $pkField, int $id
     return ['success' => true, 'message' => ''];
 }
 
-
-function verifyDocuments(string $document, string | null $personType): array {
+/**
+ * Verifica se um CPF ou CNPJ é válido.
+ *
+ * Recebe um CPF/CNPJ formatado ou não e o tipo de documento (física ou jurídica).
+ * Caso o tipo de documento seja omitido, é considerado um CPF.
+ *
+ * @param string $document CPF ou CNPJ formatado ou não.
+ * @param string|null $personType Tipo de documento: "fisica" (CPF) ou "juridica" (CNPJ).
+ *
+ * @return array Retorna um array com 'success' indicando se o documento é válido,
+ *               e 'message' com a mensagem de erro, se houver.
+ */
+function verifyDocuments(string $document, string|null $personType): array
+{
     // Remove tudo que não é número
     $cleanDocument = preg_replace('/\D/', '', $document);
 
@@ -1317,7 +1507,7 @@ function verifyDocuments(string $document, string | null $personType): array {
 
     $characters = str_split($cleanDocument);
 
-    if($personType === "fisica" || $personType === null){
+    if ($personType === "fisica" || $personType === null) {
 
         // Primeiro dígito verificador
         $total = 0;
@@ -1341,23 +1531,23 @@ function verifyDocuments(string $document, string | null $personType): array {
         $valid = ((int)$characters[9] === $firstDigit) && ((int)$characters[10] === $secondDigit);
 
         return
-            $valid ? 
+            $valid ?
                 [
                     'success' => true,
                     'message' => "CPF válido!"
                 ] : [
-                    'success' => false,
-                    'message' => "CPF inválido!"
-                ];
+                'success' => false,
+                'message' => "CPF inválido!"
+            ];
     }
 
-    if($personType === "juridica"){
+    if ($personType === "juridica") {
 
         $total = 0;
         $times = 2;
-        for($i = 11; $i >= 0; $i--){
+        for ($i = 11; $i >= 0; $i--) {
 
-            if($times > 9){
+            if ($times > 9) {
                 $times = 2;
             }
 
@@ -1368,12 +1558,12 @@ function verifyDocuments(string $document, string | null $personType): array {
 
         $rest = $total % 11;
         $firstDigit = ($rest < 2) ? 0 : 11 - $rest;
-        
+
         $total = 0;
         $times = 2;
-        for($i = 12; $i >= 0; $i--){
+        for ($i = 12; $i >= 0; $i--) {
 
-            if($times > 9){
+            if ($times > 9) {
                 $times = 2;
             }
 
@@ -1387,18 +1577,17 @@ function verifyDocuments(string $document, string | null $personType): array {
 
         $isValid = ((int)$characters[12] === $firstDigit) && ((int)$characters[13] === $secondDigit);
 
-        return 
-            $isValid ? 
+        return
+            $isValid ?
                 [
-                    'success' => true, 
+                    'success' => true,
                     'message' => "CNPJ válido!"
                 ] : [
-                    'success' => false, 
-                    'message' => "CNPJ inválido!"
-                ];
+                'success' => false,
+                'message' => "CNPJ inválido!"
+            ];
     }
 }
-
 
 
 ?>
