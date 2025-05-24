@@ -144,31 +144,29 @@ const Modal = ({
 									</Form.Submit>
 								) : (
 									<div className="flex justify-end items-center gap-3 m-2">
-										<>
-											<Dialog.Close asChild>
-												<button
-													type="button"
-													onClick={onCancel}
-													className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-													aria-label="Close"
-												>
-													{rightButtonText}
-												</button>
-											</Dialog.Close>
+										<Dialog.Close asChild>
+											<button
+												type="button"
+												onClick={onCancel}
+												className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
+												aria-label="Close"
+											>
+												{rightButtonText}
+											</button>
+										</Dialog.Close>
 
-											<Form.Submit>
-												<button
-													type="submit"
-													className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-												>
-													{isLoading ? (
-														<Loader2 className="animate-spin h-6 w-6" />
-													) : (
-														leftButtonText
-													)}
-												</button>
-											</Form.Submit>
-										</>
+										<Form.Submit>
+											<button
+												type="submit"
+												className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+											>
+												{isLoading ? (
+													<Loader2 className="animate-spin h-6 w-6" />
+												) : (
+													leftButtonText
+												)}
+											</button>
+										</Form.Submit>
 									</div>
 								)}
 							</Form.Root>
