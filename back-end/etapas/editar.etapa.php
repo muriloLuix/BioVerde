@@ -7,6 +7,8 @@ require_once "../usuarios/User.class.php";
 require_once "../etapas/Etapa.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+$user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 /************************************************/
 
 try {
@@ -58,7 +60,6 @@ try {
     /**************** ATUALIZA A ETAPA ************************/
 
     $etapaAntiga = Etapa::find($data['etor_id']);
-    $user = Usuario::find($_SESSION['user_id']);
 
     $camposAtualizados = [
         'etor_etapa_nome' => $data['nome_etapa'],
@@ -95,7 +96,7 @@ try {
     /***********************************************************/
 
     /**************** MONTA A MENSAGEM DE LOG ************************/
-    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou a etapa: ({$data['etor_id']} - {$data['nome_etapa']}). Do produto: ({$data['produto_id']} - {$data['produto_nome']}).";
+    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou a etapa: ({$data['etor_id']} - {$data['nome_etapa']}). Do produto: ({$data['produto_id']} - {$data['produto_nome']}).\n\n";
     if (!empty($alteracoes)) {
         $logMensagem .= "Alterações:\n" . implode("\n", $alteracoes);
     } else {
@@ -108,7 +109,7 @@ try {
 } catch (Exception $e) {
     error_log("Erro em editar.etapa.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
-    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar a etapa: ({$data['etor_id']} - {$data['nome_etapa']}) do produto: ({$data['produto_id']} - {$data['produto_nome']}). Motivo do erro: {$e->getMessage()}", Acoes::EDITAR_ETAPA, "erro");
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar a etapa. \n\nMotivo do erro: {$e->getMessage()}", Acoes::EDITAR_ETAPA, "erro");
 }
 
 $conn->close();

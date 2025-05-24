@@ -1,21 +1,24 @@
-<?php 
+<?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header('Content-Type: application/json');
+/*************************************************/
 
 try {
+    /**************** VERIFICA CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco de dados");
     }
+    /*************************************************************/
 
-    // Buscar status
-    $status = buscarStatus($conn); 
+    /**************** BUSCA O STATUS ************************/
+    $status = buscarStatus($conn);
     echo json_encode([
         "success" => true,
-        "status" => $status 
+        "status" => $status
     ]);
+    /*************************************************************/
 
 } catch (Exception $e) {
     http_response_code(500);

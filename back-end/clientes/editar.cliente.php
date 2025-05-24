@@ -7,6 +7,8 @@ require_once "../usuarios/User.class.php";
 require_once "../clientes/Clientes.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+$user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 /************************************************/
 
 try {
@@ -15,9 +17,6 @@ try {
         checkLoggedUser($conn, $_SESSION['user_id']);;
         exit;
     }
-
-    $user_id = $_SESSION['user_id'];
-    $user = Usuario::find($user_id);
     /*****************************************************************/
 
     /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
@@ -141,7 +140,7 @@ try {
     /***********************************************************/
 
     /**************** MONTA A MENSAGEM DE LOG ************************/
-    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome}).";
+    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome}).\n\n";
     if (!empty($alteracoes)) {
         $logMensagem .= "Alterações:\n\n" . implode("\n", $alteracoes);
     } else {
@@ -154,5 +153,5 @@ try {
 } catch (Exception $e) {
     error_log("Erro em editar.cliente.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
-    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar o cliente: ({$clienteId->cliente_nome} - {$clienteId->cliente_id}). Motivo do erro: {$e->getMessage()}", Acoes::EDITAR_CLIENTE, "erro");
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar o cliente. \n\nMotivo do erro: {$e->getMessage()}", Acoes::EDITAR_CLIENTE, "erro");
 }

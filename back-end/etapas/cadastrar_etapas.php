@@ -9,6 +9,7 @@ if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
 $user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 /*************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
@@ -78,8 +79,6 @@ try {
 
     $conn->commit();
     echo json_encode(["success" => true, "message" => "Produto e etapas cadastrados com sucesso!"]);
-
-    $user = Usuario::find($user_id);
 
     /**************** FORMATANDO AS ETAPAS PARA SALVAR NO LOG ************************/
     $etapasStr = formatarEtapasLog($data['etapas']);

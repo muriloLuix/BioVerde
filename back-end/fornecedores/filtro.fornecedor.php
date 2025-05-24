@@ -1,52 +1,54 @@
-<?php 
-
-ini_set("display_errors", 1);
-
+<?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+/*************************************************/
 
-// Verifica autenticação
+/**************** VERIFICA AUTENTICAÇÃO ************************/
 if (!isset($_SESSION["user_id"])) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
     exit();
 }
 
-// Verifica conexão com o banco
+/**************** VERIFICA CONEXÃO COM O BANCO ************************/
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
     exit();
 }
+/*************************************************************/
 
-// Processa os dados de entrada
+/**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
+/****************************************************************************/
 
-// Define o mapa de filtros para fornecedores
+/**************** DEFINE O MAPA DE FILTROS ************************/
 $mapaFiltrosFornecedor = [
-    "fnome_empresa"  => ['coluna' => 'f.fornecedor_nome', 'tipo' => 'like'],
-    "fresponsavel"   => ['coluna' => 'f.fornecedor_responsavel', 'tipo' => 'like'],
-    "fcnpj"          => ['coluna' => 'f.fornecedor_documento', 'tipo' => 'like'],
-    "ftel"           => ['coluna' => 'f.fornecedor_telefone', 'tipo' => 'like'],
-    "fcidade"        => ['coluna' => 'f.fornecedor_cidade', 'tipo' => 'like'],
-    "festado"        => ['coluna' => 'f.fornecedor_estado', 'tipo' => 'like'],
-    "fdataCadastro"  => ['coluna' => 'DATE(f.fornecedor_dtcadastro)', 'tipo' => '='],
+    "fnome_empresa" => ['coluna' => 'f.fornecedor_nome', 'tipo' => 'like'],
+    "fresponsavel" => ['coluna' => 'f.fornecedor_responsavel', 'tipo' => 'like'],
+    "fcnpj" => ['coluna' => 'f.fornecedor_documento', 'tipo' => 'like'],
+    "ftel" => ['coluna' => 'f.fornecedor_telefone', 'tipo' => 'like'],
+    "fcidade" => ['coluna' => 'f.fornecedor_cidade', 'tipo' => 'like'],
+    "festado" => ['coluna' => 'f.fornecedor_estado', 'tipo' => 'like'],
+    "fdataCadastro" => ['coluna' => 'DATE(f.fornecedor_dtcadastro)', 'tipo' => '='],
 ];
+/*****************************************************************/
 
-// Gera os filtros com base no mapa
+/**************** FUNÇÃO PARA GERAR FILTROS ************************/
 $filtros = buildFilters($data, $mapaFiltrosFornecedor);
+/*******************************************************************/
 
-// Trata o status manualmente para pegar "0" também
+/**************** TRATA O STATUS ************************/
 if (isset($data['fstatus']) && $data['fstatus'] !== "") {
     // garante inteiro 0 ou 1
     $val = intval($data['fstatus']);
     $filtros['where'][] = "f.estaAtivo = {$val}";
 }
+/********************************************************/
 
-// Define a estrutura da consulta
+/**************** DEFINE A ESTRUTURA DA CONSULTA ************************/
 $buscaFornecedor = [
     'select' => "
      f.fornecedor_id,
@@ -72,16 +74,19 @@ $buscaFornecedor = [
         'fornecedor_dtcadastro' => 'DATE(f.fornecedor_dtcadastro)'
     ]
 ];
+/*********************************************************/
 
-// Busca os dados usando a função genérica
+/**************** FUNÇÃO PARA BUSCAR DADOS ************************/
 $fornecedores = findFilters($conn, $buscaFornecedor, $filtros);
+/*****************************************************************/
 
-// Retorna a resposta
+/**************** RETORNA A RESPOSTA ************************/
 echo json_encode([
     "success" => true,
     "message" => "Filtro aplicado com sucesso!",
     "fornecedores" => $fornecedores
 ]);
+/*********************************************************/
 
 $conn->close();
 

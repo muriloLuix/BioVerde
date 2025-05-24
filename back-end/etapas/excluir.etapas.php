@@ -7,6 +7,8 @@ require_once "../usuarios/User.class.php";
 require_once "../etapas/Etapas.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+$user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 /*************************************************/
 
 try {
@@ -45,7 +47,6 @@ try {
     /*************************************************************/
 
     /**************** VERIFICA O ID DA ETAPA ************************/
-    $user_id = $_SESSION['user_id'];
     $etor_id = (int)$data['etor_id'];
     if ($etor_id <= 0) {
         throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
@@ -72,7 +73,6 @@ try {
         'deleted_id' => $etor_id
     ]);
 
-    $user = Usuario::find($user_id);
     $etapas = Etapa::find($etor_id);
 
     salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto: {$data['dproduct']}\n\nMotivo: {$data['reason']}", Acoes::EXCLUIR_ETAPA);
@@ -96,7 +96,7 @@ try {
         'dproduct' => $data['dproduct'],
     ]);
 
-    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) tentou excluir a etapa ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto {$data['dproduct']}. \n\nMotivo: {$data['reason']}). \n\nErro: {$e->getMessage()}", Acoes::EXCLUIR_ETAPA, "erro");
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) tentou excluir a etapa. \n\nErro: {$e->getMessage()}", Acoes::EXCLUIR_ETAPA, "erro");
 
     exit();
 }

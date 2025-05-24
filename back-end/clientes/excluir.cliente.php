@@ -6,6 +6,8 @@ require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+$user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 /************************************************/
 
 try {
@@ -42,8 +44,6 @@ try {
         }
     }
 
-    $user_id = $_SESSION['user_id'];
-
     $cliente_id = (int)$data['cliente_id'];
     if ($cliente_id <= 0) {
         throw new Exception("ID do cliente inválido. Por favor, verifique os dados.");
@@ -76,8 +76,6 @@ try {
         'deleted_id' => $cliente_id
     ]);
 
-    $user = Usuario::find($user_id);
-
     salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) excluiu o cliente: \n\n  - {$data['dnome_cliente']} \n\nMotivo: {$data['reason']}", Acoes::EXCLUIR_CLIENTE);
 
 
@@ -96,7 +94,7 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) tentou excluir o cliente: \n\n  - {$data['dnome_cliente']} \n\nMotivo: {$data['reason']}. \n\nMotivo do erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
+    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) tentou excluir o cliente. \n\nMotivo do erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
 
     exit();
 }
