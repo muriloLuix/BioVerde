@@ -174,7 +174,7 @@ export default function Suppliers() {
 		);
 	};
 
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -511,7 +511,7 @@ export default function Suppliers() {
 			if (Object.values(errors).some((error) => error)) {
 				return;
 			}
-			const response = await axios.patch(
+			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
 				formData,
 				{
@@ -948,7 +948,7 @@ export default function Suppliers() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={gerarRelatorio}
+									onClick={generateReport}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />

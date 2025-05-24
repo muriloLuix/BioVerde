@@ -11,10 +11,11 @@ import {
 	Search,
 	Loader2,
 	FilterX,
-	Printer, X,
+	Printer,
+	X,
 } from "lucide-react";
 
-import { OrderStatus, SelectEvent } from "../../utils/types";
+import { City, OrderStatus, SelectEvent, UF } from "../../utils/types";
 import { cepApi } from "../../utils/cepApi";
 import {
 	SmartField,
@@ -22,11 +23,6 @@ import {
 	Modal,
 	NoticeModal,
 } from "../../shared";
-
-interface Estado {
-	estado_id: number;
-	pedido_estado: string;
-}
 
 interface Cliente {
 	cliente_id: number;
@@ -89,6 +85,7 @@ export default function Orders() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [pedidos, setPedidos] = useState<Pedido[]>([]);
+	const [errors, setErrors] = useState({ isCepValid: false });
 	const [formData, setFormData] = useState({
 		pedido_id: 0,
 		nome_cliente: "",
@@ -102,12 +99,13 @@ export default function Orders() {
 		prev_entrega: "",
 		obs: "",
 	});
+	const [cities, setCities] = useState<City[]>();
 	const [options, setOptions] = useState<{
-		estados: Estado[];
+		ufs: UF[];
 		status: OrderStatus[];
 		unidades_medida: Unidade[];
 	}>({
-		estados: [],
+		ufs: [],
 		status: [],
 		unidades_medida: [],
 	});
@@ -133,7 +131,24 @@ export default function Orders() {
 		fetchData();
 	}, []);
 
+	const handleCities = async (id: number | undefined) => {
+		if (formData.estado) {
+			try {
+				const response = await axios.get(
+					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
+				);
+
+				if (response.status === 200) {
+					setCities(response.data);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
+	};
+
 	const navigate = useNavigate();
+
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
@@ -166,52 +181,66 @@ export default function Orders() {
 
 	const fetchData = async () => {
 		try {
-			setLoading((prev) => new Set([...prev, "orders", "options"]));
+			setLoading(
+				(prev) => new Set([...prev, "orders", "options", "ufs", "cities"])
+			);
 
-			const [optionsResponse, pedidosResponse, userLevelResponse, clientsResponse] =
-				await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-								"Content-Type": "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/pedidos/listar_clientes.php",
-						{
-							params: { q: "" }, 
-						}
-					),
-				]);
+			const [
+				optionsResponse,
+				pedidosResponse,
+				userLevelResponse,
+				clientsResponse,
+				ufsResponse,
+				citiesResponse,
+			] = await Promise.all([
+				axios.get(
+					"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+							"Content-Type": "application/json",
+						},
+					}
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
+					{
+						withCredentials: true,
+						headers: {
+							Accept: "application/json",
+						},
+					}
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
+				),
+				axios.get(
+					"http://localhost/BioVerde/back-end/pedidos/listar_clientes.php",
+					{
+						params: { q: "" },
+					}
+				),
+				axios.get(
+					"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+				),
+				axios.get(
+					"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+				),
+			]);
 
 			console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
 			console.log("Resposta do back-end Options:", optionsResponse.data);
 
-			if (optionsResponse.data.success) {
+			if (optionsResponse.data.success && ufsResponse.status === 200) {
 				setOptions({
-					estados: optionsResponse.data.estados || [],
-					status: optionsResponse.data.status || [],
+					ufs: ufsResponse.data,
 					unidades_medida: optionsResponse.data.unidades_medida || [],
+					status: optionsResponse.data.status || [],
 				});
 			} else {
 				setOpenNoticeModal(true);
@@ -239,11 +268,15 @@ export default function Orders() {
 			} else {
 				setOpenNoticeModal(true);
 				setClientes([]);
-				setMessage(
-					clientsResponse.data.message || "Erro ao carregar clientes"
-				);
+				setMessage(clientsResponse.data.message || "Erro ao carregar clientes");
 			}
 
+			if (citiesResponse.status === 200) {
+				setCities(citiesResponse.data);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage("Erro ao carregar municípios");
+			}
 		} catch (error) {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
@@ -361,10 +394,9 @@ export default function Orders() {
 		if (name in deleteOrder) {
 			setDeleteOrder({ ...deleteOrder, [name]: value });
 		}
-
 	};
 
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -545,7 +577,9 @@ export default function Orders() {
 			setFormData,
 			setOpenNoticeModal,
 			setMessage,
-			setSuccessMsg
+			setSuccessMsg,
+			setCities,
+			setErrors
 		);
 	};
 
@@ -616,7 +650,6 @@ export default function Orders() {
 										inputWidth="w-[120px]"
 									/>
 
-
 									<SmartField
 										fieldName="fnome_cliente"
 										fieldText="Cliente"
@@ -627,12 +660,10 @@ export default function Orders() {
 										placeholder="Selecione o cliente"
 										fieldClassname="flex flex-col flex-1"
 										onChangeSelect={handleChange}
-										options={
-											clientes?.map((cliente) => ({
-												label: cliente.cliente_nome_ou_empresa,
-												value: cliente.cliente_nome_ou_empresa,
-											}))
-										}
+										options={clientes?.map((cliente) => ({
+											label: cliente.cliente_nome_ou_empresa,
+											value: cliente.cliente_nome_ou_empresa,
+										}))}
 									/>
 
 									<SmartField
@@ -652,7 +683,6 @@ export default function Orders() {
 								</div>
 
 								<div className="flex gap-x-15 justify-between">
-
 									<SmartField
 										fieldName="fcep"
 										fieldText="CEP"
@@ -679,51 +709,41 @@ export default function Orders() {
 										autoComplete="address-level1"
 										fieldClassname="flex flex-col flex-1"
 										onChangeSelect={handleChange}
-										options={[
-											{ value: "AC", label: "Acre" },
-											{ value: "AL", label: "Alagoas" },
-											{ value: "AP", label: "Amapá" },
-											{ value: "AM", label: "Amazonas" },
-											{ value: "BA", label: "Bahia" },
-											{ value: "CE", label: "Ceará" },
-											{ value: "DF", label: "Distrito Federal" },
-											{ value: "ES", label: "Espírito Santo" },
-											{ value: "GO", label: "Goiás" },
-											{ value: "MA", label: "Maranhão" },
-											{ value: "MT", label: "Mato Grosso" },
-											{ value: "MS", label: "Mato Grosso do Sul" },
-											{ value: "MG", label: "Minas Gerais" },
-											{ value: "PA", label: "Pará" },
-											{ value: "PB", label: "Paraíba" },
-											{ value: "PR", label: "Paraná" },
-											{ value: "PE", label: "Pernambuco" },
-											{ value: "PI", label: "Piauí" },
-											{ value: "RJ", label: "Rio de Janeiro" },
-											{ value: "RN", label: "Rio Grande do Norte" },
-											{ value: "RS", label: "Rio Grande do Sul" },
-											{ value: "RO", label: "Rondônia" },
-											{ value: "RR", label: "Roraima" },
-											{ value: "SC", label: "Santa Catarina" },
-											{ value: "SP", label: "São Paulo" },
-											{ value: "SE", label: "Sergipe" },
-											{ value: "TO", label: "Tocantins" },
-										]}
+										options={options.ufs?.map((uf: UF) => ({
+											label: uf.nome,
+											value: uf.sigla,
+										}))}
+										onBlur={() => {
+											const uf = options.ufs?.find(
+												(uf: UF) => formData.estado === uf.sigla
+											);
+
+											handleCities(uf?.id);
+										}}
+										isDisabled={!!formData.cep || !options.ufs}
 									/>
 
 									<SmartField
 										fieldName="fcidade"
 										fieldText="Cidade"
-										type="text"
-										placeholder="Cidade"
-										value={filters.fcidade}
-										onChange={handleChange}
-										autoComplete="address-level2"
+										isSelect
+										isLoading={loading.has("options")}
 										fieldClassname="flex flex-col flex-1"
+										value={filters.fcidade}
+										placeholder="Selecione"
+										autoComplete="address-level2"
+										//error={errors ? "*" : undefined}
+										inputWidth="w-[350px]"
+										onChangeSelect={handleChange}
+										options={cities?.map((city: City) => ({
+											label: city.nome,
+											value: city.nome,
+										}))}
+										isDisabled={!!formData.cep || !cities}
 									/>
 								</div>
 
 								<div className="flex justify-between mb-8">
-
 									<SmartField
 										fieldName="fstatus"
 										fieldText="Status"
@@ -733,12 +753,10 @@ export default function Orders() {
 										placeholder="Selecione"
 										inputWidth="w-[220px]"
 										onChangeSelect={handleChange}
-										options={
-											options?.status.map((status) => ({
-												label: status.stapedido_nome,
-												value: String(status.stapedido_id),
-											}))
-										}
+										options={options?.status.map((status) => ({
+											label: status.stapedido_nome,
+											value: String(status.stapedido_id),
+										}))}
 									/>
 
 									<SmartField
@@ -946,7 +964,7 @@ export default function Orders() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={gerarRelatorio}
+									onClick={generateReport}
 									disabled={loading.size > 0}
 								>
 									{loading.has("reports") ? (
@@ -1133,12 +1151,10 @@ export default function Orders() {
 							placeholder="Selecione o cliente"
 							fieldClassname="flex flex-col flex-1"
 							onChangeSelect={handleChange}
-							options={
-								clientes?.map((cliente) => ({
-									label: cliente.cliente_nome_ou_empresa,
-									value: cliente.cliente_nome_ou_empresa,
-								}))
-							}
+							options={clientes?.map((cliente) => ({
+								label: cliente.cliente_nome_ou_empresa,
+								value: cliente.cliente_nome_ou_empresa,
+							}))}
 						/>
 
 						<SmartField
@@ -1195,35 +1211,18 @@ export default function Orders() {
 							autoComplete="address-level1"
 							inputWidth="w-[200px]"
 							onChangeSelect={handleChange}
-							options={[
-								{ value: "AC", label: "Acre" },
-								{ value: "AL", label: "Alagoas" },
-								{ value: "AP", label: "Amapá" },
-								{ value: "AM", label: "Amazonas" },
-								{ value: "BA", label: "Bahia" },
-								{ value: "CE", label: "Ceará" },
-								{ value: "DF", label: "Distrito Federal" },
-								{ value: "ES", label: "Espírito Santo" },
-								{ value: "GO", label: "Goiás" },
-								{ value: "MA", label: "Maranhão" },
-								{ value: "MT", label: "Mato Grosso" },
-								{ value: "MS", label: "Mato Grosso do Sul" },
-								{ value: "MG", label: "Minas Gerais" },
-								{ value: "PA", label: "Pará" },
-								{ value: "PB", label: "Paraíba" },
-								{ value: "PR", label: "Paraná" },
-								{ value: "PE", label: "Pernambuco" },
-								{ value: "PI", label: "Piauí" },
-								{ value: "RJ", label: "Rio de Janeiro" },
-								{ value: "RN", label: "Rio Grande do Norte" },
-								{ value: "RS", label: "Rio Grande do Sul" },
-								{ value: "RO", label: "Rondônia" },
-								{ value: "RR", label: "Roraima" },
-								{ value: "SC", label: "Santa Catarina" },
-								{ value: "SP", label: "São Paulo" },
-								{ value: "SE", label: "Sergipe" },
-								{ value: "TO", label: "Tocantins" },
-							]}
+							options={options.ufs?.map((uf: UF) => ({
+								label: uf.nome,
+								value: uf.sigla,
+							}))}
+							onBlur={() => {
+								const uf = options.ufs?.find(
+									(uf: UF) => formData.estado === uf.sigla
+								);
+
+								handleCities(uf?.id);
+							}}
+							isDisabled={!!formData.cep || !options.ufs}
 						/>
 
 						<SmartField
@@ -1277,14 +1276,11 @@ export default function Orders() {
 							placeholder="Selecione"
 							inputWidth="w-[250px]"
 							onChangeSelect={handleChange}
-							options={
-								options?.status.map((status) => ({
-									label: status.stapedido_nome,
-									value: String(status.stapedido_id),
-								}))
-							}
+							options={options?.status.map((status) => ({
+								label: status.stapedido_nome,
+								value: String(status.stapedido_id),
+							}))}
 						/>
-
 					</div>
 
 					<div className="flex mb-5">

@@ -39,7 +39,6 @@ const Modal = ({
 	modalWidth,
 	obsText,
 	isObsModal,
-	loading,
 	rightButtonText,
 	leftButtonText,
 	isOrderModal,
@@ -68,18 +67,17 @@ const Modal = ({
 						{modalTitle}
 						{withXButton ? (
 							<Dialog.Close asChild>
-								<button 
-								className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200"
-								>
+								<button className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200">
 									<X />
 								</button>
 							</Dialog.Close>
-						) : modalSecondTitle}	
+						) : (
+							modalSecondTitle
+						)}
 					</Dialog.Title>
 					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
 						{withExitButton ? (
 							<>
-
 								{isObsModal ? (
 									obsText ? (
 										<p className="text-gray-800 break-words">{obsText}</p>
@@ -128,9 +126,9 @@ const Modal = ({
 								}}
 							>
 								{children}
-									{isRegister ? (
-										<Form.Submit asChild>
-											<div className="flex place-content-center mt-6">
+								{isRegister ? (
+									<Form.Submit asChild>
+										<div className="flex place-content-center mt-6">
 											<button
 												type="submit"
 												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
@@ -142,39 +140,37 @@ const Modal = ({
 													registerButtonText
 												)}
 											</button>
-											</div>
-										</Form.Submit>
-									) : (
-										<div className="flex justify-end items-center gap-3 m-2">
-											<>
-												<Dialog.Close asChild>
-													<button
+										</div>
+									</Form.Submit>
+								) : (
+									<div className="flex justify-end items-center gap-3 m-2">
+										<>
+											<Dialog.Close asChild>
+												<button
 													type="button"
 													onClick={onCancel}
 													className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
 													aria-label="Close"
-													>
+												>
 													{rightButtonText}
-													</button>
-												</Dialog.Close>
-												
-												<Form.Submit>
-													<button
+												</button>
+											</Dialog.Close>
+
+											<Form.Submit>
+												<button
 													type="submit"
 													className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-													disabled={!!loading?.size}
-													>
+												>
 													{isLoading ? (
 														<Loader2 className="animate-spin h-6 w-6" />
 													) : (
 														leftButtonText
 													)}
-													</button>
-												</Form.Submit>
-
-											</>
-										</div>
-									)}
+												</button>
+											</Form.Submit>
+										</>
+									</div>
+								)}
 							</Form.Root>
 						)}
 					</Dialog.Description>
