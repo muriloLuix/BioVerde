@@ -25,12 +25,56 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos obrigatórios
-$camposObrigatorios = ['produto_nome', 'fornecedor', 'dtColheita', 'quantidade', 'uni_nome', 'tipo', 'dtValidade', 'classificacao', 'localArmazenado',];
+$camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quantidade', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado',];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
     exit();
 }
+
+$uni_id                = (int) $data['unidade'];
+$tipo_id               = (int) $data['tipo'];
+$fornecedor_id         = (int) $data['fornecedor'];
+$classificacao_id      = (int) $data['classificacao'];
+$localArmazenamento_id = (int) $data['localArmazenado'];
+
+// ------ Criar o código do lote ------
+
+// Buscar prefixo do produto
+$produto_id = (int)$data['produto'];
+$dataColheita = $data['dt_colheita']; // Exemplo: '2025-05-23'
+$dataColheitaFormatada = date('Ymd', strtotime($dataColheita)); // Resultado: '20250523'
+
+// Buscar os 3 primeiros caracteres do nome do produto
+$sqlPrefixo = "SELECT LEFT(produto_nome, 3) AS prefixo FROM produtos WHERE produto_id = ?";
+$stmtPrefixo = $conn->prepare($sqlPrefixo);
+$stmtPrefixo->bind_param("i", $produto_id);
+$stmtPrefixo->execute();
+$resultPrefixo = $stmtPrefixo->get_result();
+$rowPrefixo = $resultPrefixo->fetch_assoc();
+
+if (!$rowPrefixo) {
+    echo json_encode(["success" => false, "message" => "Produto não encontrado."]);
+    exit();
+}
+
+$prefixo = strtoupper($rowPrefixo['prefixo']);
+
+// Contar quantos lotes já existem para esse produto na mesma data de colheita
+$sqlCount = "SELECT COUNT(*) AS total FROM lote 
+             WHERE produto_id = ? AND DATE(lote_dtColheita) = ?";
+$stmtCount = $conn->prepare($sqlCount);
+$stmtCount->bind_param("is", $produto_id, $dataColheita);
+$stmtCount->execute();
+$resultCount = $stmtCount->get_result();
+$rowCount = $resultCount->fetch_assoc();
+$numeroLote = $rowCount['total'] + 1;
+
+// Montar o código do lote
+$lote_codigo = sprintf('%s-%s-%03d', $prefixo, $dataColheitaFormatada, $numeroLote);
+
+// Atribuir ao array para enviar ao banco
+$data['lote_codigo'] = $lote_codigo;
 
 // Cadastro do lote
 $sql = "INSERT INTO lote (
@@ -57,21 +101,29 @@ if (!$stmt) {
 $stmt->bind_param(
     "sssddsiiiiii",
     $data['lote_codigo'],
-    $data['dtColheita'],
-    $data['dtValidade'],
+    $data['dt_colheita'],
+    $data['dt_validade'],
     $data['quantidade'],  // lote_quantInicial
     $data['quantidade'],  // lote_quantAtual
     $data['obs'],
-    (int)$data['produto'], 
-    (int)$data['unidade'], 
-    (int)$data['tipo'], 
-    (int)$data['fornecedor'], 
-    (int)$data['classificacao'], 
-    (int)$data['localArmazenado']
+    $produto_id, 
+    $uni_id, 
+    $tipo_id, 
+    $fornecedor_id,
+    $classificacao_id,
+    $localArmazenamento_id 
 );
 
 if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Produto cadastrado com sucesso!"]);
+    echo json_encode([
+        "success" => true,
+        "message" => "Lote cadastrado com sucesso!",
+        "lote_codigo" => $lote_codigo
+    ]);
 } else {
-    echo json_encode(["success" => false, "message" => "Erro ao cadastrar o produto: " . $stmt->error]);
+    echo json_encode([
+        "success" => false,
+        "message" => "Erro ao cadastrar o lote: " . $stmt->error
+    ]);
 }
+

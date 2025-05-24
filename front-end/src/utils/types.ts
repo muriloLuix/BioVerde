@@ -63,8 +63,8 @@ export interface User {
 export interface Batch {
 	lote_id: number;
 	lote_codigo: string;
-    lote_dtFabricacao: Date;
-    lote_dtExpiracao: Date;
+    lote_dtColheita: Date;
+    lote_dtValidade: Date;
     lote_quantInicial: string;
     lote_quantAtual: string;
 	fornecedor_nome_ou_empresa: string;
