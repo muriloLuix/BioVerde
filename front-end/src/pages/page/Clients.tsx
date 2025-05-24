@@ -516,7 +516,7 @@ export default function Clients() {
 				return;
 			}
 
-			const response = await axios.patch(
+			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
 				formData,
 				{

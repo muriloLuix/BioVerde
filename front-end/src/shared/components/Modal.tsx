@@ -67,18 +67,17 @@ const Modal = ({
 						{modalTitle}
 						{withXButton ? (
 							<Dialog.Close asChild>
-								<button 
-								className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200"
-								>
+								<button className="text-gray-700 hover:text-gray-800 cursor-pointer rounded-full p-1 hover:bg-gray-200">
 									<X />
 								</button>
 							</Dialog.Close>
-						) : modalSecondTitle}	
+						) : (
+							modalSecondTitle
+						)}
 					</Dialog.Title>
 					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
 						{withExitButton ? (
 							<>
-
 								{isObsModal ? (
 									obsText ? (
 										<p className="text-gray-800 break-words">{obsText}</p>
@@ -127,9 +126,9 @@ const Modal = ({
 								}}
 							>
 								{children}
-									{isRegister ? (
-										<Form.Submit asChild>
-											<div className="flex place-content-center mt-6">
+								{isRegister ? (
+									<Form.Submit asChild>
+										<div className="flex place-content-center mt-6">
 											<button
 												type="submit"
 												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
@@ -141,7 +140,7 @@ const Modal = ({
 													registerButtonText
 												)}
 											</button>
-											</div>
+										</div>
 										</Form.Submit>
 									) : (
 										<div className="flex justify-end items-center gap-3 m-2">
@@ -168,8 +167,8 @@ const Modal = ({
 												)}
 												</button>
 											</Form.Submit>
-										</div>
-									)}
+									</div>
+								)}
 							</Form.Root>
 						)}
 					</Dialog.Description>
