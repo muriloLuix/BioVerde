@@ -1,6 +1,8 @@
 <?php
 session_start();
 include_once "../inc/funcoes.inc.php";
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
 
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
@@ -12,7 +14,7 @@ try {
         exit;
     }
     $user_id = (int) $_SESSION['user_id'];
-
+    $user = Usuario::find($user_id);
     // 2. Verificação da conexão com o banco
     if ($conn->connect_error) {
         throw new Exception("Falha na conexão com o banco de dados. Tente novamente mais tarde.");
@@ -71,7 +73,7 @@ try {
     ]);
 
     salvarLog(
-        "O usuário ID {$user_id} excluiu o fornecedor “{$data['dnome_empresa']}” (Motivo: {$data['reason']})",
+        "O usuário, {$user->user_id} - ({$user->user_nome}) excluiu o fornecedor “{$data['dnome_empresa']}” (Motivo: {$data['reason']})",
         Acoes::EXCLUIR_FORNECEDOR
     );
 
@@ -89,7 +91,7 @@ try {
     ]);
 
     salvarLog(
-        "Falha ao excluir fornecedor “{$data['dnome_empresa']}”: " . $e->getMessage(),
+        "O usuário, {$user->user_id} - ({$user->user_nome}), tentou excluir o fornecedor {$fornecedor_id} | Motivo: {$data['reason']} ",
         Acoes::EXCLUIR_FORNECEDOR,
         "erro"
     );

@@ -1248,7 +1248,7 @@ function getMinLevelFor(string $recurso): ?int {
  */
 function getDependencyMap(): array {
     return [
-        'lotes' => [              // quando for excluir de lotes:
+        'lotes' => [
             'produtos'     => 'lote_id',
             'movimentacoes'=> 'lote_id',
         ],
@@ -1259,7 +1259,10 @@ function getDependencyMap(): array {
             'pedidos'      => 'user_id',
             'logs'         => 'usuario_id',
         ],
-        // … adicione conforme suas outras entidades
+        'produtos' => [
+            'lote'=> 'produto_id',
+            'pedido_item' => 'produto_id',
+        ],
     ];
 }
 

@@ -1,6 +1,8 @@
-<?php 
+<?php
 session_start();
 include_once "../inc/funcoes.inc.php";
+require_once "../MVC/Model.php";
+require_once "../User.class.php";
 authorize(3);
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
@@ -8,7 +10,7 @@ header('Content-Type: application/json');
 try {
     // Verificação de autenticação
 
-    if(!isset($_SESSION["user_id"])) {
+    if (!isset($_SESSION["user_id"])) {
         checkLoggedUSer($conn, $_SESSION['user_id']);
         exit;
     }
@@ -69,7 +71,9 @@ try {
         'deleted_id' => $user_id // Envia o ID do usuário excluído
     ]);
 
-    salvarLog("O usuário, ID: {$user_id}, excluiu o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO);
+    $user = Usuario::find($user_id);
+
+    salvarLog("O usuário, ID: ({$user->user_id} - {$user->user_nome}), excluiu o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO);
 
 
 } catch (Exception $e) {
@@ -77,16 +81,16 @@ try {
     if (isset($conn) && $conn) {
         $conn->rollback();
     }
-    
+
     error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
-    
+
     // Resposta de erro simplificada para produção
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
 
-    salvarLog("O usuário, ID: {$user_id}, tentou excluir o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO, "erro");
+    salvarLog("O usuário, ID: ({$user->user_id} - {$user->user_nome}), tentou excluir o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO, "erro");
 
 
     exit();

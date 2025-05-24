@@ -1,13 +1,15 @@
 <?php
 session_start();
 include_once "../inc/funcoes.inc.php";
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
+require_once "../produtos/Produtos.class.php";
 
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
 
 try {
     // Verificação de autenticação
-
     if (!isset($_SESSION["user_id"])) {
         checkLoggedUSer($conn, $_SESSION['user_id']);
         exit;
@@ -38,14 +40,22 @@ try {
     }
 
     $user_id = $_SESSION['user_id'];
+    $user = Usuario::find($user_id);
 
-    $produto_id = (int) $data['produto_id'];
+    $produto_id = (int)$data['produto_id'];
     if ($user_id <= 0) {
         throw new Exception("ID do fornecedor inválido. Por favor, verifique os dados.");
     }
 
     // Início da transação
     $conn->begin_transaction();
+
+    $check = checkDependencies($conn, 'produtos', 'produto_id', $produto_id);
+    if (!$check['success']) {
+        throw new Exception($check['message']);
+    }
+
+    $produto = Produtos::find($produto_id);
 
     // 1. Deleta o usuário
     $exclusao = deleteData($conn, $produto_id, 'produtos', "produto_id");
@@ -62,10 +72,10 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $produto_id // Envia o ID do usuário excluído
+        'deleted_id' => $produto_id
     ]);
 
-    salvarLog("O usuário, ID: {$user_id}, excluiu o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO);
+    salvarLog("O usuário, {$user->user_id} - ({$user->user_nome}), excluiu o produto ({$produto->produto_nome} - {$produto->produto_id}) | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO);
 
 } catch (Exception $e) {
     // Rollback em caso de erro
@@ -73,8 +83,7 @@ try {
         $conn->rollback();
     }
 
-    error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
-    
+    $produto = Produtos::find($produto_id);
 
     // Resposta de erro simplificada para produção
     echo json_encode([
@@ -82,7 +91,7 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog("O usuário, ID: {$user_id}, tentou excluir o produto {$produto_id} | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO, "erro");
+    salvarLog("O usuário, {$user->user_id} - ({$user->user_nome}), tentou excluir o produto ({$produto->produto_nome} - {$produto->produto_id}) | Motivo: {$data['reason']}", Acoes::EXCLUIR_PRODUTO, "erro");
 
     exit();
 }

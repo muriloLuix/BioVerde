@@ -2,6 +2,8 @@
 
 global $conn;
 include_once '../inc/funcoes.inc.php';
+include_once '../MVC/Model.php';
+include_once '../usuarios/User.class.php';
 
 // Configurações de sessão segura
 configurarSessaoSegura();
@@ -54,7 +56,9 @@ if ($resultado["success"]) {
         "user" => $resultado["user"]
     ]);
 
-    salvarLog("Login bem-sucedido para o usuário: " . $user_id, Acoes::LOGIN, "sucesso");
+    $user = Usuario::find($user_id);
+
+    salvarLog("Login bem-sucedido para o usuário: {$user->user_id} - {$user->user_nome}", Acoes::LOGIN, "sucesso");
 } else {
     
     echo json_encode([
