@@ -1,24 +1,29 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
-
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
+require_once "../etapas/Etapas.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+/*************************************************/
 
 try {
-    // Verificação de autenticação
-
+    /**************** VERIFICA A AUTENTICAÇÃO ************************/
     if (!isset($_SESSION["user_id"])) {
         checkLoggedUSer($conn, $_SESSION['user_id']);
         exit;
     }
+    /*************************************************************/
 
-    // Verificação da conexão com o banco
+    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Falha na conexão com o banco de dados. Tente novamente mais tarde.");
     }
+    /***********************************************************************/
 
-    // Processamento dos dados de entrada
+    /**************** RECEBE AS INFORMAÇÕES DO FRONT-END************************/
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
         throw new Exception("Nenhum dado foi recebido para processamento.");
@@ -28,54 +33,61 @@ try {
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception("Formato de dados inválido. Por favor, verifique os dados enviados.");
     }
+    /***************************************************************************/
 
-    // Validação dos campos obrigatórios
+    /**************** VALIDAÇÃO DOS CAMPOS ************************/
     $camposObrigatorios = ['dproduct', 'dstep', 'reason'];
     foreach ($camposObrigatorios as $field) {
         if (empty($data[$field])) {
             throw new Exception("O campo '{$field}' é obrigatório para a exclusão.");
         }
     }
+    /*************************************************************/
 
+    /**************** VERIFICA O ID DA ETAPA ************************/
     $user_id = $_SESSION['user_id'];
-
-    $etor_id = (int) $data['etor_id'];
+    $etor_id = (int)$data['etor_id'];
     if ($etor_id <= 0) {
         throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
     }
+    /***************************************************************/
 
-    // Início da transação
     $conn->begin_transaction();
 
+    /**************** DELETA A ETAPA ************************/
     $exclusao = deleteData($conn, $etor_id, "etapa_ordem", "etor_id");
     if (!$exclusao['success']) {
         throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
     }
 
-    // Commit da transação
     if (!$conn->commit()) {
         throw new Exception("Falha ao finalizar a operação. Tente novamente.");
     }
+    /******************************************************/
 
-    // Resposta de sucesso simplificada para produção
+    /**************** LOG DE EXCLUSÃO ************************/
     echo json_encode([
         'success' => true,
         'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $etor_id 
+        'deleted_id' => $etor_id
     ]);
 
-    salvarLog("O usuário ID {$user_id} excluiu a etapa de produção do produto {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
+    $user = Usuario::find($user_id);
+    $etapas = Etapa::find($etor_id);
+
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto: {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
 
 
-} catch (Exception $e) {
-    // Rollback em caso de erro
+} catch
+(Exception $e) {
+    /**************** ROLLBACK ************************/
     if (isset($conn) && $conn) {
         $conn->rollback();
     }
-    
+
     error_log("ERRO NA EXCLUSÃO [" . date('Y-m-d H:i:s') . "]: " . $e->getMessage());
-    
-    // Resposta de erro simplificada para produção
+
+    /**************** LOG DE ERRO ************************/
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
@@ -84,7 +96,7 @@ try {
         'dproduct' => $data['dproduct'],
     ]);
 
-    salvarLog("O usuário ID {$user_id} tentou excluir a etapa de produção do produto {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE, "erro");
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) tentou excluir a etapa ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto {$data['dproduct']} (Motivo: {$data['reason']}). Erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
 
     exit();
 }

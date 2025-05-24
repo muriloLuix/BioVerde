@@ -1,23 +1,25 @@
 <?php
-ini_set("display_errors", 1);
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+/************************************************/
 
 try {
+    /**************** VERIFICA A AUTENTICAÇÃO ************************/
     if (!isset($_SESSION["user_id"])) {
         throw new Exception("Usuário não autenticado.");
     }
+    /*****************************************************************/
 
-    // Verifica a conexão
+    /**************** CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);
     }
+    /***************************************************************/
 
-    // Recebe o JSON
+    /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");
@@ -27,21 +29,24 @@ try {
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
+    /***************************************************************************/
 
-    // Validação dos campos obrigatórios
+    /**************** VALIDAÇÃO DOS CAMPOS ************************/
     $camposObrigatorios = ['nome_etapa', 'responsavel', 'tempo', 'insumos', 'obs'];
     foreach ($camposObrigatorios as $campo) {
         if (!isset($data[$campo])) {
             throw new Exception("Campo obrigatório ausente: $campo");
         }
     }
+    /************************************************************/
 
-    // Verifica se o ID da etapa foi enviado
+    /**************** VERIFICA SE O ID DA ETAPA FOI ENVIADO ************************/
     if (empty($data['etor_id'])) {
         throw new Exception("ID da etapa não informado.");
     }
+    /********************************************************************************/
 
-    // Atualiza a etapa_ordem
+    /**************** ATUALIZA A ETAPA ************************/
     $stmt = $conn->prepare("UPDATE etapa_ordem 
         SET etor_etapa_nome = ?, 
             etor_tempo = ?, 
@@ -56,17 +61,19 @@ try {
 
     $stmt->bind_param(
         "sssssi",
-        $data['nome_etapa'],       
-        $data['tempo'],         
-        $data['insumos'],         
-        $data['responsavel'],     
-        $data['obs'],           
-        $data['etor_id']            
+        $data['nome_etapa'],
+        $data['tempo'],
+        $data['insumos'],
+        $data['responsavel'],
+        $data['obs'],
+        $data['etor_id']
     );
 
     if (!$stmt->execute()) {
         throw new Exception("Erro ao executar atualização: " . $stmt->error);
     }
+
+    /********************************************************/
 
     echo json_encode([
         "success" => true,

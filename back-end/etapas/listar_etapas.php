@@ -1,16 +1,21 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+/************************************************/
 
 try {
+    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco de dados");
     }
+    /*********************************************************************/
 
+    /**************** TABELAS DA ETAPA ************************/
     $cols_etapa = array(
         "a.etor_id",
-        "a.etor_ordem",             // <- BUSCA a ordem correta agora
+        "a.etor_ordem",
         "a.etor_etapa_nome",
         "a.etor_responsavel",
         "a.etor_tempo",
@@ -18,9 +23,9 @@ try {
         "a.etor_observacoes",
         "a.etor_dtCadastro",
         "b.etapa_nome as produto_nome",
-        "b.etapa_id as producao_id"  // <- Pegamos o ID real do registro de producao
+        "b.etapa_id as producao_id"
     );
-    
+
     $joins = [
         [
             'type' => 'INNER',
@@ -28,27 +33,29 @@ try {
             'on' => 'a.producao_id = b.etapa_id'
         ]
     ];
+    /*************************************************************/
 
-    // Busca os dados com JOIN
+    /**************** BUSCA OS DADOS ************************/
     $etapas = search($conn, "etapa_ordem a", implode(",", $cols_etapa), $joins);
+    /*******************************************************/
 
-    // Agrupa as etapas por produção
+    /**************** AGRUPA AS ETAPAS POR PRODUÇÃO ************************/
     $produtosComEtapas = [];
     foreach ($etapas as $etapa) {
         $producaoId = $etapa['producao_id'];
         $produtoNome = $etapa['produto_nome'];
-        
+
         if (!isset($produtosComEtapas[$producaoId])) {
             $produtosComEtapas[$producaoId] = [
                 'produto_nome' => $produtoNome,
-                'produto_id' => $producaoId, // agora produto_id é o etapa_id
+                'produto_id' => $producaoId,
                 'etapas' => []
             ];
         }
-        
+
         $produtosComEtapas[$producaoId]['etapas'][] = [
             'etor_id' => $etapa['etor_id'],
-            'ordem' => $etapa['etor_ordem'], // <- agora sim a ordem certa
+            'ordem' => $etapa['etor_ordem'],
             'nome_etapa' => $etapa['etor_etapa_nome'],
             'tempo' => $etapa['etor_tempo'],
             'insumos' => $etapa['etor_insumos'],
@@ -57,6 +64,7 @@ try {
             'dtCadastro' => $etapa['etor_dtCadastro']
         ];
     }
+    /*************************************************************/
 
     echo json_encode([
         "success" => true,
