@@ -423,7 +423,7 @@ function buscarProdutos($conn)
  * @param mysqli $conn Conexão com o banco de dados.
  *
  * @return array Retorna um array com os fornecedores, onde cada fornecedor
- *         é representado por um array com as chaves 'fornecedor_id' e 'fornecedor_nome_ou_empresa'.
+ *         é representado por um array com as chaves 'fornecedor_id' e 'fornecedor_nome'.
  *
  * @throws Exception Caso ocorra um erro ao buscar os fornecedores.
  */

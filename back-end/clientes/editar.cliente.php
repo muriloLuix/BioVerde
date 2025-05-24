@@ -141,7 +141,7 @@ try {
     /***********************************************************/
 
     /**************** MONTA A MENSAGEM DE LOG ************************/
-    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome_ou_empresa}).";
+    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome}).";
     if (!empty($alteracoes)) {
         $logMensagem .= "Alterações:\n" . implode("\n", $alteracoes);
     } else {
@@ -154,5 +154,5 @@ try {
 } catch (Exception $e) {
     error_log("Erro em editar.cliente.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
-    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar o cliente: ({$clienteId->cliente_nome_ou_empresa} - {$clienteId->cliente_id}). Motivo do erro: {$e->getMessage()}", Acoes::EDITAR_CLIENTE, "erro");
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar o cliente: ({$clienteId->cliente_nome} - {$clienteId->cliente_id}). Motivo do erro: {$e->getMessage()}", Acoes::EDITAR_CLIENTE, "erro");
 }
