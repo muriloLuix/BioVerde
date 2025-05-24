@@ -1203,11 +1203,8 @@ export default function UsersPage() {
 					openModal={openPositionModal}
 					setOpenModal={setOpenPositionModal}
 					modalTitle="Gerenciamento de Cargos:"
-					leftButtonText="Salvar"
-					rightButtonText="Cancelar"
 					withExitButton
 					withXButton
-					loading={loading}
 					isLoading={loading.has("registerPosition")}
 				>
 					<div className="min-w-[30vw] max-w-[50vw] overflow-auto h-[60vh] mb-5 mt-2">
@@ -1318,7 +1315,6 @@ export default function UsersPage() {
 					confirmationModalTitle="Tem certeza que deseja excluir o cargo?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={deletePosition}
-					loading={loading}
 					isLoading={loading.has("deletePosition")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir cargo"
@@ -1329,9 +1325,8 @@ export default function UsersPage() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Usuário:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateUser")}
 					onCancel={() => clearFormData()}
 					onSubmit={handleUpdateUser}
@@ -1458,8 +1453,8 @@ export default function UsersPage() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Usuário:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1501,7 +1496,6 @@ export default function UsersPage() {
 					confirmationModalTitle="Tem certeza que deseja excluir o usuário?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteUser}
-					loading={loading}
 					isLoading={loading.has("deleteUser")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir usuário"

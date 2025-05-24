@@ -1288,9 +1288,8 @@ export default function Suppliers() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Fornecedor:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateSupplier")}
 					onCancel={() => {
 						clearFormData();
@@ -1555,8 +1554,8 @@ export default function Suppliers() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Fornecedor:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1597,7 +1596,6 @@ export default function Suppliers() {
 					confirmationModalTitle="Tem certeza que deseja excluir o fornecedor?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteSupplier}
-					loading={loading}
 					isLoading={loading.has("deleteSupplier")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir fornecedor"

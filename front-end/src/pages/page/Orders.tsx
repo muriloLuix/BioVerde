@@ -1103,9 +1103,8 @@ export default function Orders() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Pedido:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateOrder")}
 					onCancel={() => clearFormData()}
 					onSubmit={handleUpdateOrder}
@@ -1305,8 +1304,8 @@ export default function Orders() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Pedido:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1360,7 +1359,6 @@ export default function Orders() {
 					confirmationModalTitle="Tem certeza que deseja excluir o pedido?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteOrder}
-					loading={loading}
 					isLoading={loading.has("deleteOrder")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir pedido"
