@@ -1589,5 +1589,27 @@ function verifyDocuments(string $document, string|null $personType): array
     }
 }
 
+/**
+ * Formata as etapas para o log em uma string.
+ *
+ * @param array $etapas Etapas a serem formatadas.
+ *
+ * @return string Etapas formatadas em uma string.
+ */
+function formatarEtapasLog($etapas) {
+    $etapasLog = [];
+    foreach ($etapas as $etapa) {
+        $etapasLog[] =
+            "Ordem: {$etapa['ordem']}\n" .
+            "Etapa: {$etapa['nome_etapa']}\n" .
+            "Responsável: {$etapa['responsavel']}\n" .
+            "Tempo: {$etapa['tempo']}\n" .
+            "Insumos: {$etapa['insumos']}\n" .
+            "Observações: {$etapa['obs']}";
+    }
+    return implode("\n---\n", $etapasLog); // separa as etapas com uma linha
+}
+
+
 
 ?>

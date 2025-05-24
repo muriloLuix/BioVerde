@@ -2,10 +2,13 @@
 /**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
 header('Content-Type: application/json');
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
+$user_id = $_SESSION['user_id'];
 /*************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
@@ -76,9 +79,26 @@ try {
     $conn->commit();
     echo json_encode(["success" => true, "message" => "Produto e etapas cadastrados com sucesso!"]);
 
+    $user = Usuario::find($user_id);
+
+    /**************** FORMATANDO AS ETAPAS PARA SALVAR NO LOG ************************/
+    $etapasStr = formatarEtapasLog($data['etapas']);
+    SalvarLog(
+        "O usuário ({$user->user_id} - {$user->user_nome}), cadastrou o produto: ({$data['produto_nome']}).\nCom as etapas:\n\n{$etapasStr}",
+        Acoes::CADASTRAR_ETAPA,
+        "sucesso"
+    );
+
+    /*********************************************************************************/
+
+
 } catch (Exception $e) {
+    /**************** FORMATANDO AS ETAPAS PARA SALVAR NO LOG ************************/
+    $etapasStr = formatarEtapasLog($data['etapas']);
     $conn->rollback();
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar etapas: " . $e->getMessage()]);
+    SalvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou cadastrar o produto: ({$data['produto_nome']}).\nCom as etapas:\n\n({$etapasStr}). \nMotivo do erro: ({$e->getMessage()})", Acoes::CADASTRAR_ETAPA, "erro");
+    /********************************************************************************/
 }
 
 $conn->close();

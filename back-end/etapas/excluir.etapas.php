@@ -75,7 +75,7 @@ try {
     $user = Usuario::find($user_id);
     $etapas = Etapa::find($etor_id);
 
-    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto: {$data['dproduct']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto: {$data['dproduct']}\n\nMotivo: {$data['reason']}", Acoes::EXCLUIR_ETAPA);
 
 
 } catch
@@ -96,7 +96,7 @@ try {
         'dproduct' => $data['dproduct'],
     ]);
 
-    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) tentou excluir a etapa ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto {$data['dproduct']} (Motivo: {$data['reason']}). Erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) tentou excluir a etapa ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto {$data['dproduct']}. \n\nMotivo: {$data['reason']}). \n\nErro: {$e->getMessage()}", Acoes::EXCLUIR_ETAPA, "erro");
 
     exit();
 }

@@ -143,7 +143,7 @@ try {
     /**************** MONTA A MENSAGEM DE LOG ************************/
     $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome}).";
     if (!empty($alteracoes)) {
-        $logMensagem .= "Alterações:\n" . implode("\n", $alteracoes);
+        $logMensagem .= "Alterações:\n\n" . implode("\n", $alteracoes);
     } else {
         $logMensagem .= "Nenhuma alteração detectada.";
     }

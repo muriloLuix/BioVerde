@@ -78,7 +78,7 @@ try {
 
     $user = Usuario::find($user_id);
 
-    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) excluiu o cliente {$data['dnome_cliente']} (Motivo: {$data['reason']})", Acoes::EXCLUIR_CLIENTE);
+    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) excluiu o cliente: \n\n  - {$data['dnome_cliente']} \n\nMotivo: {$data['reason']}", Acoes::EXCLUIR_CLIENTE);
 
 
 } catch (Exception $e) {
@@ -96,7 +96,7 @@ try {
         'message' => $e->getMessage()
     ]);
 
-    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) tentou excluir o cliente {$data['dnome_cliente']} (Motivo: {$data['reason']}). Motivo do erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
+    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) tentou excluir o cliente: \n\n  - {$data['dnome_cliente']} \n\nMotivo: {$data['reason']}. \n\nMotivo do erro: {$e->getMessage()}", Acoes::EXCLUIR_CLIENTE, "erro");
 
     exit();
 }
