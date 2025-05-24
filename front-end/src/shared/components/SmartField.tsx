@@ -1,12 +1,7 @@
 import { useState } from "react";
 
 import { Form } from "radix-ui";
-import Select, {
-	GroupBase,
-	Props,
-	components,
-	OptionProps,
-} from "react-select";
+import Select, { GroupBase, Props} from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
@@ -36,7 +31,10 @@ type InputPropsBase = {
 	creatableConfigName?: string;
 	openManagementModal?: () => void;
 	generatePassword?: () => void;
-	onChangeSelect?: (e: { target: { name: string; value: string } }) => void;
+	onCreateNewOption?: (inputValue: string) => Promise<void>;
+	onChangeSelect?: (
+		e: { target: { name: string; value: string } }
+	) => void;
 };
 
 type InputProps =
@@ -73,25 +71,7 @@ const SmartField = ({
 }: InputProps) => {
 	const [isHidden, setIsHidden] = useState(false);
 
-	const regex = (text: string) =>
-		text.trim().toLowerCase().replace(/\s+/g, "-");
-
-	const CustomCreateOption = (
-		props: OptionProps<{ label: string; value: string }, false>
-	) => {
-		if (props.data.value === "nova_opcao") {
-			return (
-				<components.Option {...props}>
-					<div className="flex justify-center items-center gap-1 font-semibold text-black">
-						<Plus size={16} />
-						<span>{props.data.label}</span>
-					</div>
-				</components.Option>
-			);
-		}
-
-		return <components.Option {...props} />;
-	};
+	const regex = (text: string) => text.trim().toLowerCase().replace(/\s+/g, "-");
 
 	return (
 		<Form.Field
@@ -107,14 +87,17 @@ const SmartField = ({
 					{error && (
 						<span
 							className={`text-red-500 ${
-								error === "*" ? "text-base" : "text-xs"
+							error === "*" ? "text-base" : "text-xs"
 							}`}
 						>
 							{error}
 						</span>
 					)}
 
-					<Form.Message className="text-red-500 text-base" match="valueMissing">
+					<Form.Message
+						className="text-red-500 text-base"
+						match="valueMissing"
+					>
 						*
 					</Form.Message>
 					<Form.Message className="text-red-500 text-xs" match="typeMismatch">
@@ -126,14 +109,22 @@ const SmartField = ({
 					>
 						Formato inválido*
 					</Form.Message>
-					<Form.Message className="text-red-500 text-xs" match="rangeUnderflow">
+					<Form.Message
+						className="text-red-500 text-xs"
+						match="rangeUnderflow"
+					>
 						Valor inválido*
 					</Form.Message>
 
-					{userLevel === "Administrador" && isCreatableSelect && (
-						<button title={creatableConfigName} onClick={openManagementModal}>
-							<Settings size={20} className="text-gray-600 cursor-pointer" />
-						</button>
+					{userLevel === "Administrador" && (
+						isCreatableSelect && (
+							<button 
+								title={creatableConfigName}
+								onClick={openManagementModal}
+							>
+								<Settings size={20} className="text-gray-600 cursor-pointer" />
+							</button>
+						) 
 					)}
 				</div>
 			</Form.Label>
@@ -321,7 +312,7 @@ const SmartField = ({
 							fixedDecimalScale
 							allowNegative={false}
 							value={value}
-							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
+							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : (
 						<input
@@ -330,7 +321,7 @@ const SmartField = ({
 							id={regex(fieldName)}
 							required={required}
 							value={value}
-							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] disabled:opacity-35 disabled:bg-gray-200`}
+							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}
 				</Form.Control>

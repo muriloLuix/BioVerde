@@ -44,11 +44,11 @@ const Batchs = () => {
         lote_codigo: "",
         produto: "",
         fornecedor: "",
-        dtColheita: "",
+        dt_colheita: "",
         quantidade: 0,
         unidade: "",
         tipo: "",
-        dtValidade: "",
+        dt_validade: "",
         classificacao: "",
         localArmazenado: "",
         obs: "",
@@ -154,11 +154,11 @@ const Batchs = () => {
                         lote_codigo:     lote.lote_codigo,
                         produto_nome:    lote.produto_nome,
                         fornecedor:      lote.fornecedor_nome_ou_empresa,
-                        dtColheita:      new Date(lote.lote_dtFabricacao).toLocaleDateString("pt-BR"),
+                        dtColheita:      new Date(lote.lote_dtColheita).toLocaleDateString("pt-BR"),
                         quantInicial:    parseFloat(lote.lote_quantInicial) + lote.uni_sigla,
                         quantAtual:      parseFloat(lote.lote_quantAtual) + lote.uni_sigla,
                         tipo:            lote.tproduto_nome,
-                        dtValidade:      new Date(lote.lote_dtExpiracao).toLocaleDateString("pt-BR"),
+                        dtValidade:      new Date(lote.lote_dtValidade).toLocaleDateString("pt-BR"),
                         classificacao:   lote.classificacao_nome,
                         localArmazenado: lote.localArmazenamento_nome,
                         obs:             lote.lote_obs,
@@ -198,7 +198,57 @@ const Batchs = () => {
 		fetchData();
 	}, []);
 
-    console.log(formData)
+    //Função para Atualizar a Tabela após ação
+	const refreshData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "batches"]));
+
+			const lotesResponse = await axios.get(
+				"http://localhost/BioVerde/back-end/lotes/listar_lotes.php",
+				{ withCredentials: true }
+			);
+
+			if (lotesResponse.data.success) {
+				const lotesCampos = lotesResponse.data.lotes.map((lote: Batch) => ({
+                    lote_codigo:     lote.lote_codigo,
+                    produto_nome:    lote.produto_nome,
+                    fornecedor:      lote.fornecedor_nome_ou_empresa,
+                    dtColheita:      new Date(lote.lote_dtColheita).toLocaleDateString("pt-BR"),
+                    quantInicial:    parseFloat(lote.lote_quantInicial) + lote.uni_sigla,
+                    quantAtual:      parseFloat(lote.lote_quantAtual) + lote.uni_sigla,
+                    tipo:            lote.tproduto_nome,
+                    dtValidade:      new Date(lote.lote_dtValidade).toLocaleDateString("pt-BR"),
+                    classificacao:   lote.classificacao_nome,
+                    localArmazenado: lote.localArmazenamento_nome,
+                    obs:             lote.lote_obs,
+                }));
+
+                setRowData(lotesCampos);
+			} else {
+				const errorMessage =
+					lotesResponse.data.message ||
+					"Erro ao carregar dados";
+				setMessage(errorMessage);
+				setOpenNoticeModal(true);
+				return false;
+			}
+
+		} catch (error) {
+			let errorMessage = "Erro ao conectar com o servidor";
+			if (axios.isAxiosError(error)) {
+				errorMessage = error.response?.data?.message || error.message;
+			}
+			setMessage(errorMessage);
+			setOpenNoticeModal(true);
+			return false;
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("batches");
+				return newLoading;
+			});
+		}
+	};
 
     // Função que busca as opções de produto
     const fetchOptions = async () => {
@@ -266,8 +316,8 @@ const Batchs = () => {
             classification: !formData.classificacao,
             storage: !formData.localArmazenado,
             quantity: !formData.quantidade,
-            harvestDate: !formData.dtColheita,
-            expirationDate: !formData.dtValidade,
+            harvestDate: !formData.dt_colheita,
+            expirationDate: !formData.dt_validade,
 		};
 		setErrors(errors);
 
@@ -295,9 +345,10 @@ const Batchs = () => {
 			console.log("Resposta do back-end:", response.data);
 
 			if (response.data.success) {
-				// await refreshData();
+				await refreshData();
 				setSuccessMsg(true);
-				setMessage("Lote cadastrado com sucesso!");
+                setOpenRegisterModal(false);
+				setMessage(`Lote ${response.data.lote_codigo} foi cadastrado com sucesso!`);
 				clearFormData();
 			} else {
 				setMessage(response.data.message ?? "Erro ao cadastrar lote");
@@ -336,6 +387,7 @@ const Batchs = () => {
     ) => {
 
         const { name, value } = event.target;
+        
         if (name in formData) {
 			setFormData({ ...formData, [name]: value });
 		}
@@ -499,10 +551,10 @@ const Batchs = () => {
                     <div className="flex gap-10">
                         <SmartField
                             type="date"
-                            fieldName="dtColheita"
-                            error={errors.harvestDate ? "*" : undefined}
+                            fieldName="dt_colheita"
                             fieldText="Data de Colheita"
-                            value={formData.dtColheita}
+                            error={errors.harvestDate ? "*" : undefined}
+                            value={formData.dt_colheita}
                             onChange={handleChange}
                             fieldClassname="flex flex-col flex-1"
                         />
@@ -528,9 +580,9 @@ const Batchs = () => {
                         <SmartField
                             type="date"
                             error={errors.expirationDate ? "*" : undefined}
-                            fieldName="dtValidade"
+                            fieldName="dt_validade"
                             fieldText="Data de Validade"
-                            value={formData.dtValidade}
+                            value={formData.dt_validade}
                             onChange={handleChange}
                             fieldClassname="flex flex-col flex-1"
                         />

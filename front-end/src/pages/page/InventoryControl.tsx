@@ -972,9 +972,8 @@ export default function InventoryControl() {
 				openModal={openEditModal}
 				setOpenModal={setOpenEditModal}
 				modalTitle="Editar Produto:"
-				leftButtonText="Editar"
-				rightButtonText="Cancelar"
-				loading={loading}
+				rightButtonText="Editar"
+				leftButtonText="Cancelar"
 				isLoading={loading.has("updateProduct")}
 				onCancel={() => {
 					clearFormData();
@@ -1132,8 +1131,8 @@ export default function InventoryControl() {
 				openModal={openDeleteModal}
 				setOpenModal={setOpenDeleteModal}
 				modalTitle="Excluir Produto:"
-				leftButtonText="Excluir"
-				rightButtonText="Cancelar"
+				rightButtonText="Excluir"
+				leftButtonText="Cancelar"
 				onDelete={() => {
 					setOpenConfirmModal(true);
 					setOpenDeleteModal(false);
@@ -1175,7 +1174,6 @@ export default function InventoryControl() {
 				confirmationModalTitle="Tem certeza que deseja excluir o produto?"
 				confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 				onConfirm={handleDeleteProduct}
-				loading={loading}
 				isLoading={loading.has("deleteProduct")}
 				confirmationLeftButtonText="Cancelar"
 				confirmationRightButtonText="Sim, excluir produto"

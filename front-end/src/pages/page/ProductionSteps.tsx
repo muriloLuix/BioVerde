@@ -938,9 +938,8 @@ export default function ProductionSteps() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Etapa:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateStep")}
 					onCancel={() => clearFormData(keepProduct)}
 					onSubmit={handleUpdateStep}
@@ -1014,8 +1013,8 @@ export default function ProductionSteps() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Etapa:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1067,7 +1066,6 @@ export default function ProductionSteps() {
 					confirmationModalTitle="Tem certeza que deseja excluir a etapa?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteStep}
-					loading={loading}
 					isLoading={loading.has("deleteStep")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir etapa"

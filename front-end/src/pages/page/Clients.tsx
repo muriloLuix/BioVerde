@@ -1302,9 +1302,8 @@ export default function Clients() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Cliente:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateClient")}
 					onCancel={() => {
 						clearFormData();
@@ -1564,8 +1563,8 @@ export default function Clients() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Cliente:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1607,7 +1606,6 @@ export default function Clients() {
 					confirmationModalTitle="Tem certeza que deseja excluir o cliente?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteClient}
-					loading={loading}
 					isLoading={loading.has("deleteClient")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir cliente"

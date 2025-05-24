@@ -174,7 +174,7 @@ export default function Suppliers() {
 		);
 	};
 
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -511,7 +511,7 @@ export default function Suppliers() {
 			if (Object.values(errors).some((error) => error)) {
 				return;
 			}
-			const response = await axios.patch(
+			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
 				formData,
 				{
@@ -948,7 +948,7 @@ export default function Suppliers() {
 								<button
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={gerarRelatorio}
+									onClick={generateReport}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -1288,9 +1288,8 @@ export default function Suppliers() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Fornecedor:"
-					leftButtonText="Editar"
-					rightButtonText="Cancelar"
-					loading={loading}
+					rightButtonText="Editar"
+					leftButtonText="Cancelar"
 					isLoading={loading.has("updateSupplier")}
 					onCancel={() => {
 						clearFormData();
@@ -1555,8 +1554,8 @@ export default function Suppliers() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Fornecedor:"
-					leftButtonText="Excluir"
-					rightButtonText="Cancelar"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);
@@ -1597,7 +1596,6 @@ export default function Suppliers() {
 					confirmationModalTitle="Tem certeza que deseja excluir o fornecedor?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
 					onConfirm={handleDeleteSupplier}
-					loading={loading}
 					isLoading={loading.has("deleteSupplier")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir fornecedor"
