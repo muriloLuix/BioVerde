@@ -1,31 +1,31 @@
-<?php 
-
-ini_set("display_errors", 1);
-
+<?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+/************************************************/
 
-// Verifica autenticação
+/**************** VERIFICA A AUTENTICAÇÃO ************************/
 if (!isset($_SESSION["user_id"])) {
     echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
     exit();
 }
+/*************************************************************/
 
-// Verifica conexão com o banco
+/**************** VERIFICA A CONEXÃO COM O BANCO ************************/
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
     exit();
 }
+/*********************************************************************/
 
-// Processa os dados de entrada
+/**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
 $rawData = file_get_contents("php://input");
 $data = json_decode($rawData, true);
+/****************************************************************************/
 
-// Define o mapa de filtros para clientes
+/**************** DEFINE O MAPA DE FILTROS PARA CLIENTES ************************/
 $mapaFiltrosCliente = [
     "fnome_cliente"   => ['coluna' => 'c.cliente_nome', 'tipo' => 'like'],
     "fcpf_cnpj"       => ['coluna' => 'c.cliente_documento',     'tipo' => 'like'],
@@ -34,18 +34,21 @@ $mapaFiltrosCliente = [
     "festado"         => ['coluna' => 'c.cliente_estado',          'tipo' => 'like'],
     "fdataCadastro"   => ['coluna' => 'DATE(c.cliente_data_cadastro)', 'tipo' => '='],
 ];
+/*********************************************************************************/
 
-// Gera os filtros
+/**************** GERA OS FILTROS ************************/
 $filtros = buildFilters($data, $mapaFiltrosCliente);
+/********************************************************/
 
-// Trata o status manualmente para pegar "0" também
+/**************** TRATA O STATUS ************************/
 if (isset($data['fstatus']) && $data['fstatus'] !== "") {
     // garante inteiro 0 ou 1
     $val = intval($data['fstatus']);
     $filtros['where'][] = "c.estaAtivo = {$val}";
 }
+/*******************************************************/
 
-// Define estrutura da busca
+/**************** DEFINE AS ESTRUTURAS DE BUSCA ************************/
 $buscaCliente = [
     'select' => "
         c.cliente_id,
@@ -71,10 +74,11 @@ $buscaCliente = [
         'cliente_data_cadastro' => 'DATE(cliente_data_cadastro)'
     ]
 ];
+/*********************************************************************************/
 
-// Busca os dados
+/**************** BUSCA OS DADOS ************************/
 $clientes = findFilters($conn, $buscaCliente, $filtros);
-
+/******************************************************/
 
 // Retorna a resposta
 echo json_encode([

@@ -2,9 +2,6 @@
 
 include_once("../inc/funcoes.inc.php");
 
-// Configurações de sessão segura
-configurarSessaoSegura();
-
 session_start();
 header_remove('X-Powered-By');
 header('Content-Type: application/json; charset=UTF-8');

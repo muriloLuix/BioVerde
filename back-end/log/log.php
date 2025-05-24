@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Sao_Paulo');
 
 /**
  * Registra um evento de log no banco de dados.

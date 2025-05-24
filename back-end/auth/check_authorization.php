@@ -1,14 +1,16 @@
 <?php
+/**************** HEADERS ************************/
 header('Content-Type: application/json');
 session_start();
 include_once "../inc/funcoes.inc.php";
+/*************************************************/
 
-// Verifique se a sessão está iniciada corretamente
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(["success" => false, "message" => "Sessão inválida"]);
     exit;
 }
 
+/**************** QUERY ************************/
 $sql = "SELECT nivel_id FROM usuarios WHERE user_id = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -20,6 +22,7 @@ $stmt->execute();
 $stmt->bind_result($nivelMinimo);
 $stmt->fetch();
 $stmt->close();
+/*************************************************/
 
 if (!isset($_SESSION['nivel_acesso']) || $_SESSION['nivel_acesso'] !== $nivelMinimo) {
     echo json_encode([

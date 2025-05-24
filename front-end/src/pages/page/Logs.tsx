@@ -208,6 +208,7 @@ export default function Orders() {
                     modalTitle="Visualizar Log"
                     modalWidth="w-1/2"
                     isLoading={false}
+                    withExitButton
                     isRegister={true}
                     registerButtonText="Fechar"
                     onSubmit={(e) => {
@@ -223,7 +224,12 @@ export default function Orders() {
                             <p><strong>Página:</strong> {selectedLog.log_pag_id}</p>
                             <p><strong>URL:</strong> {selectedLog.log_url}</p>
                             <p><strong>Ação:</strong> {selectedLog.log_acao}</p>
-                            <p><strong>Conteúdo:</strong> {selectedLog.log_conteudo}</p>
+                            <p><strong>Conteúdo:</strong></p>
+                            <div className="bg-gray-100 p-2 rounded text-sm font-mono">
+                                {selectedLog.log_conteudo.split('\n').map((linha, index) => (
+                                    <p key={index}>{linha}</p>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </Modal>

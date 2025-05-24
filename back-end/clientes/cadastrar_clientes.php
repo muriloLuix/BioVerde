@@ -1,17 +1,22 @@
 <?php
+/**************** HEADERS ************************/
 header('Content-Type: application/json');
 session_start();
 include_once("../inc/funcoes.inc.php");
-
-if(!isset($_SESSION["user_id"])) {
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
+if (!isset($_SESSION["user_id"])) {
     checkLoggedUSer($conn, $_SESSION['user_id']);
     exit;
 }
-
+$user_id = $_SESSION['user_id'];
+$user = Usuario::find($user_id);
 if ($conn->connect_error) {
     die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
 }
+/*************************************************/
 
+/**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
 $rawData = file_get_contents("php://input");
 if (!$rawData) {
     echo json_encode(["success" => false, "message" => "Erro ao receber os dados."]);
@@ -19,22 +24,24 @@ if (!$rawData) {
 }
 
 $data = json_decode($rawData, true);
+/**************************************************************************/
 
-// Validação dos campos
+/**************** VALIDAÇÃO DOS CAMPOS ************************/
 $camposObrigatorios = ['nome_empresa_cliente', 'email', 'tipo', 'tel', 'cpf_cnpj', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 $verifiedDocuments = verifyDocuments($data['cpf_cnpj'], $data['tipo']);
 
-if ($validacaoDosCampos !== null) { 
+if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
-    exit();    
+    exit();
 }
-if ($verifiedDocuments["success"] === false) { 
+if ($verifiedDocuments["success"] === false) {
     echo json_encode($verifiedDocuments);
-    exit();    
+    exit();
 }
+/************************************************************/
 
-// Verificar email e CNPJ
+/**************** VERIFICAR EMAIL E CNPJ************************/
 $emailCpfError = verifyCredentials(
     $conn, 
     "clientes", 
@@ -47,25 +54,28 @@ if ($emailCpfError) {
     echo json_encode($emailCpfError);
     exit();
 }
+/************************************************************/
+
+/**************** CADASTRO DO CLIENTE ************************/
 
 $estaAtivo = 1;
 
 // Cadastro do cliente
 $stmt = $conn->prepare("INSERT INTO clientes (cliente_nome, cliente_razao_social, cliente_documento, cliente_tipo, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_complemento, cliente_cidade, cliente_estado, cliente_cep, estaAtivo, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-$stmt->bind_param("ssssssssssssis", 
-    $data['nome_empresa_cliente'], 
-    $data['razao_social'], 
+$stmt->bind_param("ssssssssssssis",
+    $data['nome_empresa_cliente'],
+    $data['razao_social'],
     $data['cpf_cnpj'],
     $data['tipo'],
-    $data['tel'], 
-    $data['email'], 
-    $data['endereco'], 
-    $data['num_endereco'], 
-    $data['complemento'], 
-    $data['cidade'], 
-    $data['estado'], 
-    $data['cep'], 
+    $data['tel'],
+    $data['email'],
+    $data['endereco'],
+    $data['num_endereco'],
+    $data['complemento'],
+    $data['cidade'],
+    $data['estado'],
+    $data['cep'],
     $estaAtivo,
     $data['obs']
 );
@@ -74,10 +84,13 @@ if ($stmt->execute()) {
 
     $emailCliente = enviarEmailCliente($data['email'], $data);
     if ($emailCliente === true) {
-        echo json_encode(["success" => true, "message" => "cliente cadastrado com sucesso!"]);
+        echo json_encode(["success" => true, "message" => "Cliente cadastrado com sucesso!"]);
     } else {
         echo json_encode($emailCliente);
+        SalvarLog("O usuário ({$user->user_id} - {$user->user_nome}), cadastrou o cliente: {$data['nome_empresa_cliente']}", Acoes::CADASTRAR_CLIENTE, "sucesso");
     }
 } else {
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar cliente: " . $stmt->error]);
+    SalvarLog("O usuário, ({$user->user_id} - ({$user->user_nome}), tentou cadastrar o cliente: {$data['nome_empresa_cliente']}", Acoes::CADASTRAR_CLIENTE, "erro");
 }
+/************************************************************/
