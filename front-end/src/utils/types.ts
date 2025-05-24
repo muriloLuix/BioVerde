@@ -5,19 +5,19 @@ export interface Product {
 	produto_preco: string;
 	lote_nome: number;
 	lote_id: number;
-	fornecedor_nome_ou_empresa: string;
+	fornecedor_nome: string;
 	produto_observacoes: string;
 	staproduto_nome: string;
 }
 
 export interface Client {
 	cliente_id: number;
-	cliente_nome_ou_empresa: string;
+	cliente_nome: string;
 	cliente_razao_social: string;
 	cliente_email: string;
 	cliente_telefone: string;
 	cliente_tipo: string;
-	cliente_cpf_ou_cnpj: string;
+	cliente_documento: string;
 	cliente_cep: string;
 	cliente_endereco: string;
 	cliente_numendereco: string;
@@ -31,12 +31,12 @@ export interface Client {
 
 export interface Supplier {
 	fornecedor_id: number;
-	fornecedor_nome_ou_empresa: string;
+	fornecedor_nome: string;
 	fornecedor_razao_social: string;
 	fornecedor_email: string;
 	fornecedor_telefone: string;
 	fornecedor_tipo: string;
-	fornecedor_cpf_ou_cnpj: string;
+	fornecedor_documento: string;
 	fornecedor_endereco: string;
 	fornecedor_num_endereco: number;
 	fornecedor_cidade: string;
@@ -61,20 +61,31 @@ export interface User {
 }
 
 export interface Batch {
-	lote_id: number;
-	lote_codigo: string;
-    lote_dtColheita: Date;
-    lote_dtValidade: Date;
-    lote_quantInicial: string;
-    lote_quantAtual: string;
-	fornecedor_nome_ou_empresa: string;
-	tproduto_nome: string;
-	staproduto_nome: string;
-	lote_obs: string;
-	produto_nome: string;
-	uni_sigla: string;
-	classificacao_nome: string;
-	localArmazenamento_nome: string;
+    lote_id: number;
+    lote_codigo: string;
+    lote_dtColheita: string;
+    lote_dtValidade: string;
+    lote_quantInicial: number;
+    lote_quantAtual: number;
+    lote_obs: string;
+
+    produto_id: number;
+    produto_nome: string;
+
+    fornecedor_id: number;
+    fornecedor_nome: string;
+
+    uni_id: number;
+    uni_sigla: string;
+
+    tproduto_id: number;
+    tproduto_nome: string;
+
+    classificacao_id: number;
+    classificacao_nome: string;
+
+    localArmazenamento_id: number;
+    localArmazenamento_nome: string;
 }
 
 export interface JobPosition {

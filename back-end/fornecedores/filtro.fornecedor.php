@@ -27,9 +27,9 @@ $data = json_decode($rawData, true);
 
 // Define o mapa de filtros para fornecedores
 $mapaFiltrosFornecedor = [
-    "fnome_empresa"  => ['coluna' => 'f.fornecedor_nome_ou_empresa', 'tipo' => 'like'],
+    "fnome_empresa"  => ['coluna' => 'f.fornecedor_nome', 'tipo' => 'like'],
     "fresponsavel"   => ['coluna' => 'f.fornecedor_responsavel', 'tipo' => 'like'],
-    "fcnpj"          => ['coluna' => 'f.fornecedor_cpf_ou_cnpj', 'tipo' => 'like'],
+    "fcnpj"          => ['coluna' => 'f.fornecedor_documento', 'tipo' => 'like'],
     "ftel"           => ['coluna' => 'f.fornecedor_telefone', 'tipo' => 'like'],
     "fcidade"        => ['coluna' => 'f.fornecedor_cidade', 'tipo' => 'like'],
     "festado"        => ['coluna' => 'f.fornecedor_estado', 'tipo' => 'like'],
@@ -50,9 +50,9 @@ if (isset($data['fstatus']) && $data['fstatus'] !== "") {
 $buscaFornecedor = [
     'select' => "
      f.fornecedor_id,
-     f.fornecedor_nome_ou_empresa,
+     f.fornecedor_nome,
      CASE WHEN f.fornecedor_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END,
-     f.fornecedor_cpf_ou_cnpj,
+     f.fornecedor_documento,
      f.fornecedor_email, 
      f.fornecedor_telefone, 
      f.fornecedor_responsavel,

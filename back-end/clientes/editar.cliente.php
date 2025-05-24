@@ -50,7 +50,7 @@ try {
     }
 
     // Conflitos de email/CPF/CNPJ
-    $colunas = ["cliente_email", "cliente_cpf_ou_cnpj"];
+    $colunas = ["cliente_email", "cliente_documento"];
     $valores = [$data["email"], $data["cpf_cnpj"]];
     
     $conflito = verificarConflitosAtualizacao($conn, "clientes", $colunas, $valores, "cliente_id", $data["cliente_id"]);
@@ -63,12 +63,12 @@ try {
 
     // Atualiza cliente
     $camposAtualizados = [
-        'cliente_nome_ou_empresa' => $data['nome_empresa_cliente'],
+        'cliente_nome' => $data['nome_empresa_cliente'],
         'cliente_razao_social' => $data['razao_social'],
         'cliente_tipo' => $data['tipo'],
         'cliente_email' => $data['email'],
         'cliente_telefone' => $data['tel'],
-        'cliente_cpf_ou_cnpj' => $data['cpf_cnpj'],
+        'cliente_documento' => $data['cpf_cnpj'],
         'cliente_cep' => $data['cep'],
         'cliente_endereco' => $data['endereco'],
         'cliente_numendereco' => $data['num_endereco'],
@@ -86,12 +86,12 @@ try {
 
     $fields = "
     c.cliente_id,
-    c.cliente_nome_ou_empresa,
+    c.cliente_nome,
     c.cliente_razao_social,
     c.cliente_email,
     c.cliente_telefone,
     c.cliente_tipo,
-    c.cliente_cpf_ou_cnpj,
+    c.cliente_documento,
     c.cliente_cep,
     c.cliente_endereco,
     c.cliente_numendereco,

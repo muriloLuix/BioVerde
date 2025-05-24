@@ -28,7 +28,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
 try {
     // Busca dados dos clientes
-    $sql = " SELECT cliente_nome_ou_empresa, cliente_razao_social, cliente_cpf_ou_cnpj, cliente_telefone, cliente_email, ";
+    $sql = " SELECT cliente_nome, cliente_razao_social, cliente_documento, cliente_telefone, cliente_email, ";
     $sql .= " CASE ";
     $sql .= " WHEN cliente_tipo = 'fisica' THEN 'Física' ";
     $sql .= " WHEN cliente_tipo = 'juridica' THEN 'Jurídica' ";
@@ -79,10 +79,10 @@ try {
     foreach ($clientes as $cliente) {
         $html .= '
                     <tr>
-                        <td>' . htmlspecialchars($cliente['cliente_nome_ou_empresa']) . '</td>
+                        <td>' . htmlspecialchars($cliente['cliente_nome']) . '</td>
                         <td>' . htmlspecialchars($cliente['cliente_razao_social']) . '</td>
                         <td>' . htmlspecialchars($cliente['cliente_email']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_cpf_ou_cnpj']) . '</td>
+                        <td>' . htmlspecialchars($cliente['cliente_documento']) . '</td>
                         <td>' . htmlspecialchars($cliente['cliente_telefone']) . '</td>
                         <td>' . htmlspecialchars($cliente['cliente_tipo']) . '</td>
                     </tr>';

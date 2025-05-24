@@ -11,7 +11,7 @@ try {
 
     $cols_pedidos = [
         "d.pedido_id",
-        "e.cliente_nome_ou_empresa",
+        "e.cliente_nome",
         "d.pedido_dtCadastro",
         "f.stapedido_nome",
         "d.pedido_prevEntrega AS pedido_prevEntrega",
@@ -82,7 +82,7 @@ try {
                 'pedido_dtCadastro' => $item['pedido_dtCadastro'],
                 'stapedido_nome'    => $item['stapedido_nome'],
                 'pedido_prevEntrega'=> $item['pedido_prevEntrega'],
-                'cliente_nome_ou_empresa' => $item['cliente_nome_ou_empresa'],
+                'cliente_nome' => $item['cliente_nome'],
                 'pedido_valor_total'=> (float)$item['pedido_valor_total'],
                 'pedido_telefone'  => $item['pedido_telefone'],
                 'pedido_cep'        => $item['pedido_cep'],

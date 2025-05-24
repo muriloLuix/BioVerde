@@ -45,7 +45,7 @@ try {
 
     // Busca o ID do fornecedor pelo nome
     $fornecedorNome = $data['fornecedor'];
-    $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome_ou_empresa = ?");
+    $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome = ?");
     $stmt->bind_param("s", $fornecedorNome);
     $stmt->execute();
     $result = $stmt->get_result();

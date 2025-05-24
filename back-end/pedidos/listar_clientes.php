@@ -14,9 +14,9 @@ if ($conn->connect_error) {
 $termo = isset($_GET['q']) ? trim($_GET['q']) : '';
 
 if ($termo === '') {
-    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome_ou_empresa FROM clientes");
+    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome FROM clientes");
 } else {
-    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome_ou_empresa FROM clientes WHERE cliente_nome_ou_empresa LIKE ?");
+    $stmt = $conn->prepare("SELECT cliente_id, cliente_nome FROM clientes WHERE cliente_nome LIKE ?");
     $search = "%$termo%";
     $stmt->bind_param("s", $search);
 }

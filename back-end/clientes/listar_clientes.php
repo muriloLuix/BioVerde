@@ -10,9 +10,9 @@ try {
 
     $cols = [
         "c.cliente_id",
-        "c.cliente_nome_ou_empresa",
+        "c.cliente_nome",
         "CASE WHEN c.cliente_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END",
-        "c.cliente_cpf_ou_cnpj",
+        "c.cliente_documento",
         "c.cliente_email",
         "c.cliente_telefone",
         "c.cliente_cep",

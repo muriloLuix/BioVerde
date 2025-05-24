@@ -59,7 +59,7 @@ try {
     }
 
     // Conflitos de email/CPF/CNPJ
-    $colunas = ["fornecedor_email", "fornecedor_cpf_ou_cnpj"];
+    $colunas = ["fornecedor_email", "fornecedor_documento"];
     $valores = [$data["email"], $data["cpf_cnpj"]];
     
     $conflito = verificarConflitosAtualizacao($conn, "fornecedores", $colunas, $valores, "fornecedor_id", $data["fornecedor_id"]);
@@ -72,12 +72,12 @@ try {
 
     // Atualiza fornecedor
     $camposAtualizados = [
-        'fornecedor_nome_ou_empresa' => $data['nome_empresa_fornecedor'],
+        'fornecedor_nome' => $data['nome_empresa_fornecedor'],
         'fornecedor_razao_social' => $data['razao_social'],
         'fornecedor_email' => $data['email'],
         'fornecedor_telefone' => $data['tel'],
         'fornecedor_tipo' => $data['tipo'],
-        'fornecedor_cpf_ou_cnpj' => $data['cpf_cnpj'],
+        'fornecedor_documento' => $data['cpf_cnpj'],
         'fornecedor_responsavel' => $data['responsavel'],
         'fornecedor_cep' => $data['cep'],
         'fornecedor_endereco' => $data['endereco'],
@@ -95,11 +95,11 @@ try {
 
     $fields = "
     f.fornecedor_id,
-    f.fornecedor_nome_ou_empresa,
+    f.fornecedor_nome,
     f.fornecedor_email,
     f.fornecedor_telefone,
     f.fornecedor_tipo,
-    f.fornecedor_cpf_ou_cnpj,
+    f.fornecedor_documento,
     f.fornecedor_cep,
     f.fornecedor_endereco,
     f.fornecedor_num_endereco,

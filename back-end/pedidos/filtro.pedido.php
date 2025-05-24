@@ -21,7 +21,7 @@ $data    = json_decode($rawData, true);
 // 1) Mapa sem o status
 $mapaFiltrosPedido = [
     "fnum_pedido"         => ['coluna'=>'ped.pedido_id',       'tipo'=>'like'],
-    "fnome_cliente"        => ['coluna'=>'cli.cliente_nome_ou_empresa',      'tipo'=>'like'],
+    "fnome_cliente"        => ['coluna'=>'cli.cliente_nome',      'tipo'=>'like'],
     "ftel"          => ['coluna'=>'cli.cliente_telefone',   'tipo'=>'like'],
     "fstatus"          => ['coluna'=>'sta.stapedido_nome',        'tipo'=>'like'],
     "fcep"        => ['coluna'=>'ped.pedido_cep',        'tipo'=>'like'],
@@ -37,7 +37,7 @@ $filtros = buildFilters($data, $mapaFiltrosPedido);
 $buscaPedido = [
     'select' => "
                     ped.pedido_id,
-                    cli.cliente_nome_ou_empresa,
+                    cli.cliente_nome,
                     cli.cliente_telefone,
                     sta.stapedido_nome,
                     ped.pedido_cep,

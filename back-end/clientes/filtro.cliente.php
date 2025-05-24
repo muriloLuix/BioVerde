@@ -27,8 +27,8 @@ $data = json_decode($rawData, true);
 
 // Define o mapa de filtros para clientes
 $mapaFiltrosCliente = [
-    "fnome_cliente"   => ['coluna' => 'c.cliente_nome_ou_empresa', 'tipo' => 'like'],
-    "fcpf_cnpj"       => ['coluna' => 'c.cliente_cpf_ou_cnpj',     'tipo' => 'like'],
+    "fnome_cliente"   => ['coluna' => 'c.cliente_nome', 'tipo' => 'like'],
+    "fcpf_cnpj"       => ['coluna' => 'c.cliente_documento',     'tipo' => 'like'],
     "ftel"            => ['coluna' => 'c.cliente_telefone',        'tipo' => 'like'],
     "fcidade"         => ['coluna' => 'c.cliente_cidade',          'tipo' => 'like'],
     "festado"         => ['coluna' => 'c.cliente_estado',          'tipo' => 'like'],
@@ -49,9 +49,9 @@ if (isset($data['fstatus']) && $data['fstatus'] !== "") {
 $buscaCliente = [
     'select' => "
         c.cliente_id,
-        c.cliente_nome_ou_empresa,
+        c.cliente_nome,
         CASE WHEN c.cliente_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END,
-        c.cliente_cpf_ou_cnpj,
+        c.cliente_documento,
         c.cliente_email,
         c.cliente_telefone,
         c.cliente_cep,

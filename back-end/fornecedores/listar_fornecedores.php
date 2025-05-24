@@ -13,9 +13,9 @@ try {
     $cols = [
 
         "f.fornecedor_id", 
-        "f.fornecedor_nome_ou_empresa", 
+        "f.fornecedor_nome", 
         "CASE WHEN f.fornecedor_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END",
-        "f.fornecedor_cpf_ou_cnpj", 
+        "f.fornecedor_documento", 
         "f.fornecedor_email", 
         "f.fornecedor_telefone", 
         "f.fornecedor_responsavel", 

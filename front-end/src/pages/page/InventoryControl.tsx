@@ -181,7 +181,7 @@ export default function InventoryControl() {
 				options?.lotes.find((lote) => lote.lote_id === produto.lote_id)
 					?.lote_id ?? 0,
 			preco: parseFloat(produto.produto_preco) ?? 0.0,
-			fornecedor: produto.fornecedor_nome_ou_empresa,
+			fornecedor: produto.fornecedor_nome,
 			obs: produto.produto_observacoes,
 		});
 
@@ -845,8 +845,8 @@ export default function InventoryControl() {
 								placeholder="Selecione o fornecedor"
 								onChangeSelect={handleChange}
 								options={fornecedores?.map((fornecedor) => ({
-									label: fornecedor.fornecedor_nome_ou_empresa,
-									value: fornecedor.fornecedor_nome_ou_empresa,
+									label: fornecedor.fornecedor_nome,
+									value: fornecedor.fornecedor_nome,
 								}))}
 							/>
 						</div>
@@ -1005,8 +1005,8 @@ export default function InventoryControl() {
 						placeholder="Selecione o fornecedor"
 						onChangeSelect={handleChange}
 						options={fornecedores?.map((fornecedor) => ({
-							label: fornecedor.fornecedor_nome_ou_empresa,
-							value: fornecedor.fornecedor_nome_ou_empresa,
+							label: fornecedor.fornecedor_nome,
+							value: fornecedor.fornecedor_nome,
 						}))}
 					/>
 				</div>

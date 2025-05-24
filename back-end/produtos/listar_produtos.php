@@ -8,7 +8,7 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    $cols = array("produto_id", "produto_nome", "c.tproduto_nome", "produto_preco", "f.fornecedor_nome_ou_empresa", "sp.staproduto_nome", "produto_observacoes");
+    $cols = array("produto_id", "produto_nome", "c.tproduto_nome", "produto_preco", "f.fornecedor_nome", "sp.staproduto_nome", "produto_observacoes");
 
     $joins = [
         [

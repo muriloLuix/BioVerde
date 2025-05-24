@@ -239,11 +239,11 @@ export default function Clients() {
 
 		setFormData({
 			cliente_id: cliente.cliente_id,
-			nome_empresa_cliente: cliente.cliente_nome_ou_empresa,
+			nome_empresa_cliente: cliente.cliente_nome,
 			razao_social: cliente.cliente_razao_social,
 			email: cliente.cliente_email,
 			tel: cliente.cliente_telefone,
-			cpf_cnpj: cliente.cliente_cpf_ou_cnpj,
+			cpf_cnpj: cliente.cliente_documento,
 			status: String(cliente.estaAtivo),
 			cep: cliente.cliente_cep,
 			endereco: cliente.cliente_endereco,
@@ -262,7 +262,7 @@ export default function Clients() {
 	const handleDeleteClick = (cliente: Client) => {
 		setDeleteClient({
 			cliente_id: cliente.cliente_id,
-			dnome_cliente: cliente.cliente_nome_ou_empresa,
+			dnome_cliente: cliente.cliente_nome,
 			reason: "",
 		});
 		setOpenDeleteModal(true);

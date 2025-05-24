@@ -60,7 +60,7 @@ if ($sta_id === null) {
 }
 
 // Buscar ID do fornecedor
-$sqlFornecedor = "SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome_ou_empresa = ?";
+$sqlFornecedor = "SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome = ?";
 $stmtFornecedor = $conn->prepare($sqlFornecedor);
 if (!$stmtFornecedor) {
     echo json_encode(["success" => false, "message" => "Erro ao preparar consulta de fornecedor: " . $conn->error]);

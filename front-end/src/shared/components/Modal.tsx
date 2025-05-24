@@ -16,7 +16,6 @@ type ModalProps = {
 	leftButtonText?: string;
 	rightButtonText?: string;
 	modalWidth?: string;
-	loading?: Set<string>;
 	isLoading?: boolean;
 	isRegister?: boolean;
 	registerButtonText?: string;
@@ -132,7 +131,6 @@ const Modal = ({
 											<button
 												type="submit"
 												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
-												// disabled={loading.size > 0}
 											>
 												{isLoading ? (
 													<Loader2 className="animate-spin h-6 w-6" />

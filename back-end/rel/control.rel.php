@@ -28,7 +28,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
 try {
     // Busca dados dos produtos
-    $sql = "SELECT produto_nome, tproduto_nome, produto_preco, staproduto_nome, fornecedor_nome_ou_empresa";
+    $sql = "SELECT produto_nome, tproduto_nome, produto_preco, staproduto_nome, fornecedor_nome";
     $sql .= " FROM produtos a";
     $sql .= " INNER JOIN fornecedores b ON a.id_fornecedor = b.fornecedor_id";
     $sql .= " INNER JOIN status_produto c ON a.status_id = c.staproduto_id";
@@ -79,7 +79,7 @@ try {
             <td>' . htmlspecialchars($produto['tproduto_nome']) . '</td>
             <td>R$ ' . number_format($produto['produto_preco'], 2, ',', '.') . '</td>
             <td>' . htmlspecialchars($produto['staproduto_nome']) . '</td>
-            <td>' . htmlspecialchars($produto['fornecedor_nome_ou_empresa']) . '</td>
+            <td>' . htmlspecialchars($produto['fornecedor_nome']) . '</td>
         </tr>';
     }
 

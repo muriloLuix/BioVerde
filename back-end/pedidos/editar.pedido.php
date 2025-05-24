@@ -41,7 +41,7 @@ try {
     }
 
     // Pesquisar id pelo nome
-    $sql = "SELECT cliente_id FROM clientes WHERE cliente_nome_ou_empresa = ?";
+    $sql = "SELECT cliente_id FROM clientes WHERE cliente_nome = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $data['nome_cliente']);
     $stmt->execute();

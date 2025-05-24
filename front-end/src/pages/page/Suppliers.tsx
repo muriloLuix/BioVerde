@@ -225,11 +225,11 @@ export default function Suppliers() {
 
 		setFormData({
 			fornecedor_id: fornecedor.fornecedor_id,
-			nome_empresa_fornecedor: fornecedor.fornecedor_nome_ou_empresa,
+			nome_empresa_fornecedor: fornecedor.fornecedor_nome,
 			razao_social: fornecedor.fornecedor_razao_social,
 			email: fornecedor.fornecedor_email,
 			tel: fornecedor.fornecedor_telefone,
-			cpf_cnpj: fornecedor.fornecedor_cpf_ou_cnpj,
+			cpf_cnpj: fornecedor.fornecedor_documento,
 			responsavel: fornecedor.fornecedor_responsavel,
 			status: String(fornecedor.estaAtivo),
 			cep: fornecedor.fornecedor_cep,
@@ -248,7 +248,7 @@ export default function Suppliers() {
 	const handleDeleteClick = (fornecedor: Supplier) => {
 		setDeleteSupplier({
 			fornecedor_id: fornecedor.fornecedor_id,
-			dnome_empresa: fornecedor.fornecedor_nome_ou_empresa,
+			dnome_empresa: fornecedor.fornecedor_nome,
 			reason: "",
 		});
 		setOpenDeleteModal(true);

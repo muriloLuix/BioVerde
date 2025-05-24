@@ -25,7 +25,7 @@ if (!$rawData) {
 $data = json_decode($rawData, true);
 
 // Validação dos campos obrigatórios
-$camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quantidade', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado',];
+$camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quant_inicial', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
@@ -37,6 +37,7 @@ $tipo_id               = (int) $data['tipo'];
 $fornecedor_id         = (int) $data['fornecedor'];
 $classificacao_id      = (int) $data['classificacao'];
 $localArmazenamento_id = (int) $data['localArmazenado'];
+$data['quant_atual']   = $data['quant_inicial'];
 
 // ------ Criar o código do lote ------
 
@@ -76,6 +77,8 @@ $lote_codigo = sprintf('%s-%s-%03d', $prefixo, $dataColheitaFormatada, $numeroLo
 // Atribuir ao array para enviar ao banco
 $data['lote_codigo'] = $lote_codigo;
 
+
+
 // Cadastro do lote
 $sql = "INSERT INTO lote (
     lote_codigo,
@@ -103,8 +106,8 @@ $stmt->bind_param(
     $data['lote_codigo'],
     $data['dt_colheita'],
     $data['dt_validade'],
-    $data['quantidade'],  // lote_quantInicial
-    $data['quantidade'],  // lote_quantAtual
+    $data['quant_inicial'],
+    $data['quant_atual'], 
     $data['obs'],
     $produto_id, 
     $uni_id, 

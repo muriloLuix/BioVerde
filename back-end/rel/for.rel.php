@@ -28,13 +28,13 @@ date_default_timezone_set('America/Sao_Paulo');
 
 try {
     // Busca dados dos fornecedores
-    $sql = " SELECT fornecedor_nome_ou_empresa, ";
+    $sql = " SELECT fornecedor_nome, ";
     $sql .= " CASE ";
     $sql .= " WHEN fornecedor_razao_social = '' OR fornecedor_razao_social IS NULL ";
-    $sql .= " THEN fornecedor_nome_ou_empresa ";
+    $sql .= " THEN fornecedor_nome ";
     $sql .= " ELSE fornecedor_razao_social ";
     $sql .= " END as fornecedor_razao_social, ";
-    $sql .= " fornecedor_email, fornecedor_cpf_ou_cnpj, fornecedor_responsavel, ";
+    $sql .= " fornecedor_email, fornecedor_documento, fornecedor_responsavel, ";
     $sql .= " CASE ";
     $sql .= " WHEN fornecedor_tipo = 'fisica' THEN 'Física' ";
     $sql .= " WHEN fornecedor_tipo = 'juridica' THEN 'Jurídica' ";
@@ -85,10 +85,10 @@ try {
     foreach ($fornecedores as $fornecedor) {
         $html .= '
                     <tr>
-                        <td>' . htmlspecialchars($fornecedor['fornecedor_nome_ou_empresa']) . '</td>
+                        <td>' . htmlspecialchars($fornecedor['fornecedor_nome']) . '</td>
                         <td>' . htmlspecialchars($fornecedor['fornecedor_razao_social']) . '</td>
                         <td>' . htmlspecialchars($fornecedor['fornecedor_email']) . '</td>
-                        <td>' . htmlspecialchars($fornecedor['fornecedor_cpf_ou_cnpj']) . '</td>
+                        <td>' . htmlspecialchars($fornecedor['fornecedor_documento']) . '</td>
                         <td>' . htmlspecialchars($fornecedor['fornecedor_responsavel']) . '</td>
                         <td>' . htmlspecialchars($fornecedor['fornecedor_tipo']) . '</td>
                     </tr>';

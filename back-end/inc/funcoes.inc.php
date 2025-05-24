@@ -398,7 +398,7 @@ function buscarProdutos($conn)
 
 function buscarFornecedores($conn)
 {
-    $result = $conn->query("SELECT fornecedor_id, fornecedor_nome_ou_empresa FROM fornecedores");
+    $result = $conn->query("SELECT fornecedor_id, fornecedor_nome FROM fornecedores");
     if (!$result) {
         throw new Exception("Erro ao buscar fornecedor: " . $conn->error);
     }

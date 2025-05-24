@@ -26,7 +26,7 @@ import {
 
 interface Cliente {
 	cliente_id: number;
-	cliente_nome_ou_empresa: string;
+	cliente_nome: string;
 	pedido_telefone: string;
 }
 
@@ -37,7 +37,7 @@ interface Unidade {
 
 interface Pedido {
 	pedido_id: number;
-	cliente_nome_ou_empresa: string;
+	cliente_nome: string;
 	pedido_telefone: string;
 	pedido_cep: string;
 	pedido_endereco: string;
@@ -346,7 +346,7 @@ export default function Orders() {
 
 		setFormData({
 			pedido_id: pedido.pedido_id,
-			nome_cliente: pedido.cliente_nome_ou_empresa,
+			nome_cliente: pedido.cliente_nome,
 			tel: pedido.pedido_telefone,
 			cep: pedido.pedido_cep,
 			status:
@@ -368,7 +368,7 @@ export default function Orders() {
 		setDeleteOrder({
 			pedido_id: pedido.pedido_id,
 			dnum_pedido: pedido.pedido_id,
-			dnome_cliente: pedido.cliente_nome_ou_empresa,
+			dnome_cliente: pedido.cliente_nome,
 			reason: "",
 		});
 		setOpenDeleteModal(true);
@@ -605,7 +605,7 @@ export default function Orders() {
 
 	const handleSeeOrderClick = (pedido: Pedido) => {
 		setNumOrder(pedido.pedido_id);
-		setClientOrder(pedido.cliente_nome_ou_empresa);
+		setClientOrder(pedido.cliente_nome);
 		setTotalOrder(pedido.pedido_valor_total);
 		setSelectedOrder(pedido.pedido_itens);
 		setOpenOrderModal(true);
@@ -661,8 +661,8 @@ export default function Orders() {
 										fieldClassname="flex flex-col flex-1"
 										onChangeSelect={handleChange}
 										options={clientes?.map((cliente) => ({
-											label: cliente.cliente_nome_ou_empresa,
-											value: cliente.cliente_nome_ou_empresa,
+											label: cliente.cliente_nome,
+											value: cliente.cliente_nome,
 										}))}
 									/>
 
@@ -875,7 +875,7 @@ export default function Orders() {
 													{pedido.pedido_id}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
-													{pedido.cliente_nome_ou_empresa}
+													{pedido.cliente_nome}
 												</td>
 												<td className="border border-black px-4 py-4 whitespace-nowrap">
 													{new Date(
@@ -1151,8 +1151,8 @@ export default function Orders() {
 							fieldClassname="flex flex-col flex-1"
 							onChangeSelect={handleChange}
 							options={clientes?.map((cliente) => ({
-								label: cliente.cliente_nome_ou_empresa,
-								value: cliente.cliente_nome_ou_empresa,
+								label: cliente.cliente_nome,
+								value: cliente.cliente_nome,
 							}))}
 						/>
 

@@ -41,7 +41,7 @@ $emailCpfError = verifyCredentials(
     $data['email'], 
     "cliente_email", 
     $data['cpf_cnpj'], 
-    "cliente_cpf_ou_cnpj"
+    "cliente_documento"
 );
 if ($emailCpfError) {
     echo json_encode($emailCpfError);
@@ -51,7 +51,7 @@ if ($emailCpfError) {
 $estaAtivo = 1;
 
 // Cadastro do cliente
-$stmt = $conn->prepare("INSERT INTO clientes (cliente_nome_ou_empresa, cliente_razao_social, cliente_cpf_ou_cnpj, cliente_tipo, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_complemento, cliente_cidade, cliente_estado, cliente_cep, estaAtivo, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO clientes (cliente_nome, cliente_razao_social, cliente_documento, cliente_tipo, cliente_telefone, cliente_email, cliente_endereco, cliente_numendereco, cliente_complemento, cliente_cidade, cliente_estado, cliente_cep, estaAtivo, cliente_observacoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 $stmt->bind_param("ssssssssssssis", 
     $data['nome_empresa_cliente'], 

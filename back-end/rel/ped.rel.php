@@ -22,7 +22,7 @@ if (!isset($_SESSION["user_id"])) {
 date_default_timezone_set('America/Sao_Paulo');
 
 try {
-    $sql = "SELECT p.*, c.cliente_nome_ou_empresa 
+    $sql = "SELECT p.*, c.cliente_nome 
             FROM pedidos p 
             INNER JOIN clientes c ON c.cliente_id = p.cliente_id";
     $result = $conn->query($sql);
@@ -54,7 +54,7 @@ try {
         $html .= '
         <div class="pedido-header">
             <strong>Pedido ID:</strong> ' . $pedido['pedido_id'] . ' |
-            <strong>Cliente:</strong> ' . htmlspecialchars($pedido['cliente_nome_ou_empresa']) . ' |
+            <strong>Cliente:</strong> ' . htmlspecialchars($pedido['cliente_nome']) . ' |
             <strong>Data:</strong> ' . date('d/m/Y', strtotime($pedido['pedido_dtCadastro'])) . ' |
             <strong>Valor Total:</strong> R$ ' . number_format($pedido['pedido_valor_total'], 2, ',', '.') . '
         </div>
