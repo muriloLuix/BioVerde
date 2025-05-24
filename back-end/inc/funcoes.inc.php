@@ -31,12 +31,49 @@ require '../../vendor/autoload.php';
  * @return array|null Retorna um array com chave 'success' e 'message' caso haja um erro,
  *         ou null caso todos os campos sejam válidos.
  */
-function validarCampos($data, $requiredFields)
-{
+function validarCampos($data, $requiredFields) {
     foreach ($requiredFields as $field) {
-        if (!isset($data[$field]) || empty($data[$field])) {
-            return ["success" => false, "message" => "O campo " . $field . " é obrigatório."];
+
+        // verifica se esta nulo
+        if (isset($data[$field])) {
+
+            // verifica se o valor veio vazio
+            if (trim($data[$field]) === '') {
+                return [
+                    "success" => false,
+                    "message" => "O campo '$field' é obrigatório! Insira um texto válido"
+                ];
+            }
+            
+            $textFields = ["nome_produto", "nome_empresa_fornecedor", "nome_empresa_cliente"];
+
+            // em pessoas fisicas e produtos, verifica se tem algum numero nos nomes
+            if (in_array($field, $textFields) && is_numeric($data[$field])) {
+                if($data["tipo"] === "fisica" || $field === "nome_produto"){
+                    return [
+                        "success" => false,
+                        "message" => "O valor inserido no campo '$field' é inválido! Insira um texto válido"
+                    ];
+                }
+            }
+            
+            // verifica se tem algum caracter especial nos nomes
+            if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
+                return [
+                    "success" => false,
+                    "message" => "O campo '$field' contém caracteres inválidos!"
+                ];
+            }
+
+            // verifica se tem valores negativos
+            if (is_numeric($data[$field]) && floatval($data[$field]) <= 0) {
+                return [
+                    "success" => false,
+                    "message" => "O valor inserido no campo '$field' é inválido! Insira um valor positivo"
+                ];
+            }
         }
+
     }
     return null;
 }
@@ -1258,6 +1295,103 @@ function checkDependencies(mysqli $conn, string $table, string $pkField, int $id
     }
 
     return ['success' => true, 'message' => ''];
+}
+
+
+function verifyDocuments(string $document, string | null $personType): array {
+    // Remove tudo que não é número
+    $cleanDocument = preg_replace('/\D/', '', $document);
+
+    // Verifica se todos os dígitos são iguais (ex: 111.111.111-11)
+    if (preg_match('/^(\d)\1{10}$/', $cleanDocument)) {
+        return [
+            'success' => false,
+            'message' => "CPF inválido!"
+        ];
+    }
+
+    $characters = str_split($cleanDocument);
+
+    if($personType === "fisica" || $personType === null){
+
+        // Primeiro dígito verificador
+        $total = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $total += (int)$characters[$i] * (10 - $i);
+        }
+
+        $rest = $total % 11;
+        $firstDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        // Segundo dígito verificador
+        $total = 0;
+        for ($i = 0; $i < 10; $i++) {
+            $total += (int)$characters[$i] * (11 - $i);
+        }
+
+        $rest = $total % 11;
+        $secondDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        // Comparando com os dois últimos dígitos do CPF
+        $valid = ((int)$characters[9] === $firstDigit) && ((int)$characters[10] === $secondDigit);
+
+        return
+            $valid ? 
+                [
+                    'success' => true,
+                    'message' => "CPF válido!"
+                ] : [
+                    'success' => false,
+                    'message' => "CPF inválido!"
+                ];
+    }
+
+    if($personType === "juridica"){
+
+        $total = 0;
+        $times = 2;
+        for($i = 11; $i >= 0; $i--){
+
+            if($times > 9){
+                $times = 2;
+            }
+
+            $total += (int)$characters[$i] * $times;
+
+            $times++;
+        }
+
+        $rest = $total % 11;
+        $firstDigit = ($rest < 2) ? 0 : 11 - $rest;
+        
+        $total = 0;
+        $times = 2;
+        for($i = 12; $i >= 0; $i--){
+
+            if($times > 9){
+                $times = 2;
+            }
+
+            $total += (int)$characters[$i] * $times;
+
+            $times++;
+        }
+
+        $rest = $total % 11;
+        $secondDigit = ($rest < 2) ? 0 : 11 - $rest;
+
+        $isValid = ((int)$characters[12] === $firstDigit) && ((int)$characters[13] === $secondDigit);
+
+        return 
+            $isValid ? 
+                [
+                    'success' => true, 
+                    'message' => "CNPJ válido!"
+                ] : [
+                    'success' => false, 
+                    'message' => "CNPJ inválido!"
+                ];
+    }
 }
 
 

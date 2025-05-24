@@ -16,7 +16,13 @@ import {
 } from "lucide-react";
 
 import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
-import { AccessLevel, JobPosition, User, SelectEvent, PositionType } from "../../utils/types";
+import {
+	AccessLevel,
+	JobPosition,
+	User,
+	SelectEvent,
+	PositionType,
+} from "../../utils/types";
 import {
 	ConfirmationModal,
 	SmartField,
@@ -65,7 +71,7 @@ export default function UsersPage() {
 		fname: "",
 		fcargo: "",
 		fcpf: "",
-		fnivel: "", 	
+		fnivel: "",
 		ftel: "",
 		fstatus: "",
 		fdataCadastro: "",
@@ -84,7 +90,7 @@ export default function UsersPage() {
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
 	useEffect(() => {
-		checkAuth({ navigate, setMessage, setOpenNoticeModal});
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
 	}, [navigate]);
 
 	//Carrega a lista de usuario e as opções nos selects ao renderizar a página
@@ -111,7 +117,7 @@ export default function UsersPage() {
 						}
 					),
 				]);
-				
+
 				await fetchOptions();
 
 				if (userLevelResponse.data.success) {
@@ -173,13 +179,11 @@ export default function UsersPage() {
 				return true;
 			} else {
 				const errorMessage =
-					usuariosResponse.data.message ||
-					"Erro ao carregar dados";
+					usuariosResponse.data.message || "Erro ao carregar dados";
 				setMessage(errorMessage);
 				setOpenNoticeModal(true);
 				return false;
 			}
-
 		} catch (error) {
 			let errorMessage = "Erro ao conectar com o servidor";
 			if (axios.isAxiosError(error)) {
@@ -522,7 +526,7 @@ export default function UsersPage() {
 
 	const handleDeletePosition = (cargo: PositionType) => {
 		setDeletedId(cargo.car_id);
-		setOpenPostionConfirmModal(true)
+		setOpenPostionConfirmModal(true);
 	};
 
 	const createPosition = async (cargoNome: string) => {
@@ -565,7 +569,7 @@ export default function UsersPage() {
 		}
 	};
 
-	console.log(deletedId)
+	console.log(deletedId);
 
 	const updatePosition = async (id: number, editedValue: string) => {
 		setLoading((prev) => new Set([...prev, "options"]));
@@ -605,13 +609,13 @@ export default function UsersPage() {
 			}
 		} finally {
 			setOpenNoticeModal(true);
-			setEditingId(null); 
+			setEditingId(null);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
 				return newLoading;
 			});
-		};
+		}
 	};
 
 	const deletePosition = async (e: React.FormEvent) => {
@@ -621,11 +625,10 @@ export default function UsersPage() {
 		setSuccessMsg(false);
 
 		try {
-
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/usuarios/excluir_cargo.php",
 				{
-					car_id: deletedId
+					car_id: deletedId,
 				},
 				{
 					headers: { "Content-Type": "application/json" },
@@ -659,7 +662,7 @@ export default function UsersPage() {
 				return newLoading;
 			});
 		}
-	}
+	};
 
 	/* ----- Outras Funções ----- */
 
@@ -793,12 +796,10 @@ export default function UsersPage() {
 										placeholder="Selecione o Cargo"
 										inputWidth="w-[280px]"
 										onChangeSelect={handleChange}
-										options={
-											options?.cargos.map((cargo) => ({
-												label: cargo.car_nome,
-												value: cargo.car_nome,
-											}))
-										}
+										options={options?.cargos.map((cargo) => ({
+											label: cargo.car_nome,
+											value: cargo.car_nome,
+										}))}
 									/>
 								</div>
 
@@ -828,12 +829,10 @@ export default function UsersPage() {
 										placeholder="Selecione"
 										inputWidth="w-[210px]"
 										onChangeSelect={handleChange}
-										options={
-											options?.niveis.map((nivel) => ({
-												label: nivel.nivel_nome,
-												value: nivel.nivel_nome,
-											}))
-										}
+										options={options?.niveis.map((nivel) => ({
+											label: nivel.nivel_nome,
+											value: nivel.nivel_nome,
+										}))}
 									/>
 								</div>
 
@@ -1112,7 +1111,9 @@ export default function UsersPage() {
 									fieldName="cargo"
 									fieldText="Cargo"
 									isSelect
-									isCreatableSelect={userLevel === "Administrador" ? true : false}
+									isCreatableSelect={
+										userLevel === "Administrador" ? true : false
+									}
 									error={errors.position ? "*" : undefined}
 									isLoading={loading.has("options")}
 									value={formData.cargo}
@@ -1124,14 +1125,11 @@ export default function UsersPage() {
 									openManagementModal={() => setOpenPositionModal(true)}
 									onCreateNewOption={createPosition}
 									onChangeSelect={handleChange}
-									options={
-										options?.cargos.map((cargo) => ({
-											label: cargo.car_nome,
-											value: cargo.car_nome,
-										}))
-									}
+									options={options?.cargos.map((cargo) => ({
+										label: cargo.car_nome,
+										value: cargo.car_nome,
+									}))}
 								/>
-
 							</div>
 
 							{/* Linha Nivel de Acesso e Senha*/}
@@ -1146,14 +1144,11 @@ export default function UsersPage() {
 									placeholder="Selecione o nível de acesso"
 									inputWidth="w-[275px]"
 									onChangeSelect={handleChange}
-									options={
-										options?.niveis.map((nivel) => ({
-											label: nivel.nivel_nome,
-											value: nivel.nivel_nome,
-										}))
-									}
+									options={options?.niveis.map((nivel) => ({
+										label: nivel.nivel_nome,
+										value: nivel.nivel_nome,
+									}))}
 								/>
-
 
 								<SmartField
 									isPassword
@@ -1192,7 +1187,7 @@ export default function UsersPage() {
 						{/* Fim aba de cadastro de usuários*/}
 					</Tabs.Content>
 				</Tabs.Root>
-				
+
 				{/* ----- Modais ----- */}
 
 				{/* Modal de Avisos */}
@@ -1220,10 +1215,7 @@ export default function UsersPage() {
 							{/* Tabela Cabeçalho */}
 							<thead>
 								<tr className="bg-verdePigmento text-white shadow-thead">
-									{[
-										"Cargo",
-										"Ações",
-									].map((header) => (
+									{["Cargo", "Ações"].map((header) => (
 										<th
 											key={header}
 											className="border border-black p-3 whitespace-nowrap"
@@ -1261,7 +1253,8 @@ export default function UsersPage() {
 														value={editedValue}
 														onChange={(e) => setEditedValue(e.target.value)}
 														onKeyDown={(e) => {
-															if (e.key === "Enter") updatePosition(cargo.car_id, editedValue);
+															if (e.key === "Enter")
+																updatePosition(cargo.car_id, editedValue);
 														}}
 														autoFocus
 													/>
@@ -1272,39 +1265,41 @@ export default function UsersPage() {
 											<td className="border border-black p-3 text-center whitespace-nowrap">
 												{editingId === cargo.car_id ? (
 													<>
-													<button
-														className="ml-2 cursor-pointer"
-														onClick={() => updatePosition(cargo.car_id, editedValue)}
-														title="Salvar"
-													>
-														✔
-													</button>
-													<button
-														className="ml-2 cursor-pointer"
-														onClick={() => setEditingId(null)}
-														title="Cancelar"
-													>
-														❌ 
-													</button>
+														<button
+															className="ml-2 cursor-pointer"
+															onClick={() =>
+																updatePosition(cargo.car_id, editedValue)
+															}
+															title="Salvar"
+														>
+															✔
+														</button>
+														<button
+															className="ml-2 cursor-pointer"
+															onClick={() => setEditingId(null)}
+															title="Cancelar"
+														>
+															❌
+														</button>
 													</>
 												) : (
 													<>
-													<button
-														className="text-black cursor-pointer"
-														onClick={() => handleEditPosition(cargo)}
-														title="Editar cargo"
-													>
-														<PencilLine />
-													</button>
-													{userLevel === "Administrador" && (
 														<button
-															className="text-red-500 cursor-pointer ml-3"
-															onClick={() => handleDeletePosition(cargo)}
-															title="Excluir cargo"
+															className="text-black cursor-pointer"
+															onClick={() => handleEditPosition(cargo)}
+															title="Editar cargo"
 														>
-														<Trash />
+															<PencilLine />
 														</button>
-													)}
+														{userLevel === "Administrador" && (
+															<button
+																className="text-red-500 cursor-pointer ml-3"
+																onClick={() => handleDeletePosition(cargo)}
+																title="Excluir cargo"
+															>
+																<Trash />
+															</button>
+														)}
 													</>
 												)}
 											</td>
@@ -1422,7 +1417,6 @@ export default function UsersPage() {
 
 					{/* Linha Cargo e Nivel de Acesso */}
 					<div className="flex gap-x-15 mb-10 items-center justify-between">
-
 						<SmartField
 							fieldName="cargo"
 							fieldText="Cargo"
@@ -1434,12 +1428,10 @@ export default function UsersPage() {
 							placeholder="Selecione o Cargo"
 							inputWidth="w-[300px]"
 							onChangeSelect={handleChange}
-							options={
-								options?.cargos.map((cargo) => ({
-									label: cargo.car_nome,
-									value: cargo.car_nome,
-								}))
-							}
+							options={options?.cargos.map((cargo) => ({
+								label: cargo.car_nome,
+								value: cargo.car_nome,
+							}))}
 						/>
 
 						<SmartField
@@ -1453,12 +1445,10 @@ export default function UsersPage() {
 							placeholder="Selecione o Nível"
 							inputWidth="w-[300px]"
 							onChangeSelect={handleChange}
-							options={
-								options?.niveis.map((nivel) => ({
-									label: nivel.nivel_nome,
-									value: nivel.nivel_nome,
-								}))
-							}
+							options={options?.niveis.map((nivel) => ({
+								label: nivel.nivel_nome,
+								value: nivel.nivel_nome,
+							}))}
 						/>
 					</div>
 				</Modal>

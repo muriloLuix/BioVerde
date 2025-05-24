@@ -38,7 +38,7 @@ export interface Supplier {
 	fornecedor_tipo: string;
 	fornecedor_cpf_ou_cnpj: string;
 	fornecedor_endereco: string;
-	fornecedor_num_endereco: string;
+	fornecedor_num_endereco: number;
 	fornecedor_cidade: string;
 	fornecedor_estado: string;
 	fornecedor_cep: string;
@@ -63,18 +63,18 @@ export interface User {
 export interface Batch {
 	lote_id: number;
 	lote_codigo: string;
-    lote_dtFabricacao: Date;
-    lote_dtExpiracao: Date;
-    lote_quantInicial: string;
-    lote_quantAtual: string;
+	lote_dtFabricacao: Date;
+	lote_dtExpiracao: Date;
+	lote_quantInicial: string;
+	lote_quantAtual: string;
 	fornecedor_nome_ou_empresa: string;
 	tproduto_nome: string;
 	staproduto_nome: string;
-    lote_obs: string;
-    produto_nome: string;
-    uni_sigla: string;
+	lote_obs: string;
+	produto_nome: string;
+	uni_sigla: string;
 	classificacao_nome: string;
-    localArmazenamento_nome: string;
+	localArmazenamento_nome: string;
 }
 
 export interface JobPosition {
@@ -129,12 +129,21 @@ export interface Option {
 }
 
 export interface SelectEvent {
-  target: {
-    name: string;
-    value: string;
-  };
-};
+	target: {
+		name: string;
+		value: string;
+	};
+}
 
+export interface UF {
+	id: number;
+	sigla: string;
+	nome: string;
+}
+export interface City {
+	id: number;
+	nome: string;
+}
 export interface Logs {
 	log_id: number;
 	log_user_nome: string;

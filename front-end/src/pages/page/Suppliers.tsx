@@ -10,12 +10,13 @@ import {
 	Trash,
 	Loader2,
 	FilterX,
-	Printer, X,
+	Printer,
+	X,
 } from "lucide-react";
 // import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier, SelectEvent } from "../../utils/types";
+import { Supplier, SelectEvent, UF, City } from "../../utils/types";
 import {
 	SmartField,
 	ConfirmationModal,
@@ -38,8 +39,11 @@ export default function Suppliers() {
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
+	const [ufs, setUfs] = useState<UF[]>();
+	const [cities, setCities] = useState<City[]>();
 	const [errors, setErrors] = useState({
 		states: false,
+		isCepValid: false,
 	});
 	const [formData, setFormData] = useState({
 		fornecedor_id: 0,
@@ -54,7 +58,7 @@ export default function Suppliers() {
 		endereco: "",
 		estado: "",
 		cidade: "",
-		num_endereco: "",
+		num_endereco: 0,
 		complemento: "",
 		status: "1",
 	});
@@ -73,10 +77,11 @@ export default function Suppliers() {
 		dnome_empresa: "",
 		reason: "",
 	});
-	
+
 	// useVerificarNivelAcesso();
 
 	const navigate = useNavigate();
+
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
@@ -107,8 +112,6 @@ export default function Suppliers() {
 		checkAuth();
 	}, [navigate]);
 
-	console.log(formData);
-
 	//OnChange dos campos
 	const handleChange = (
 		event:
@@ -120,7 +123,6 @@ export default function Suppliers() {
 	) => {
 		const { name, value } = event.target;
 
-		console.log(value);
 		//Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
 		switchCpfCnpjMask(name, value, setCpfCnpjMask);
 
@@ -149,7 +151,11 @@ export default function Suppliers() {
 		}
 
 		if (name in formData) {
-			setFormData({ ...formData, [name]: value });
+			if (name === "num_endereco") {
+				setFormData({ ...formData, [name]: value === "" ? 0 : Number(value) });
+			} else {
+				setFormData({ ...formData, [name]: value });
+			}
 		}
 		if (name in filters) {
 			setFilters({ ...filters, [name]: value });
@@ -157,6 +163,8 @@ export default function Suppliers() {
 		if (name in deleteSupplier) {
 			setDeleteSupplier({ ...deleteSupplier, [name]: value });
 		}
+
+		console.log(formData);
 
 		setErrors(
 			(prevErrors) =>
@@ -205,6 +213,16 @@ export default function Suppliers() {
 
 	//função para puxar os dados do fornecedor que será editado
 	const handleEditClick = (fornecedor: Supplier) => {
+		cepApi(
+			fornecedor.fornecedor_cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+
 		setFormData({
 			fornecedor_id: fornecedor.fornecedor_id,
 			nome_empresa_fornecedor: fornecedor.fornecedor_nome_ou_empresa,
@@ -226,8 +244,6 @@ export default function Suppliers() {
 		setOpenEditModal(true);
 	};
 
-	console.log(formData);
-
 	//função para puxar o nome do fornecedor que será excluido
 	const handleDeleteClick = (fornecedor: Supplier) => {
 		setDeleteSupplier({
@@ -241,9 +257,16 @@ export default function Suppliers() {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				setLoading((prev) => new Set([...prev, "suppliers", "options"]));
+				setLoading(
+					(prev) => new Set([...prev, "suppliers", "options", "ufs", "cities"])
+				);
 
-				const [fornecedoresResponse, userLevelResponse] = await Promise.all([
+				const [
+					fornecedoresResponse,
+					userLevelResponse,
+					ufsResponse,
+					citiesResponse,
+				] = await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
 						{
@@ -259,6 +282,12 @@ export default function Suppliers() {
 							withCredentials: true,
 							headers: { "Content-Type": "application/json" },
 						}
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
 					),
 				]);
 
@@ -281,6 +310,20 @@ export default function Suppliers() {
 						userLevelResponse.data.message ||
 							"Erro ao carregar nível do usuário"
 					);
+				}
+
+				if (ufsResponse.status === 200) {
+					setUfs(ufsResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
+
+				if (citiesResponse.status === 200) {
+					setCities(citiesResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar municípios");
 				}
 			} catch (error) {
 				setOpenNoticeModal(true);
@@ -349,10 +392,12 @@ export default function Suppliers() {
 		e.preventDefault();
 
 		// Validações
-		const errors = {
+		const err = {
 			states: !formData.estado,
+			isCepValid: errors.isCepValid,
 		};
-		setErrors(errors);
+
+		setErrors(err);
 
 		// Se algum erro for true, interrompe a execução
 		if (Object.values(errors).some((error) => error)) {
@@ -456,13 +501,17 @@ export default function Suppliers() {
 	// submit para atualizar o fornecedor após a edição dele
 	const handleUpdateSupplier = async (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("Dados sendo enviados:", formData); // <-- Adicione esta linha
+
+		console.log("Dados sendo enviados:", formData);
 
 		setLoading((prev) => new Set([...prev, "updateSupplier"]));
 		setSuccessMsg(false);
 
 		try {
-			const response = await axios.post(
+			if (Object.values(errors).some((error) => error)) {
+				return;
+			}
+			const response = await axios.patch(
 				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
 				formData,
 				{
@@ -553,21 +602,40 @@ export default function Suppliers() {
 			setFormData,
 			setOpenNoticeModal,
 			setMessage,
-			setSuccessMsg
+			setSuccessMsg,
+			setCities,
+			setErrors
 		);
 	};
 
 	//Limpar FormData
 	const clearFormData = () => {
-		setFormData((prev) =>
-			Object.fromEntries(
-				Object.entries(prev).map(([key, value]) => {
-					if (key === "tipo") return [key, "juridica"];
-					if (key === "status") return [key, "1"];
-					return [key, typeof value === "number" ? 0 : ""];
-				})
-			) as typeof prev
+		setFormData(
+			(prev) =>
+				Object.fromEntries(
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "tipo") return [key, "juridica"];
+						if (key === "status") return [key, "1"];
+						return [key, typeof value === "number" ? 0 : ""];
+					})
+				) as typeof prev
 		);
+	};
+
+	const handleCities = async (id: number | undefined) => {
+		if (formData.estado) {
+			try {
+				const response = await axios.get(
+					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
+				);
+
+				if (response.status === 200) {
+					setCities(response.data);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
 	};
 
 	return (
@@ -705,12 +773,19 @@ export default function Suppliers() {
 									<SmartField
 										fieldName="fcidade"
 										fieldText="Cidade"
-										type="text"
-										placeholder="Cidade"
-										autoComplete="address-level2"
+										isSelect
+										isLoading={loading.has("options")}
 										value={filters.fcidade}
-										onChange={handleChange}
+										placeholder="Selecione"
+										autoComplete="address-level2"
+										error={errors.states ? "*" : undefined}
 										inputWidth="w-[350px]"
+										onChangeSelect={handleChange}
+										options={cities?.map((city: City) => ({
+											label: city.nome,
+											value: city.nome,
+										}))}
+										isDisabled={!!formData.cep || !cities}
 									/>
 
 									<SmartField
@@ -721,45 +796,28 @@ export default function Suppliers() {
 										value={filters.festado}
 										placeholder="Selecione"
 										autoComplete="address-level1"
+										error={errors.states ? "*" : undefined}
 										inputWidth="w-[250px]"
 										onChangeSelect={handleChange}
-										options={[
-											{ value: "AC", label: "Acre" },
-											{ value: "AL", label: "Alagoas" },
-											{ value: "AP", label: "Amapá" },
-											{ value: "AM", label: "Amazonas" },
-											{ value: "BA", label: "Bahia" },
-											{ value: "CE", label: "Ceará" },
-											{ value: "DF", label: "Distrito Federal" },
-											{ value: "ES", label: "Espírito Santo" },
-											{ value: "GO", label: "Goiás" },
-											{ value: "MA", label: "Maranhão" },
-											{ value: "MT", label: "Mato Grosso" },
-											{ value: "MS", label: "Mato Grosso do Sul" },
-											{ value: "MG", label: "Minas Gerais" },
-											{ value: "PA", label: "Pará" },
-											{ value: "PB", label: "Paraíba" },
-											{ value: "PR", label: "Paraná" },
-											{ value: "PE", label: "Pernambuco" },
-											{ value: "PI", label: "Piauí" },
-											{ value: "RJ", label: "Rio de Janeiro" },
-											{ value: "RN", label: "Rio Grande do Norte" },
-											{ value: "RS", label: "Rio Grande do Sul" },
-											{ value: "RO", label: "Rondônia" },
-											{ value: "RR", label: "Roraima" },
-											{ value: "SC", label: "Santa Catarina" },
-											{ value: "SP", label: "São Paulo" },
-											{ value: "SE", label: "Sergipe" },
-											{ value: "TO", label: "Tocantins" },
-										]}
-									/>									
+										options={ufs?.map((uf: UF) => ({
+											label: uf.nome,
+											value: uf.sigla,
+										}))}
+										onBlur={() => {
+											const uf = ufs?.find(
+												(uf: UF) => formData.estado === uf.sigla
+											);
+
+											handleCities(uf?.id);
+										}}
+										isDisabled={!!formData.cep || !ufs}
+									/>
 
 									<Form.Submit asChild>
 										<div className="flex gap-4 mt-8">
 											<button
 												type="submit"
 												className="bg-verdeMedio p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
-												disabled={loading.size > 0}
 											>
 												{loading.has("filterSubmit") ? (
 													<Loader2 className="animate-spin h-6 w-6" />
@@ -773,7 +831,6 @@ export default function Suppliers() {
 											<button
 												type="button"
 												className="bg-verdeLimparFiltros p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-hoverLimparFiltros "
-												disabled={loading.size > 0}
 												onClick={() =>
 													setFilters(
 														(prev) =>
@@ -892,7 +949,6 @@ export default function Suppliers() {
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
 									onClick={gerarRelatorio}
-									disabled={loading.size > 0}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -1090,19 +1146,18 @@ export default function Suppliers() {
 							</div>
 
 							<div className="flex mb-10 gap-x-7">
-								
 								<SmartField
 									fieldName="num_endereco"
 									fieldText="Número"
 									required
-									type="text"
+									type="number"
 									placeholder="Número"
 									value={formData.num_endereco}
 									onChange={handleChange}
 									autoComplete="address-line1"
 									inputWidth="w-[90px]"
 								/>
-								
+
 								<SmartField
 									fieldName="complemento"
 									fieldText="Complemento"
@@ -1124,47 +1179,36 @@ export default function Suppliers() {
 									error={errors.states ? "*" : undefined}
 									fieldClassname="flex flex-col flex-1"
 									onChangeSelect={handleChange}
-									options={[
-										{ value: "AC", label: "Acre" },
-										{ value: "AL", label: "Alagoas" },
-										{ value: "AP", label: "Amapá" },
-										{ value: "AM", label: "Amazonas" },
-										{ value: "BA", label: "Bahia" },
-										{ value: "CE", label: "Ceará" },
-										{ value: "DF", label: "Distrito Federal" },
-										{ value: "ES", label: "Espírito Santo" },
-										{ value: "GO", label: "Goiás" },
-										{ value: "MA", label: "Maranhão" },
-										{ value: "MT", label: "Mato Grosso" },
-										{ value: "MS", label: "Mato Grosso do Sul" },
-										{ value: "MG", label: "Minas Gerais" },
-										{ value: "PA", label: "Pará" },
-										{ value: "PB", label: "Paraíba" },
-										{ value: "PR", label: "Paraná" },
-										{ value: "PE", label: "Pernambuco" },
-										{ value: "PI", label: "Piauí" },
-										{ value: "RJ", label: "Rio de Janeiro" },
-										{ value: "RN", label: "Rio Grande do Norte" },
-										{ value: "RS", label: "Rio Grande do Sul" },
-										{ value: "RO", label: "Rondônia" },
-										{ value: "RR", label: "Roraima" },
-										{ value: "SC", label: "Santa Catarina" },
-										{ value: "SP", label: "São Paulo" },
-										{ value: "SE", label: "Sergipe" },
-										{ value: "TO", label: "Tocantins" },
-									]}
-								/>	
+									options={ufs?.map((uf: UF) => ({
+										label: uf.nome,
+										value: uf.sigla,
+									}))}
+									onBlur={() => {
+										const uf = ufs?.find(
+											(uf: UF) => formData.estado === uf.sigla
+										);
+
+										handleCities(uf?.id);
+									}}
+									isDisabled={!!formData.cep || !ufs}
+								/>
 
 								<SmartField
 									fieldName="cidade"
 									fieldText="Cidade"
-									required
-									type="text"
-									placeholder="Cidade"
+									isSelect
+									isLoading={loading.has("options")}
 									value={formData.cidade}
-									onChange={handleChange}
+									placeholder="Selecione"
 									autoComplete="address-level2"
-									fieldClassname="flex flex-col flex-1"
+									error={errors.states ? "*" : undefined}
+									inputWidth="w-[200px]"
+									onChangeSelect={handleChange}
+									options={cities?.map((city: City) => ({
+										label: city.nome,
+										value: city.nome,
+									}))}
+									isDisabled={!!formData.cep || !cities}
 								/>
 							</div>
 
@@ -1173,7 +1217,6 @@ export default function Suppliers() {
 									<button
 										type="submit"
 										className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
-										disabled={loading.size > 0}
 									>
 										{loading.has("submit") ? (
 											<Loader2 className="animate-spin h-6 w-6" />
@@ -1378,7 +1421,6 @@ export default function Suppliers() {
 					</div>
 
 					<div className="flex mb-7 gap-x-10 ">
-
 						<SmartField
 							fieldName="status"
 							fieldText="Status"
@@ -1440,17 +1482,15 @@ export default function Suppliers() {
 							autoComplete="street-address"
 							fieldClassname="flex flex-col flex-1"
 						/>
-
 					</div>
 
 					{/* Linha Nivel de Acesso e Senha*/}
 					<div className="flex mb-9 gap-x-10 ">
-						
 						<SmartField
 							fieldName="num_endereco"
 							fieldText="Número"
 							required
-							type="text"
+							type="number"
 							placeholder="Número"
 							value={formData.num_endereco}
 							onChange={handleChange}
@@ -1472,53 +1512,41 @@ export default function Suppliers() {
 							fieldName="estado"
 							fieldText="Estado"
 							isSelect
-							isClearable={false}
 							isLoading={loading.has("options")}
 							value={formData.estado}
+							placeholder="Selecione"
 							autoComplete="address-level1"
-							fieldClassname="flex flex-col flex-1"
+							error={errors.states ? "*" : undefined}
+							inputWidth="w-[220px]"
 							onChangeSelect={handleChange}
-							options={[
-								{ value: "AC", label: "Acre" },
-								{ value: "AL", label: "Alagoas" },
-								{ value: "AP", label: "Amapá" },
-								{ value: "AM", label: "Amazonas" },
-								{ value: "BA", label: "Bahia" },
-								{ value: "CE", label: "Ceará" },
-								{ value: "DF", label: "Distrito Federal" },
-								{ value: "ES", label: "Espírito Santo" },
-								{ value: "GO", label: "Goiás" },
-								{ value: "MA", label: "Maranhão" },
-								{ value: "MT", label: "Mato Grosso" },
-								{ value: "MS", label: "Mato Grosso do Sul" },
-								{ value: "MG", label: "Minas Gerais" },
-								{ value: "PA", label: "Pará" },
-								{ value: "PB", label: "Paraíba" },
-								{ value: "PR", label: "Paraná" },
-								{ value: "PE", label: "Pernambuco" },
-								{ value: "PI", label: "Piauí" },
-								{ value: "RJ", label: "Rio de Janeiro" },
-								{ value: "RN", label: "Rio Grande do Norte" },
-								{ value: "RS", label: "Rio Grande do Sul" },
-								{ value: "RO", label: "Rondônia" },
-								{ value: "RR", label: "Roraima" },
-								{ value: "SC", label: "Santa Catarina" },
-								{ value: "SP", label: "São Paulo" },
-								{ value: "SE", label: "Sergipe" },
-								{ value: "TO", label: "Tocantins" },
-							]}
-						/>	
+							options={ufs?.map((uf: UF) => ({
+								label: uf.nome,
+								value: uf.sigla,
+							}))}
+							onBlur={() => {
+								const uf = ufs?.find((uf: UF) => formData.estado === uf.sigla);
+
+								handleCities(uf?.id);
+							}}
+							isDisabled={!!formData.cep || !ufs}
+						/>
 
 						<SmartField
 							fieldName="cidade"
 							fieldText="Cidade"
-							required
-							type="text"
-							placeholder="Cidade"
+							isSelect
+							isLoading={loading.has("options")}
 							value={formData.cidade}
-							onChange={handleChange}
+							placeholder="Selecione"
 							autoComplete="address-level2"
+							error={errors.states ? "*" : undefined}
 							fieldClassname="flex flex-col flex-1"
+							onChangeSelect={handleChange}
+							options={cities?.map((city: City) => ({
+								label: city.nome,
+								value: city.nome,
+							}))}
+							isDisabled={!!formData.cep || !cities}
 						/>
 					</div>
 				</Modal>

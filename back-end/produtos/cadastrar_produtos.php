@@ -24,9 +24,11 @@ if (!$rawData) {
 
 $data = json_decode($rawData, true);
 
+
 // Validação dos campos obrigatórios
-$camposObrigatorios = ['nome_produto', 'tipo', 'status', 'preco', 'fornecedor', 'obs'];
+$camposObrigatorios = ['nome_produto', 'tipo', 'status', 'preco', 'fornecedor', 'lote'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
+
 if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
     exit();
@@ -39,6 +41,7 @@ $verifyName = verifyCredentials(
     $data['nome_produto'],
     'produto_nome'
 );
+
 if ($verifyName !== null) {
     echo json_encode($verifyName);
     exit();
