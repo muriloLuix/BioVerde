@@ -1,13 +1,18 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+/************************************************/
 
 try {
+    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco de dados");
     }
+    /*********************************************************************/
 
+    /**************** PREPARA A CONSULTA ************************/
     $cols = [
         "c.cliente_id",
         "c.cliente_nome_ou_empresa",
@@ -29,13 +34,14 @@ try {
         "c.estaAtivo"
     ];
 
-    // Sem joins adicionais, caso não precise:
     $joins = [];
 
     $clientes = search($conn, "clientes c", implode(",", $cols), $joins);
 
+    /**************************************************************/
+
     echo json_encode([
-        "success"  => true,
+        "success" => true,
         "clientes" => $clientes
     ]);
 

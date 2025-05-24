@@ -1,26 +1,32 @@
-<?php 
-ini_set("display_errors", 1);
+<?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
+require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
+require_once "../clientes/Clientes.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+/************************************************/
 
 try {
-    // Verifica autenticação
-
-    if(!isset($_SESSION["user_id"])) {
+    /**************** VERIFICA A AUTENTICAÇÃO ************************/
+    if (!isset($_SESSION["user_id"])) {
         checkLoggedUser($conn, $_SESSION['user_id']);;
         exit;
     }
 
-    // Verifica conexão com o banco
+    $user_id = $_SESSION['user_id'];
+    $user = Usuario::find($user_id);
+    /*****************************************************************/
+
+    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);
     }
+    /*********************************************************************/
 
-    // Processa os dados de entrada
+    /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");
@@ -30,38 +36,41 @@ try {
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception("JSON inválido: " . json_last_error_msg());
     }
+    /************************************************************************/
 
-    // Verifica se o cliente existe
-    if(!verifyExist($conn, $data['cliente_id'], 'cliente_id', 'clientes')) {
+    /**************** VALIDAÇÃO DOS DADOS ************************/
+    if (!verifyExist($conn, $data['cliente_id'], 'cliente_id', 'clientes')) {
         throw new Exception('Cliente não encontrado');
     }
 
-    // Validação dos campos obrigatórios
     $camposObrigatorios = ['cliente_id', 'nome_empresa_cliente', 'tipo', 'email', 'tel', 'cpf_cnpj', 'cep', 'endereco', 'num_endereco', 'estado', 'cidade'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
-    if ($validacaoDosCampos !== null) { 
+    if ($validacaoDosCampos !== null) {
         echo json_encode($validacaoDosCampos);
-        exit();    
+        exit();
     }
 
-    // Validações específicas
     if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
         throw new Exception("Email inválido");
     }
+    /**********************************************************/
 
-    // Conflitos de email/CPF/CNPJ
+    /**************** CONFLITOS DE EMAIL/CPF/CNPJ ************************/
     $colunas = ["cliente_email", "cliente_cpf_ou_cnpj"];
     $valores = [$data["email"], $data["cpf_cnpj"]];
-    
+
     $conflito = verificarConflitosAtualizacao($conn, "clientes", $colunas, $valores, "cliente_id", $data["cliente_id"]);
     if ($conflito) {
         throw new Exception($conflito['message']);
     }
+    /********************************************************************/
 
     // Converte o status (string "1" ou "0") para inteiro
     $statusValue = (int)$data['status'];  // 1 = ativo, 0 = inativo
 
-    // Atualiza cliente
+    $clienteAntigo = Clientes::find($data['cliente_id']);
+
+    /**************** ATUALIZA O CLIENTE ************************/
     $camposAtualizados = [
         'cliente_nome_ou_empresa' => $data['nome_empresa_cliente'],
         'cliente_razao_social' => $data['razao_social'],
@@ -103,9 +112,13 @@ try {
     c.estaAtivo
     ";
 
-$joins = [];
+    $joins = [];
 
-$cliente = searchPersonPerID($conn, $data['cliente_id'], 'clientes c', $fields, $joins, 'c.cliente_id');
+    $cliente = searchPersonPerID($conn, $data['cliente_id'], 'clientes c', $fields, $joins, 'c.cliente_id');
+
+    $clienteId = Clientes::find($data['cliente_id']);
+
+    /***********************************************************/
 
     echo json_encode([
         "success" => true,
@@ -113,7 +126,33 @@ $cliente = searchPersonPerID($conn, $data['cliente_id'], 'clientes c', $fields, 
         "usuario" => $cliente
     ]);
 
+    /**************** COMPARA OS CAMPOS ************************/
+    $alteracoes = [];
+    foreach ($camposAtualizados as $campo => $novoValor) {
+        $campoAntigo = $clienteAntigo->$campo ?? null;
+        // Normalizar valores para comparação
+        if (is_null($campoAntigo)) $campoAntigo = '';
+        if (is_null($novoValor)) $novoValor = '';
+
+        if ($campoAntigo != $novoValor) {
+            $alteracoes[] = "Campo: $campo | De: '$campoAntigo' Para: '$novoValor'";
+        }
+    }
+    /***********************************************************/
+
+    /**************** MONTA A MENSAGEM DE LOG ************************/
+    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o cliente: ({$clienteId->cliente_nome_ou_empresa}).";
+    if (!empty($alteracoes)) {
+        $logMensagem .= "Alterações:\n" . implode("\n", $alteracoes);
+    } else {
+        $logMensagem .= "Nenhuma alteração detectada.";
+    }
+    /***********************************************************/
+
+    salvarLog($logMensagem, Acoes::EDITAR_CLIENTE, "sucesso");
+
 } catch (Exception $e) {
     error_log("Erro em editar.cliente.php: " . $e->getMessage());
     echo json_encode(["success" => false, "message" => $e->getMessage()]);
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou editar o cliente: ({$clienteId->cliente_nome_ou_empresa} - {$clienteId->cliente_id}). Motivo do erro: {$e->getMessage()}", Acoes::EDITAR_CLIENTE, "erro");
 }

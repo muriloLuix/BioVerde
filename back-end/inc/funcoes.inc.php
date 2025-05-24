@@ -1256,13 +1256,15 @@ function getDependencyMap(): array {
             'produtos'     => 'id_fornecedor',
         ],
         'usuarios' => [
-            'pedidos'      => 'user_id',
-            'logs'         => 'usuario_id',
+            'movimentacoes_estoque' => 'user_id'
         ],
         'produtos' => [
             'lote'=> 'produto_id',
             'pedido_item' => 'produto_id',
         ],
+        'clientes' => [
+            'pedidos'      => 'cliente_id',
+        ]
     ];
 }
 
