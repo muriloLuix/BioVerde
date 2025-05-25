@@ -164,3 +164,39 @@ export interface Logs {
 	log_acao: string;
 	log_conteudo: string;
 }
+
+export interface BatchOptions {
+	produtos: Product[];
+	unidade_medida: Unit[];
+	tipos: ProductType[];
+	fornecedores: Supplier[];
+	classificacoes: Classification[];
+	locaisArmazenamento: Storage[];
+}
+
+// ------ FormsData ------
+
+export interface FormDataBatch {
+  lote_id: number;
+  lote_codigo: string;
+  produto: string;
+  fornecedor: string;
+  dt_colheita: string;
+  quant_inicial: number;
+  quant_atual: number;
+  unidade: string;
+  tipo: string;
+  dt_validade: string;
+  classificacao: string;
+  localArmazenado: string;
+  obs: string;
+}
+
+// ------ FormsDataDelete ------
+
+export interface DeleteBatch {
+	lote_id: number;
+	lote_codigo: string;
+	dproduto: string;
+	reason: string;
+}

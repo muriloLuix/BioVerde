@@ -13,7 +13,7 @@ import {
 	Printer,
 	X,
 } from "lucide-react";
-// import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
+// import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
 import { cepApi } from "../../utils/cepApi";
 import { Supplier, SelectEvent, UF, City } from "../../utils/types";
@@ -78,7 +78,7 @@ export default function Suppliers() {
 		reason: "",
 	});
 
-	// useVerificarNivelAcesso();
+	// useCheckAccessLevel();
 
 	const navigate = useNavigate();
 

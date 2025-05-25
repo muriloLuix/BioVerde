@@ -3,31 +3,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { Tabs, Form } from "radix-ui";
-import {
-	Search,
-	PencilLine,
-	Trash,
-	Loader2,
-	Eye,
-	FilterX,
-	Printer,
-	X,
-} from "lucide-react";
-
-import {
-	Product,
-	ProductType,
-	ProductStatus,
-	Supplier,
-	Batch,
-	SelectEvent,
-} from "../../utils/types";
-import {
-	SmartField,
-	Modal,
-	NoticeModal,
-	ConfirmationModal,
-} from "../../shared";
+import { Search, PencilLine, Trash, Loader2, Eye, FilterX, Printer, X } from "lucide-react";
+import { Product, ProductType, ProductStatus, Supplier, Batch, SelectEvent } from "../../utils/types";
+import { SmartField, Modal, NoticeModal, ConfirmationModal } from "../../shared";
 
 interface ProductOptions {
 	tipos: ProductType[];

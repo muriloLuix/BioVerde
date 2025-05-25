@@ -10,7 +10,7 @@ import axios from "axios";
 import {Tabs} from "radix-ui";
 import {useNavigate} from "react-router-dom";
 import {Modal, NoticeModal} from "../../shared";
-import {Eye} from "lucide-react";
+import {Eye,FileSpreadsheet} from "lucide-react";
 import {Logs} from "../../utils/types.ts";
 import {agGridTranslation} from "../../utils/agGridTranslation.ts";
 import {
@@ -177,8 +177,9 @@ export default function Orders() {
                                 };
                                 gridRef.current?.api.exportDataAsCsv(params);
                             }}
-                            className="bg-verdePigmento hover:bg-green-700 text-white font-semibold py-2 px-4 rounded cursor-pointer"
-                        >
+                            className="bg-verdePigmento hover:bg-verdeGrama text-white font-semibold py-2.5 px-4 sombra-botao flex place-content-center gap-2 rounded cursor-pointer"
+                        >   
+                            <FileSpreadsheet />
                             Exportar CSV
                         </button>
                     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-function useVerificarNivelAcesso() {
+function useCheckAccessLevel() {
 	const nivelAcessoAtual = useRef<number | null>(null);
 
 	useEffect(() => {
@@ -34,4 +34,4 @@ function useVerificarNivelAcesso() {
 	}, []);
 }
 
-export default useVerificarNivelAcesso;
+export default useCheckAccessLevel;
