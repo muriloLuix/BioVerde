@@ -1,18 +1,24 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+/*************************************************/
 
 try {
+    /**************** VERIFICA CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco de dados");
     }
+    /*********************************************************************/
 
-    $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantInicial", "lote_quantAtual", "lote_obs", "p.produto_id", "p.produto_nome", "u.uni_id", "u.uni_sigla", "t.tproduto_id", "t.tproduto_nome", "f.fornecedor_id", "f.fornecedor_nome", "c.classificacao_id", "c.classificacao_nome", "a.localArmazenamento_id", "a.localArmazenamento_nome" );
+    /**************** CRIA O ARRAY DAS COLUNAS NA TABELA DE LOTE PARA EXIBIÇÃO ************************/
+
+    $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantInicial", "lote_quantAtual", "lote_obs", "p.produto_id", "p.produto_nome", "u.uni_id", "u.uni_sigla", "t.tproduto_id", "t.tproduto_nome", "f.fornecedor_id", "f.fornecedor_nome", "c.classificacao_id", "c.classificacao_nome", "a.localArmazenamento_id", "a.localArmazenamento_nome");
 
     $joins = [
         [
-            "type"=> "INNER",
+            "type" => "INNER",
             "join_table" => "produtos p",
             "on" => "l.produto_id = p.produto_id"
         ],
@@ -56,6 +62,8 @@ try {
     $classficacao = buscarClassificacaoProduto($conn);
 
     $localArmazenado = buscarLocaisArmazenamento($conn);
+
+    /***************************************************************************/
 
     echo json_encode([
         "success" => true,
