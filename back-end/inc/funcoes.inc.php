@@ -418,6 +418,31 @@ function buscarProdutos($conn)
 }
 
 /**
+ * Busca todos os ltes registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os lotes, onde cada produto
+ *         é representado por um array com as chaves 'lote_id' e 'lote_codigo'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os lotes.
+ */
+function buscarLotes($conn)
+{
+    $result = $conn->query("SELECT lote_id, lote_codigo FROM lote");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $lotes = [];
+    while ($row = $result->fetch_assoc()) {
+        $lotes[] = $row;
+    }
+
+    return $lotes;
+}
+
+/**
  * Busca todos os fornecedores registrados no banco de dados.
  *
  * @param mysqli $conn Conexão com o banco de dados.

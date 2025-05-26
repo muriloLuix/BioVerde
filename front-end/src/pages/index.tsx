@@ -8,6 +8,9 @@ export { default as ProductionSteps } from "./page/ProductionSteps";
 export { default as Orders } from "./page/Orders";
 export { default as Suppliers } from "./page/Suppliers";
 export { default as UsersPage } from "./page/UsersPage";
-export { default as Batchs } from "./page/Batch";
+export { default as Batch } from "./page/Batch";
+export { default as InventoryList } from "./page/InventoryList";
+export { default as InventoryMovements } from "./page/InventoryMovements";
+export { default as InventoryNotices } from "./page/InventoryNotices";
 
 export type { StepProps } from "./page/RecoverPassword";

@@ -174,6 +174,12 @@ export interface BatchOptions {
 	locaisArmazenamento: Storage[];
 }
 
+export interface AddProducts {
+	produtos: Product[];
+	unidade_medida: Unit[];
+	lotes: Batch[];
+}
+
 // ------ FormsData ------
 
 export interface FormDataBatch {

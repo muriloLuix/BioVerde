@@ -1,4 +1,4 @@
-import {useState, useRef, useEffect} from "react";
+import { useState, useRef, useEffect} from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
@@ -19,11 +19,11 @@ const Batchs = () => {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
+    const [openNoticeModal, setOpenNoticeModal] = useState(false);
     const [loading, setLoading] = useState<Set<string>>(new Set());
     const [options, setOptions] = useState<BatchOptions>();
     const [userLevel, setUserLevel] = useState("");
     const [successMsg, setSuccessMsg] = useState(false);
-    const [openNoticeModal, setOpenNoticeModal] = useState(false);
     const [message, setMessage] = useState("");
     const [errors, setErrors] = useState({
 		product: false,
@@ -57,82 +57,6 @@ const Batchs = () => {
 		dproduto: "",
 		reason: "",
 	}); 
-
-    /* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
-
-    const gridRef = useRef<AgGridReact>(null);
-    const [rowData, setRowData] = useState<Batch[]>([]);
-    const [columnDefs] = useState<ColDef[]>([
-        { field: "lote_codigo", headerName: "ID", filter: true, width: 180 },
-        { field: "produto_nome",headerName: "Produto", filter: true, width: 250 },
-        { field: "fornecedor_nome", headerName: "Fornecedor", filter: true, width: 230 },
-        { 
-            headerName: "Data De Colheita", field: "lote_dtColheita", width: 180,
-            valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
-        },
-        {
-            headerName: "Quantidade Inicial",
-            width: 180,
-            valueGetter: (params) => {
-                const value = Number(params.data.lote_quantInicial);
-                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
-            }
-        },
-        {
-            headerName: "Quantidade Atual",
-            width: 180,
-            valueGetter: (params) => {
-                const value = Number(params.data.lote_quantAtual);
-                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
-            }
-        },
-        {
-            headerName: "Data De Validade", field: "lote_dtValidade", width: 180,
-            valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
-        },
-        {field: "tproduto_nome", headerName: "Tipo", width: 150},
-        {field: "classificacao_nome", headerName: "Classificação", width: 180},
-        {field: "localArmazenamento_nome", headerName: "Local Armazenado", width: 180},
-        {field: "lote_obs", headerName: "Observação", width: 300},
-        {
-            headerName: "Ações",
-            field: "acoes",
-            width: 100,
-            cellRenderer: (params: ICellRendererParams<Batch>) => (
-                <div className="flex gap-2 mt-2.5 items-center justify-center">
-                    <button
-                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                        title="Editar Lote"
-                        onClick={() => { if(params.data) handleEdit(params.data) }}
-                    >
-                        <Pencil size={18} />
-                    </button>
-                    {params.context.userLevel === "Administrador" && (
-                        <button
-                            className="text-red-600 hover:text-red-800 cursor-pointer"
-                            title="Excluir Lote"
-                            onClick={() => { if(params.data) handleDelete(params.data) }}
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    )}
-                </div>
-            ),
-            pinned: "right",
-            sortable: false,
-            filter: false
-        }
-    ]);
-
-    //Esilos da Tabela
-    const myTheme = themeQuartz.withParams({
-        spacing: 9,
-        headerBackgroundColor: '#89C988',
-        foregroundColor: '#1B1B1B',
-        rowHoverColor: '#E2FBE2',
-        oddRowBackgroundColor: '#f5f5f5',
-        fontFamily: '"Inter", sans-serif',
-    });
 
     /* ----- useEffects e Requisições via Axios ----- */
 
@@ -441,6 +365,82 @@ const Batchs = () => {
             ) as unknown as FormDataBatch
         );
     };
+
+    /* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
+
+    const gridRef = useRef<AgGridReact>(null);
+    const [rowData, setRowData] = useState<Batch[]>([]);
+    const [columnDefs] = useState<ColDef[]>([
+        { field: "lote_codigo", headerName: "ID", filter: true, width: 180 },
+        { field: "produto_nome",headerName: "Produto", filter: true, width: 250 },
+        { field: "fornecedor_nome", headerName: "Fornecedor", filter: true, width: 230 },
+        { 
+            headerName: "Data De Colheita", field: "lote_dtColheita", width: 180,
+            valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
+        },
+        {
+            headerName: "Quantidade Inicial",
+            width: 180,
+            valueGetter: (params) => {
+                const value = Number(params.data.lote_quantInicial);
+                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
+            }
+        },
+        {
+            headerName: "Quantidade Atual",
+            width: 180,
+            valueGetter: (params) => {
+                const value = Number(params.data.lote_quantAtual);
+                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
+            }
+        },
+        {
+            headerName: "Data De Validade", field: "lote_dtValidade", width: 180,
+            valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
+        },
+        {field: "tproduto_nome", headerName: "Tipo", width: 150},
+        {field: "classificacao_nome", headerName: "Classificação", width: 180},
+        {field: "localArmazenamento_nome", headerName: "Local Armazenado", width: 180},
+        {field: "lote_obs", headerName: "Observação", width: 300},
+        {
+            headerName: "Ações",
+            field: "acoes",
+            width: 100,
+            cellRenderer: (params: ICellRendererParams<Batch>) => (
+                <div className="flex gap-2 mt-2.5 items-center justify-center">
+                    <button
+                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                        title="Editar Lote"
+                        onClick={() => { if(params.data) handleEdit(params.data) }}
+                    >
+                        <Pencil size={18} />
+                    </button>
+                    {params.context.userLevel === "Administrador" && (
+                        <button
+                            className="text-red-600 hover:text-red-800 cursor-pointer"
+                            title="Excluir Lote"
+                            onClick={() => { if(params.data) handleDelete(params.data) }}
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
+                </div>
+            ),
+            pinned: "right",
+            sortable: false,
+            filter: false
+        }
+    ]);
+
+    //Esilos da Tabela
+    const myTheme = themeQuartz.withParams({
+        spacing: 9,
+        headerBackgroundColor: '#89C988',
+        foregroundColor: '#1B1B1B',
+        rowHoverColor: '#E2FBE2',
+        oddRowBackgroundColor: '#f5f5f5',
+        fontFamily: '"Inter", sans-serif',
+    });
 
     return (
         <div className="h-screen w-full flex-1 p-6 pl-[280px]">
