@@ -27,6 +27,7 @@ try {
 
     /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
     $rawData = file_get_contents("php://input");
+
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");
     }
@@ -57,7 +58,7 @@ try {
 
     /**************** ATUALIZAR O LOTE ************************/
 
-    $loteAntigo = Lote::find($data['lote_codigo']);
+    $loteAntigo = Lote::find($data['lote_id']);
 
     $camposAtualizados = [
         'produto_id' => (int) $data['produto'],
@@ -102,8 +103,10 @@ try {
     }
     /***********************************************************/
 
+    $loteClass = Lote::find($data['lote_id']);
+
     /**************** MONTA A MENSAGEM DE LOG ************************/
-    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o lote: ({$data['lote_codigo']}).\n\n";
+    $logMensagem = "O usuário ({$user->user_id} - {$user->user_nome}), editou o lote: ({$loteClass->lote_codigo}).\n\n";
     if (!empty($alteracoes)) {
         $logMensagem .= "Alterações:\n\n" . implode("\n", $alteracoes);
     } else {
