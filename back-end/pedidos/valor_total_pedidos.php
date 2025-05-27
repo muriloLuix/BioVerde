@@ -26,12 +26,14 @@ $query = '
     SELECT 
         YEAR(p.pedido_dtCadastro) AS year,
         MONTH(p.pedido_dtCadastro) AS month,
+        MONTHNAME(p.pedido_dtCadastro) AS monthName,
         SUM(p.pedido_valor_total) as rawValue
     FROM pedidos p
     WHERE p.pedido_dtCadastro BETWEEN \'' . $data['start'] . '\' AND \'' . $data['end'] . '\'
     GROUP BY year, month
     ORDER BY year, month
 ';
+
 
 advancedSearch($conn, $query);
 

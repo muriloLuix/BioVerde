@@ -27,12 +27,15 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 }
 
 $query = '
-    SELECT sp.stapedido_nome AS status, COUNT(*) AS total_pedidos
-    FROM pedidos AS p
-    LEFT JOIN status_pedido sp ON p.stapedido_id = sp.stapedido_id
-    WHERE p.pedido_dtCadastro BETWEEN \'' . $data['start'] . '\' AND \'' . $data['end'] . '\'
-    GROUP BY status
-    ORDER BY status
+    SELECT 
+        sp.stapedido_nome AS status, 
+        COUNT(p.pedido_id) AS total_orders
+    FROM status_pedido sp
+    LEFT JOIN pedidos p 
+        ON p.stapedido_id = sp.stapedido_id
+        AND p.pedido_dtCadastro BETWEEN \'' . $data['start'] . '\' AND \'' . $data['end'] . '\'
+    GROUP BY sp.stapedido_nome
+    ORDER BY sp.stapedido_id
 ';
 
 advancedSearch($conn, $query);
