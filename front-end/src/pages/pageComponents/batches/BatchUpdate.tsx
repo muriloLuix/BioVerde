@@ -11,6 +11,7 @@ interface Props {
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       | SelectEvent
   ) => void;
+  handlePriceChange: (data: { value: string }) => void;
 }
 
 const BatchUpdate: React.FC<Props> = ({
@@ -18,6 +19,7 @@ const BatchUpdate: React.FC<Props> = ({
   options,
   loading,
   handleChange,
+  handlePriceChange,
 }) => {
   return (
     <div className="flex flex-col gap-4 mb-5">
@@ -64,24 +66,14 @@ const BatchUpdate: React.FC<Props> = ({
         />
         <div className="flex gap-10">
             <SmartField
-                fieldName="quant_inicial"
-                fieldText="Qtd. Inicial"
+                fieldName="quant_max"
+                fieldText="Capacidade Máxima"
                 required
-                inputWidth="w-[150px]"
+                fieldClassname="flex flex-col flex-1"
                 type="number"
-                value={formData.quant_inicial}
+                value={formData.quant_max}
                 onChange={handleChange}
                 placeholder="Quantidade Inicial"
-            />
-            <SmartField
-                fieldName="quant_atual"
-                fieldText="Qtd. Atual"
-                required
-                inputWidth="w-[150px]"
-                type="number"
-                value={formData.quant_atual}
-                onChange={handleChange}
-                placeholder="Quantidade Atual"
             />
             <SmartField
                 fieldName="unidade"
@@ -103,13 +95,15 @@ const BatchUpdate: React.FC<Props> = ({
         </div>
         <div className="flex gap-10">
             <SmartField
-                type="date"
-                fieldName="dt_colheita"
-                required
-                fieldText="Data de Colheita"
-                value={formData.dt_colheita}
-                onChange={handleChange}
+                isPrice
+                fieldName="preco"
+                fieldText="Preço Unitário do Produto"
                 fieldClassname="flex flex-col flex-1"
+                type="text"
+                required
+                placeholder="Preço do Produto"
+                value={formData.preco}
+                onValueChange={handlePriceChange}
             />
             <SmartField
                 fieldName="tipo"
@@ -132,6 +126,15 @@ const BatchUpdate: React.FC<Props> = ({
         <div className="flex gap-10">
             <SmartField
                 type="date"
+                fieldName="dt_colheita"
+                required
+                fieldText="Data de Colheita"
+                value={formData.dt_colheita}
+                onChange={handleChange}
+                fieldClassname="flex flex-col flex-1"
+            />
+            <SmartField
+                type="date"
                 required
                 fieldName="dt_validade"
                 fieldText="Data de Validade"
@@ -139,24 +142,26 @@ const BatchUpdate: React.FC<Props> = ({
                 onChange={handleChange}
                 fieldClassname="flex flex-col flex-1"
             />
-            <SmartField
-                fieldName="classificacao"
-                fieldText="Classificação"
-                isSelect
-                isLoading={loading.has("options")}
-                isClearable={false}
-                fieldClassname="flex flex-col flex-1"
-                value={formData.classificacao}
-                placeholder="Selecione"
-                onChangeSelect={handleChange}
-                options={
-                    options?.classificacoes.map((classificacao) => ({
-                        label: classificacao.classificacao_nome,
-                        value: String(classificacao.classificacao_id),
-                    }))
-                }
-            />
         </div>
+
+        <SmartField
+            fieldName="classificacao"
+            fieldText="Classificação"
+            isSelect
+            isLoading={loading.has("options")}
+            isClearable={false}
+            fieldClassname="flex flex-col flex-1"
+            value={formData.classificacao}
+            placeholder="Selecione"
+            onChangeSelect={handleChange}
+            options={
+                options?.classificacoes.map((classificacao) => ({
+                    label: classificacao.classificacao_nome,
+                    value: String(classificacao.classificacao_id),
+                }))
+            }
+        />
+
         <SmartField
             fieldName="localArmazenado"
             fieldText="Local de Armazenamento"

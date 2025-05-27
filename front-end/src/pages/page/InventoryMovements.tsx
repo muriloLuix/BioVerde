@@ -9,21 +9,25 @@ import { agGridTranslation } from "../../utils/agGridTranslation";
 import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
 import { PackagePlus, PackageMinus, FileSpreadsheet } from "lucide-react";
 import { Modal, NoticeModal, SmartField } from "../../shared";
-import { SelectEvent, AddProducts } from "../../utils/types";
+import { SelectEvent, Movements, FormDataMovements } from "../../utils/types";
 
 export default function InventoryMovements() {
-    const [openAddProductModal, setOpenAddProductModal] = useState(false);
+    const [openStockInModal, setOpenStockInModal] = useState(false);
+    const [openStockOutModal, setOpenStockOutModal] = useState(false);
     const [openNoticeModal, setOpenNoticeModal] = useState(false);
     const [successMsg, setSuccessMsg] = useState(false);
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState<Set<string>>(new Set());
-    const [userLevel, setUserLevel] = useState("");
-    const [options, setOptions] = useState<AddProducts>();
-    const [formData, setFormData] = useState({
+    // const [userLevel, setUserLevel] = useState("");
+    const [options, setOptions] = useState<Movements>();
+    const [formData, setFormData] = useState<FormDataMovements>({
         produto: "",
+        motivo: "",
         lote: "",
         quantidade: 0,
         unidade: "",
+        pedido: "",
+        destino: "",
         obs: "",
     });
     const [errors, setErrors] = useState({
@@ -31,6 +35,8 @@ export default function InventoryMovements() {
         batch: false,
         quantity: false,
         unit: false,
+        reason: false,
+        order: false,
     });
 
     /* ----- useEffects e Requisições via Axios ----- */
@@ -42,47 +48,47 @@ export default function InventoryMovements() {
     }, [navigate]);
 
     //Carrega a lista os lotes e as opções nos selects ao renderizar a página
-    // useEffect(() => {
-    //     const fetchData = async () => {
-    //         try {
-    //             setLoading((prev) => new Set([...prev, "movements", "options"]));
-    //             const [movimentacoesResponse, userLevelResponse] = await Promise.all([
-    //                 axios.get(
-    //                     "http://localhost/BioVerde/back-end/movimentacoes/listar_movimentacoes.php",
-    //                     { withCredentials: true, headers: { Accept: "application/json" }}
-    //                 ),
-    //                 axios.get(
-    //                     "http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-    //                     { withCredentials: true, headers: { "Content-Type": "application/json" }}
-    //                 ),
-    //             ]);
-    //             await fetchOptions();
-    //             if (userLevelResponse.data.success) {
-    //                 setUserLevel(userLevelResponse.data.userLevel);
-    //             } else {
-    //                 setOpenNoticeModal(true);
-    //                 setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário" );
-    //             }
-    //             if (movimentacoesResponse.data.success) {
-    //                 setRowData(movimentacoesResponse.data.lotes);
-    //             } else {
-    //                 setOpenNoticeModal(true);
-    //                 setMessage(movimentacoesResponse.data.message || "Erro ao carregar lotes" );
-    //             }
-    //         } catch (error) {
-    //             console.error(error);
-    //             setOpenNoticeModal(true);
-    //             setMessage("Erro ao conectar com o servidor");
-    //         } finally {
-    //             setLoading((prev) => {
-    //                 const newLoading = new Set(prev);
-    //                 ["movements", "options"].forEach((item) => newLoading.delete(item));
-    //                 return newLoading;
-    //             });
-    //         }
-    //     };
-    //     fetchData();
-    // }, []);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading((prev) => new Set([...prev, "movements", "options"]));
+                const [movimentacoesResponse] = await Promise.all([
+                    axios.get(
+                        "http://localhost/BioVerde/back-end/movimentacoes/listar_movimentacoes.php",
+                        { withCredentials: true, headers: { Accept: "application/json" }}
+                    ),
+                    // axios.get(
+                    //     "http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+                    //     { withCredentials: true, headers: { "Content-Type": "application/json" }}
+                    // ),
+                ]);
+                await fetchOptions();
+                // if (userLevelResponse.data.success) {
+                //     setUserLevel(userLevelResponse.data.userLevel);
+                // } else {
+                //     setOpenNoticeModal(true);
+                //     setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário" );
+                // }
+                if (movimentacoesResponse.data.success) {
+                    setRowData(movimentacoesResponse.data.movimentacoes);
+                } else {
+                    setOpenNoticeModal(true);
+                    setMessage(movimentacoesResponse.data.message || "Erro ao carregar lotes" );
+                }
+            } catch (error) {
+                console.error(error);
+                setOpenNoticeModal(true);
+                setMessage("Erro ao conectar com o servidor");
+            } finally {
+                setLoading((prev) => {
+                    const newLoading = new Set(prev);
+                    ["movements", "options"].forEach((item) => newLoading.delete(item));
+                    return newLoading;
+                });
+            }
+        };
+        fetchData();
+    }, []);
 
     useEffect(() => {
         fetchOptions();
@@ -92,14 +98,14 @@ export default function InventoryMovements() {
 	const refreshData = async () => {
 		try {
 			setLoading((prev) => new Set([...prev, "movements"]));
-			const lotesResponse = await axios.get(
-				"http://localhost/BioVerde/back-end/lotes/listar_lotes.php",
+			const movimentacoesResponse = await axios.get(
+				"http://localhost/BioVerde/back-end/movimentacoes/listar_movimentacoes.php",
 				{ withCredentials: true }
 			);
-			if (lotesResponse.data.success) {
-                setRowData(lotesResponse.data.lotes);
+			if (movimentacoesResponse.data.success) {
+                setRowData(movimentacoesResponse.data.movimentacoes);
 			} else {
-                setMessage(lotesResponse.data.message || "Erro ao carregar dados");
+                setMessage(movimentacoesResponse.data.message || "Erro ao carregar dados");
 				setOpenNoticeModal(true);
 			}
 		} catch (error) {
@@ -115,7 +121,7 @@ export default function InventoryMovements() {
 		}
 	};
 
-    // Função que busca as opções de produto
+    // Função que busca as opções 
     const fetchOptions = async () => {
         try {
             setLoading((prev) => new Set([...prev, "options"]));
@@ -128,6 +134,8 @@ export default function InventoryMovements() {
                     produtos:            response.data.produtos,
                     unidade_medida:      response.data.unidade_medida,
                     lotes:               response.data.lotes,
+                    motivos:             response.data.motivos,
+                    pedidos:             response.data.pedidos,
                 });
             } else {
                 setOpenNoticeModal(true);
@@ -146,42 +154,110 @@ export default function InventoryMovements() {
         }
     };
 
-    /* ----- Definição de colunas e dados que a tabela de movimentações vai receber ----- */
+    /* ----- Função para Efetuar entrada de produtos ----- */
 
-    const gridRef = useRef<AgGridReact>(null);
-    const [rowData, setRowData] = useState([]);
-    const [columnDefs] = useState<ColDef[]>([
-        { field: "", headerName: "ID", filter: true, width: 100 },
-        { 
-            headerName: "Data De Movimentação", field: "", width: 200,
-            valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
-        },
-        { field: "",headerName: "Tipo de Movimentação", filter: true, width: 230 },
-        { field: "", headerName: "Produto", filter: true, width: 230 },
-        {
-            headerName: "Quantidade",
-            width: 180,
-            valueGetter: (params) => {
-                const value = Number(params.data.lote_quantInicial);
-                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
-            }
-        },
-        {field: "", headerName: "Preço Movimentado", width: 180},
-        {field: "", headerName: "Lote", filter: true, width: 150},
-        {field: "", headerName: "Responsável", filter: true, width: 180},
-        {field: "", headerName: "Observação", width: 300},
-    
-    ]);
+	const handleStockInProduct = async (e: React.FormEvent) => {
+		e.preventDefault();
+		// Validações
+		const errors = {
+            product:  !formData.produto,
+            batch:    !formData.lote,
+            quantity: !formData.quantidade,
+            unit:     !formData.unidade,
+            reason:   !formData.motivo,
+            order:    isSaleCliente ? !formData.pedido : false,  
+		};
+		setErrors(errors);
+		// Se algum erro for true, interrompe a execução
+		if (Object.values(errors).some((error) => error)) { return; }
 
-    //Esilos da Tabela
-    const myTheme = themeQuartz.withParams({
-        spacing: 9,
-        headerBackgroundColor: '#89C988',
-        foregroundColor: '#1B1B1B',
-        rowHoverColor: '#E2FBE2',
-        oddRowBackgroundColor: '#f5f5f5',
-        fontFamily: '"Inter", sans-serif',
-    });
+		setLoading((prev) => new Set([...prev, "stockIn"]));
+		
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/movimentacoes/cadastrar_entrada.php",
+				formData,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+                setOpenStockInModal(false);
+				setMessage(`Entrada Efetuada com Sucesso!`);
+				clearFormData();
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message ?? "Erro ao cadastrar Entrada");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("stockIn");
+				return newLoading;
+			});
+		}
+	};
+
+    /* ----- Função para Efetuar entrada de produtos ----- */
+    const isSaleCliente = formData.motivo === "9";
+
+    const handleStockOutProduct = async (e: React.FormEvent) => {
+		e.preventDefault();
+		// Validações
+		const errors = {
+            product:  !formData.produto,
+            batch:    !formData.lote,
+            quantity: !formData.quantidade,
+            unit:     !formData.unidade,
+            reason:   !formData.motivo,
+            order:    isSaleCliente ? !formData.pedido : false,  
+		};
+		setErrors(errors);
+		// Se algum erro for true, interrompe a execução
+		if (Object.values(errors).some((error) => error)) { return; }
+
+		setLoading((prev) => new Set([...prev, "stockOut"]));
+		
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/movimentacoes/cadastrar_saida.php",
+				formData,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+                setOpenStockOutModal(false);
+				setMessage(`Saída Efetuada com Sucesso!`);
+				clearFormData();
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message ?? "Erro ao cadastrar Entrada");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("stockOut");
+				return newLoading;
+			});
+		}
+	};
+
+    /* ----- Outras Funções ----- */
 
     //OnChange dos campos
     const handleChange = (
@@ -197,6 +273,73 @@ export default function InventoryMovements() {
             ) as typeof prevErrors
         );
     };
+    
+    //Limpar formData
+    const clearFormData = () => {
+        setFormData(
+            Object.fromEntries(
+                Object.entries(formData).map(([key, value]) => {
+                    return [key, typeof value === "number" ? 0 : ""];
+                })
+            ) as unknown as FormDataMovements
+        );
+    };
+
+    /* ----- Definição de colunas e dados que a tabela de movimentações vai receber ----- */
+
+    const gridRef = useRef<AgGridReact>(null);
+    const [rowData, setRowData] = useState([]);
+    const [columnDefs] = useState<ColDef[]>([
+        { field: "mov_id", headerName: "ID", filter: true, width: 100 },
+        { 
+            headerName: "Data De Movimentação", field: "mov_data", filter: true, width: 220,
+            valueGetter: (params) => new Date(params.data.mov_data).toLocaleDateString("pt-BR")
+        },
+        { field: "mov_tipo_label",headerName: "Tipo de Movimentação", filter: true, width: 230 },
+        { field: "produto_nome", headerName: "Produto", filter: true, width: 230 },
+        {
+            headerName: "Quantidade Movimentada",
+            width: 210,
+            valueGetter: (params) => {
+                const value = Number(params.data.mov_quantidade);
+                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
+            }
+        },
+        {
+            field: "preco_movimentado", 
+            headerName: "Preço Movimentado", 
+            width: 180,
+            valueFormatter: (params) => {
+                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
+            }
+        },
+        {field: "lote_codigo", headerName: "Lote", filter: true, width: 170},
+        {
+            headerName: "Destino",
+            field: "localArmazenamento_nome",
+            filter: true,
+            width: 180,
+            valueGetter: (params) => {
+                return params.data.mov_tipo === "entrada"
+                ? params.data.localArmazenamento_nome
+                : params.data.destino;
+            }
+        },
+        {field: "pedido_id", headerName: "Nº do Pedido", filter: true, width: 150},
+        {field: "user_nome", headerName: "Responsável", filter: true, width: 180},
+        {field: "mov_obs", headerName: "Observação", width: 300},
+    
+    ]);
+
+    //Esilos da Tabela
+    const myTheme = themeQuartz.withParams({
+        spacing: 9,
+        headerBackgroundColor: '#89C988',
+        foregroundColor: '#1B1B1B',
+        rowHoverColor: '#E2FBE2',
+        oddRowBackgroundColor: '#f5f5f5',
+        fontFamily: '"Inter", sans-serif',
+    });
 
     return(
         <>
@@ -209,7 +352,7 @@ export default function InventoryMovements() {
                         <button
                             type="button"
                             className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-                            onClick={() => setOpenAddProductModal(true)}
+                            onClick={() => {setOpenStockInModal(true); clearFormData()}}
                         >
                             <PackagePlus  />
                             Adicionar Produto
@@ -219,7 +362,7 @@ export default function InventoryMovements() {
                         <button
                             type="button"
                             className="bg-gray-300 py-2.5 px-4 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2"
-                            // onClick={() => {setOpenRegisterModal(true); clearFormData()}}
+                            onClick={() => {setOpenStockOutModal(true); clearFormData()}}
                         >
                             <PackageMinus />
                             Retirar Produto
@@ -263,17 +406,17 @@ export default function InventoryMovements() {
             </div>
         </Tabs.Content>
 
-        {/* Modal de Cadastro de Lotes */}
+        {/* Modal de Efetuar Entrada de produto */}
         <Modal
-            openModal={openAddProductModal}
-            setOpenModal={setOpenAddProductModal}
-            modalTitle="Adicionar Entrada de Produto"
+            openModal={openStockInModal}
+            setOpenModal={setOpenStockInModal}
+            modalTitle="Efetuar Entrada de Produto"
             withXButton
             isRegister
-            registerButtonText="Adicionar Entrada"
+            registerButtonText="Efetuar Entrada"
             modalWidth="w-1/2"
-            isLoading={loading.has("add")}
-            // onSubmit={handleRegister}
+            isLoading={loading.has("stockIn")}
+            onSubmit={handleStockInProduct}
         >
             <div className="flex flex-col gap-4">
                 <SmartField
@@ -335,11 +478,160 @@ export default function InventoryMovements() {
                 </div>
 
                 <SmartField
+                    fieldName="motivo"
+                    fieldText="Motivo da Entrada"
+                    isSelect
+                    fieldClassname="flex flex-col flex-1"
+                    isLoading={loading.has("options")}
+                    error={errors.reason ? "*" : undefined}
+                    value={formData.motivo}
+                    placeholder="Selecione o Motivo"
+                    onChangeSelect={handleChange}
+                    options={options?.motivos
+                        .filter((motivo) => motivo.mov_tipo === "entrada")
+                        .map((motivo) => ({
+                            label: motivo.motivo,
+                            value: String(motivo.motivo_id),
+                        }))
+                    }
+                />
+
+                <SmartField
                     fieldName="obs"
                     fieldText="Observações"
                     rows={2}
                     isTextArea
                     placeholder="Adicione informações sobre a entrada do produto"
+                    value={formData.obs}
+                    onChange={handleChange}
+                />
+            </div>   
+        </Modal>
+
+         {/* Modal de Efetuar Saída de produto */}
+        <Modal
+            openModal={openStockOutModal}
+            setOpenModal={setOpenStockOutModal}
+            modalTitle="Efetuar Saída de Produto"
+            withXButton
+            isRegister
+            registerButtonText="Efetuar Saída"
+            modalWidth="w-1/2"
+            isLoading={loading.has("stockOut")}
+            onSubmit={handleStockOutProduct}
+        >
+            <div className="flex flex-col gap-4">
+                <SmartField
+                    fieldName="produto"
+                    fieldText="Produto"
+                    isSelect
+                    error={errors.product ? "*" : undefined}
+                    placeholder="Selecione o produto"
+                    isLoading={loading.has("options")}
+                    value={formData.produto}
+                    onChangeSelect={handleChange}
+                    options={options?.produtos.map((produto) => ({
+                        label: produto.produto_nome,
+                        value: String(produto.produto_id),
+                    }))}
+                />
+
+                <SmartField
+                    fieldName="lote"
+                    fieldText="Lote"
+                    isSelect
+                    isLoading={loading.has("options")}
+                    error={errors.batch ? "*" : undefined}
+                    value={formData.lote}
+                    placeholder="Selecione o lote"
+                    onChangeSelect={handleChange}
+                    options={options?.lotes.map((lote) => ({
+                        label: lote.lote_codigo,
+                        value: String(lote.lote_id),
+                    }))}
+                />
+
+                <div className="flex gap-10">
+                    <SmartField
+                    fieldName="quantidade"
+                    fieldText="Quantidade"
+                    error={errors.quantity ? "*" : undefined}
+                    fieldClassname="flex flex-col flex-1"
+                    type="number"
+                    value={formData.quantidade}
+                    onChange={handleChange}
+                    placeholder="Quantidade"
+                    />
+                    <SmartField
+                    fieldName="unidade"
+                    fieldText="Unidade de Medida"
+                    isSelect
+                    fieldClassname="flex flex-col flex-1"
+                    isLoading={loading.has("options")}
+                    error={errors.unit ? "*" : undefined}
+                    value={formData.unidade}
+                    placeholder="Selecione"
+                    onChangeSelect={handleChange}
+                    options={options?.unidade_medida.map((unidade) => ({
+                        label: unidade.uni_nome,
+                        value: String(unidade.uni_id),
+                    }))}
+                    />
+                </div>
+                
+                <div className="flex gap-10">
+                    <SmartField
+                        fieldName="motivo"
+                        fieldText="Motivo da Saída"
+                        isSelect
+                        fieldClassname="flex flex-col flex-1"
+                        isLoading={loading.has("options")}
+                        error={errors.reason ? "*" : undefined}
+                        value={formData.motivo}
+                        placeholder="Selecione o Motivo"
+                        onChangeSelect={handleChange}
+                        options={options?.motivos
+                            .filter((motivo) => motivo.mov_tipo === "saida")
+                            .map((motivo) => ({
+                                label: motivo.motivo,
+                                value: String(motivo.motivo_id),
+                            }))
+                        }
+                    />
+                    {isSaleCliente && (
+                        <SmartField
+                            fieldName="pedido"
+                            fieldText="Nº do Pedido"
+                            isSelect
+                            inputWidth="w-[180px]"
+                            isLoading={loading.has("options")}
+                            error={errors.order ? "*" : undefined}
+                            value={formData.pedido}
+                            placeholder="Selecione"
+                            onChangeSelect={handleChange}
+                            options={options?.pedidos.map((pedido) => ({
+                                label: String(pedido.pedido_id),
+                                value: String(pedido.pedido_id),
+                            }))}
+                        />
+                    ) }
+                </div>
+
+                <SmartField
+                    fieldName="destino"
+                    fieldText="Destino do Produto"
+                    required
+                    placeholder="Digite o Destino do Produto"
+                    value={formData.destino}
+                    onChange={handleChange}
+                />
+
+                <SmartField
+                    fieldName="obs"
+                    fieldText="Observações"
+                    rows={2}
+                    isTextArea
+                    placeholder="Adicione informações sobre a saída do produto"
                     value={formData.obs}
                     onChange={handleChange}
                 />

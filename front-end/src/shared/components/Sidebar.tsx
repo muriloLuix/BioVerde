@@ -11,8 +11,7 @@
     Users,
     Truck,
     User,
-    LogOut,
-    Boxes
+    LogOut
   } from "lucide-react";
 
   import Logo from "./Logo";
@@ -64,7 +63,6 @@
         { name: "Controle de Estoque", icon: <Package />,         path: "/app/controle-estoque" },
         { name: "Etapas de Produção",  icon: <Layers />,          path: "/app/etapas-producao" },
         { name: "Pedidos",             icon: <ShoppingCart />,    path: "/app/pedidos" },
-        { name: "Lotes",               icon: <Boxes />,           path: "/app/lotes" },
         { name: "Usuários",            icon: <Users />,           path: "/app/usuarios", restricted: true },
         { name: "Fornecedores",        icon: <Truck />,           path: "/app/fornecedores", restricted: true },
         { name: "Clientes",            icon: <User />,            path: "/app/clientes", restricted: true },

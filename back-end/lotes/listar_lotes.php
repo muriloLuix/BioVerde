@@ -14,7 +14,7 @@ try {
 
     /**************** CRIA O ARRAY DAS COLUNAS NA TABELA DE LOTE PARA EXIBIÇÃO ************************/
 
-    $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantInicial", "lote_quantAtual", "lote_obs", "p.produto_id", "p.produto_nome", "u.uni_id", "u.uni_sigla", "t.tproduto_id", "t.tproduto_nome", "f.fornecedor_id", "f.fornecedor_nome", "c.classificacao_id", "c.classificacao_nome", "a.localArmazenamento_id", "a.localArmazenamento_nome");
+    $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantMax", "lote_quantAtual", "l.produto_preco", "lote_preco", "lote_obs", "p.produto_id", "p.produto_nome", "u.uni_id", "u.uni_sigla", "t.tproduto_id", "t.tproduto_nome", "f.fornecedor_id", "f.fornecedor_nome", "c.classificacao_id", "c.classificacao_nome", "a.localArmazenamento_id", "a.localArmazenamento_nome");
 
     $joins = [
         [

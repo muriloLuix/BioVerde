@@ -45,7 +45,7 @@ try {
     /******************************************************************/
 
     /**************** VALIDAÇÕES ************************/
-    $camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quant_inicial', 'quant_atual', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado'];
+    $camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quant_max', 'preco', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
     if ($validacaoDosCampos !== null) {
         echo json_encode($validacaoDosCampos);
@@ -63,8 +63,8 @@ try {
     $camposAtualizados = [
         'produto_id' => (int) $data['produto'],
         'fornecedor_id' => (int) $data['fornecedor'],
-        'lote_quantInicial' => $data['quant_inicial'],
-        'lote_quantAtual' => $data['quant_atual'],
+        'lote_quantMax' => $data['quant_max'],
+        'produto_preco' => $data['preco'],
         'uni_id' => (int) $data['unidade'],
         'lote_dtColheita' => $lote_dtColheita,
         'tproduto_id' => (int) $data['tipo'],

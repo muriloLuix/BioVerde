@@ -2,8 +2,8 @@
 /**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
-require_once "../usuarios/User.class.php";
 require_once "../MVC/Model.php";
+require_once "../usuarios/User.class.php";
 require_once "../fornecedores/Fornecedor.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
@@ -32,28 +32,50 @@ $data = json_decode($rawData, true);
 /***************************************************************************/
 
 /**************** VALIDACAO DOS CAMPOS ************************/
-$camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quant_inicial', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado'];
+$camposObrigatorios = ['produto', 'fornecedor', 'dt_colheita', 'quant_max', 'preco', 'unidade', 'tipo', 'dt_validade', 'classificacao', 'localArmazenado'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
     exit();
 }
 
+/**************** INSERIR NOVO PRODUTO NA TABELA DE PRODUTOS ************************/
+$produto_nome = trim($data['produto']);
+
+// Verifica se o produto já existe (opcional)
+$checkProdutoStmt = $conn->prepare("SELECT produto_id FROM produtos WHERE produto_nome = ?");
+$checkProdutoStmt->bind_param("s", $produto_nome);
+$checkProdutoStmt->execute();
+$checkResult = $checkProdutoStmt->get_result();
+
+if ($checkResult->num_rows > 0) {
+    // Produto já existe
+    $existing = $checkResult->fetch_assoc();
+    $produto_id = $existing['produto_id'];
+} else {
+    // Produto não existe, insere
+    $insertProdutoStmt = $conn->prepare("INSERT INTO produtos (produto_nome) VALUES (?)");
+    $insertProdutoStmt->bind_param("s", $produto_nome);
+    if ($insertProdutoStmt->execute()) {
+        $produto_id = $insertProdutoStmt->insert_id;
+    } else {
+        echo json_encode(["success" => false, "message" => "Erro ao cadastrar o produto: " . $insertProdutoStmt->error]);
+        exit();
+    }
+}
+/************************************************************/
+
+/**************** DEFINE E CONVERTE VALORES *******************/
 $uni_id = (int) $data['unidade'];
 $tipo_id = (int) $data['tipo'];
 $fornecedor_id = (int) $data['fornecedor'];
 $classificacao_id = (int) $data['classificacao'];
 $localArmazenamento_id = (int) $data['localArmazenado'];
-$data['quant_atual'] = $data['quant_inicial'];
+$dataColheita = $data['dt_colheita']; // Exemplo: '2025-05-23'
+$dataColheitaFormatada = date('Ymd', strtotime($dataColheita)); // Resultado: '20250523'
 /************************************************************/
 
 /**************** CRIAR O CÓDIGO DO LOTE ************************/
-
-/**************** BUSCAR PREFIXO DO PRODUTO ************************/
-$produto_id = (int) $data['produto'];
-$dataColheita = $data['dt_colheita']; // Exemplo: '2025-05-23'
-$dataColheitaFormatada = date('Ymd', strtotime($dataColheita)); // Resultado: '20250523'
-/******************************************************************/
 
 /**************** BUSCAR OS 3 PRIMEIROS CARACTERES DO NOME DO PRODUTO ************************/
 $sqlPrefixo = "SELECT LEFT(produto_nome, 3) AS prefixo FROM produtos WHERE produto_id = ?";
@@ -89,13 +111,35 @@ $lote_codigo = sprintf('%s-%s-%03d', $prefixo, $dataColheitaFormatada, $numeroLo
 /**************** ATRIBUIR AO ARRAY PARA ENVIAR AO BANCO ************************/
 $data['lote_codigo'] = $lote_codigo;
 
+/**************** VERIFICAR CAPACIDADE DO ESTOQUE ************************/
+$estoque_id = 1; 
+$verificaEstoque = $conn->prepare("SELECT estoque_capacidadeMax, estoque_atual FROM estoque WHERE estoque_id = ?");
+$verificaEstoque->bind_param("i", $estoque_id);
+$verificaEstoque->execute();
+$resultEstoque = $verificaEstoque->get_result();
+$dadosEstoque = $resultEstoque->fetch_assoc();
+
+if (!$dadosEstoque) {
+    echo json_encode(["success" => false, "message" => "Estoque não encontrado."]);
+    exit();
+}
+
+$capacidadeMax = (int)$dadosEstoque['estoque_capacidadeMax'];
+$estoqueAtual = (int)$dadosEstoque['estoque_atual'];
+
+if ($estoqueAtual + 1 > $capacidadeMax) {
+    echo json_encode(["success" => false, "message" => "Capacidade máxima de lotes atingida no estoque."]);
+    exit();
+}
+/****************************************************************/
+
 /**************** CADASTRAR O LOTE ************************/
 $sql = "INSERT INTO lote (
     lote_codigo,
     lote_dtColheita,
     lote_dtValidade,
-    lote_quantInicial,
-    lote_quantAtual,
+    lote_quantMax,
+    produto_preco,
     lote_obs,
     produto_id,
     uni_id,
@@ -116,8 +160,8 @@ $stmt->bind_param(
     $data['lote_codigo'],
     $data['dt_colheita'],
     $data['dt_validade'],
-    $data['quant_inicial'],
-    $data['quant_atual'],
+    $data['quant_max'],
+    $data['preco'],
     $data['obs'],
     $produto_id,
     $uni_id,
@@ -132,17 +176,26 @@ $stmt->bind_param(
 $fornecedorClass = Fornecedor::find($fornecedor_id);
 
 if ($stmt->execute()) {
+    // Atualizar o estoque com a nova quantidade de lotes
+    $stmtSincronizaEstoque = $conn->prepare("
+        UPDATE estoque 
+        SET estoque_atual = (SELECT COUNT(*) FROM lote)
+        WHERE estoque_id = ?
+    ");
+    $stmtSincronizaEstoque->bind_param("i", $estoque_id);
+    $stmtSincronizaEstoque->execute();
+
     echo json_encode([
         "success" => true,
         "message" => "Lote cadastrado com sucesso!",
         "lote_codigo" => $lote_codigo
     ]);
-    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), cadastrou o lote: {$data['lote_codigo']}. Com as seguintes informações: \n\n Data da colheita: {$data['dt_colheita']} \n\n Data de validade: {$data['dt_validade']} \n\n Quantidade inicial: {$data['quant_inicial']} \n\n Fornecedor: {$fornecedorClass->fornecedor_nome}", Acoes::CADASTRAR_LOTE, "sucesso");
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), cadastrou o lote: {$data['lote_codigo']}. Com as seguintes informações: \n\n Data da colheita: {$data['dt_colheita']} \n\n Data de validade: {$data['dt_validade']} \n\n Capacidade Máxima: {$data['quant_max']} \n\n Preço do Produto: {$data['preco']} \n\n Fornecedor: {$fornecedorClass->fornecedor_nome}", Acoes::CADASTRAR_LOTE, "sucesso");
 } else {
     echo json_encode([
         "success" => false,
         "message" => "Erro ao cadastrar o lote: " . $stmt->error
     ]);
-    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou cadastrar o lote: {$data['lote_codigo']}. Com as seguintes informações: \n\n Data da colheita: {$data['dt_colheita']} \n\n Data de validade: {$data['dt_validade']} \n\n Quantidade inicial: {$data['quant_inicial']} \n\n Fornecedor: {$fornecedorClass->fornecedor_nome}. \n\n Motivo do erro: {$stmt->error}", Acoes::CADASTRAR_LOTE, "erro");
+    salvarLog("O usuário ({$user->user_id} - {$user->user_nome}), tentou cadastrar o lote: {$data['lote_codigo']}. Com as seguintes informações: \n\n Data da colheita: {$data['dt_colheita']} \n\n Data de validade: {$data['dt_validade']} \n\n Capacidade Máxima: {$data['quant_max']} \n\n Preço do Produto: {$data['preco']} \n\n Fornecedor: {$fornecedorClass->fornecedor_nome}. \n\n Motivo do erro: {$stmt->error}", Acoes::CADASTRAR_LOTE, "erro");
 }
 

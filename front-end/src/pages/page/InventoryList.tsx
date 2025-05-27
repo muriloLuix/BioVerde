@@ -30,9 +30,10 @@ export default function InventoryList() {
         supplier: false,
         unit: false,
         type: false,
+        price: false,
         classification: false,
         storage: false,
-        quantityInitial: false,
+        quantityMax: false,
         harvestDate: false,
         expirationDate: false,
     });
@@ -42,9 +43,10 @@ export default function InventoryList() {
         produto: "",
         fornecedor: "",
         dt_colheita: "",
-        quant_inicial: 0,
+        quant_max: 0,
         quant_atual: 0,
         unidade: "",
+        preco: 0.0,
         tipo: "",
         dt_validade: "",
         classificacao: "",
@@ -180,9 +182,10 @@ export default function InventoryList() {
             supplier:        !formData.fornecedor,
             unit:            !formData.unidade,
             type:            !formData.tipo,
+            price:           !formData.preco,   
             classification:  !formData.classificacao,
             storage:         !formData.localArmazenado,
-            quantityInitial: !formData.quant_inicial,
+            quantityMax:     !formData.quant_max,
             harvestDate:     !formData.dt_colheita,
             expirationDate:  !formData.dt_validade,
 		};
@@ -238,9 +241,10 @@ export default function InventoryList() {
             lote_codigo: lote.lote_codigo,
             produto: String(lote.produto_id),
             fornecedor: String(lote.fornecedor_id),
-            quant_inicial: lote.lote_quantInicial,
+            quant_max: lote.lote_quantMax,
             quant_atual: lote.lote_quantAtual,
             unidade: String(lote.uni_id),
+            preco: lote.produto_preco,
             dt_colheita: formatDate(lote.lote_dtColheita),
             tipo: String(lote.tproduto_id),
             dt_validade: formatDate(lote.lote_dtValidade),
@@ -305,11 +309,12 @@ export default function InventoryList() {
 		e.preventDefault();
 		setLoading((prev) => new Set([...prev, "deleteBatch"]));
 		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/lotes/excluir_lote.php",
+            const response = await axios.post(
+                "http://localhost/BioVerde/back-end/lotes/excluir_lote.php",
 				deleteBatch,
 				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 			);
+            console.log(response.data);
 			if (response.data.success) {
 				await refreshData();
 				setOpenConfirmModal(false);
@@ -355,6 +360,14 @@ export default function InventoryList() {
 		);
     };
 
+    //Capturar valor no campo de Preço
+	const handlePriceChange = ({ value }: { value: string }) => {
+		const formattedValue = parseFloat(value);
+
+		setFormData({ ...formData, preco: formattedValue });
+		setErrors((errors) => ({ ...errors, price: false }));
+	};
+
     //Limpar FormData
 	const clearFormData = () => {
         setFormData(
@@ -379,10 +392,10 @@ export default function InventoryList() {
             valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
         },
         {
-            headerName: "Quantidade Inicial",
+            headerName: "Capacidade Máxima",
             width: 180,
             valueGetter: (params) => {
-                const value = Number(params.data.lote_quantInicial);
+                const value = Number(params.data.lote_quantMax);
                 return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
             }
         },
@@ -397,6 +410,22 @@ export default function InventoryList() {
         {
             headerName: "Data De Validade", field: "lote_dtValidade", width: 180,
             valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
+        },
+        {
+            field: "produto_preco",
+            headerName: "Preço do Produto",
+            width: 160,
+            valueFormatter: (params) => {
+                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
+            }
+        },
+        {
+            field: "lote_preco",
+            headerName: "Preço Total do Lote",
+            width: 180,
+            valueFormatter: (params) => {
+                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
+            }
         },
         {field: "tproduto_nome", headerName: "Tipo", width: 150},
         {field: "classificacao_nome", headerName: "Classificação", width: 180},
@@ -513,6 +542,7 @@ export default function InventoryList() {
                 loading={loading}
                 errors={errors}
                 handleChange={handleChange}
+                handlePriceChange={handlePriceChange}
             />
         </Modal>
         {/* Modal de Edição de Lotes */}
@@ -532,6 +562,7 @@ export default function InventoryList() {
                 options={options}
                 loading={loading}
                 handleChange={handleChange}
+                handlePriceChange={handlePriceChange}
             />
         </Modal>
         {/* Modal de Exclusão */}

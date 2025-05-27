@@ -10,18 +10,23 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar produtos
     $produtos = buscarProdutos($conn);
 
     $unidade_medida = buscarUnidadeMedida($conn);
 
     $lotes = buscarLotes($conn);
 
+    $motivoMovimentacoes = buscarMotivoMovimentacoes($conn);
+
+    $pedidos =buscarPedidos($conn);
+
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,
         "unidade_medida" => $unidade_medida,
         "lotes" => $lotes,
+        "motivos" => $motivoMovimentacoes,
+        "pedidos" => $pedidos
     ]);
 
 } catch (Exception $e) {

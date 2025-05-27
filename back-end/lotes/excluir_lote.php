@@ -66,6 +66,16 @@ try {
     }
     /*******************************************************/
 
+    /**************** ATUALIZAR LOTE ************************/
+    // Atualizar o estoque com a nova quantidade de lotes
+    $stmtSincronizaEstoque = $conn->prepare("
+        UPDATE estoque 
+        SET estoque_atual = (SELECT COUNT(*) FROM lote)
+        WHERE estoque_id = 1
+    ");
+    $stmtSincronizaEstoque->execute();
+    /*******************************************************/
+
     if (!$conn->commit()) {
         throw new Exception("Falha ao finalizar a operação. Tente novamente.");
     }
@@ -76,7 +86,7 @@ try {
         'deleted_id' => $lote_id
     ]);
 
-    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) excluiu o lote: \n\n Lote: {$data['lote_codigo']} \n\n Data da colheita: {$data['dt_colheita']} \n\n Data de validade: {$data['dt_validade']} \n\n Quantidade inicial: {$data['quant_inicial']} \n\n Fornecedor: {$data['fornecedor']}.", Acoes::EXCLUIR_LOTE);
+    salvarLog("O usuário ID ({$user->user_id} -  {$user->user_nome}) excluiu o lote: \n\n Lote: {$data['lote_codigo']} \n\n Produto {$data['dproduto']} \n\n Motivo: {$data['reason']}.", Acoes::EXCLUIR_LOTE);
 
 } catch (Exception $e) {
     /**************** ROLLBACK ************************/

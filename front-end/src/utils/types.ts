@@ -65,9 +65,10 @@ export interface Batch {
     lote_codigo: string;
     lote_dtColheita: string;
     lote_dtValidade: string;
-    lote_quantInicial: number;
+    lote_quantMax: number;
     lote_quantAtual: number;
     lote_obs: string;
+	produto_preco: number;
 
     produto_id: number;
     produto_nome: string;
@@ -124,6 +125,10 @@ export interface ProductStatus {
 	staproduto_nome: string;
 }
 
+export interface OrderType {
+	pedido_id: number;
+}
+
 export interface OrderStatus {
 	stapedido_id: number;
 	stapedido_nome: string;
@@ -132,6 +137,12 @@ export interface OrderStatus {
 export interface PositionType {
 	car_id: number;
 	car_nome: string;
+}
+
+export interface ReasenType {
+	motivo_id: number;
+	mov_tipo: string;
+	motivo: string;
 }
 
 export interface Option {
@@ -174,10 +185,12 @@ export interface BatchOptions {
 	locaisArmazenamento: Storage[];
 }
 
-export interface AddProducts {
+export interface Movements {
 	produtos: Product[];
 	unidade_medida: Unit[];
 	lotes: Batch[];
+	motivos: ReasenType[];
+	pedidos: OrderType[];
 }
 
 // ------ FormsData ------
@@ -188,13 +201,25 @@ export interface FormDataBatch {
   produto: string;
   fornecedor: string;
   dt_colheita: string;
-  quant_inicial: number;
+  quant_max: number;
   quant_atual: number;
   unidade: string;
+  preco: number;
   tipo: string;
   dt_validade: string;
   classificacao: string;
   localArmazenado: string;
+  obs: string;
+}
+
+export interface FormDataMovements {
+  produto: string;
+  motivo: string;
+  lote: string;
+  quantidade: number;
+  unidade: string;
+  pedido: string;
+  destino: string;
   obs: string;
 }
 

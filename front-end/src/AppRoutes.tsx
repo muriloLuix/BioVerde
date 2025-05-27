@@ -13,7 +13,6 @@ import {
 	Logs,
 	Orders,
 	Suppliers,
-	Batch,
 	InventoryList,
 	InventoryMovements,
 	InventoryNotices
@@ -39,7 +38,6 @@ const AppRoutes = () => {
 					
 					<Route path="etapas-producao" element={<ProductionSteps />} />
 					<Route path="pedidos" element={<Orders />} />
-					<Route path="lotes" element={<Batch />} />
 					<Route
 						path="usuarios"
 						element={
