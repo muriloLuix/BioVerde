@@ -541,7 +541,7 @@ export default function InventoryMovements() {
                         <SmartField
                             fieldName="unidade"
                             fieldText="Unidade de Medida"
-                            isDisabled
+                            isDisable
                             inputWidth="w-[200px]"
                             placeholder="Unidade de Medida"
                             readOnly
@@ -644,7 +644,7 @@ export default function InventoryMovements() {
                         <SmartField
                             fieldName="unidade"
                             fieldText="Unidade de Medida"
-                            isDisabled
+                            isDisable
                             inputWidth="w-[200px]"
                             placeholder="Unidade de Medida"
                             readOnly
