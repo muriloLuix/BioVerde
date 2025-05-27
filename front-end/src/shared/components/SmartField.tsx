@@ -27,6 +27,7 @@ type InputPropsBase = {
 	fieldClassname?: string;
 	fieldText: string;
 	userLevel?: string;
+	isDisabled?: boolean;
 	children?: React.ReactNode;
 	creatableConfigName?: string;
 	openManagementModal?: () => void;
@@ -50,6 +51,7 @@ const SmartField = ({
 	isTextArea,
 	isPrice,
 	withInputMask,
+	isDisabled,
 	required,
 	fieldName,
 	fieldClassname,
@@ -84,6 +86,16 @@ const SmartField = ({
 			>
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
 				<div className="flex items-center pb-1 gap-2">
+					{userLevel === "Administrador" && (
+						isCreatableSelect && (
+							<button 
+								title={creatableConfigName}
+								onClick={openManagementModal}
+							>
+								<Settings size={20} className="text-gray-600 cursor-pointer" />
+							</button>
+						) 
+					)}
 					{error && (
 						<span
 							className={`text-red-500 ${
@@ -93,7 +105,6 @@ const SmartField = ({
 							{error}
 						</span>
 					)}
-
 					<Form.Message
 						className="text-red-500 text-base"
 						match="valueMissing"
@@ -116,16 +127,6 @@ const SmartField = ({
 						Valor inválido*
 					</Form.Message>
 
-					{userLevel === "Administrador" && (
-						isCreatableSelect && (
-							<button 
-								title={creatableConfigName}
-								onClick={openManagementModal}
-							>
-								<Settings size={20} className="text-gray-600 cursor-pointer" />
-							</button>
-						) 
-					)}
 				</div>
 			</Form.Label>
 			{isSelect ? (
@@ -197,6 +198,7 @@ const SmartField = ({
 					) : (
 						<Select
 							isClearable
+							noOptionsMessage={() => "Nenhuma opção encontrada"}
 							{...(rest as Props<Option, false, GroupBase<Option>>)}
 							name={regex(fieldName)}
 							id={regex(fieldName)}
@@ -206,7 +208,6 @@ const SmartField = ({
 							closeMenuOnSelect
 							menuShouldScrollIntoView
 							hideSelectedOptions
-							noOptionsMessage={() => "Nenhuma opção encontrada"}
 							loadingMessage={() => "Carregando..."}
 							options={options}
 							value={options?.find((opt) => opt.value === value) || null}
@@ -321,7 +322,7 @@ const SmartField = ({
 							id={regex(fieldName)}
 							required={required}
 							value={value}
-							className={`bg-white ${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
+							className={`${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 ${isDisabled ? "bg-gray-100 text-gray-600 cursor-default" : "bg-white"} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}
 				</Form.Control>

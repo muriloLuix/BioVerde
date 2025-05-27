@@ -49,7 +49,7 @@ try {
     // Resposta de sucesso simplificada para produção
     echo json_encode([
         'success' => true,
-        'message' => 'Usuário excluído com sucesso',
+        'message' => 'Cargo excluído com sucesso',
         'deleted_id' => $car_id 
     ]);
 

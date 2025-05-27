@@ -20,8 +20,11 @@ type FieldErrors = {
 interface Props {
   formData: FormDataBatch;
   options?: BatchOptions;
+  userLevel?: string;
   loading: Set<string>;
   errors: FieldErrors;
+  openProductModal?: () => void;
+  createProduct?: (produtoNome: string) => Promise<void>;
   handleChange: (
     event:
       | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -35,6 +38,9 @@ const BatchRegister: React.FC<Props> = ({
   options,
   loading,
   errors,
+  userLevel,
+  createProduct,
+  openProductModal,
   handleChange,
   handlePriceChange,
 }) => {
@@ -43,10 +49,21 @@ const BatchRegister: React.FC<Props> = ({
       <SmartField
         fieldName="produto"
         fieldText="Produto"
+        isSelect
+        isCreatableSelect
         error={errors.product ? "*" : undefined}
-        placeholder="Digite o nome do produto"
+        isLoading={loading.has("options")}
         value={formData.produto}
-        onChange={handleChange}
+        placeholder="Selecione ou Digite um Novo Produto"
+        creatableConfigName="Gerenciar Produtos"
+        userLevel={userLevel}
+        openManagementModal={openProductModal}
+        onCreateNewOption={createProduct}
+        onChangeSelect={handleChange}
+        options={options?.produtos.map((produto) => ({
+          label: produto.produto_nome,
+          value: String(produto.produto_id),
+        }))}
       />
 
       <SmartField
