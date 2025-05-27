@@ -544,41 +544,33 @@ export default function InventoryList() {
         { field: "produto_nome",headerName: "Produto", filter: true, width: 250 },
         { field: "fornecedor_nome", headerName: "Fornecedor", filter: true, width: 230 },
         { 
-            headerName: "Data De Colheita", field: "lote_dtColheita", width: 180,
+            headerName: "Data De Colheita", field: "lote_dtColheita", width: 180, filter: true,
             valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
         },
         {
-            headerName: "Capacidade Máxima",
-            width: 180,
+            headerName: "Capacidade Máxima", width: 180,
             valueGetter: (params) => {
                 const value = Number(params.data.lote_quantMax);
                 return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
             }
         },
         {
-            headerName: "Quantidade Atual",
-            width: 180,
+            headerName: "Quantidade Atual", width: 180,
             valueGetter: (params) => {
                 const value = Number(params.data.lote_quantAtual);
                 return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
             }
         },
         {
-            headerName: "Data De Validade", field: "lote_dtValidade", width: 180,
+            headerName: "Data De Validade", field: "lote_dtValidade", width: 180, filter: true,
             valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
         },
-        {
-            field: "produto_preco",
-            headerName: "Preço do Produto",
-            width: 160,
+        {   field: "produto_preco", headerName: "Preço do Produto", width: 160, filter: true,
             valueFormatter: (params) => {
                 return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
             }
         },
-        {
-            field: "lote_preco",
-            headerName: "Preço Total do Lote",
-            width: 180,
+        {   field: "lote_preco", headerName: "Preço Total do Lote", width: 180, filter: true,
             valueFormatter: (params) => {
                 return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
             }

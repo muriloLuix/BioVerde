@@ -455,7 +455,7 @@ export default function ProductionSteps() {
 	};
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
+		<div className="flex-1 p-6 pl-[280px] h-screen">
 			<div className="px-6 font-[inter] bg-brancoSal">
 				<h1 className=" text-[40px] font-semibold text-center mb-3">
 					Etapas de Produção
@@ -493,7 +493,8 @@ export default function ProductionSteps() {
 						<div className="flex items-center justify-start">
 							<div className="flex gap-10 max-h-[500px] h-[68vh]">
 								{/* SideBar Estrutura de produtos */}
-								<div className=" bg-gray-200 rounded-xl max-w-[350px] sombra flex flex-col h-full">
+								<div className="bg-gray-200 rounded-xl max-w-[350px] sombra flex flex-col h-full">
+									{/* Cabeçalho */}
 									<div className="bg-green-800 p-4 rounded-t-xl">
 										<h2 className="text-white text-center text-lg font-semibold">
 											Etapas de Produção
@@ -511,6 +512,8 @@ export default function ProductionSteps() {
 											/>
 										</div>
 									</div>
+
+									{/* Lista rolável */}
 									<div className="flex-1 overflow-y-auto custom-scrollbar-products">
 										{loading.has("steps") ? (
 											<div className="flex justify-center items-center h-full">
@@ -547,7 +550,19 @@ export default function ProductionSteps() {
 											</ul>
 										)}
 									</div>
+
+									{/* Botão fixo */}
+									<div className="p-1 bg-gray-300 hover:bg-gray-400 rounded-b-xl">
+										<button
+											// onClick={handleNovoProduto}
+											className="w-full cursor-pointer flex place-content-center gap-2 text-black font-semibold py-2 rounded-lg"
+										>
+											<Plus />
+											Novo Produto
+										</button>
+									</div>
 								</div>
+
 
 								{/* Tabela de Etapas */}
 								<div className="max-w-[50vw]">
@@ -557,10 +572,21 @@ export default function ProductionSteps() {
 										</div>
 									) : selectedProduct ? (
 										<>
-											<h2 className="text-2xl mb-4">
-												<strong>Produto Final:</strong>{" "}
-												{selectedProduct.produto_nome}
-											</h2>
+											<div className="flex items-center justify-between mb-4">
+												<h2 className="text-2xl flex items-center gap-2">
+													<strong>Produto Final:</strong>{" "}
+													{selectedProduct.produto_nome}
+													<PencilLine size={21} className="cursor-pointer ml-1"/>
+													<Trash size={21} className="text-red-500 cursor-pointer"/>
+												</h2>
+												<button
+												// onClick={gerarRelatorio}
+												className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+												>
+													<Plus />
+													Nova Etapa
+												</button>
+											</div>
 											<div className="max-h-[62vh] overflow-x-auto overflow-y-auto">
 												<table className="w-full border-collapse">
 													{/* Tabela Cabeçalho */}
