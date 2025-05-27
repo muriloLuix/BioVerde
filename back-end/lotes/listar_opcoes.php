@@ -1,16 +1,18 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header('Content-Type: application/json');
+/*************************************************/
 
 try {
+    /**************** VERIFICA CONEXÃO COM O BANCO ************************/
     if ($conn->connect_error) {
         throw new Exception("Erro na conexão com o banco de dados");
     }
+    /********************************************************************/
 
-    // Buscar produtos
+    /**************** BUSCAR PRODUTOS ************************/
     $produtos = buscarProdutos($conn);
 
     $unidade_medida = buscarUnidadeMedida($conn);
@@ -22,6 +24,7 @@ try {
     $classificacao = buscarClassificacaoProduto($conn);
 
     $localArmazenado = buscarLocaisArmazenamento($conn);
+    /*********************************************************/
 
     echo json_encode([
         "success" => true,

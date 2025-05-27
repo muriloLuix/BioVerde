@@ -15,7 +15,7 @@ import {
 	X,
 } from "lucide-react";
 
-import useVerificarNivelAcesso from "../../hooks/useCheckAccessLevel";
+import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 import {
 	AccessLevel,
 	JobPosition,
@@ -81,9 +81,6 @@ export default function UsersPage() {
 		dname: "",
 		reason: "",
 	});
-
-	//Verifica nível de acesso do usuário
-	useVerificarNivelAcesso();
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
@@ -665,6 +662,9 @@ export default function UsersPage() {
 	};
 
 	/* ----- Outras Funções ----- */
+
+	//Verifica nível de acesso do usuário
+	useCheckAccessLevel();
 
 	//Gerar Relatório
 	const gerarRelatorio = async () => {

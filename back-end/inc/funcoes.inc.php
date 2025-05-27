@@ -418,6 +418,81 @@ function buscarProdutos($conn)
 }
 
 /**
+ * Busca todos os pedidos registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os pedidos, onde cada pedido
+ *         é representado por um array com as chaves 'pedido_id'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os pedidos.
+ */
+function buscarPedidos($conn)
+{
+    $result = $conn->query("SELECT pedido_id FROM pedidos");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $pedidos = [];
+    while ($row = $result->fetch_assoc()) {
+        $pedidos[] = $row;
+    }
+
+    return $pedidos;
+}
+
+/**
+ * Busca todos os ltes registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os lotes, onde cada produto
+ *         é representado por um array com as chaves 'lote_id' e 'lote_codigo'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os lotes.
+ */
+function buscarLotes($conn)
+{
+    $result = $conn->query("SELECT lote_id, lote_codigo, produto_preco FROM lote");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $lotes = [];
+    while ($row = $result->fetch_assoc()) {
+        $lotes[] = $row;
+    }
+
+    return $lotes;
+}
+
+/**
+ * Busca todos os ltes registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os lotes, onde cada produto
+ *         é representado por um array com as chaves 'lote_id' e 'lote_codigo'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os lotes.
+ */
+function buscarUsuarios($conn)
+{
+    $result = $conn->query("SELECT user_id, user_nome FROM usuarios");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $usuarios = [];
+    while ($row = $result->fetch_assoc()) {
+        $usuarios[] = $row;
+    }
+
+    return $usuarios;
+}
+
+/**
  * Busca todos os fornecedores registrados no banco de dados.
  *
  * @param mysqli $conn Conexão com o banco de dados.
@@ -542,6 +617,31 @@ function buscarTipoProduto($conn)
     }
 
     return $tproduto_id;
+}
+
+/**
+ * Busca todas os motivos de movimentações registradas no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os motivos de movimentações, onde cada
+ *         motivo é representada por um array com as chaves 'motivo_id', 'mov_tipo' e 'motivo'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os motivos de movimentações.
+ */
+function buscarMotivoMovimentacoes($conn)
+{
+    $result = $conn->query("SELECT motivo_id, mov_tipo, motivo FROM motivo_movimentacoes");
+    if (!$result) {
+        throw new Exception("Erro ao buscar o tipo do produto: " . $conn->error);
+    }
+
+    $motivo_id = [];
+    while ($row = $result->fetch_assoc()) {
+        $motivo_id[] = $row;
+    }
+
+    return $motivo_id;
 }
 
 /**
@@ -1034,7 +1134,7 @@ function atualizarSenha($conn, $email, $novaSenha)
 {
     $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
 
-    $sql = "UPDATE usuarios SET user_senha = ? WHERE user_email = ?";
+    $sql = "UPDATE usuarios SET user_senha = ?, codigo_recuperacao_expira_em = NULL, codigo_recuperacao = NULL WHERE user_email = ?";
     $res = $conn->prepare($sql);
     $res->bind_param("ss", $senhaHash, $email);
     $res->execute();
@@ -1100,7 +1200,7 @@ function verificarEmailExiste($conn, $email)
  */
 function atualizarCodigoRecuperacao($conn, $email, $codigo)
 {
-    $update_sql = "UPDATE usuarios SET codigo_recuperacao = ? WHERE user_email = ?";
+    $update_sql = "UPDATE usuarios SET codigo_recuperacao = ?, codigo_recuperacao_expira_em = DATE_ADD(NOW(), INTERVAL 5 MINUTE) WHERE user_email = ?";
     $update_stmt = $conn->prepare($update_sql);
     if (!$update_stmt) {
         return ["success" => false, "message" => "Erro ao preparar atualização: " . $conn->error];
