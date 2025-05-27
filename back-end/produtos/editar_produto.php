@@ -35,46 +35,9 @@ try {
         throw new Exception('Produto não encontrado');
     }
 
-    // Validação dos campos obrigatórios
-    $camposObrigatorios = ['nome_produto', 'tipo', 'preco', 'status', 'fornecedor', 'obs'];
-    $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
-    if ($validacaoDosCampos !== null) {
-        echo json_encode($validacaoDosCampos);
-        exit();
-    }
-
-    // Busca o ID do fornecedor pelo nome
-    $fornecedorNome = $data['fornecedor'];
-    $stmt = $conn->prepare("SELECT fornecedor_id FROM fornecedores WHERE fornecedor_nome = ?");
-    $stmt->bind_param("s", $fornecedorNome);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows === 0) {
-        throw new Exception("Fornecedor não encontrado: " . $fornecedorNome);
-    }
-    
-    $fornecedor = $result->fetch_assoc();
-    $id_fornecedor = $fornecedor['fornecedor_id'];
-
-    // Validação do status
-    if (empty($data['status'])) {
-        throw new Exception("O campo status é obrigatório");
-    }
-
-    $sta_id = (int)$data['status'];
-    if ($sta_id <= 0) {
-        throw new Exception("Status inválido");
-    }
-
     // Atualiza produto
     $camposAtualizados = [
-        'produto_nome' => $data['nome_produto'],
-        'tproduto_id' => (int)$data['tipo'],
-        'produto_preco' => (float)$data['preco'],
-        'status_id' => $sta_id,
-        'id_fornecedor' => $id_fornecedor,
-        'produto_observacoes' => $data['obs']
+        'produto_nome' => $data['produto_nome'],
     ];
 
     $resultado = updateData($conn, "produtos", $camposAtualizados, $data['produto_id'], "produto_id");
@@ -90,7 +53,7 @@ try {
     ]);
 
 } catch (Exception $e) {
-    error_log("Erro em editar.produto.php: " . $e->getMessage());
+    error_log("Erro em editar_produto.php: " . $e->getMessage());
     echo json_encode([
         "success" => false, 
         "message" => $e->getMessage()

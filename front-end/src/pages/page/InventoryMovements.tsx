@@ -7,7 +7,7 @@ import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
 import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { PackagePlus, PackageMinus, FileSpreadsheet } from "lucide-react";
+import { PackagePlus, PackageMinus, FileSpreadsheet, FileText, Loader2, X } from "lucide-react";
 import { Modal, NoticeModal, SmartField } from "../../shared";
 import { SelectEvent, Movements, FormDataMovements } from "../../utils/types";
 
@@ -34,7 +34,7 @@ export default function InventoryMovements() {
         product: false,
         batch: false,
         quantity: false,
-        unit: false,
+        destination: false,
         reason: false,
         order: false,
     });
@@ -46,6 +46,8 @@ export default function InventoryMovements() {
     useEffect(() => {
         checkAuth({ navigate, setMessage, setOpenNoticeModal });
     }, [navigate]);
+
+    console.log(formData)
 
     //Carrega a lista os lotes e as opções nos selects ao renderizar a página
     useEffect(() => {
@@ -156,16 +158,20 @@ export default function InventoryMovements() {
 
     /* ----- Função para Efetuar entrada de produtos ----- */
 
+    const lotesFiltrados = options?.lotes.filter(
+        (lote) => String(lote.produto_id) === formData.produto
+    );
+
 	const handleStockInProduct = async (e: React.FormEvent) => {
 		e.preventDefault();
 		// Validações
 		const errors = {
-            product:  !formData.produto,
-            batch:    !formData.lote,
-            quantity: !formData.quantidade,
-            unit:     !formData.unidade,
-            reason:   !formData.motivo,
-            order:    isSaleCliente ? !formData.pedido : false,  
+            product:        !formData.produto,
+            batch:          !formData.lote,
+            quantity:       !formData.quantidade,
+            destination:    haveDestination ? !formData.destino : false,
+            reason:         !formData.motivo,
+            order:          isSaleCliente ? !formData.pedido : false,  
 		};
 		setErrors(errors);
 		// Se algum erro for true, interrompe a execução
@@ -205,19 +211,20 @@ export default function InventoryMovements() {
 		}
 	};
 
-    /* ----- Função para Efetuar entrada de produtos ----- */
+    /* ----- Função para Efetuar saída de produtos ----- */
     const isSaleCliente = formData.motivo === "9";
+    const [haveDestination, setHaveDestination] = useState(false);
 
     const handleStockOutProduct = async (e: React.FormEvent) => {
 		e.preventDefault();
 		// Validações
 		const errors = {
-            product:  !formData.produto,
-            batch:    !formData.lote,
-            quantity: !formData.quantidade,
-            unit:     !formData.unidade,
-            reason:   !formData.motivo,
-            order:    isSaleCliente ? !formData.pedido : false,  
+            product:        !formData.produto,
+            batch:          !formData.lote,
+            quantity:       !formData.quantidade,
+            destination:    haveDestination ? !formData.destino : false,
+            reason:         !formData.motivo,
+            order:          isSaleCliente ? !formData.pedido : false,  
 		};
 		setErrors(errors);
 		// Se algum erro for true, interrompe a execução
@@ -261,18 +268,34 @@ export default function InventoryMovements() {
 
     //OnChange dos campos
     const handleChange = (
-        event: 
-            | React.ChangeEvent< HTMLInputElement | HTMLTextAreaElement> 
-            | SelectEvent
+    event:
+        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        | SelectEvent
     ) => {
         const { name, value } = event.target;
-        if (name in formData) { setFormData({ ...formData, [name]: value }) }
+
+        let newFormData = { ...formData, [name]: value };
+        if (name === "produto" && value === "") {
+            newFormData.lote = "";
+        }
+        if (name === "lote") {
+            const loteSelecionado = options?.lotes.find(
+                (lote) => String(lote.lote_id) === value
+            );
+            if (loteSelecionado) {
+                newFormData = {
+                    ...newFormData,
+                    unidade: String(loteSelecionado.uni_id), 
+                };
+            }
+        }
+        setFormData(newFormData);
+
         setErrors((prevErrors) =>
-            Object.fromEntries(
-                Object.keys(prevErrors).map((key) => [key, false])
-            ) as typeof prevErrors
+            Object.fromEntries(Object.keys(prevErrors).map((key) => [key, false])) as typeof prevErrors
         );
     };
+
     
     //Limpar formData
     const clearFormData = () => {
@@ -284,6 +307,42 @@ export default function InventoryMovements() {
             ) as unknown as FormDataMovements
         );
     };
+
+    //Gerar Relatório
+    const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/mov.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+			const contentType = response.headers["content-type"];
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
+	};
 
     /* ----- Definição de colunas e dados que a tabela de movimentações vai receber ----- */
 
@@ -346,31 +405,48 @@ export default function InventoryMovements() {
         <Tabs.Content value="movements" className="w-full flex flex-col py-2 px-4">
             {/* Botões de Exportar CSV e Novo Lote */}
             <div className="flex justify-between">
-                {/* Botão de Abrir Modal de Cadastro de Lote */}
-                <div className="flex gap-8">
-                    <div className="mt-1 mb-3">
-                        <button
-                            type="button"
-                            className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-                            onClick={() => {setOpenStockInModal(true); clearFormData()}}
-                        >
-                            <PackagePlus  />
-                            Adicionar Produto
-                        </button>
-                    </div>
-                    <div className="mt-1 mb-3">
-                        <button
-                            type="button"
-                            className="bg-gray-300 py-2.5 px-4 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2"
-                            onClick={() => {setOpenStockOutModal(true); clearFormData()}}
-                        >
-                            <PackageMinus />
-                            Retirar Produto
-                        </button>
-                    </div>
+                {/* Botão de Abrir Modal de Cadastro de Entrada e Saída de Produtos */}
+                <div className="flex items-center gap-5 mt-1 mb-3">
+                    <button
+                        type="button"
+                        className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+                        onClick={() => {
+                            setOpenStockInModal(true); 
+                            setHaveDestination(false);
+                            clearFormData();
+                        }}
+                    >
+                        <PackagePlus  />
+                        Adicionar Produto
+                    </button>
+                    <button
+                        type="button"
+                        className="bg-gray-300 py-2.5 px-4 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2"
+                        onClick={() => {
+                            setOpenStockOutModal(true); 
+                            setHaveDestination(true);
+                            clearFormData();
+                        }}
+                    >
+                        <PackageMinus />
+                        Retirar Produto
+                    </button>
                 </div>
-                {/* Botão de exportar para CSV dos dados da tabela */}
-                <div className="mt-1 mb-3">
+                {/* Botão de exportar para CSV e PDF dos dados da tabela */}
+                <div className="flex items-center gap-5 mt-1 mb-3">
+                    <button
+                        onClick={gerarRelatorio}
+                        className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+                    >
+                        {loading.has("reports") ? (
+                            <Loader2 className="animate-spin h-6 w-6" />
+                        ) : (
+                            <>
+                                <FileText />
+                                Exportar PDF
+                            </>
+                        )}
+                    </button>
                     <button
                         onClick={() => {
                             const params = {
@@ -441,9 +517,10 @@ export default function InventoryMovements() {
                     isLoading={loading.has("options")}
                     error={errors.batch ? "*" : undefined}
                     value={formData.lote}
+                    noOptionsMessage={() => "Nenhum Lote encontrado com o Produto selecionado"}
                     placeholder="Selecione o lote"
                     onChangeSelect={handleChange}
-                    options={options?.lotes.map((lote) => ({
+                    options={lotesFiltrados?.map((lote) => ({
                         label: lote.lote_codigo,
                         value: String(lote.lote_id),
                     }))}
@@ -451,30 +528,30 @@ export default function InventoryMovements() {
 
                 <div className="flex gap-10">
                     <SmartField
-                    fieldName="quantidade"
-                    fieldText="Quantidade"
-                    error={errors.quantity ? "*" : undefined}
-                    fieldClassname="flex flex-col flex-1"
-                    type="number"
-                    value={formData.quantidade}
-                    onChange={handleChange}
-                    placeholder="Quantidade"
+                        fieldName="quantidade"
+                        fieldText="Quantidade"
+                        error={errors.quantity ? "*" : undefined}
+                        fieldClassname="flex flex-col flex-1"
+                        type="number"
+                        value={formData.quantidade}
+                        onChange={handleChange}
+                        placeholder="Quantidade"
                     />
-                    <SmartField
-                    fieldName="unidade"
-                    fieldText="Unidade de Medida"
-                    isSelect
-                    fieldClassname="flex flex-col flex-1"
-                    isLoading={loading.has("options")}
-                    error={errors.unit ? "*" : undefined}
-                    value={formData.unidade}
-                    placeholder="Selecione"
-                    onChangeSelect={handleChange}
-                    options={options?.unidade_medida.map((unidade) => ({
-                        label: unidade.uni_nome,
-                        value: String(unidade.uni_id),
-                    }))}
-                    />
+                    {formData.lote && (
+                        <SmartField
+                            fieldName="unidade"
+                            fieldText="Unidade de Medida"
+                            isDisabled
+                            inputWidth="w-[200px]"
+                            placeholder="Unidade de Medida"
+                            readOnly
+                            value={
+                                options?.unidade_medida.find(
+                                    (u) => String(u.uni_id) === formData.unidade
+                                )?.uni_nome || ""
+                            }
+                        />
+                    )}
                 </div>
 
                 <SmartField
@@ -544,8 +621,9 @@ export default function InventoryMovements() {
                     error={errors.batch ? "*" : undefined}
                     value={formData.lote}
                     placeholder="Selecione o lote"
+                    noOptionsMessage={() => "Nenhum Lote encontrado com o Produto selecionado"}
                     onChangeSelect={handleChange}
-                    options={options?.lotes.map((lote) => ({
+                    options={lotesFiltrados?.map((lote) => ({
                         label: lote.lote_codigo,
                         value: String(lote.lote_id),
                     }))}
@@ -553,30 +631,30 @@ export default function InventoryMovements() {
 
                 <div className="flex gap-10">
                     <SmartField
-                    fieldName="quantidade"
-                    fieldText="Quantidade"
-                    error={errors.quantity ? "*" : undefined}
-                    fieldClassname="flex flex-col flex-1"
-                    type="number"
-                    value={formData.quantidade}
-                    onChange={handleChange}
-                    placeholder="Quantidade"
+                        fieldName="quantidade"
+                        fieldText="Quantidade"
+                        error={errors.quantity ? "*" : undefined}
+                        fieldClassname="flex flex-col flex-1"
+                        type="number"
+                        value={formData.quantidade}
+                        onChange={handleChange}
+                        placeholder="Quantidade"
                     />
-                    <SmartField
-                    fieldName="unidade"
-                    fieldText="Unidade de Medida"
-                    isSelect
-                    fieldClassname="flex flex-col flex-1"
-                    isLoading={loading.has("options")}
-                    error={errors.unit ? "*" : undefined}
-                    value={formData.unidade}
-                    placeholder="Selecione"
-                    onChangeSelect={handleChange}
-                    options={options?.unidade_medida.map((unidade) => ({
-                        label: unidade.uni_nome,
-                        value: String(unidade.uni_id),
-                    }))}
-                    />
+                    {formData.lote && (
+                        <SmartField
+                            fieldName="unidade"
+                            fieldText="Unidade de Medida"
+                            isDisabled
+                            inputWidth="w-[200px]"
+                            placeholder="Unidade de Medida"
+                            readOnly
+                            value={
+                                options?.unidade_medida.find(
+                                    (u) => String(u.uni_id) === formData.unidade
+                                )?.uni_nome || ""
+                            }
+                        />
+                    )}
                 </div>
                 
                 <div className="flex gap-10">
@@ -620,7 +698,7 @@ export default function InventoryMovements() {
                 <SmartField
                     fieldName="destino"
                     fieldText="Destino do Produto"
-                    required
+                    error={errors.destination ? "*" : undefined}
                     placeholder="Digite o Destino do Produto"
                     value={formData.destino}
                     onChange={handleChange}
@@ -645,6 +723,49 @@ export default function InventoryMovements() {
             successMsg={successMsg}
             message={message}
         />
+
+        {/* Modal de Relatório */}
+        {relatorioModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">Relatório de Movimentações</h2>
+                        <button
+                            onClick={() => setRelatorioModalOpen(false)}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto mb-4">
+                        {relatorioContent ? (
+                            <iframe
+                                src={relatorioContent}
+                                className="w-full h-full min-h-[70vh] border"
+                                title="Relatório de Movimentações"
+                            />
+                        ) : (
+                            <p>Carregando relatório...</p>
+                        )}
+                    </div>
+                    <div className="flex justify-end gap-4">
+                        <a
+                            href={relatorioContent}
+                            download="relatorio_movimentacoes.pdf"
+                            className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+                        >
+                            Baixar Relatório
+                        </a>
+                        <button
+                            onClick={() => setRelatorioModalOpen(false)}
+                            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 }

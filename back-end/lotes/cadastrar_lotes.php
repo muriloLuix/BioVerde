@@ -39,33 +39,8 @@ if ($validacaoDosCampos !== null) {
     exit();
 }
 
-/**************** INSERIR NOVO PRODUTO NA TABELA DE PRODUTOS ************************/
-$produto_nome = trim($data['produto']);
-
-// Verifica se o produto já existe (opcional)
-$checkProdutoStmt = $conn->prepare("SELECT produto_id FROM produtos WHERE produto_nome = ?");
-$checkProdutoStmt->bind_param("s", $produto_nome);
-$checkProdutoStmt->execute();
-$checkResult = $checkProdutoStmt->get_result();
-
-if ($checkResult->num_rows > 0) {
-    // Produto já existe
-    $existing = $checkResult->fetch_assoc();
-    $produto_id = $existing['produto_id'];
-} else {
-    // Produto não existe, insere
-    $insertProdutoStmt = $conn->prepare("INSERT INTO produtos (produto_nome) VALUES (?)");
-    $insertProdutoStmt->bind_param("s", $produto_nome);
-    if ($insertProdutoStmt->execute()) {
-        $produto_id = $insertProdutoStmt->insert_id;
-    } else {
-        echo json_encode(["success" => false, "message" => "Erro ao cadastrar o produto: " . $insertProdutoStmt->error]);
-        exit();
-    }
-}
-/************************************************************/
-
 /**************** DEFINE E CONVERTE VALORES *******************/
+$produto_id = (int) $data['produto'];
 $uni_id = (int) $data['unidade'];
 $tipo_id = (int) $data['tipo'];
 $fornecedor_id = (int) $data['fornecedor'];

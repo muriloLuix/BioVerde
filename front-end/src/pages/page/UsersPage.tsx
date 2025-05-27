@@ -566,7 +566,6 @@ export default function UsersPage() {
 		}
 	};
 
-	console.log(deletedId);
 
 	const updatePosition = async (id: number, editedValue: string) => {
 		setLoading((prev) => new Set([...prev, "options"]));
@@ -1117,7 +1116,6 @@ export default function UsersPage() {
 									error={errors.position ? "*" : undefined}
 									isLoading={loading.has("options")}
 									value={formData.cargo}
-									onChange={handleChange}
 									placeholder="Selecione o Cargo"
 									creatableConfigName="Gerenciar Cargos"
 									inputWidth="w-[275px]"
@@ -1205,9 +1203,9 @@ export default function UsersPage() {
 					modalTitle="Gerenciamento de Cargos:"
 					withExitButton
 					withXButton
-					isLoading={loading.has("registerPosition")}
+					isLoading={loading.has("options")}
 				>
-					<div className="min-w-[30vw] max-w-[50vw] overflow-auto h-[60vh] mb-5 mt-2">
+					<div className="min-w-[30vw] max-w-[50vw] overflow-auto max-h-[60vh] mb-5 mt-2">
 						<table className="w-full border-collapse">
 							{/* Tabela Cabeçalho */}
 							<thead>

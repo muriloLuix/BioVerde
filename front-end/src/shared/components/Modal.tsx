@@ -58,7 +58,7 @@ const Modal = ({
 				</button>
 			</Dialog.Trigger>
 			<Dialog.Portal>
-				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-40" />
+				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-50" />
 				<Dialog.Content
 					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg max-h-[90vh] overflow-auto custom-scrollbar-modal`}
 				>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 // import { InputMaskChangeEvent } from "primereact/inputmask";
 import { Tabs } from "radix-ui";
-import { Pencil, Trash2, Plus, FileSpreadsheet } from "lucide-react";
+import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, PencilLine, Trash, FileText, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
@@ -11,7 +11,7 @@ import { Modal, NoticeModal, ConfirmationModal } from "../../shared";
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
-import { Batch, BatchOptions, SelectEvent, FormDataBatch, DeleteBatch } from "../../utils/types";
+import { Batch, BatchOptions, SelectEvent, FormDataBatch, DeleteBatch, Product } from "../../utils/types";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function InventoryList() {
@@ -20,6 +20,8 @@ export default function InventoryList() {
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [openConfirmModal, setOpenConfirmModal] = useState(false);
     const [openNoticeModal, setOpenNoticeModal] = useState(false);
+    const [openProductModal, setOpenProductModal] = useState(false);
+    const [openProductConfirmModal, setOpenProductConfirmModal] = useState(false);
     const [loading, setLoading] = useState<Set<string>>(new Set());
     const [options, setOptions] = useState<BatchOptions>();
     const [userLevel, setUserLevel] = useState("");
@@ -339,6 +341,124 @@ export default function InventoryList() {
 		}
 	};
 
+    /* ----- Funções para CRUD de Produtos ----- */
+
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [deletedId, setDeletedId] = useState<number | null>(null);
+	const [editedValue, setEditedValue] = useState<string>("");
+    
+    const handleEditProduct = (produto: Product) => {
+		setEditingId(produto.produto_id);
+		setEditedValue(produto.produto_nome);
+	};
+	const handleDeleteProduct = (produto: Product) => {
+		setDeletedId(produto.produto_id);
+		setOpenProductConfirmModal(true);
+	};
+    //Função para criar produto
+	const createProduct = async (produtoNome: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/produtos/cadastrar_produto.php",
+				{ produto: produtoNome },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Produto cadastrado com sucesso!");
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar Produto");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+    //Função para editar produto
+	const updateProduct = async (id: number, editedValue: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		try {
+			const dataToSend = {
+				produto_id: id,
+				produto_nome: editedValue,
+			};
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/produtos/editar_produto.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Produto atualizado com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar Produto.");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+    //Função para excluir produto
+	const deleteProduct = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "deleteProduct"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/produtos/excluir_produto.php",
+				{ produto_id: deletedId },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			if (response.data.success) {
+				await fetchOptions();
+				setOpenProductConfirmModal(false);
+				setSuccessMsg(true);
+				setMessage("Produto excluído com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir Produto.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor")
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteProduct");
+				return newLoading;
+			});
+		}
+	};
+
     /* ----- Outras Funções ----- */
 
     //Verifica nível de acesso do usuário
@@ -378,6 +498,42 @@ export default function InventoryList() {
             ) as unknown as FormDataBatch
         );
     };
+
+    //Gerar Relatório
+    const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
+		try {
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/rel/lotes.rel.php",
+				{
+					responseType: "blob",
+					withCredentials: true,
+				}
+			);
+			const contentType = response.headers["content-type"];
+			if (contentType !== "application/pdf") {
+				const errorText = await response.data.text();
+				throw new Error(`Erro ao gerar relatório: ${errorText}`);
+			}
+			const fileURL = URL.createObjectURL(
+				new Blob([response.data], { type: "application/pdf" })
+			);
+			setRelatorioContent(fileURL);
+			setRelatorioModalOpen(true);
+		} catch (error) {
+			console.error("Erro ao gerar relatório:", error);
+			setMessage("Erro ao gerar relatório");
+			setOpenNoticeModal(true);
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("reports");
+				return newLoading;
+			});
+		}
+	};
 
     /* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
@@ -487,8 +643,21 @@ export default function InventoryList() {
                         Novo Lote
                     </button>
                 </div>
-                {/* Botão de exportar para CSV dos dados da tabela */}
-                <div className="mt-1 mb-3">
+                {/* Botão de exportar para CSV e PDF dos dados da tabela */}
+                <div className="flex items-center gap-5 mt-1 mb-3">
+                    <button
+                        onClick={gerarRelatorio}
+                        className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+                    >
+                        {loading.has("reports") ? (
+                            <Loader2 className="animate-spin h-6 w-6" />
+                        ) : (
+                            <>
+                                <FileText />
+                                Exportar PDF
+                            </>
+                        )}
+                    </button>
                     <button
                         onClick={() => {
                             const params = {
@@ -541,6 +710,9 @@ export default function InventoryList() {
                 options={options}
                 loading={loading}
                 errors={errors}
+                userLevel={userLevel}
+                openProductModal={() => setOpenProductModal(true)}
+                createProduct={createProduct}
                 handleChange={handleChange}
                 handlePriceChange={handlePriceChange}
             />
@@ -601,6 +773,167 @@ export default function InventoryList() {
             successMsg={successMsg}
             message={message}
         />
+        {/* Modal de Cadastro de Produto */}
+        <Modal
+            openModal={openProductModal}
+            setOpenModal={setOpenProductModal}
+            modalTitle="Gerenciamento de Produtos:"
+            withExitButton
+            withXButton
+            isLoading={loading.has("options")}
+        >
+            <div className="min-w-[30vw] max-w-[50vw] overflow-auto max-h-[60vh] mb-5 mt-2">
+                <table className="w-full border-collapse">
+                    {/* Tabela Cabeçalho */}
+                    <thead>
+                        <tr className="bg-verdePigmento text-white shadow-thead">
+                            {["Produto", "Ações"].map((header) => (
+                                <th key={header} className="border border-black p-3 whitespace-nowrap">
+                                    {header}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading.has("options") ? (
+                            <tr>
+                                <td colSpan={9} className="text-center py-3">
+                                    <Loader2 className="animate-spin h-8 w-8 mx-auto" />
+                                </td>
+                            </tr>
+                        ) : options?.produtos.length === 0 ? (
+                            <tr>
+                                <td colSpan={9} className="text-center py-3">
+                                    Nenhum produto encontrado
+                                </td>
+                            </tr>
+                        ) : (
+                            //Tabela Dados
+                            options?.produtos.map((produto, index) => (
+                                <tr
+                                    key={produto.produto_id}
+                                    className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
+                                >
+                                    <td className="border border-black p-3 text-center whitespace-nowrap">
+                                        {editingId === produto.produto_id ? (
+                                            <input
+                                                type="text"
+                                                className="border p-1"
+                                                value={editedValue}
+                                                onChange={(e) => setEditedValue(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter")
+                                                        updateProduct(produto.produto_id, editedValue);
+                                                }}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            produto.produto_nome
+                                        )}
+                                    </td>
+                                    <td className="border border-black p-3 text-center whitespace-nowrap">
+                                        {editingId === produto.produto_id ? (
+                                            <>
+                                                <button
+                                                    className="ml-2 cursor-pointer"
+                                                    onClick={() =>
+                                                        updateProduct(produto.produto_id, editedValue)
+                                                    }
+                                                    title="Salvar"
+                                                >
+                                                    ✔
+                                                </button>
+                                                <button
+                                                    className="ml-2 cursor-pointer"
+                                                    onClick={() => setEditingId(null)}
+                                                    title="Cancelar"
+                                                >
+                                                    ❌
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    className="text-black cursor-pointer"
+                                                    onClick={() => handleEditProduct(produto)}
+                                                    title="Editar produto"
+                                                >
+                                                    <PencilLine />
+                                                </button>
+                                                {userLevel === "Administrador" && (
+                                                    <button
+                                                        className="text-red-500 cursor-pointer ml-3"
+                                                        onClick={() => handleDeleteProduct(produto)}
+                                                        title="Excluir produto"
+                                                    >
+                                                        <Trash />
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </Modal>
+
+        {/* Alert para confirmar exclusão do produto */}
+        <ConfirmationModal
+            openModal={openProductConfirmModal}
+            setOpenModal={setOpenProductConfirmModal}
+            confirmationModalTitle="Tem certeza que deseja excluir o produto?"
+            confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+            onConfirm={deleteProduct}
+            isLoading={loading.has("deleteProduct")}
+            confirmationLeftButtonText="Cancelar"
+            confirmationRightButtonText="Sim, excluir produto"
+        />
+
+        {/* Modal de Relatório */}
+        {relatorioModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">Relatório de Lotes</h2>
+                        <button
+                            onClick={() => setRelatorioModalOpen(false)}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto mb-4">
+                        {relatorioContent ? (
+                            <iframe
+                                src={relatorioContent}
+                                className="w-full h-full min-h-[70vh] border"
+                                title="Relatório de Lotes"
+                            />
+                        ) : (
+                            <p>Carregando relatório...</p>
+                        )}
+                    </div>
+                    <div className="flex justify-end gap-4">
+                        <a
+                            href={relatorioContent}
+                            download="relatorio_lotes.pdf"
+                            className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
+                        >
+                            Baixar Relatório
+                        </a>
+                        <button
+                            onClick={() => setRelatorioModalOpen(false)}
+                            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                        >
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 }

@@ -454,7 +454,7 @@ function buscarPedidos($conn)
  */
 function buscarLotes($conn)
 {
-    $result = $conn->query("SELECT lote_id, lote_codigo, produto_preco FROM lote");
+    $result = $conn->query("SELECT lote_id, lote_codigo, produto_preco, produto_id, uni_id FROM lote");
     if (!$result) {
         throw new Exception("Erro ao buscar status: " . $conn->error);
     }
