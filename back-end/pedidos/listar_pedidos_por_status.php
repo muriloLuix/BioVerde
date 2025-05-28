@@ -4,12 +4,6 @@ ini_set('display_errors', 1);
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
 
-// quantidade de pedidos separados por status no mês
-// valor total arrecadado de pedidos no mês
-
-// produto acabado mais pedido
-// produto matéria-prima mais usado
-
 
 if ($conn->connect_error) {
     throw new Exception("Erro na conexão com o banco de dados");
@@ -41,3 +35,5 @@ $query = '
 advancedSearch($conn, $query);
 
 $conn->close();
+
+?>

@@ -8,7 +8,6 @@ import { AgChartOptions } from "ag-charts-community";
 
 import {
 	Loader2,
-	Mail,
 	Package,
 	PackageCheck,
 	PackageOpen,
@@ -27,6 +26,85 @@ const Dashboard = () => {
 		<Package className="text-white" />,
 		<PackageCheck className="text-white" />,
 	];
+
+	const [barOptions, setBarOptions] = useState<AgChartOptions>({
+		series: [
+			{
+				type: "bar",
+				xKey: "classificacao_nome",
+				yKey: "quantity",
+				yName: "Classificação",
+			},
+		],
+		title: {
+			text: "QUALIDADE DOS LOTES",
+			color: "#fff",
+			fontSize: 20,
+			fontWeight: "bold",
+			fontFamily: "inter",
+		},
+		background: {
+			visible: false,
+		},
+		theme: {
+			palette: {
+				fills: ["limegreen"],
+				strokes: ["limegreen"],
+			},
+			overrides: {
+				bar: {
+					series: {
+						strokeWidth: 2,
+					},
+					axes: {
+						category: {
+							line: {
+								stroke: "#fff",
+							},
+							label: {
+								color: "#fff",
+							},
+						},
+						number: {
+							line: {
+								stroke: "#fff",
+							},
+							label: {
+								color: "#fff",
+							},
+						},
+					},
+				},
+			},
+		},
+	});
+	const [pieOptions, setPieOptions] = useState<AgChartOptions>({
+		series: [
+			{
+				type: "pie",
+				angleKey: "value",
+				legendItemKey: "label",
+				fills: ["red", "limegreen"],
+			},
+		],
+		title: {
+			text: "OCUPAÇÃO DO ESTOQUE",
+			color: "white",
+			fontSize: 20,
+			fontWeight: "bold",
+			fontFamily: "inter",
+		},
+		background: {
+			visible: false,
+		},
+		legend: {
+			item: {
+				label: {
+					color: "white",
+				},
+			},
+		},
+	});
 	const [lineOptions, setLineOptions] = useState<AgChartOptions>({
 		theme: {
 			palette: {
@@ -64,14 +142,41 @@ const Dashboard = () => {
 				},
 			},
 		},
-		series: [{ type: "line", xKey: "monthName", yKey: "rawValue" }],
+		series: [
+			{
+				type: "line",
+				xKey: "monthName",
+				yKey: "rawValue",
+				yName: "Valor Bruto",
+				stroke: "lightgreen",
+			},
+			{
+				type: "line",
+				xKey: "monthName",
+				yKey: "quantity",
+				yName: "Quantidade",
+				stroke: "gray",
+			},
+		],
 		title: {
-			text: "PEDIDOS POR MÊS",
+			text: "FATURAMENTO",
 			color: "#fff",
-			fontSize: 24,
+			fontSize: 20,
+			fontWeight: "bold",
+			fontFamily: "inter",
+		},
+		subtitle: {
+			text: "2025",
+			color: "#fff",
+			fontSize: 12,
+			fontFamily: "inter",
+			fontWeight: "bold",
 		},
 		background: {
 			visible: false,
+		},
+		legend: {
+			enabled: false,
 		},
 		overlays: {
 			loading: {
@@ -85,52 +190,97 @@ const Dashboard = () => {
 	const [products, setProducts] = useState<QuantityByStatus[] | null>();
 	const [isLoading, setIsLoading] = useState(false);
 
-	const fetchData = useCallback(async (url: string, params: object) => {
+	const loadStatusData = useCallback(async () => {
 		try {
-			const request = await axios.post(url, params);
+			setIsLoading(true);
+			const req = await axios.post(
+				"http://localhost/BioVerde/back-end/pedidos/listar_pedidos_por_status.php",
+				{
+					start: "2025-01-01",
+					end: "2025-12-31",
+				}
+			);
 
-			return request.data.data;
+			setProducts(req.data.data);
 		} catch (err) {
-			console.log(err);
+			console.error(err);
+		} finally {
+			setIsLoading(false);
 		}
 	}, []);
 
-	const loadStatusData = useCallback(async () => {
-		setIsLoading(true);
-		const data = await fetchData(
-			"http://localhost/BioVerde/back-end/pedidos/listar_pedidos_por_status.php",
-			{
-				start: "2025-01-01",
-				end: "2025-12-31",
-			}
-		);
+	const loadLineChart = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			const req = await axios.post(
+				"http://localhost/BioVerde/back-end/pedidos/valor_total_pedidos.php",
+				{
+					start: "2025-01-01",
+					end: "2025-12-31",
+				}
+			);
 
-		console.log(data);
-
-		setProducts(data);
-		setIsLoading(false);
+			setLineOptions({ ...lineOptions, data: req.data.data });
+		} catch (err) {
+			console.log(err);
+		} finally {
+			setIsLoading(false);
+		}
 	}, []);
 
-	const loadChartData = useCallback(async () => {
-		setIsLoading(true);
-		const data = await fetchData(
-			"http://localhost/BioVerde/back-end/pedidos/valor_total_pedidos.php",
-			{
-				start: "2025-01-01",
-				end: "2025-12-31",
-			}
-		);
+	const loadPieChart = useCallback(async () => {
+		try {
+			setIsLoading(true);
 
-		console.log(data);
+			const res = await axios.get(
+				"http://localhost/BioVerde/back-end/estoque/listar_dados.php"
+			);
 
-		setLineOptions({ ...lineOptions, data: data });
-		setIsLoading(false);
+			const data = res.data.data;
+
+			const pieData = [
+				{
+					value: Number(data[0].estoque_atual),
+					label: "Ocupado",
+				},
+				{
+					value:
+						Number(data[0].estoque_capacidadeMax) -
+						Number(data[0].estoque_atual),
+					label: "Disponível",
+				},
+			];
+
+			setPieOptions({
+				...pieOptions,
+				data: pieData ?? [],
+			});
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	const load = useCallback(async () => {
+		try {
+			const req = await axios.get(
+				"http://localhost/BioVerde/back-end/lotes/lotes_por_classificacao.php"
+			);
+
+			console.log(req.data);
+			setBarOptions({ ...barOptions, data: req.data.data });
+		} catch (err) {
+			console.error(err);
+		}
 	}, []);
 
 	useEffect(() => {
 		loadStatusData();
-		loadChartData();
-	}, [fetchData]);
+		loadLineChart();
+		loadPieChart();
+		load();
+	}, []);
 
 	return isLoading ? (
 		<div className="pl-64 h-screen w-full flex justify-center items-center">
@@ -170,25 +320,11 @@ const Dashboard = () => {
 				</div>
 
 				<div className="h-4/12 w-full gap-4 flex items-center justify-around">
-					<div className="h-full w-1/2 p-3 bg-verdeEscuroForte rounded-lg overflow-auto">
-						<div className="h-1/5 w-full flex items-center p-2 gap-2">
-							<Mail className="text-white" />
-							<span className="text-lg font-semibold text-white">
-								NOTIFICAÇÕES
-							</span>
-						</div>
-						<Separator.Root className="h-0.25 w-full m-auto bg-white" />
-						{/* {messages.map((msg, index) => (
-							<div
-								key={index}
-								className="h-1/5 w-full my-1 flex items-center p-2 bg-verdeMedio hover:bg-verdeEscuro rounded-lg cursor-pointer"
-							>
-								<span className="text-sm text-white">{msg}</span>
-							</div>
-						))} */}
+					<div className="h-full w-1/2 p-3 bg-verdeEscuroForte rounded-lg">
+						<AgCharts className="h-full w-full" options={barOptions} />
 					</div>
 					<div className="h-full w-1/2 flex flex-col items-center justify-center p-2 bg-verdeEscuroForte rounded-lg">
-						{/* <AgCharts className="h-full w-full" options={pieOptions} /> */}
+						<AgCharts className="h-full w-full" options={pieOptions} />
 					</div>
 				</div>
 				<div className="h-4/12 w-full rounded-lg p-1 box-border text-center shadow-xl bg-verdeEscuroForte">

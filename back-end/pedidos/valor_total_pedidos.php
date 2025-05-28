@@ -4,9 +4,6 @@ ini_set('display_errors', 1);
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
 
-// produto acabado mais pedido
-// produto matéria-prima mais usado
-
 if ($conn->connect_error) {
     throw new Exception("Erro na conexão com o banco de dados");
 }
@@ -24,12 +21,15 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 
 $query = '
     SELECT 
-        YEAR(p.pedido_dtCadastro) AS year,
-        MONTH(p.pedido_dtCadastro) AS month,
-        MONTHNAME(p.pedido_dtCadastro) AS monthName,
-        SUM(p.pedido_valor_total) as rawValue
+        YEAR(p.pedido_prevEntrega) AS year,
+        MONTH(p.pedido_prevEntrega) AS month,
+        MONTHNAME(p.pedido_prevEntrega) AS monthName,
+        SUM(p.pedido_valor_total) AS rawValue,
+        COUNT(p.pedido_id) AS quantity
     FROM pedidos p
-    WHERE p.pedido_dtCadastro BETWEEN \'' . $data['start'] . '\' AND \'' . $data['end'] . '\'
+    WHERE 
+        p.pedido_dtCadastro BETWEEN \'' . $data['start'] . '\' AND \'' . $data['end'] . '\'
+        AND p.stapedido_id = 4
     GROUP BY year, month
     ORDER BY year, month
 ';
@@ -38,3 +38,4 @@ $query = '
 advancedSearch($conn, $query);
 
 $conn->close();
+?>
