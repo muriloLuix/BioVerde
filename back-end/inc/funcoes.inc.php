@@ -46,6 +46,16 @@ function validarCampos($data, $requiredFields)
                 ];
             }
 
+            if ($field === "tel") {
+                $tel = preg_replace('/\D/', '', $data[$field]);
+                if (strlen($tel) < 8 || preg_match('/^(\d)\1+$/', $tel)) {
+                    return [
+                        "success" => false,
+                        "message" => "O valor inserido no campo '$field' é uma repetição de um número! Insira um número telefone válido"
+                    ];
+                }
+            }
+
             $textFields = ["nome_produto", "nome_empresa_fornecedor", "nome_empresa_cliente"];
 
             // em pessoas fisicas e produtos, verifica se tem algum numero nos nomes
