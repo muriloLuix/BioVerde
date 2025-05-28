@@ -60,8 +60,7 @@ border-radius: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-background: #c31b1b;
-/* background: #26382f; */
+background: #26382f;
 border-radius: 8px;
 }
 .custom-scrollbar-products::-webkit-scrollbar {

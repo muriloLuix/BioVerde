@@ -193,6 +193,18 @@ export interface Movements {
 	pedidos: OrderType[];
 }
 
+export interface ProductsWithSteps {
+	produto_id: number;
+	produto_nome: string;
+	etapas: Etapa[];
+};
+
+export interface Etapa extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
+	etor_id: number;
+	dtCadastro?: string;
+}
+
+
 // ------ FormsData ------
 
 export interface FormDataBatch {
@@ -222,6 +234,18 @@ export interface FormDataMovements {
   destino: string;
   obs: string;
 }
+
+export interface FormDataSteps {
+	produto_id: number;
+	produto_nome: string;
+	etor_id: number;
+	ordem: number;
+	nome_etapa: string;
+	tempo: string;
+	insumos: string;
+	responsavel: string;
+	obs: string;
+};
 
 // ------ FormsDataDelete ------
 

@@ -1,11 +1,6 @@
 import {useState, useEffect, useRef} from "react";
 import {AgGridReact} from "ag-grid-react";
-import {
-    AllCommunityModule,
-    ColDef,
-    themeQuartz,
-    ValueFormatterParams
-} from "ag-grid-community";
+import { AllCommunityModule, ColDef, themeQuartz, ValueFormatterParams, ICellRendererParams } from "ag-grid-community";
 import axios from "axios";
 import {Tabs} from "radix-ui";
 import {useNavigate} from "react-router-dom";
@@ -13,10 +8,7 @@ import {Modal, NoticeModal} from "../../shared";
 import {Eye,FileSpreadsheet} from "lucide-react";
 import {Logs} from "../../utils/types.ts";
 import {agGridTranslation} from "../../utils/agGridTranslation.ts";
-import {
-    overlayLoadingTemplate,
-    overlayNoRowsTemplate
-} from "../../utils/gridOverlays.ts";
+import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays.ts";
 
 function formatDateBR(value?: string): string {
     if (!value) return "";
@@ -64,7 +56,7 @@ export default function Orders() {
         {
             headerName: "Ações",
             field: "acoes",
-            cellRenderer: (params: any) => (
+            cellRenderer: (params: ICellRendererParams) => (
                 <div
                     className="flex gap-2 mt-2.5 items-center justify-center"
                     onClick={() => handleViewClick(params.data)}
@@ -217,7 +209,6 @@ export default function Orders() {
                         setOpenModal(false);
                     }}
                 >
-
                     {selectedLog && (
                         <div className="space-y-2 text-gray-800">
                             <p><strong>Usuário:</strong> {selectedLog.log_user_nome}</p>
