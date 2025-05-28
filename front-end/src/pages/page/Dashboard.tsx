@@ -262,8 +262,9 @@ const Dashboard = () => {
 		}
 	}, []);
 
-	const load = useCallback(async () => {
+	const loadBarChart = useCallback(async () => {
 		try {
+			setIsLoading(true);
 			const req = await axios.get(
 				"http://localhost/BioVerde/back-end/lotes/lotes_por_classificacao.php"
 			);
@@ -272,6 +273,8 @@ const Dashboard = () => {
 			setBarOptions({ ...barOptions, data: req.data.data });
 		} catch (err) {
 			console.error(err);
+		} finally {
+			setIsLoading(false);
 		}
 	}, []);
 
@@ -279,7 +282,7 @@ const Dashboard = () => {
 		loadStatusData();
 		loadLineChart();
 		loadPieChart();
-		load();
+		loadBarChart();
 	}, []);
 
 	return isLoading ? (
