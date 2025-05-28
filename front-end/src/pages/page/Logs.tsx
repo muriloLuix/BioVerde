@@ -4,7 +4,8 @@ import {
     AllCommunityModule,
     ColDef,
     themeQuartz,
-    ValueFormatterParams
+    ValueFormatterParams,
+    ICellRendererParams
 } from "ag-grid-community";
 import axios from "axios";
 import {Tabs} from "radix-ui";
@@ -64,7 +65,7 @@ export default function Orders() {
         {
             headerName: "Ações",
             field: "acoes",
-            cellRenderer: (params: any) => (
+            cellRenderer: (params: ICellRendererParams) => (
                 <div
                     className="flex gap-2 mt-2.5 items-center justify-center"
                     onClick={() => handleViewClick(params.data)}
