@@ -819,7 +819,7 @@ function verifyExist($conn, $id, $pk, $tabela)
  * @return array retorna um array com os dados encontrados
  * @throws Exception caso haja erro ao buscar os dados
  */
-function search($conn, $table, $fields, $joins = [])
+function search($conn, $table, $fields, $joins = [], $separator = null)
 {
     $sql = "SELECT $fields FROM $table";
 
@@ -1683,9 +1683,9 @@ function verifyDocuments(string $document, string|null $personType): array
                     'success' => true,
                     'message' => "CNPJ válido!"
                 ] : [
-                'success' => false,
-                'message' => "CNPJ inválido!"
-            ];
+                    'success' => false,
+                    'message' => "CNPJ inválido!"
+                ];
     }
 }
 
@@ -1710,6 +1710,35 @@ function formatarEtapasLog($etapas) {
     return implode("\n---\n", $etapasLog); // separa as etapas com uma linha
 }
 
+
+function advancedSearch(mysqli $conn, string $query): void {
+    
+    $result = mysqli_query($conn, $query);
+
+    if (!$result) {
+        echo json_encode([
+            'success' => false,
+            'message' => "Erro na execução da query: " . $conn->error,
+            'data' => null
+        ]);
+    }
+
+    $data = [];
+    while ($row = $result->fetch_assoc()) {
+        foreach ($row as $key => $value) {
+            if (is_numeric($value)) {
+                $row[$key] = strpos($value, '.') !== false ? (float)$value : (int)$value;
+            }
+        }
+        $data[] = $row;
+    }
+
+    echo json_encode([
+        'success' => count($data) > 0 ? true : false,
+        'message' => count($data) > 0 ? 'Resultado gerado com sucesso!' : 'Nenhum resultado encontrado',
+        'data' => $data
+    ]);
+}
 
 
 ?>
