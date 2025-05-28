@@ -59,7 +59,7 @@ function validarCampos($data, $requiredFields)
             }
 
             // verifica se tem algum caracter especial nos nomes
-            if (in_array($field, $textFields) && !preg_match('/^[\pL\s0-9\-áéíóúàèìòùâêîôûãõçÁÉÍÓÚÂÊÎÔÛÃÕÇ]+$/u', $data[$field])) {
+            if (in_array($field, $textFields) && !preg_match('/^[a-zA-Z0-9\sáàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\.\-]+$/u', $data[$field])) {
                 return [
                     "success" => false,
                     "message" => "O campo '$field' contém caracteres inválidos!"
