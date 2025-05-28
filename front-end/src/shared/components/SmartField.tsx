@@ -27,7 +27,7 @@ type InputPropsBase = {
 	fieldClassname?: string;
 	fieldText: string;
 	userLevel?: string;
-	isDisabled?: boolean;
+	isDisable?: boolean;
 	children?: React.ReactNode;
 	creatableConfigName?: string;
 	openManagementModal?: () => void;
@@ -51,7 +51,7 @@ const SmartField = ({
 	isTextArea,
 	isPrice,
 	withInputMask,
-	isDisabled,
+	isDisable,
 	required,
 	fieldName,
 	fieldClassname,
@@ -322,7 +322,7 @@ const SmartField = ({
 							id={regex(fieldName)}
 							required={required}
 							value={value}
-							className={`${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 ${isDisabled ? "bg-gray-100 text-gray-600 cursor-default" : "bg-white"} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
+							className={`${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 ${isDisable ? "bg-gray-100 text-gray-600 cursor-default" : "bg-white"} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}
 				</Form.Control>
