@@ -139,7 +139,7 @@ export default function InventoryList() {
 		}
 	};
 
-    // Função que busca as opções de produto
+    // Função que busca as opções 
     const fetchOptions = async () => {
         try {
             setLoading((prev) => new Set([...prev, "options"]));

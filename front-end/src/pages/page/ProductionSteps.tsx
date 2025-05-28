@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Tabs, Form } from "radix-ui";
-import { Plus, PencilLine, Trash, Eye, Search, Loader2, Pencil, Trash2} from "lucide-react";
+import { Tabs } from "radix-ui";
+import { Plus, PencilLine, Trash, Search, Loader2, Pencil, Trash2} from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
@@ -10,7 +10,7 @@ import { SmartField, Modal, NoticeModal, ConfirmationModal } from "../../shared"
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 // import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
-import { SelectEvent, FormDataSteps, ProductsWithSteps, Etapa } from "../../utils/types";
+import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions } from "../../utils/types";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function ProductionSteps() {
@@ -21,28 +21,28 @@ export default function ProductionSteps() {
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
-	const [openObsModal, setOpenObsModal] = useState(false);
+	const [openNewProductModal, setOpenNewProductModal] = useState(false);
 	// const [keepProduct, setKeepProduct] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [search, setSearch] = useState("");
 	const [message, setMessage] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	// const [options, setOptions] = useState<BatchOptions>();
+	const [options, setOptions] = useState<StepOptions>();
 	const [productsWithSteps, setProductsWithSteps] = useState<ProductsWithSteps[]>([]);
 	const [selectedProduct, setSelectedProduct] = useState<ProductsWithSteps | null>(null);
+	const [newProduct, setNewProduct] = useState({ produto: "" });
+	const [errors, setErrors] = useState({
+        product: false,
+    });
 	const [formData, setFormData] = useState<FormDataSteps>({
-		produto_id: 0,
-		produto_nome: "",
 		etor_id: 0,
-		ordem: 0,
-		nome_etapa: "",
-		tempo: "",
-		insumos: "",
-		responsavel: "",
-		obs: "",
+		etor_ordem: 0,
+		etor_etapa_nome: "",
+		etor_tempo: "",
+		etor_insumos: "",
+		etor_observacoes: "",
 	});
-	const [stepData, setStepData] = useState<Etapa[]>([]);
 	const [deleteStep, setDeleteStep] = useState({
 		etor_id: 0,
 		dproduct: "",
@@ -50,102 +50,97 @@ export default function ProductionSteps() {
 		reason: "",
 	});
 
-	// Carrega os produtos e suas etapas cadastradas
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "steps", "options"]));
+	/* ----- useEffects e Requisições via Axios ----- */
 
-				const [stepsResponse, userLevelResponse] = await Promise.all([
-					axios.get(
-					"http://localhost/BioVerde/back-end/etapas/listar_etapas.php",
-					{
-						withCredentials: true,
-						headers: {
-							Accept: "application/json",
-						},
-					}
-					),
-					axios.get(
-					"http://localhost/BioVerde/back-end/auth/usuario_logado.php", 
-					{
-						withCredentials: true,
-						headers: { "Content-Type": "application/json" },
-					}
-					),
-				]);
+    //Checa a autenticação do usuário, se for false expulsa o usuário da sessão
+    const navigate = useNavigate();
+    useEffect(() => {
+        checkAuth({ navigate, setMessage, setOpenNoticeModal });
+    }, [navigate]);
 
-				console.log("Resposta do back-end:", stepsResponse.data);
-
-				if (stepsResponse.data.success) {
-					const formattedData = stepsResponse.data.etapas.map((item: any) => ({
+    //Carrega a lista os lotes e as opções nos selects ao renderizar a página
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading((prev) => new Set([...prev, "steps"]));
+                const [stepsResponse, userLevelResponse] = await Promise.all([
+                    axios.get(
+                        "http://localhost/BioVerde/back-end/etapas/listar_etapas.php",
+                        { withCredentials: true, headers: { Accept: "application/json" }}
+                    ),
+                    axios.get(
+                        "http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+                        { withCredentials: true, headers: { "Content-Type": "application/json" }}
+                    ),
+                ]);
+                await fetchOptions();
+                if (userLevelResponse.data.success) {
+                    setUserLevel(userLevelResponse.data.userLevel);
+                } else {
+                    setOpenNoticeModal(true);
+                    setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário" );
+                }
+                if (stepsResponse.data.success) {
+                    const formattedData = stepsResponse.data.etapas.map((item: ProductsWithSteps) => ({
+						produto_id: item.produto_id,	
 						produto_nome: item.produto_nome,
 						etapas: item.etapas,
 					}));
 					setProductsWithSteps(formattedData);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(stepsResponse.data.message || "Erro ao carregar etapas");
-				}
-
-				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel)
-				} else {
-					setSuccessMsg(false);
-					setOpenNoticeModal(true);
-					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
-				}
-
-			} catch (error) {
-				setSuccessMsg(false);
-				console.error(error);
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-				return false;
-			} finally {
+                } else {
+                    setOpenNoticeModal(true);
+                    setMessage(stepsResponse.data.message || "Erro ao carregar lotes" );
+                }
+            } catch (error) {
+                console.error(error);
+                setOpenNoticeModal(true);
+                setMessage("Erro ao conectar com o servidor");
+            } finally {
 				setLoading((prev) => {
 					const newLoading = new Set(prev);
 					newLoading.delete("steps");
 					return newLoading;
 				});
-			}
-		};
+            }
+        };
+        fetchData();
+    }, []);
 
-		fetchData();
-	}, []);
-
-	// Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
+   // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
 	useEffect(() => {
 		if (productsWithSteps.length > 0) {
 			setSelectedProduct(productsWithSteps[0]);
 		}
 	}, [productsWithSteps]);
 
+	useEffect(() => {
+		if (selectedProduct) {
+			setRowData(selectedProduct.etapas);
+		} else {
+			setRowData([]);
+		}
+	}, [selectedProduct]);
+
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
 		try {
 			setLoading((prev) => new Set([...prev, "steps"]));
-
 			const response = await axios.get(
 				"http://localhost/BioVerde/back-end/etapas/listar_etapas.php",
 				{ withCredentials: true }
 			);
-
 			if (response.data.success) {
 				setProductsWithSteps(response.data.etapas || []);
-				return true;
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao carregar etapas");
 				setOpenNoticeModal(true);
-				return false;
 			}
 		} catch (error) {
 			setSuccessMsg(false);
-            console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
-			return false;
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
@@ -155,93 +150,128 @@ export default function ProductionSteps() {
 		}
 	};
 
-	//OnChange dos campos
-	const handleChange = (
-		event: 
-			| React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-			| SelectEvent
-	) => {
-		const { name, value } = event.target;
+    // Função que busca as opções
+    const fetchOptions = async () => {
+        try {
+            setLoading((prev) => new Set([...prev, "options"]));
+            const response = await axios.get(
+                "http://localhost/BioVerde/back-end/etapas/listar_opcoes.php",
+                { withCredentials: true, headers: { Accept: "application/json", "Content-Type": "application/json" }}
+            );
+            if (response.data.success) {
+                setOptions({
+                    produtos: response.data.produtos,
+                });
+            } else {
+				setSuccessMsg(false);
+                setOpenNoticeModal(true);
+                setMessage(response.data.message || "Erro ao carregar opções");
+            }
+        } catch (error) {
+            setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+        } finally {
+            setLoading((prev) => {
+                const newLoading = new Set(prev);
+                newLoading.delete("options");
+                return newLoading;
+            });
+        }
+    };
 
-		if (name in formData) {
-			setFormData({ ...formData, [name]: value });
+	/* ----- Função para Cadastro de Produtos ----- */
+
+	//Submit de cadastrar a etapa de produção completa
+	const handleProductSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		const errors = { product: !newProduct.produto };
+		setErrors(errors);
+		if (Object.values(errors).some((error) => error)) { return; }
+
+		setLoading((prev) => new Set([...prev, "registerProduct"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/cadastrar_produto.php",
+				{ produto_id: newProduct.produto },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setMessage("Produto cadastrado com sucesso!");
+				setOpenNewProductModal(false);
+				setNewProduct({ produto: "" });
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar Produto");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("registerProduct");
+				return newLoading;
+			});
 		}
-		if (name in deleteStep) {
-			setDeleteStep({ ...deleteStep, [name]: value });
-		}
-		// setErrors((prevErrors) =>
-        //     Object.fromEntries(
-        //         Object.keys(prevErrors).map((key) => [key, false])
-        //     ) as typeof prevErrors
-		// );
 	};
 
-	//função para puxar os dados da etapa que será editada
-	const handleEditClick = (
-		etapa: Etapa,
-		nome_produto: string,
-		produto_id: number
-	) => {
-		console.log("Dados completos da etapa:", etapa);
+	/* ----- Outras Funções ----- */
 
-		setFormData({
-			produto_id: produto_id,
-			produto_nome: nome_produto,
-			etor_id: etapa.etor_id,
-			ordem: etapa.ordem,
-			nome_etapa: etapa.nome_etapa,
-			tempo: etapa.tempo,
-			insumos: etapa.insumos,
-			responsavel: etapa.responsavel,
-			obs: etapa.obs,
-		});
-		setOpenEditModal(true);
-	};
+    //Verifica nível de acesso do usuário
+	useCheckAccessLevel();
+
+    //OnChange dos campos
+    const handleChange = (
+        event: 
+            | React.ChangeEvent< HTMLInputElement | HTMLTextAreaElement> 
+            | SelectEvent
+    ) => {
+        const { name, value } = event.target;
+		if (name in newProduct) { setNewProduct({ ...newProduct, [name]: value }) }
+        if (name in formData) { setFormData({ ...formData, [name]: value }) }
+        // if (name in deleteBatch) { setDeleteBatch({ ...deleteBatch, [name]: value }) }
+        setErrors((prevErrors) =>
+            Object.fromEntries(
+                Object.keys(prevErrors).map((key) => [key, false])
+            ) as typeof prevErrors
+		);
+    };
+
+    //Limpar FormData
+	const clearFormData = () => {
+        setFormData(
+            Object.fromEntries(
+                Object.entries(formData).map(([key, value]) => {
+                    return [key, typeof value === "number" ? 0 : ""];
+                })
+            ) as unknown as FormDataSteps
+        );
+    };
 
 	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
     const gridRef = useRef<AgGridReact>(null);
-    const [rowData, setRowData] = useState<Batch[]>([]);
+    const [rowData, setRowData] = useState<Steps[]>([]);
     const [columnDefs] = useState<ColDef[]>([
-        { field: "lote_codigo", headerName: "ID do Lote", filter: true, width: 180 },
-        { field: "produto_nome",headerName: "Produto", filter: true, width: 250 },
-        { field: "fornecedor_nome", headerName: "Fornecedor", filter: true, width: 230 },
-        { 
-            headerName: "Data De Colheita", field: "lote_dtColheita", width: 180, filter: true,
-            valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
+        { field: "etor_ordem", headerName: "Ordem", filter: true, width: 110 },
+        { field: "etor_etapa_nome",headerName: "Nome da Etapa", filter: true, width: 180 },
+        { field: "etor_tempo", headerName: "Tempo Estimado", width: 180 },
+        {field: "etor_insumos", headerName: "Insumos Utilizados", filter: true, width: 260},
+        {field: "etor_responsavel", headerName: "Responsável", filter: true, width: 200},
+		{
+            headerName: "Data de Cadastro", field: "etor_dtCadastro", width: 180, filter: true,
+            valueGetter: (params) => new Date(params.data.etor_dtCadastro).toLocaleDateString("pt-BR")
         },
-        {
-            headerName: "Capacidade Máxima", width: 180,
-            valueGetter: (params) => {
-                const value = Number(params.data.lote_quantMax);
-                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
-            }
-        },
-        {
-            headerName: "Quantidade Atual", width: 180,
-            valueGetter: (params) => {
-                const value = Number(params.data.lote_quantAtual);
-                return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
-            }
-        },
-        {
-            headerName: "Data De Validade", field: "lote_dtValidade", width: 180, filter: true,
-            valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
-        },
-        {   field: "produto_preco", headerName: "Preço do Produto", width: 160, filter: true,
-            valueFormatter: (params) => {
-                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
-            }
-        },
-        {   field: "lote_preco", headerName: "Preço Total do Lote", width: 180, filter: true,
-            valueFormatter: (params) => {
-                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
-            }
-        },
-        {field: "tproduto_nome", headerName: "Tipo", width: 150},
-        {field: "classificacao_nome", headerName: "Classificação", width: 180},
-        {field: "localArmazenamento_nome", headerName: "Local Armazenado", width: 180},
-        {field: "lote_obs", headerName: "Observação", width: 300},
+        {field: "etor_observacoes", headerName: "Observações", width: 300},
         {
             headerName: "Ações",
             field: "acoes",
@@ -251,7 +281,7 @@ export default function ProductionSteps() {
                     <button
                         className="text-blue-600 hover:text-blue-800 cursor-pointer"
                         title="Editar Lote"
-                        onClick={() => { if(params.data) handleEdit(params.data) }}
+                        // onClick={() => { if(params.data) handleEdit(params.data) }}
                     >
                         <Pencil size={18} />
                     </button>
@@ -259,7 +289,7 @@ export default function ProductionSteps() {
                         <button
                             className="text-red-600 hover:text-red-800 cursor-pointer"
                             title="Excluir Lote"
-                            onClick={() => { if(params.data) handleDelete(params.data) }}
+                            // onClick={() => { if(params.data) handleDelete(params.data) }}
                         >
                             <Trash2 size={18} />
                         </button>
@@ -309,9 +339,9 @@ export default function ProductionSteps() {
 					{/* Listar Etapas */}
 					<Tabs.Content value="list" className="flex flex-col w-full">
 						<div className="flex items-center justify-start">
-							<div className="flex gap-10 max-h-[500px] h-[68vh]">
+							<div className="flex gap-10 ">
 								{/* SideBar Estrutura de produtos */}
-								<div className="bg-gray-200 rounded-xl max-w-[350px] sombra flex flex-col h-full">
+								<div className="bg-gray-200 rounded-xl max-w-[350px] sombra flex flex-col h-[70vh]">
 									{/* Cabeçalho */}
 									<div className="bg-green-800 p-4 rounded-t-xl">
 										<h2 className="text-white text-center text-lg font-semibold">
@@ -372,7 +402,7 @@ export default function ProductionSteps() {
 									{/* Botão fixo */}
 									<div className="p-1 bg-gray-300 hover:bg-gray-400 rounded-b-xl">
 										<button
-											// onClick={handleNovoProduto}
+											onClick={() => {setOpenNewProductModal(true); setNewProduct({ produto: "" });}}
 											className="w-full cursor-pointer flex place-content-center gap-2 text-black font-semibold py-2 rounded-lg"
 										>
 											<Plus />
@@ -383,7 +413,7 @@ export default function ProductionSteps() {
 
 
 								{/* Tabela de Etapas */}
-								<div className="max-w-[50vw]">
+								<div className="w-[60vw]">
 									{loading.has("steps") ? (
 										<div className="flex justify-center items-center h-full w-[50vw]">
 											<Loader2 className="animate-spin h-8 w-8 mx-auto" />
@@ -394,11 +424,21 @@ export default function ProductionSteps() {
 												<h2 className="text-2xl flex items-center gap-2">
 													<strong>Produto Final:</strong>{" "}
 													{selectedProduct.produto_nome}
-													<PencilLine size={21} className="cursor-pointer ml-1"/>
-													<Trash size={21} className="text-red-500 cursor-pointer"/>
+													<button 
+														className="cursor-pointer ml-1 text-blue-600" 
+														title="Editar Produto"
+													>
+														<PencilLine size={21} />
+													</button>
+													<button 
+														className="text-red-500 cursor-pointer" 
+														title="Excluir Produto"
+													>
+														<Trash size={21} />
+													</button>
 												</h2>
 												<button
-												// onClick={gerarRelatorio}
+												onClick={() => setOpenRegisterModal(true)}
 												className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
 												>
 													<Plus />
@@ -406,7 +446,7 @@ export default function ProductionSteps() {
 												</button>
 											</div>
 											{/* Tabela de Lotes */}
-											<div className="h-[75vh]">
+											<div className="h-[63vh]">
 												<AgGridReact
 													modules={[AllCommunityModule]}
 													theme={myTheme}
@@ -436,6 +476,101 @@ export default function ProductionSteps() {
 
 				</Tabs.Root>
 
+				{/* Modal de Cadastro de Produto */}
+				<Modal
+					openModal={openNewProductModal}
+					setOpenModal={setOpenNewProductModal}
+					modalTitle="Cadastrar Novo Produto"
+					withXButton
+					isRegister
+            		registerButtonText="Cadastrar Produto"
+					modalWidth="w-1/2 h-[450px]"
+					isSideButton
+					isLoading={loading.has("registerProduct")}
+					onSubmit={handleProductSubmit}
+				>
+					<SmartField
+						fieldName="produto"
+						fieldText="Produto"
+						isSelect
+						fieldClassname="flex flex-col flex-1"
+						error={errors.product ? "*" : undefined}
+						isLoading={loading.has("options")}
+						value={newProduct.produto}
+						placeholder="Selecione o novo Produto"
+						onChangeSelect={handleChange}
+						options={options?.produtos.map((produto) => ({
+							label: produto.produto_nome,
+							value: String(produto.produto_id),
+						}))}
+					/>
+				</Modal>
+
+				{/* Modal de Cadastro de Nova Etapa */}
+				<Modal
+					openModal={openRegisterModal}
+					setOpenModal={setOpenRegisterModal}
+					modalTitle="Cadastrar Nova Etapa"
+					withXButton
+					isRegister
+            		registerButtonText="Cadastrar Etapa"
+					modalWidth="w-1/2"
+					isLoading={loading.has("registerStep")}
+					// onSubmit={handleStepSubmit}
+				>	
+					<div className="flex flex-col gap-4">
+						<SmartField
+							fieldName="produto"
+							fieldText="Produto Final"
+							fieldClassname="flex flex-col flex-1"
+							type="text"
+							value={selectedProduct?.produto_nome}
+							onChange={handleChange}
+							readOnly
+						/>
+						<SmartField
+							fieldName="nome_etapa"
+							fieldText="Nome da Etapa"
+							fieldClassname="flex flex-col w-full"
+							type="text"
+							required
+							placeholder="Digite o Nome da Etapa"
+							value={formData.etor_etapa_nome}
+							onChange={handleChange}
+						/>
+						<SmartField
+							fieldName="tempo"
+							fieldText="Tempo Estimado"
+							type="text"
+							required
+							placeholder="Tempo Estimado da etapa"
+							value={formData.etor_tempo}
+							onChange={handleChange}
+							inputWidth="w-[250px]"
+						/>
+						<SmartField
+							fieldName="insumos"
+							fieldText="Insumos Utilizados"
+							fieldClassname="flex flex-col w-full"
+							type="text"
+							required
+							placeholder="Insumos Utilizados na etapa"
+							value={formData.etor_insumos}
+							onChange={handleChange}
+						/>
+						<SmartField
+							isTextArea
+							fieldName="obs"
+							fieldText="Observações"
+							fieldClassname="flex flex-col w-full"
+							placeholder="Digite as observações da Etapa"
+							value={formData.etor_observacoes}
+							onChange={handleChange}
+							rows={2}
+						/>
+					</div>
+				</Modal>
+
 				{/* Modal de Avisos */}
 				<NoticeModal
 					openModal={openNoticeModal}
@@ -450,7 +585,7 @@ export default function ProductionSteps() {
 					setOpenModal={setOpenConfirmModal}
 					confirmationModalTitle="Tem certeza que deseja excluir a etapa?"
 					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-					onConfirm={handleDeleteStep}
+					// onConfirm={handleDeleteStep}
 					isLoading={loading.has("deleteStep")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir etapa"

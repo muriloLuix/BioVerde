@@ -20,6 +20,7 @@ type ModalProps = {
 	isRegister?: boolean;
 	registerButtonText?: string;
 	isOrderModal?: boolean;
+	isSideButton?: boolean;
 	totalPedido?: number;
 	onCancel?: () => void;
 	onDelete?: () => void;
@@ -46,6 +47,7 @@ const Modal = ({
 	withXButton,
 	isRegister,
 	registerButtonText,
+	isSideButton,
 	onCancel,
 	onSubmit,
 	onDelete,
@@ -124,13 +126,14 @@ const Modal = ({
 									}
 								}}
 							>
+								<div className={`${isSideButton && "flex"}`}>
 								{children}
 								{isRegister ? (
 									<Form.Submit asChild>
 										<div className="flex place-content-center mt-6">
 											<button
 												type="submit"
-												className="bg-verdePigmento p-4 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-50"
+												className={`bg-verdePigmento font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center ${isSideButton ? "p-2 w-40 h-11 mt-3 ml-7" : "p-4 w-50"}`}
 											>
 												{isLoading ? (
 													<Loader2 className="animate-spin h-6 w-6" />
@@ -139,34 +142,35 @@ const Modal = ({
 												)}
 											</button>
 										</div>
-										</Form.Submit>
+									</Form.Submit>
 									) : (
-										<div className="flex justify-end items-center gap-3 m-2">
-											<Dialog.Close asChild>
-												<button
-												type="button"
-												onClick={onCancel}
-												className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-												aria-label="Close"
-												>
-												{leftButtonText}
-												</button>
-											</Dialog.Close>
-											
-											<Form.Submit>
-												<button
-												type="submit"
-												className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-												>
-												{isLoading ? (
-													<Loader2 className="animate-spin h-6 w-6" />
-												) : (
-													rightButtonText
-												)}
-												</button>
-											</Form.Submit>
+									<div className="flex justify-end items-center gap-3 m-2">
+										<Dialog.Close asChild>
+											<button
+											type="button"
+											onClick={onCancel}
+											className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
+											aria-label="Close"
+											>
+											{leftButtonText}
+											</button>
+										</Dialog.Close>
+								
+										<Form.Submit>
+											<button
+											type="submit"
+											className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
+											>
+											{isLoading ? (
+												<Loader2 className="animate-spin h-6 w-6" />
+											) : (
+												rightButtonText
+											)}
+											</button>
+										</Form.Submit>
 									</div>
 								)}
+								</div>
 							</Form.Root>
 						)}
 					</Dialog.Description>

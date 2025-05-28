@@ -196,12 +196,16 @@ export interface Movements {
 export interface ProductsWithSteps {
 	produto_id: number;
 	produto_nome: string;
-	etapas: Etapa[];
+	etapas: Steps[];
 };
 
-export interface Etapa extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
-	etor_id: number;
-	dtCadastro?: string;
+export interface Steps extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
+	producao_id: number;
+	etor_dtCadastro?: string;
+}
+
+export interface StepOptions {
+	produtos: Product[];
 }
 
 
@@ -236,15 +240,12 @@ export interface FormDataMovements {
 }
 
 export interface FormDataSteps {
-	produto_id: number;
-	produto_nome: string;
 	etor_id: number;
-	ordem: number;
-	nome_etapa: string;
-	tempo: string;
-	insumos: string;
-	responsavel: string;
-	obs: string;
+	etor_ordem: number;
+	etor_etapa_nome: string;
+	etor_tempo: string;
+	etor_insumos: string;
+	etor_observacoes: string;
 };
 
 // ------ FormsDataDelete ------

@@ -55,13 +55,13 @@ try {
 
         $produtosComEtapas[$producaoId]['etapas'][] = [
             'etor_id' => $etapa['etor_id'],
-            'ordem' => $etapa['etor_ordem'],
-            'nome_etapa' => $etapa['etor_etapa_nome'],
-            'tempo' => $etapa['etor_tempo'],
-            'insumos' => $etapa['etor_insumos'],
-            'responsavel' => $etapa['etor_responsavel'],
-            'obs' => $etapa['etor_observacoes'],
-            'dtCadastro' => $etapa['etor_dtCadastro']
+            'etor_ordem' => $etapa['etor_ordem'],
+            'etor_etapa_nome' => $etapa['etor_etapa_nome'],
+            'etor_tempo' => $etapa['etor_tempo'],
+            'etor_insumos' => $etapa['etor_insumos'],
+            'etor_responsavel' => $etapa['etor_responsavel'],
+            'etor_observacoes' => $etapa['etor_observacoes'],
+            'etor_dtCadastro' => $etapa['etor_dtCadastro']
         ];
     }
     /*************************************************************/
