@@ -40,6 +40,16 @@ try {
     $lotes = $stmt->get_result();
     /**************************************************************/
 
+    /**************** CARREGA A LOGO COMO BASE64 ************************/
+    $logoFile = __DIR__ . '/../../front-end/public/logo-bioverde-branco.png'; // Caminho para a logo
+    if (file_exists($logoFile)) {
+        $logoData = base64_encode(file_get_contents($logoFile));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+    } else {
+        $logoSrc = '';
+    }
+    /**************************************************************/
+
     /**************** CRIA O HTML DO RELATÓRIO ************************/
     $html = '
     <!DOCTYPE html>
@@ -48,14 +58,15 @@ try {
         <meta charset="UTF-8">
         <title>Relatório de Lotes</title>
         <style>
-            body { font-family: Arial, sans-serif; font-size: 12px; }
-            h1 { color: #2e7d32; text-align: center; font-size: 22px; }
-            p { text-align: center; margin-top: -10px; font-size: 12px; color: #555; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+            h1 { color: #2e7d32; text-align: center; font-size: 24px; margin-bottom: 5px; }
+            p { text-align: center; margin-top: -5px; font-size: 11px; color: #555; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-            th { background-color: #2e7d32; color: white; font-size: 13px; }
-            tbody tr:nth-child(even) { background-color: #f5f5f5; }
-            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; }
+            th { background-color: #2e7d32; color: #fff; font-size: 12px; text-transform: uppercase; padding: 8px; }
+            td { padding: 8px; border: 1px solid #ddd; font-size: 11px; }
+            tbody tr:nth-child(even) { background-color: #f9f9f9; }
+            tbody tr:hover { background-color: #e8f5e9; }
+            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #ccc; padding-top: 5px; }
         </style>
     </head>
     <body>
@@ -67,9 +78,9 @@ try {
             <thead>
                 <tr>
                     <th style="width: 20%;">Código Lote</th>
-                    <th style="width: 25%;">Nome do Produto</th>
-                    <th style="width: 15%;">Fornecedor</th>
-                    <th style="width: 16%;">Data Colheita</th>
+                    <th style="width: 30%;">Nome do Produto</th>
+                    <th style="width: 20%;">Fornecedor</th>
+                    <th style="width: 15%;">Data Colheita</th>
                     <th style="width: 15%;">Quant. Máx.</th>
                 </tr>
             </thead>
@@ -98,7 +109,6 @@ try {
     </html>';
     /**************************************************************/
 
-
     /**************** CONFIGURA O MPDF ************************/
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -106,18 +116,24 @@ try {
         'default_font' => 'arial',
         'margin_left' => 10,
         'margin_right' => 10,
-        'margin_top' => 20,
+        'margin_top' => 35,
         'margin_bottom' => 20,
         'margin_header' => 10,
         'margin_footer' => 10,
         'tempDir' => sys_get_temp_dir()
     ]);
 
-    $mpdf->SetTitle('Relatório de Controle do Estoque');
+    $mpdf->SetTitle('Relatório de Lotes');
     $mpdf->SetAuthor('Sistema BioVerde');
-    $mpdf->SetWatermarkText('BioVerde');
-    $mpdf->showWatermarkText = true;
-    $mpdf->watermarkTextAlpha = 0.1;
+
+    // Cabeçalho com a logo
+    $headerHtml = '
+    <div style="text-align: center;">
+        <img src="' . $logoSrc . '" width="90" style="margin-top: -15px; opacity: 0.85;">
+    </div>
+    <hr style="border: 0.5px solid #2e7d32; margin-top: 5px;">
+    ';
+    $mpdf->SetHTMLHeader($headerHtml);
 
     $mpdf->WriteHTML($html);
 

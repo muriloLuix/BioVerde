@@ -30,7 +30,7 @@ if (!isset($_SESSION["user_id"])) {
 /**************************************************************/
 
 try {
-    /**************** BUSCA DADOS DOS LOTES ************************/
+    /**************** BUSCA DADOS DAS MOVIMENTAÇÕES ************************/
     $sql = "SELECT b.produto_nome, d.lote_codigo, mov_quantidade, preco_movimentado, f.localArmazenamento_nome, destino, c.user_nome, a.mov_tipo, e.motivo";
     $sql .= " FROM movimentacoes_estoque a";
     $sql .= " INNER JOIN produtos b ON a.produto_id = b.produto_id";
@@ -43,6 +43,16 @@ try {
     $movimentacoes = $stmt->get_result();
     /**************************************************************/
 
+    /**************** CARREGA A LOGO COMO BASE64 ************************/
+    $logoFile = __DIR__ . '/../../front-end/public/logo-bioverde-branco.png'; // Caminho para a logo
+    if (file_exists($logoFile)) {
+        $logoData = base64_encode(file_get_contents($logoFile));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+    } else {
+        $logoSrc = '';
+    }
+    /**************************************************************/
+
     /**************** CRIA O HTML DO RELATÓRIO ************************/
     $html = '
     <!DOCTYPE html>
@@ -51,14 +61,15 @@ try {
         <meta charset="UTF-8">
         <title>Relatório de Movimentações do Estoque</title>
         <style>
-            body { font-family: Arial, sans-serif; font-size: 12px; }
-            h1 { color: #2e7d32; text-align: center; font-size: 22px; }
-            p { text-align: center; margin-top: -10px; font-size: 12px; color: #555; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+            h1 { color: #2e7d32; text-align: center; font-size: 24px; margin-bottom: 5px; }
+            p { text-align: center; margin-top: -5px; font-size: 11px; color: #555; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-            th { background-color: #2e7d32; color: white; font-size: 13px; }
-            tbody tr:nth-child(even) { background-color: #f5f5f5; }
-            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; }
+            th { background-color: #2e7d32; color: #fff; font-size: 12px; text-transform: uppercase; padding: 8px; }
+            td { padding: 8px; border: 1px solid #ddd; font-size: 11px; }
+            tbody tr:nth-child(even) { background-color: #f9f9f9; }
+            tbody tr:hover { background-color: #e8f5e9; }
+            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #ccc; padding-top: 5px; }
         </style>
     </head>
     <body>
@@ -69,15 +80,15 @@ try {
         <table autosize="1">
             <thead>
                 <tr>
-                    <th style="width: 20%;">Nome do Produto</th>
-                    <th style="width: 25%;">Código Lote</th>
-                    <th style="width: 15%;">Quantidade</th>
-                    <th style="width: 16%;">Preço Movimentado</th>
-                    <th style="width: 15%;">Local de Armazenamento</th>
-                    <th style="width: 15%;">Destino</th>
-                    <th style="width: 15%;">Responsável</th>
-                    <th style="width: 15%;">Tipo</th>
-                    <th style="width: 15%;">Motivo</th>
+                    <th style="width: 15%;">Produto</th>
+                    <th style="width: 10%;">Código Lote</th>
+                    <th style="width: 8%;">Quantidade</th>
+                    <th style="width: 12%;">Preço Movimentado</th>
+                    <th style="width: 12%;">Local</th>
+                    <th style="width: 10%;">Destino</th>
+                    <th style="width: 13%;">Responsável</th>
+                    <th style="width: 10%;">Tipo</th>
+                    <th style="width: 10%;">Motivo</th>
                 </tr>
             </thead>
             <tbody>';
@@ -109,7 +120,6 @@ try {
     </html>';
     /**************************************************************/
 
-
     /**************** CONFIGURA O MPDF ************************/
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -117,7 +127,7 @@ try {
         'default_font' => 'arial',
         'margin_left' => 10,
         'margin_right' => 10,
-        'margin_top' => 20,
+        'margin_top' => 35,
         'margin_bottom' => 20,
         'margin_header' => 10,
         'margin_footer' => 10,
@@ -126,9 +136,15 @@ try {
 
     $mpdf->SetTitle('Relatório de Movimentações do Estoque');
     $mpdf->SetAuthor('Sistema BioVerde');
-    $mpdf->SetWatermarkText('BioVerde');
-    $mpdf->showWatermarkText = true;
-    $mpdf->watermarkTextAlpha = 0.1;
+
+    // Cabeçalho com a logo
+    $headerHtml = '
+    <div style="text-align: center;">
+        <img src="' . $logoSrc . '" width="90" style="margin-top: -15px; opacity: 0.85;">
+    </div>
+    <hr style="border: 0.5px solid #2e7d32; margin-top: 5px;">
+    ';
+    $mpdf->SetHTMLHeader($headerHtml);
 
     $mpdf->WriteHTML($html);
 
