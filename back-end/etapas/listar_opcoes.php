@@ -16,11 +16,14 @@ try {
 
     $produtos = buscarProdutos($conn);
 
+    $nome_etapas = buscarEtapasNome($conn);
+
     /*********************************************************/
 
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,
+        "nome_etapas" => $nome_etapas,
     ]);
 
 } catch (Exception $e) {

@@ -1,3 +1,10 @@
+export interface SelectEvent {
+	target: {
+		name: string;
+		value: string | string[];
+	};
+}
+
 export interface Product {
 	produto_id: number;
 	produto_nome: string;
@@ -150,13 +157,6 @@ export interface Option {
 	label: string;
 }
 
-export interface SelectEvent {
-	target: {
-		name: string;
-		value: string;
-	};
-}
-
 export interface UF {
 	id: number;
 	sigla: string;
@@ -204,8 +204,14 @@ export interface Steps extends Omit<FormDataSteps, "produto_nome" | "produto_id"
 	etor_dtCadastro?: string;
 }
 
+export interface StepNames {
+	etapa_nome_id: number;
+	etapa_nome: string;
+}
+
 export interface StepOptions {
 	produtos: Product[];
+	nome_etapas: StepNames[];
 }
 
 
@@ -242,10 +248,11 @@ export interface FormDataMovements {
 export interface FormDataSteps {
 	etor_id: number;
 	etor_ordem: number;
-	etor_etapa_nome: string;
+	etapa_nome_id: string;
 	etor_tempo: string;
-	etor_insumos: string;
+	etor_insumos: string[];
 	etor_observacoes: string;
+	etor_unidade: string;
 };
 
 // ------ FormsDataDelete ------

@@ -6,79 +6,136 @@ require_once "../usuarios/User.class.php";
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION["user_id"])) {
-    echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
-    exit();
-}
-
-if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
-}
-
-$user_id = $_SESSION['user_id'];
-$user = Usuario::find($user_id);
-
-$rawData = file_get_contents("php://input");
-if (!$rawData) {
-    echo json_encode(["success" => false, "message" => "Erro ao receber os dados."]);
-    exit();
-}
-
-$data = json_decode($rawData, true);
-
-if (!isset($data['etapa_id']) || !isset($data['etapas']) || !is_array($data['etapas'])) {
-    echo json_encode(["success" => false, "message" => "Dados incompletos ou inválidos."]);
-    exit();
-}
-
 try {
-    $conn->begin_transaction();
-    $etapaIdProducao = $data['etapa_id'];
-    $primeiraEtapaId = null;
-
-    foreach ($data["etapas"] as $etapa) {
-        $stmtEtapa = $conn->prepare("INSERT INTO etapa_ordem 
-            (etor_ordem, etor_etapa_nome, etor_responsavel, etor_tempo, etor_insumos, etor_observacoes, producao_id) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmtEtapa->bind_param(
-            "isssssi",
-            $etapa["ordem"],
-            $etapa["nome_etapa"],
-            $etapa["responsavel"],
-            $etapa["tempo"],
-            $etapa["insumos"],
-            $etapa["obs"],
-            $etapaIdProducao
-        );
-        $stmtEtapa->execute();
-        $etor_id = $conn->insert_id;
-        $stmtEtapa->close();
-
-        if ($etapa["ordem"] == 1) {
-            $primeiraEtapaId = $etor_id;
-        }
+    if (!isset($_SESSION["user_id"])) {
+        throw new Exception("Usuário não autenticado!");
     }
 
-    // Atualiza campo etor_id da produção
-    if ($primeiraEtapaId !== null) {
-        $stmtUpdate = $conn->prepare("UPDATE etapas_producao SET etor_id = ? WHERE etapa_id = ?");
-        $stmtUpdate->bind_param("ii", $primeiraEtapaId, $etapaIdProducao);
-        $stmtUpdate->execute();
-        $stmtUpdate->close();
+    if ($conn->connect_error) {
+        throw new Exception("Erro na conexão com o banco de dados: " . $conn->connect_error);
     }
 
-    $conn->commit();
+    $user_id = $_SESSION['user_id'];
+    $user = Usuario::find($user_id);
 
-    $etapasStr = formatarEtapasLog($data['etapas']);
-    SalvarLog("Usuário ({$user->user_id} - {$user->user_nome}) cadastrou etapas para o produto {$etapaIdProducao}:\n\n{$etapasStr}", Acoes::CADASTRAR_ETAPA, "sucesso");
+    $rawData = file_get_contents("php://input");
+    if (!$rawData) {
+        throw new Exception("Erro ao receber os dados.");
+    }
 
-    echo json_encode(["success" => true, "message" => "Etapas cadastradas com sucesso!"]);
+    $data = json_decode($rawData, true);
+
+    /**************** VALIDACAO DOS CAMPOS ************************/
+    $camposObrigatorios = ['etapa_nome_id', 'etor_tempo', 'etor_unidade'];
+    $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
+    if ($validacaoDosCampos !== null) {
+        echo json_encode($validacaoDosCampos);
+        exit();
+    }
+
+    /**************** BUSCA O ID DO PRODUTO FINAL ************************/
+    $produto = $data['produto_final'];
+    $buscaProdutoId = $conn->prepare("SELECT etapa_id FROM etapas_producao WHERE etapa_produtoNome = ?");
+    $buscaProdutoId->bind_param("s", $produto);
+    $buscaProdutoId->execute();
+    $resultProduto = $buscaProdutoId->get_result();
+    $idProduto = $resultProduto->fetch_assoc();
+
+    if (!$idProduto) {
+        throw new Exception("Produto não encontrado na lista de Produtos com Etapas.");
+    }
+
+    $produtoId = (int)$idProduto['etapa_id'];
+
+    /**************** VERIFICA SE O NOME DA ETAPA EXISTE ************************/
+    $nomeEtapaId = (int)$data['etapa_nome_id'];
+    $buscaEtapaId = $conn->prepare("SELECT etapa_nome_id, etapa_nome FROM etapa_nomes WHERE etapa_nome_id = ?");
+    $buscaEtapaId->bind_param("i", $nomeEtapaId);
+    $buscaEtapaId->execute();
+    $resultEtapaId = $buscaEtapaId->get_result();
+    $idEtapa = $resultEtapaId->fetch_assoc();
+
+    if (!$idEtapa) {
+        throw new Exception("Nome da Etapa não encontrado.");
+    }
+
+    $nomeEtapa = (int)$idEtapa['etapa_nome'];
+
+    /****** FAZER CONTAGEM DE QUANTAS ETAPAS ESSE PRODUTO POSSUI E SETA SUA ORDEM ********/
+    $etapaOrdem = 1;
+    $consultaOrdem = $conn->prepare("SELECT COUNT(*) as total FROM etapa_ordem WHERE producao_id = ?");
+    $consultaOrdem->bind_param("i", $produtoId);
+    $consultaOrdem->execute();
+    $resultOrdem = $consultaOrdem->get_result();
+    $totalEtapas = $resultOrdem->fetch_assoc();
+
+    if ($totalEtapas && $totalEtapas['total'] > 0) {
+        $etapaOrdem = (int)$totalEtapas['total'] + 1;
+    }
+
+    /**************** FORMATA OS INSUMOS ************************/
+    $insumosArray = $data['etor_insumos'];
+    $insumosFormatado = implode(', ', $insumosArray);
+
+    /**************** CADASTRAR A ETAPA ************************/
+    $sql = "INSERT INTO etapa_ordem (
+        etor_ordem,
+        etor_nome_id,
+        etor_tempo,
+        etor_unidade,
+        etor_insumos,
+        etor_observacoes,
+        producao_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Erro ao preparar o cadastro: " . $conn->error);
+    }
+
+    $stmt->bind_param(
+        "iissssi",
+        $etapaOrdem,
+        $nomeEtapaId,
+        $data['etor_tempo'],
+        $data['etor_unidade'],
+        $insumosFormatado,
+        $data['etor_observacoes'],
+        $produtoId
+    );
+
+    if (!$stmt->execute()) {
+        throw new Exception("Erro ao cadastrar Etapa: " . $stmt->error);
+    }
+
+    // **** LOG DE SUCESSO ****
+       $etapasStr = 
+        "Ordem: {$etapaOrdem}\n" . 
+        "Etapa {$nomeEtapa}\n" . 
+        "Insumos {$insumosFormatado}\n" . 
+        formatarEtapasLog([$data]);
+
+    SalvarLog(
+        "Usuário ({$user->user_id} - {$user->user_nome}) cadastrou etapas para o produto {$produtoId}:\n\n{$etapasStr}",
+        Acoes::CADASTRAR_ETAPA,
+        "sucesso"
+    );
+
+    echo json_encode(["success" => true, "message" => "Etapa cadastrada com sucesso!"]);
 
 } catch (Exception $e) {
-    $conn->rollback();
-    $etapasStr = formatarEtapasLog($data['etapas']);
-    SalvarLog("Erro ao cadastrar etapas para o produto {$etapaIdProducao}.\nMotivo: {$e->getMessage()}\nEtapas:\n{$etapasStr}", Acoes::CADASTRAR_ETAPA, "erro");
-    echo json_encode(["success" => false, "message" => "Erro ao cadastrar etapas: " . $e->getMessage()]);
-}
+    // **** LOG DE ERRO ****
+    $etapasStr = !empty($data) ? 
+        "Ordem: {$etapaOrdem}\n" . 
+        "Etapa {$nomeEtapa}\n" . 
+        "Insumos {$insumosFormatado}\n" . 
+        formatarEtapasLog([$data])  : '';
 
-$conn->close();
+    SalvarLog(
+        "Erro ao cadastrar etapas para o produto {$produtoId}.\nMotivo: {$e->getMessage()}\nEtapas:\n{$etapasStr}",
+        Acoes::CADASTRAR_ETAPA,
+        "erro"
+    );
+
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
+}

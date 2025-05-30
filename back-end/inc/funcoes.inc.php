@@ -418,6 +418,31 @@ function buscarProdutos($conn)
 }
 
 /**
+ * Busca todos as etapas registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com as etapas, onde cada etapa
+ *         é representado por um array com as chaves 'etapa_id' e 'etapa_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar as etapas.
+ */
+function buscarEtapasNome($conn)
+{
+    $result = $conn->query("SELECT etapa_nome_id, etapa_nome FROM etapa_nomes");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $etapas = [];
+    while ($row = $result->fetch_assoc()) {
+        $etapas[] = $row;
+    }
+
+    return $etapas;
+}
+
+/**
  * Busca todos os pedidos registrados no banco de dados.
  *
  * @param mysqli $conn Conexão com o banco de dados.
@@ -1697,18 +1722,22 @@ function verifyDocuments(string $document, string|null $personType): array
  * @return string Etapas formatadas em uma string.
  */
 function formatarEtapasLog($etapas) {
+
+    if (isset($etapas['etor_nome_id'])) {
+        $etapas = [$etapas];
+    }
+
     $etapasLog = [];
     foreach ($etapas as $etapa) {
         $etapasLog[] =
-            "Ordem: {$etapa['ordem']}\n" .
-            "Etapa: {$etapa['nome_etapa']}\n" .
-            "Responsável: {$etapa['responsavel']}\n" .
-            "Tempo: {$etapa['tempo']}\n" .
-            "Insumos: {$etapa['insumos']}\n" .
-            "Observações: {$etapa['obs']}";
+            "Tempo: {$etapa['etor_tempo']}\n" .
+            "Unidade: {$etapa['etor_unidade']}\n" .
+            "Observações: {$etapa['etor_observacoes']}";
     }
-    return implode("\n---\n", $etapasLog); // separa as etapas com uma linha
+
+    return implode("\n---\n", $etapasLog);
 }
+
 
 
 function advancedSearch(mysqli $conn, string $query): void {

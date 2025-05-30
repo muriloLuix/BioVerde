@@ -18,7 +18,7 @@ type InputPropsBase = {
 	isNumEndereco?: boolean;
 	isLoading?: boolean;
 	error?: string;
-	value?: string | number;
+	value?: string | number | string[];
 	inputWidth?: string;
 	options?: Option[];
 	withInputMask?: boolean;
@@ -28,14 +28,16 @@ type InputPropsBase = {
 	fieldText: string;
 	userLevel?: string;
 	isDisable?: boolean;
+	isMulti?: boolean;
 	children?: React.ReactNode;
 	creatableConfigName?: string;
 	openManagementModal?: () => void;
 	generatePassword?: () => void;
 	onCreateNewOption?: (inputValue: string) => Promise<void>;
 	onChangeSelect?: (
-		e: { target: { name: string; value: string } }
+		e: { target: { name: string; value: string | string[] } }
 	) => void;
+
 };
 
 type InputProps =
@@ -58,6 +60,7 @@ const SmartField = ({
 	fieldText,
 	isLoading,
 	error,
+	isMulti,
 	inputWidth,
 	isPassword,
 	isCreatableSelect,
@@ -198,24 +201,35 @@ const SmartField = ({
 					) : (
 						<Select
 							isClearable
+							isMulti={isMulti}
 							noOptionsMessage={() => "Nenhuma opção encontrada"}
-							{...(rest as Props<Option, false, GroupBase<Option>>)}
+							{...(rest as Props<Option, boolean, GroupBase<Option>>)}
 							name={regex(fieldName)}
 							id={regex(fieldName)}
 							classNamePrefix="react-select"
 							className={`react-select-container ${inputWidth}`}
 							isLoading={isLoading}
-							closeMenuOnSelect
+							closeMenuOnSelect={!isMulti}
 							menuShouldScrollIntoView
 							hideSelectedOptions
 							loadingMessage={() => "Carregando..."}
 							options={options}
-							value={options?.find((opt) => opt.value === value) || null}
-							onChange={(selectedOption) => {
+							value={
+								isMulti
+									? options?.filter((opt) =>
+										Array.isArray(value) ? value.includes(opt.value) : false
+									)
+									: options?.find((opt) => opt.value === value) || null
+							}
+							onChange={(selected) => {
+								const newValue = isMulti
+									? (selected as Option[])?.map((opt) => opt.value) || []
+									: (selected as Option)?.value || "";
+
 								onChangeSelect?.({
 									target: {
 										name: fieldName,
-										value: String(selectedOption?.value || ""),
+										value: newValue,
 									},
 								});
 							}}
@@ -312,7 +326,7 @@ const SmartField = ({
 							decimalScale={2}
 							fixedDecimalScale
 							allowNegative={false}
-							value={value}
+							value={Array.isArray(value) ? undefined : value}
 							className={`bg-white border ${inputWidth} border-separator rounded-lg p-2.5 outline-0`}
 						/>
 					) : (

@@ -50,7 +50,7 @@ $produtoNome = $row['produto_nome'];
 /************************************************************************/
 
 /******** Verifica se já existe na etapas_producao **********************/
-$verify = $conn->prepare("SELECT etapa_id FROM etapas_producao WHERE etapa_nome = ?");
+$verify = $conn->prepare("SELECT etapa_id FROM etapas_producao WHERE etapa_produtoNome = ?");
 $verify->bind_param("s", $produtoNome);
 $verify->execute();
 $verify->store_result();
@@ -62,7 +62,7 @@ $verify->close();
 /************************************************************************/
 
 /******** Insere na etapas_producao **********************/
-$stmtInsert = $conn->prepare("INSERT INTO etapas_producao (etapa_nome) VALUES (?)");
+$stmtInsert = $conn->prepare("INSERT INTO etapas_producao (etapa_produtoNome) VALUES (?)");
 $stmtInsert->bind_param("s", $produtoNome);
 
 if ($stmtInsert->execute()) {

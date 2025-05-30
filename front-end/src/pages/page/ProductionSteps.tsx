@@ -34,14 +34,19 @@ export default function ProductionSteps() {
 	const [newProduct, setNewProduct] = useState({ produto: "" });
 	const [errors, setErrors] = useState({
         product: false,
+        step: false,
+        time: false,
+        unit: false,
+		insoum: false,
     });
 	const [formData, setFormData] = useState<FormDataSteps>({
 		etor_id: 0,
 		etor_ordem: 0,
-		etor_etapa_nome: "",
+		etapa_nome_id: "",
 		etor_tempo: "",
-		etor_insumos: "",
+		etor_insumos: [],
 		etor_observacoes: "",
+		etor_unidade: "",
 	});
 	const [deleteStep, setDeleteStep] = useState({
 		etor_id: 0,
@@ -49,6 +54,8 @@ export default function ProductionSteps() {
 		dstep: "",
 		reason: "",
 	});
+
+	console.log(productsWithSteps)
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
@@ -89,7 +96,7 @@ export default function ProductionSteps() {
 					setProductsWithSteps(formattedData);
                 } else {
                     setOpenNoticeModal(true);
-                    setMessage(stepsResponse.data.message || "Erro ao carregar lotes" );
+                    setMessage(stepsResponse.data.message || "Erro ao carregar produto com etapas de produção" );
                 }
             } catch (error) {
                 console.error(error);
@@ -109,10 +116,11 @@ export default function ProductionSteps() {
    // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
 	useEffect(() => {
 		if (productsWithSteps.length > 0) {
-			setSelectedProduct(productsWithSteps[0]);
+			setSelectedProduct(selectedProduct ? selectedProduct : productsWithSteps[0]);
 		}
-	}, [productsWithSteps]);
+	}, [productsWithSteps, selectedProduct]);
 
+	// Para setar os dados que a tabela deve receber após selecionar um produto
 	useEffect(() => {
 		if (selectedProduct) {
 			setRowData(selectedProduct.etapas);
@@ -161,6 +169,7 @@ export default function ProductionSteps() {
             if (response.data.success) {
                 setOptions({
                     produtos: response.data.produtos,
+					nome_etapas: response.data.nome_etapas,
                 });
             } else {
 				setSuccessMsg(false);
@@ -181,15 +190,67 @@ export default function ProductionSteps() {
         }
     };
 
+	/* ----- Função para Cadastro de Etapas ----- */
+
+	//Submit de cadastrar a etapa de produção completa
+	const handleStepSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		const errors = { 
+			step: !formData.etapa_nome_id,
+			time: !formData.etor_tempo,
+			unit: !formData.etor_unidade,
+			insoum: formData.etor_insumos.length === 0,
+			product: false
+		};
+		setErrors(errors);
+		if (Object.values(errors).some((error) => error)) { return; }
+		
+		const dataToSend = { ...formData, produto_final: selectedProduct?.produto_nome };
+		setLoading((prev) => new Set([...prev, "registerStep"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/cadastrar_etapas.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setMessage("Etapa cadastrada com sucesso!");
+				setOpenRegisterModal(false);
+				clearFormData();
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar Etapa");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("registerStep");
+				return newLoading;
+			});
+		}
+	};
+
 	/* ----- Função para Cadastro de Produtos ----- */
 
 	//Submit de cadastrar a etapa de produção completa
 	const handleProductSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		const errors = { product: !newProduct.produto };
-		setErrors(errors);
-		if (Object.values(errors).some((error) => error)) { return; }
+		const NewErrors = { 
+			...errors, product: !newProduct.produto
+		};
+		setErrors(NewErrors);
+		if (Object.values(NewErrors).some((error) => error)) { return; }
 
 		setLoading((prev) => new Set([...prev, "registerProduct"]));
 		try {
@@ -224,6 +285,41 @@ export default function ProductionSteps() {
 		}
 	};
 
+	/* ----- Funções para CRUD de Nomes de Etapa  ----- */
+
+	//Função para criar Nome de Etapa
+	const createStepName = async (stepName: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/cadastrar_nome_etapa.php",
+				{ nomeEtapa: stepName },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Nome da Etapa cadastrado com sucesso!");
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar Nome da Etapa");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
 	/* ----- Outras Funções ----- */
 
     //Verifica nível de acesso do usuário
@@ -236,8 +332,14 @@ export default function ProductionSteps() {
             | SelectEvent
     ) => {
         const { name, value } = event.target;
+		
+		let formattedValue = value;
+		if (typeof value === "string") {
+			formattedValue = name === "etor_tempo" ? value.replace(/[^0-9:]/g, "") : value;
+		}
+
 		if (name in newProduct) { setNewProduct({ ...newProduct, [name]: value }) }
-        if (name in formData) { setFormData({ ...formData, [name]: value }) }
+        if (name in formData) { setFormData({ ...formData, [name]: formattedValue }) }
         // if (name in deleteBatch) { setDeleteBatch({ ...deleteBatch, [name]: value }) }
         setErrors((prevErrors) =>
             Object.fromEntries(
@@ -251,6 +353,7 @@ export default function ProductionSteps() {
         setFormData(
             Object.fromEntries(
                 Object.entries(formData).map(([key, value]) => {
+					if (key === "etor_insumos") return [key, []];
                     return [key, typeof value === "number" ? 0 : ""];
                 })
             ) as unknown as FormDataSteps
@@ -263,10 +366,14 @@ export default function ProductionSteps() {
     const [rowData, setRowData] = useState<Steps[]>([]);
     const [columnDefs] = useState<ColDef[]>([
         { field: "etor_ordem", headerName: "Ordem", filter: true, width: 110 },
-        { field: "etor_etapa_nome",headerName: "Nome da Etapa", filter: true, width: 180 },
-        { field: "etor_tempo", headerName: "Tempo Estimado", width: 180 },
+        { field: "etapa_nome",headerName: "Nome da Etapa", filter: true, width: 180 },
+        {
+			headerName: "Tempo Estimado", filter: true, width: 180,
+			valueGetter: (params) => {
+                return `${params.data.etor_tempo}${params.data.etor_unidade}`;
+            }
+		},
         {field: "etor_insumos", headerName: "Insumos Utilizados", filter: true, width: 260},
-        {field: "etor_responsavel", headerName: "Responsável", filter: true, width: 200},
 		{
             headerName: "Data de Cadastro", field: "etor_dtCadastro", width: 180, filter: true,
             valueGetter: (params) => new Date(params.data.etor_dtCadastro).toLocaleDateString("pt-BR")
@@ -438,7 +545,7 @@ export default function ProductionSteps() {
 													</button>
 												</h2>
 												<button
-												onClick={() => setOpenRegisterModal(true)}
+												onClick={() => {setOpenRegisterModal(true); clearFormData()}}
 												className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
 												>
 													<Plus />
@@ -446,8 +553,15 @@ export default function ProductionSteps() {
 												</button>
 											</div>
 											{/* Tabela de Lotes */}
-											<div className="h-[63vh]">
-												<AgGridReact
+											{selectedProduct.etapas && selectedProduct.etapas.length === 0 ? (
+												<div className="flex justify-center items-center h-[63vh]">
+													<p className="text-gray-800 text-lg text-center px-4">
+													Clique em <strong>Nova Etapa</strong> para adicionar etapas a esse produto.
+													</p>
+												</div>
+												) : (
+												<div className="h-[63vh]">
+													<AgGridReact
 													modules={[AllCommunityModule]}
 													theme={myTheme}
 													ref={gridRef}
@@ -461,8 +575,9 @@ export default function ProductionSteps() {
 													loading={loading.has("batches")}
 													overlayLoadingTemplate={overlayLoadingTemplate}
 													overlayNoRowsTemplate={overlayNoRowsTemplate}
-												/>
-											</div>
+													/>
+												</div>
+											)}
 										</>
 									) : (
 										<p className="text-gray-600 flex justify-center items-center h-full text-lg w-[680px]">
@@ -516,11 +631,11 @@ export default function ProductionSteps() {
             		registerButtonText="Cadastrar Etapa"
 					modalWidth="w-1/2"
 					isLoading={loading.has("registerStep")}
-					// onSubmit={handleStepSubmit}
+					onSubmit={handleStepSubmit}
 				>	
 					<div className="flex flex-col gap-4">
 						<SmartField
-							fieldName="produto"
+							fieldName="produto_nome"
 							fieldText="Produto Final"
 							fieldClassname="flex flex-col flex-1"
 							type="text"
@@ -529,40 +644,76 @@ export default function ProductionSteps() {
 							readOnly
 						/>
 						<SmartField
-							fieldName="nome_etapa"
+							fieldName="etapa_nome_id"
 							fieldText="Nome da Etapa"
-							fieldClassname="flex flex-col w-full"
-							type="text"
-							required
+							isSelect
+							isCreatableSelect
+							fieldClassname="flex flex-col flex-1"
+							isLoading={loading.has("options")}
+							error={errors.step ? "*" : undefined}
+							value={formData.etapa_nome_id}
+							onCreateNewOption={createStepName}
 							placeholder="Digite o Nome da Etapa"
-							value={formData.etor_etapa_nome}
-							onChange={handleChange}
+							onChangeSelect={handleChange}
+							options={options?.nome_etapas.map((etapa) => ({
+								label: etapa.etapa_nome,
+								value: String(etapa.etapa_nome_id),
+							}))}
 						/>
+						<div className="flex gap-10">
+							<SmartField
+								fieldName="etor_tempo"
+								fieldText="Tempo Estimado"
+								type="text"
+								error={errors.time ? "*" : undefined}
+								fieldClassname="flex flex-col flex-1"
+								placeholder="Tempo Estimado da etapa"
+								value={formData.etor_tempo}
+								onChange={handleChange}
+								pattern="^([0-9]{1,2}|[0-9]{1,2}:[0-5][0-9](:[0-5][0-9])?)$"
+							/>
+
+							<SmartField
+								fieldName="etor_unidade"
+								fieldText="Unidade de Medida"
+								isSelect
+								fieldClassname="flex flex-col flex-1"
+								isLoading={loading.has("options")}
+								error={errors.unit ? "*" : undefined}
+								value={formData.etor_unidade}
+								placeholder="Selecione"
+								onChangeSelect={handleChange}
+								options={[
+									{ value: 's', label: 'Segundo' },
+									{ value: 'min', label: 'Minutos' },
+									{ value: 'h', label: 'Hora ' },
+									{ value: ' Dia(s)', label: 'Dia' },
+									{ value: ' Mês(es)', label: 'Mês' },
+									{ value: ' Ano(s)', label: 'Ano' },
+								]}
+							/>
+						</div>
 						<SmartField
-							fieldName="tempo"
-							fieldText="Tempo Estimado"
-							type="text"
-							required
-							placeholder="Tempo Estimado da etapa"
-							value={formData.etor_tempo}
-							onChange={handleChange}
-							inputWidth="w-[250px]"
-						/>
-						<SmartField
-							fieldName="insumos"
+							fieldName="etor_insumos"
 							fieldText="Insumos Utilizados"
-							fieldClassname="flex flex-col w-full"
-							type="text"
-							required
-							placeholder="Insumos Utilizados na etapa"
+							isSelect
+							fieldClassname="flex flex-col flex-1"
+							isLoading={loading.has("options")}
+							isMulti
+							error={errors.insoum ? "*" : undefined}
 							value={formData.etor_insumos}
-							onChange={handleChange}
+							placeholder="Selecione os Insumos dessa etapa"
+							onChangeSelect={handleChange}
+							options={options?.produtos.map((produto) => ({
+								label: produto.produto_nome,
+								value: produto.produto_nome,
+							}))}
 						/>
 						<SmartField
 							isTextArea
-							fieldName="obs"
+							fieldName="etor_observacoes"
 							fieldText="Observações"
-							fieldClassname="flex flex-col w-full"
+							fieldClassname="flex flex-col flex-1"
 							placeholder="Digite as observações da Etapa"
 							value={formData.etor_observacoes}
 							onChange={handleChange}
