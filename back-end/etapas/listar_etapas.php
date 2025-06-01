@@ -56,11 +56,12 @@ try {
         }
 
         if (!empty($etapa['etor_id'])) {
-            $insumosArray = array_map('trim', explode(',  ', $etapa['etor_insumos'] ?? ''));
+            $insumosArray = array_map('trim', explode(',', $etapa['etor_insumos'] ?? ''));
 
             $produtosMap[$produtoId]['etapas'][] = [
                 'etor_id' => (int)$etapa['etor_id'],
                 'etor_ordem' => (int)$etapa['etor_ordem'],
+                'etapa_nome_id' => (int)$etapa['etapa_nome_id'],
                 'etapa_nome' => $etapa['etapa_nome'],
                 'etor_tempo' => $etapa['etor_tempo'],
                 'etor_insumos' => $insumosArray,

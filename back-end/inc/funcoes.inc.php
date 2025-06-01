@@ -220,7 +220,7 @@ function deleteData($conn, $id, $tabela, $pk)
     if ($stmt->affected_rows === 0) {
         return [
             'success' => false,
-            'message' => 'Nenhum usuário encontrado com este ID'
+            'message' => 'Nenhum registro encontrado com este ID para exclusão'
         ];
     }
 

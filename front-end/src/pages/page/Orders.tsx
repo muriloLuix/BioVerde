@@ -965,7 +965,6 @@ export default function Orders() {
 									type="button"
 									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
 									onClick={generateReport}
-									disabled={loading.size > 0}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
-import { Plus, PencilLine, Trash, Search, Loader2, Pencil, Trash2} from "lucide-react";
+import { Plus, PencilLine, Trash, Search, Loader2, Pencil, Trash2, Check, X} from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
@@ -15,14 +15,13 @@ import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function ProductionSteps() {
 	const [activeTab, setActiveTab] = useState("list");
-	// const [showStepForm, setShowStepForm] = useState<boolean>(false);
 	const [openRegisterModal, setOpenRegisterModal] = useState(false);
 	const [openEditModal, setOpenEditModal] = useState(false);
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openNewProductModal, setOpenNewProductModal] = useState(false);
-	// const [keepProduct, setKeepProduct] = useState(false);
+	const [openDeleteStepConfirmModal, setOpenDeleteStepConfirmModal] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [search, setSearch] = useState("");
@@ -50,12 +49,11 @@ export default function ProductionSteps() {
 	});
 	const [deleteStep, setDeleteStep] = useState({
 		etor_id: 0,
-		dproduct: "",
 		dstep: "",
 		reason: "",
 	});
 
-	console.log(productsWithSteps)
+	console.log(selectedProduct)
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
@@ -116,9 +114,13 @@ export default function ProductionSteps() {
    // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
 	useEffect(() => {
 		if (productsWithSteps.length > 0) {
-			setSelectedProduct(selectedProduct ? selectedProduct : productsWithSteps[0]);
+			const atual = productsWithSteps.find(
+				(p) => p.produto_id === selectedProduct?.produto_id
+			);
+			setSelectedProduct(atual || productsWithSteps[0]);
 		}
 	}, [productsWithSteps, selectedProduct]);
+
 
 	// Para setar os dados que a tabela deve receber após selecionar um produto
 	useEffect(() => {
@@ -175,7 +177,7 @@ export default function ProductionSteps() {
 				setSuccessMsg(false);
                 setOpenNoticeModal(true);
                 setMessage(response.data.message || "Erro ao carregar opções");
-            }
+            }	
         } catch (error) {
             setSuccessMsg(false);
 			console.error(error);
@@ -240,9 +242,132 @@ export default function ProductionSteps() {
 		}
 	};
 
-	/* ----- Função para Cadastro de Produtos ----- */
+	/* ----- Funcões para Edição de Etapas ----- */
 
-	//Submit de cadastrar a etapa de produção completa
+	//função para puxar os dados da etapa que será editada
+	const handleEdit = (etapa: Steps) => {
+		setFormData({
+			etor_id: etapa.etor_id,
+			etor_ordem: etapa.etor_ordem,
+			etapa_nome_id: etapa.etapa_nome_id.toString(),
+			etor_tempo: etapa.etor_tempo,
+			etor_insumos: etapa.etor_insumos,
+			etor_observacoes: etapa.etor_observacoes,
+			etor_unidade: etapa.etor_unidade,
+		});
+		setOpenEditModal(true);
+	};
+
+	// função para atualizar o lote após a edição dele
+	const handleUpdateStep = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		const NewErrors = { 
+			...errors, 
+			time: !formData.etor_tempo,
+			insoum: formData.etor_insumos.length === 0,
+		};
+		setErrors(NewErrors);
+		if (Object.values(NewErrors).some((error) => error)) { return; }
+
+		const dataToSend = { ...formData, produto_final: selectedProduct?.produto_nome };
+		setLoading((prev) => new Set([...prev, "updateStep"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/editar_etapas.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setOpenEditModal(false);
+				setSuccessMsg(true);
+				setMessage(`A etapa foi atualizada com sucesso!`);
+				clearFormData();
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar etapa.");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("updateStep");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Funcões para Edição de Etapas ----- */
+
+	//função para puxar os dados do lote que será excluido
+    const handleDelete = (etapa: Steps) => {
+        setDeleteStep({
+            etor_id: etapa.etor_id,
+            dstep: etapa.etapa_nome_id.toString(),
+            reason: "",
+        });
+        setOpenDeleteModal(true);
+    }; 
+    
+    // função para excluir um lote
+	const handleDeleteStep = async (e: React.FormEvent) => {
+		e.preventDefault();
+		const dataToSend = { ...deleteStep, dproduct: selectedProduct?.produto_nome };
+		setLoading((prev) => new Set([...prev, "deleteStep"]));
+		try {
+            const response = await axios.post(
+                "http://localhost/BioVerde/back-end/etapas/excluir_etapas.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+            console.log(response.data);
+			if (response.data.success) {
+				await refreshData();
+				setOpenConfirmModal(false);
+				setSuccessMsg(true);
+				setMessage("Etapa excluída com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir etapa.");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteStep");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Funções para CRUD de Produtos  ----- */
+
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [deletedId, setDeletedId] = useState<number | null>(null);
+	const [editedValue, setEditedValue] = useState<string>("");
+    
+    const handleEditProduct = (produto: ProductsWithSteps) => {
+		setEditingId(produto.produto_id);
+		setEditedValue(produto.produto_nome);
+	};
+	const handleDeleteProduct = (produto: ProductsWithSteps) => {
+		setDeletedId(produto.produto_id);
+		setOpenDeleteStepConfirmModal(true);
+	};
+
+	//Submit de cadastrar produto com etapa
 	const handleProductSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -255,7 +380,7 @@ export default function ProductionSteps() {
 		setLoading((prev) => new Set([...prev, "registerProduct"]));
 		try {
 			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/etapas/cadastrar_produto.php",
+				"http://localhost/BioVerde/back-end/etapas/cadastrar_produto_etapa.php",
 				{ produto_id: newProduct.produto },
 				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 			);
@@ -280,6 +405,79 @@ export default function ProductionSteps() {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("registerProduct");
+				return newLoading;
+			});
+		}
+	};
+
+    //Função para editar produto
+	const updateProduct = async (id: number, editedValue: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		try {
+			const dataToSend = {
+				produto_id: id,
+				produto_nome: editedValue,
+			};
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/editar_produto_etapa.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setMessage("Produto atualizado com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar Produto.");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+    //Função para excluir produto
+	const deleteProduct = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "deleteProduct"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/etapas/excluir_produto_etapa.php",
+				{ produto_id: deletedId },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			if (response.data.success) {
+				await refreshData();
+				setOpenDeleteStepConfirmModal(false);
+				setSuccessMsg(true);
+				setMessage("Produto excluído com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir Produto.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor")
+		} finally {
+			setOpenNoticeModal(true);
+			setEditingId(null);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteProduct");
 				return newLoading;
 			});
 		}
@@ -325,6 +523,12 @@ export default function ProductionSteps() {
     //Verifica nível de acesso do usuário
 	useCheckAccessLevel();
 
+	//Para remover a barrinha vertical e a seta do select
+	const customComponents = {
+		DropdownIndicator: () => null, 
+		IndicatorSeparator: () => null, 
+	};
+
     //OnChange dos campos
     const handleChange = (
         event: 
@@ -333,6 +537,7 @@ export default function ProductionSteps() {
     ) => {
         const { name, value } = event.target;
 		
+		//Para formatar o input de tempo estimado
 		let formattedValue = value;
 		if (typeof value === "string") {
 			formattedValue = name === "etor_tempo" ? value.replace(/[^0-9:]/g, "") : value;
@@ -340,7 +545,7 @@ export default function ProductionSteps() {
 
 		if (name in newProduct) { setNewProduct({ ...newProduct, [name]: value }) }
         if (name in formData) { setFormData({ ...formData, [name]: formattedValue }) }
-        // if (name in deleteBatch) { setDeleteBatch({ ...deleteBatch, [name]: value }) }
+        if (name in deleteStep) { setDeleteStep({ ...deleteStep, [name]: value }) }
         setErrors((prevErrors) =>
             Object.fromEntries(
                 Object.keys(prevErrors).map((key) => [key, false])
@@ -373,7 +578,16 @@ export default function ProductionSteps() {
                 return `${params.data.etor_tempo}${params.data.etor_unidade}`;
             }
 		},
-        {field: "etor_insumos", headerName: "Insumos Utilizados", filter: true, width: 260},
+        {
+			field: "etor_insumos", headerName: "Insumos Utilizados", filter: true, width: 260,
+			valueGetter: (params) => {
+				const insumos = params.data.etor_insumos;
+				if (Array.isArray(insumos)) {
+					return insumos.join(", ");
+				}
+				return insumos || ""; 
+			}
+		},
 		{
             headerName: "Data de Cadastro", field: "etor_dtCadastro", width: 180, filter: true,
             valueGetter: (params) => new Date(params.data.etor_dtCadastro).toLocaleDateString("pt-BR")
@@ -388,7 +602,7 @@ export default function ProductionSteps() {
                     <button
                         className="text-blue-600 hover:text-blue-800 cursor-pointer"
                         title="Editar Lote"
-                        // onClick={() => { if(params.data) handleEdit(params.data) }}
+                        onClick={() => { if(params.data) handleEdit(params.data) }}
                     >
                         <Pencil size={18} />
                     </button>
@@ -396,7 +610,7 @@ export default function ProductionSteps() {
                         <button
                             className="text-red-600 hover:text-red-800 cursor-pointer"
                             title="Excluir Lote"
-                            // onClick={() => { if(params.data) handleDelete(params.data) }}
+                            onClick={() => { if(params.data) handleDelete(params.data) }}
                         >
                             <Trash2 size={18} />
                         </button>
@@ -530,19 +744,60 @@ export default function ProductionSteps() {
 											<div className="flex items-center justify-between mb-4">
 												<h2 className="text-2xl flex items-center gap-2">
 													<strong>Produto Final:</strong>{" "}
-													{selectedProduct.produto_nome}
-													<button 
-														className="cursor-pointer ml-1 text-blue-600" 
-														title="Editar Produto"
-													>
-														<PencilLine size={21} />
-													</button>
-													<button 
-														className="text-red-500 cursor-pointer" 
-														title="Excluir Produto"
-													>
-														<Trash size={21} />
-													</button>
+													{editingId === selectedProduct.produto_id ? (
+														<input
+															type="text"
+															className="border p-1 text-xl"
+															value={editedValue}
+															onChange={(e) => setEditedValue(e.target.value)}
+															onKeyDown={(e) => {
+																if (e.key === "Enter")
+																	updateProduct(selectedProduct.produto_id, editedValue);
+															}}
+															autoFocus
+														/>
+													) : (
+														selectedProduct.produto_nome
+													)}
+													{editingId === selectedProduct.produto_id ? (
+														<>
+														<button
+															className="cursor-pointer text-xl text-green-700"
+															onClick={() =>
+																updateProduct(selectedProduct.produto_id, editedValue)
+															}
+															title="Salvar"
+														>
+															<Check  />
+														</button>
+														<button
+															className="cursor-pointer text-xl text-red-700"
+															onClick={() => setEditingId(null)}
+															title="Cancelar"
+														>
+															<X  />
+														</button>
+														</>
+													) : (
+														<>
+														<button 
+															className="cursor-pointer ml-1 text-blue-600" 
+															onClick={() => handleEditProduct(selectedProduct)}
+															title="Editar Produto"
+														>
+															<PencilLine size={21} />
+														</button>
+														{userLevel === "Administrador" && (
+															<button 
+																className="text-red-500 cursor-pointer" 
+																onClick={() => handleDeleteProduct(selectedProduct)}
+																title="Excluir Produto"
+															>
+																<Trash size={21} />
+															</button>
+														)}
+														</>
+													)}
 												</h2>
 												<button
 												onClick={() => {setOpenRegisterModal(true); clearFormData()}}
@@ -670,7 +925,7 @@ export default function ProductionSteps() {
 								placeholder="Tempo Estimado da etapa"
 								value={formData.etor_tempo}
 								onChange={handleChange}
-								pattern="^([0-9]{1,2}|[0-9]{1,2}:[0-5][0-9](:[0-5][0-9])?)$"
+								pattern="^([0-9]{1,4}|[0-9]{1,2}:[0-5][0-9](?::[0-5][0-9])?)$"
 							/>
 
 							<SmartField
@@ -722,6 +977,199 @@ export default function ProductionSteps() {
 					</div>
 				</Modal>
 
+				{/* Modal de Edição de Nova Etapa */}
+				<Modal
+					openModal={openEditModal}
+					setOpenModal={setOpenEditModal}
+					modalTitle="Editar Etapa"
+					withXButton
+					rightButtonText="Editar"
+            		leftButtonText="Cancelar"
+					modalWidth="w-1/2"
+					isLoading={loading.has("updateStep")}
+					onSubmit={handleUpdateStep}
+				>	
+					<div className="flex flex-col gap-4">
+						<SmartField
+							fieldName="produto_nome"
+							fieldText="Produto Final"
+							fieldClassname="flex flex-col flex-1"
+							type="text"
+							value={selectedProduct?.produto_nome}
+							onChange={handleChange}
+							readOnly
+							isDisable
+						/>
+						<div className="flex gap-10">
+							<SmartField
+								fieldName="etor_ordem"
+								fieldText="Ordem"
+								inputWidth="w-[120px]"
+								value={formData.etor_ordem}
+								onChange={handleChange}
+								readOnly
+								isDisable
+							/>
+							<SmartField
+								fieldName="etapa_nome_id"
+								fieldText="Nome da Etapa"
+								isSelect
+								isCreatableSelect
+								isClearable={false}
+								fieldClassname="flex flex-col flex-1"
+								isLoading={loading.has("options")}
+								error={errors.step ? "*" : undefined}
+								value={formData.etapa_nome_id}
+								onCreateNewOption={createStepName}
+								placeholder="Digite o Nome da Etapa"
+								onChangeSelect={handleChange}
+								options={options?.nome_etapas.map((etapa) => ({
+									label: etapa.etapa_nome,
+									value: String(etapa.etapa_nome_id),
+								}))}
+							/>
+						</div>
+						<div className="flex gap-10">
+							<SmartField
+								fieldName="etor_tempo"
+								fieldText="Tempo Estimado"
+								type="text"
+								error={errors.time ? "*" : undefined}
+								fieldClassname="flex flex-col flex-1"
+								placeholder="Tempo Estimado da etapa"
+								value={formData.etor_tempo}
+								onChange={handleChange}
+								pattern="^([0-9]{1,4}|[0-9]{1,2}:[0-5][0-9](?::[0-5][0-9])?)$"
+							/>
+
+							<SmartField
+								fieldName="etor_unidade"
+								fieldText="Unidade de Medida"
+								isSelect
+								fieldClassname="flex flex-col flex-1"
+								isClearable={false}
+								isLoading={loading.has("options")}
+								error={errors.unit ? "*" : undefined}
+								value={formData.etor_unidade}
+								placeholder="Selecione"
+								onChangeSelect={handleChange}
+								options={[
+									{ value: 's', label: 'Segundo' },
+									{ value: 'min', label: 'Minutos' },
+									{ value: 'h', label: 'Hora ' },
+									{ value: ' Dia(s)', label: 'Dia' },
+									{ value: ' Mês(es)', label: 'Mês' },
+									{ value: ' Ano(s)', label: 'Ano' },
+								]}
+							/>
+						</div>
+						<SmartField
+							fieldName="etor_insumos"
+							fieldText="Insumos Utilizados"
+							isSelect
+							fieldClassname="flex flex-col flex-1"
+							isLoading={loading.has("options")}
+							isMulti
+							error={errors.insoum ? "*" : undefined}
+							value={formData.etor_insumos}
+							placeholder="Selecione os Insumos dessa etapa"
+							onChangeSelect={handleChange}
+							options={options?.produtos.map((produto) => ({
+								label: produto.produto_nome,
+								value: produto.produto_nome,
+							}))}
+						/>
+						<SmartField
+							isTextArea
+							fieldName="etor_observacoes"
+							fieldText="Observações"
+							fieldClassname="flex flex-col flex-1"
+							placeholder="Digite as observações da Etapa"
+							value={formData.etor_observacoes}
+							onChange={handleChange}
+							rows={2}
+						/>
+					</div>
+				</Modal>
+
+				{/* Modal de Exclusão */}
+				<Modal
+					openModal={openDeleteModal}
+					setOpenModal={setOpenDeleteModal}
+					modalTitle="Excluir Etapa"
+					rightButtonText="Excluir"
+					leftButtonText="Cancelar"
+					onDelete={() => {
+						setOpenConfirmModal(true);
+						setOpenDeleteModal(false);
+					}}
+				>
+					<div className="flex flex-col gap-4 mb-5">
+						<SmartField
+							fieldName="produto_nome"
+							fieldText="Produto Final"
+							fieldClassname="flex flex-col flex-1"
+							required
+							type="text"
+							value={selectedProduct?.produto_nome}
+							onChange={handleChange}
+							readOnly
+						/>
+						<SmartField
+							fieldName="dstep"
+							fieldText="Nome da Etapa a ser excluída"
+							isSelect
+							isClearable={false}
+							menuIsOpen={false}
+							isSearchable={false}
+							components={customComponents}
+							fieldClassname="flex flex-col flex-1"
+							isLoading={loading.has("options")}
+							value={deleteStep.dstep}
+							onChangeSelect={handleChange}
+							options={options?.nome_etapas.map((etapa) => ({
+								label: etapa.etapa_nome,
+								value: String(etapa.etapa_nome_id),
+							}))}
+						/>
+						<SmartField
+							isTextArea
+							fieldName="reason"
+							required
+							autoFocus
+							fieldText="Motivo da Exclusão"
+							fieldClassname="flex flex-col w-full"
+							placeholder="Digite o motivo da exclusão da Etapa"
+							value={deleteStep.reason}
+							onChange={handleChange}
+						/>
+					</div>
+				</Modal>
+
+				{/* Alert para confirmar exclusão da etapa */}
+				<ConfirmationModal
+					openModal={openConfirmModal}
+					setOpenModal={setOpenConfirmModal}
+					confirmationModalTitle="Tem certeza que deseja excluir a etapa?"
+					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+					onConfirm={handleDeleteStep}
+					isLoading={loading.has("deleteStep")}
+					confirmationLeftButtonText="Cancelar"
+					confirmationRightButtonText="Sim, excluir etapa"
+				/>
+
+				{/* Alert para confirmar exclusão do Produto */}
+				<ConfirmationModal
+					openModal={openDeleteStepConfirmModal}
+					setOpenModal={setOpenDeleteStepConfirmModal}
+					confirmationModalTitle="Tem certeza que deseja excluir o produto da lista de produtos com etapas de produção?"
+					confirmationText="Todos as etapas desse produto serão excluídas junto com ele. Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+					onConfirm={deleteProduct}
+					isLoading={loading.has("deleteProduct")}
+					confirmationLeftButtonText="Cancelar"
+					confirmationRightButtonText="Sim, excluir Produto"
+				/>
+
 				{/* Modal de Avisos */}
 				<NoticeModal
 					openModal={openNoticeModal}
@@ -730,17 +1178,6 @@ export default function ProductionSteps() {
 					message={message}
 				/>
 
-				{/* Alert para confirmar exclusão da etapa */}
-				<ConfirmationModal
-					openModal={openConfirmModal}
-					setOpenModal={setOpenConfirmModal}
-					confirmationModalTitle="Tem certeza que deseja excluir a etapa?"
-					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-					// onConfirm={handleDeleteStep}
-					isLoading={loading.has("deleteStep")}
-					confirmationLeftButtonText="Cancelar"
-					confirmationRightButtonText="Sim, excluir etapa"
-				/>
 			</div>
 		</div>
 	);

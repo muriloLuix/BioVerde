@@ -4,11 +4,9 @@ session_start();
 include_once "../inc/funcoes.inc.php";
 require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
-require_once "../etapas/Etapas.class.php";
+require_once "../etapas/Etapa.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
-$user_id = $_SESSION['user_id'];
-$user = Usuario::find($user_id);
 /*************************************************/
 
 try {
@@ -25,6 +23,9 @@ try {
     }
     /***********************************************************************/
 
+    $user_id = $_SESSION['user_id'];
+    $user = Usuario::find($user_id);
+
     /**************** RECEBE AS INFORMAÇÕES DO FRONT-END************************/
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
@@ -38,7 +39,7 @@ try {
     /***************************************************************************/
 
     /**************** VALIDAÇÃO DOS CAMPOS ************************/
-    $camposObrigatorios = ['dproduct', 'dstep', 'reason'];
+    $camposObrigatorios = ['dstep', 'reason'];
     foreach ($camposObrigatorios as $field) {
         if (empty($data[$field])) {
             throw new Exception("O campo '{$field}' é obrigatório para a exclusão.");
@@ -46,8 +47,27 @@ try {
     }
     /*************************************************************/
 
+    /**************** BUSCA O NOME DA ETAPA COM O ID ************************/
+    $etapaId = $data['dstep'];
+    $buscaEtapaId = $conn->prepare("SELECT etapa_nome FROM etapa_nomes WHERE etapa_nome_id = ?");
+    $buscaEtapaId->bind_param("i", $etapaId);
+    $buscaEtapaId->execute();
+    $resultEtapaId = $buscaEtapaId->get_result();
+    $etapa = $resultEtapaId->fetch_assoc();
+
+    if (!$etapa) {
+        throw new Exception("Nome da Etapa não encontrado.");
+    }
+
+    $nomeEtapa = $etapa['etapa_nome'];
+
+    /**************** SALVA OS DADOS QUE SERÃO EXCLUÍDOS ************************/
+    $etor_id = (int)$data['etor_id'];         
+    $produto = $data['dproduct'];             
+    $motivo = $data['reason'];  
+    /**************************************************************************/
+
     /**************** VERIFICA O ID DA ETAPA ************************/
-    $etor_id = (int)$data['etor_id'];
     if ($etor_id <= 0) {
         throw new Exception("ID da etapa inválido. Por favor, verifique os dados.");
     }
@@ -55,28 +75,29 @@ try {
 
     $conn->begin_transaction();
 
+    
     /**************** DELETA A ETAPA ************************/
     $exclusao = deleteData($conn, $etor_id, "etapa_ordem", "etor_id");
     if (!$exclusao['success']) {
-        throw new Exception($exclusao['message'] ?? "Falha ao excluir o usuário.");
+        throw new Exception($exclusao['message'] ?? "Falha ao excluir a Etapa.");
     }
-
+    
     if (!$conn->commit()) {
         throw new Exception("Falha ao finalizar a operação. Tente novamente.");
     }
     /******************************************************/
 
     /**************** LOG DE EXCLUSÃO ************************/
-    echo json_encode([
-        'success' => true,
-        'message' => 'Usuário excluído com sucesso',
-        'deleted_id' => $etor_id
-    ]);
-
     $etapas = Etapa::find($etor_id);
 
-    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etapas->etor_id} - {$etapas->nome_etapa}) do produto: {$data['dproduct']}\n\nMotivo: {$data['reason']}", Acoes::EXCLUIR_ETAPA);
-
+    salvarLog("O usuário ID ({$user->user_id} - {$user->user_name}) excluiu a etapa: ({$etor_id} - {$nomeEtapa}) do produto: {$data['dproduct']}\n\nMotivo: {$motivo}", Acoes::EXCLUIR_ETAPA);
+    /******************************************************/
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Etapa excluída com sucesso',
+        'deleted_id' => $etor_id
+    ]);
 
 } catch
 (Exception $e) {
