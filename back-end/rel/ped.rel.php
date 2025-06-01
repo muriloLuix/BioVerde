@@ -28,6 +28,15 @@ try {
     $result = $conn->query($sql);
     $pedidos = $result->fetch_all(MYSQLI_ASSOC);
 
+    // Carrega a logo como base64
+    $logoFile = __DIR__ . '/../../front-end/public/logo-bioverde-branco.png';
+    if (file_exists($logoFile)) {
+        $logoData = base64_encode(file_get_contents($logoFile));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+    } else {
+        $logoSrc = '';
+    }
+
     $html = '
     <!DOCTYPE html>
     <html lang="pt-BR">
@@ -35,15 +44,16 @@ try {
         <meta charset="UTF-8">
         <title>Relatório de Pedidos</title>
         <style>
-            body { font-family: Arial, sans-serif; font-size: 12px; }
-            h1 { color: #2e7d32; text-align: center; font-size: 22px; }
-            p { text-align: center; margin-top: -10px; font-size: 12px; color: #555; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-            th { background-color: #2e7d32; color: white; }
-            tbody tr:nth-child(even) { background-color: #f5f5f5; }
-            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; }
-            .pedido-header { background-color: #e0f2f1; padding: 8px; margin-top: 20px; border: 1px solid #2e7d32; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+            h1 { color: #2e7d32; text-align: center; font-size: 24px; margin-bottom: 5px; }
+            p { text-align: center; margin-top: -5px; font-size: 11px; color: #555; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background-color: #2e7d32; color: #fff; font-size: 12px; text-transform: uppercase; padding: 8px; }
+            td { padding: 8px; border: 1px solid #ddd; font-size: 11px; text-align: center; }
+            tbody tr:nth-child(even) { background-color: #f9f9f9; }
+            tbody tr:hover { background-color: #e8f5e9; }
+            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #ccc; padding-top: 5px; }
+            .pedido-header { background-color: #e0f2f1; padding: 8px; margin-top: 20px; border: 1px solid #2e7d32; font-size: 12px; }
         </style>
     </head>
     <body>
@@ -70,7 +80,6 @@ try {
             </thead>
             <tbody>';
 
-        // Busca os itens do pedido atual
         $sqlItens = "SELECT i.pedidoitem_quantidade, i.pedidoitem_preco, i.pedidoitem_subtotal,
                             pr.produto_nome, u.uni_sigla
                      FROM pedido_item i
@@ -98,14 +107,13 @@ try {
 
     $html .= '<div class="footer">Sistema BioVerde - Relatório gerado automaticamente</div></body></html>';
 
-    // Configura e emite o PDF
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
         'format' => 'A4',
         'default_font' => 'arial',
         'margin_left' => 10,
         'margin_right' => 10,
-        'margin_top' => 20,
+        'margin_top' => 35,
         'margin_bottom' => 20,
         'margin_header' => 10,
         'margin_footer' => 10,
@@ -114,9 +122,15 @@ try {
 
     $mpdf->SetTitle('Relatório de Pedidos');
     $mpdf->SetAuthor('Sistema BioVerde');
-    $mpdf->SetWatermarkText('BioVerde');
-    $mpdf->showWatermarkText = true;
-    $mpdf->watermarkTextAlpha = 0.1;
+
+    $headerHtml = '
+    <div style="text-align: center;">
+        <img src="' . $logoSrc . '" width="90" style="margin-top: -15px; opacity: 0.85;">
+    </div>
+    <hr style="border: 0.5px solid #2e7d32; margin-top: 5px;">
+    ';
+    $mpdf->SetHTMLHeader($headerHtml);
+
     $mpdf->WriteHTML($html);
 
     ob_clean();

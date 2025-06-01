@@ -39,6 +39,15 @@ try {
     $stmt->execute();
     $clientes = $stmt->get_result();
 
+    // Carrega a logo como base64
+    $logoFile = __DIR__ . '/../../front-end/public/logo-bioverde-branco.png'; // Caminho para sua logo
+    if (file_exists($logoFile)) {
+        $logoData = base64_encode(file_get_contents($logoFile));
+        $logoSrc = 'data:image/png;base64,' . $logoData;
+    } else {
+        $logoSrc = ''; // Caso não encontre a logo
+    }
+
     // Cria HTML do relatório
     $html = '
     <!DOCTYPE html>
@@ -47,14 +56,15 @@ try {
         <meta charset="UTF-8">
         <title>Relatório de Clientes</title>
         <style>
-            body { font-family: Arial, sans-serif; font-size: 12px; }
-            h1 { color: #2e7d32; text-align: center; font-size: 22px; }
-            p { text-align: center; margin-top: -10px; font-size: 12px; color: #555; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+            h1 { color: #2e7d32; text-align: center; font-size: 24px; margin-bottom: 5px; }
+            p { text-align: center; margin-top: -5px; font-size: 11px; color: #555; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-            th { background-color: #2e7d32; color: white; font-size: 13px; }
-            tbody tr:nth-child(even) { background-color: #f5f5f5; }
-            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; }
+            th { background-color: #2e7d32; color: #fff; font-size: 12px; text-transform: uppercase; padding: 8px; }
+            td { padding: 8px; border: 1px solid #ddd; font-size: 11px; }
+            tbody tr:nth-child(even) { background-color: #f9f9f9; }
+            tbody tr:hover { background-color: #e8f5e9; }
+            .footer { margin-top: 30px; font-size: 10px; text-align: center; color: #888; border-top: 1px solid #ccc; padding-top: 5px; }
         </style>
     </head>
     <body>
@@ -67,27 +77,25 @@ try {
                 <tr>
                     <th style="width: 20%;">Nome</th>
                     <th style="width: 25%;">Razão Social</th>
-                    <th style="width: 15%;">Email</th>
-                    <th style="width: 16%;">CPF/CNPJ</th>
-                    <th style="width: 15%;">Telefone</th>
-                    <th style="width: 15%;">Tipo</th>
+                    <th style="width: 20%;">Email</th>
+                    <th style="width: 15%;">CPF/CNPJ</th>
+                    <th style="width: 10%;">Telefone</th>
+                    <th style="width: 10%;">Tipo</th>
                 </tr>
             </thead>
             <tbody>';
 
-
     foreach ($clientes as $cliente) {
         $html .= '
-                    <tr>
-                        <td>' . htmlspecialchars($cliente['cliente_nome']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_razao_social']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_email']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_documento']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_telefone']) . '</td>
-                        <td>' . htmlspecialchars($cliente['cliente_tipo']) . '</td>
-                    </tr>';
+                <tr>
+                    <td>' . htmlspecialchars($cliente['cliente_nome']) . '</td>
+                    <td>' . htmlspecialchars($cliente['cliente_razao_social']) . '</td>
+                    <td>' . htmlspecialchars($cliente['cliente_email']) . '</td>
+                    <td>' . htmlspecialchars($cliente['cliente_documento']) . '</td>
+                    <td>' . htmlspecialchars($cliente['cliente_telefone']) . '</td>
+                    <td>' . htmlspecialchars($cliente['cliente_tipo']) . '</td>
+                </tr>';
     }
-
 
     $html .= '
             </tbody>
@@ -100,7 +108,6 @@ try {
     </body>
     </html>';
 
-
     // Configura o mPDF
     $mpdf = new \Mpdf\Mpdf([
         'mode' => 'utf-8',
@@ -108,7 +115,7 @@ try {
         'default_font' => 'arial',
         'margin_left' => 10,
         'margin_right' => 10,
-        'margin_top' => 20,
+        'margin_top' => 35,
         'margin_bottom' => 20,
         'margin_header' => 10,
         'margin_footer' => 10,
@@ -117,9 +124,15 @@ try {
 
     $mpdf->SetTitle('Relatório de Clientes');
     $mpdf->SetAuthor('Sistema BioVerde');
-    $mpdf->SetWatermarkText('BioVerde');
-    $mpdf->showWatermarkText = true;
-    $mpdf->watermarkTextAlpha = 0.1;
+
+    // Cabeçalho com a logo
+    $headerHtml = '
+    <div style="text-align: center;">
+        <img src="' . $logoSrc . '" width="90" style="margin-top: -15px; opacity: 0.85;">
+    </div>
+    <hr style="border: 0.5px solid #2e7d32; margin-top: 5px;">
+    ';
+    $mpdf->SetHTMLHeader($headerHtml);
 
     $mpdf->WriteHTML($html);
 
