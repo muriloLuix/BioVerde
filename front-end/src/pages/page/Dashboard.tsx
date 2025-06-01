@@ -33,7 +33,39 @@ const Dashboard = () => {
 				type: "bar",
 				xKey: "classificacao_nome",
 				yKey: "quantity",
-				yName: "Classificação",
+				label: {
+					enabled: true,
+					fontSize: 12,
+				},
+			},
+		],
+		axes: [
+			{
+				type: "number",
+				position: "left",
+				title: {
+					enabled: true,
+					text: "QUANTIDADE",
+					color: "white",
+					fontSize: 12,
+					fontWeight: "bold",
+					spacing: 8,
+				},
+				interval: {
+					step: 2,
+				},
+			},
+			{
+				type: "category",
+				position: "bottom",
+				title: {
+					enabled: true,
+					text: "CLASSIFICAÇÃO",
+					color: "white",
+					fontSize: 12,
+					fontWeight: "bold",
+					spacing: 8,
+				},
 			},
 		],
 		title: {
@@ -85,8 +117,17 @@ const Dashboard = () => {
 				angleKey: "value",
 				legendItemKey: "label",
 				fills: ["red", "limegreen"],
+				sectorLabelKey: "value",
+				sectorLabel: {
+					enabled: true,
+					formatter: ({ value }) => value,
+					fontSize: 12,
+					fontWeight: "lighter",
+				},
 			},
 		],
+		height: 240,
+		width: 300,
 		title: {
 			text: "OCUPAÇÃO DO ESTOQUE",
 			color: "white",
@@ -98,10 +139,24 @@ const Dashboard = () => {
 			visible: false,
 		},
 		legend: {
+			position: "bottom",
+			spacing: 20,
 			item: {
+				marker: {
+					size: 12,
+					shape: "circle",
+				},
 				label: {
 					color: "white",
 				},
+			},
+		},
+		overlays: {
+			loading: {
+				text: "Carregando dados...",
+			},
+			noData: {
+				text: "Sem dados disponíveis",
 			},
 		},
 	});
@@ -114,9 +169,9 @@ const Dashboard = () => {
 			overrides: {
 				line: {
 					series: {
-						strokeWidth: 2,
+						strokeWidth: 3,
 						marker: {
-							size: 4,
+							size: 6,
 							fill: "#fff",
 							stroke: "#fff",
 						},
@@ -323,10 +378,10 @@ const Dashboard = () => {
 				</div>
 
 				<div className="h-4/12 w-full gap-4 flex items-center justify-around">
-					<div className="h-full w-1/2 p-3 bg-verdeEscuroForte rounded-lg">
+					<div className="h-full w-1/2 bg-verdeEscuroForte rounded-lg">
 						<AgCharts className="h-full w-full" options={barOptions} />
 					</div>
-					<div className="h-full w-1/2 flex flex-col items-center justify-center p-2 bg-verdeEscuroForte rounded-lg">
+					<div className="h-full w-1/2 flex flex-col items-center justify-center bg-verdeEscuroForte rounded-lg">
 						<AgCharts className="h-full w-full" options={pieOptions} />
 					</div>
 				</div>
