@@ -215,6 +215,8 @@ export interface StepOptions {
 }
 
 
+
+
 // ------ FormsData ------
 
 export interface FormDataBatch {
@@ -262,4 +264,10 @@ export interface DeleteBatch {
 	lote_codigo: string;
 	dproduto: string;
 	reason: string;
+}
+
+export interface DeleteSteps {
+	etor_id: number,
+	dstep: string,
+	reason: string,
 }

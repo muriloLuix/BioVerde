@@ -6,11 +6,11 @@ import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
 import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { SmartField, Modal, NoticeModal, ConfirmationModal } from "../../shared";
+import { Modal, NoticeModal, ConfirmationModal } from "../../shared";
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
-// import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
-import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions } from "../../utils/types";
+import { ProductRegister, NewStep, UpdateStep, DeleteStep } from "../pageComponents";
+import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions, DeleteSteps } from "../../utils/types";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function ProductionSteps() {
@@ -21,7 +21,7 @@ export default function ProductionSteps() {
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openNewProductModal, setOpenNewProductModal] = useState(false);
-	const [openDeleteStepConfirmModal, setOpenDeleteStepConfirmModal] = useState(false);
+	const [openDeleteProductModal, setOpenDeleteProductModal] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [search, setSearch] = useState("");
@@ -47,13 +47,11 @@ export default function ProductionSteps() {
 		etor_observacoes: "",
 		etor_unidade: "",
 	});
-	const [deleteStep, setDeleteStep] = useState({
+	const [deleteStep, setDeleteStep] = useState<DeleteSteps>({
 		etor_id: 0,
 		dstep: "",
 		reason: "",
 	});
-
-	console.log(selectedProduct)
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
@@ -111,7 +109,7 @@ export default function ProductionSteps() {
         fetchData();
     }, []);
 
-   // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
+    // Verifica se existe pelo menos um produto e seleciona o primeiro por padrão
 	useEffect(() => {
 		if (productsWithSteps.length > 0) {
 			const atual = productsWithSteps.find(
@@ -120,7 +118,6 @@ export default function ProductionSteps() {
 			setSelectedProduct(atual || productsWithSteps[0]);
 		}
 	}, [productsWithSteps, selectedProduct]);
-
 
 	// Para setar os dados que a tabela deve receber após selecionar um produto
 	useEffect(() => {
@@ -304,7 +301,7 @@ export default function ProductionSteps() {
 		}
 	};
 
-	/* ----- Funcões para Edição de Etapas ----- */
+	/* ----- Funcões para Exclusão de Etapas ----- */
 
 	//função para puxar os dados do lote que será excluido
     const handleDelete = (etapa: Steps) => {
@@ -352,7 +349,7 @@ export default function ProductionSteps() {
 		}
 	};
 
-	/* ----- Funções para CRUD de Produtos  ----- */
+	/* ----- Funções para CRUD de Produtos com Etapas  ----- */
 
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [deletedId, setDeletedId] = useState<number | null>(null);
@@ -364,7 +361,7 @@ export default function ProductionSteps() {
 	};
 	const handleDeleteProduct = (produto: ProductsWithSteps) => {
 		setDeletedId(produto.produto_id);
-		setOpenDeleteStepConfirmModal(true);
+		setOpenDeleteProductModal(true);
 	};
 
 	//Submit de cadastrar produto com etapa
@@ -412,7 +409,7 @@ export default function ProductionSteps() {
 
     //Função para editar produto
 	const updateProduct = async (id: number, editedValue: string) => {
-		setLoading((prev) => new Set([...prev, "options"]));
+		setLoading((prev) => new Set([...prev, "steps"]));
 		try {
 			const dataToSend = {
 				produto_id: id,
@@ -442,7 +439,7 @@ export default function ProductionSteps() {
 			setEditingId(null);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
-				newLoading.delete("options");
+				newLoading.delete("steps");
 				return newLoading;
 			});
 		}
@@ -460,7 +457,7 @@ export default function ProductionSteps() {
 			);
 			if (response.data.success) {
 				await refreshData();
-				setOpenDeleteStepConfirmModal(false);
+				setOpenDeleteProductModal(false);
 				setSuccessMsg(true);
 				setMessage("Produto excluído com sucesso!");
 			} else {
@@ -565,7 +562,7 @@ export default function ProductionSteps() {
         );
     };
 
-	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
+	/* ----- Definição de colunas e dados que a tabela de etapas vai receber ----- */
 
     const gridRef = useRef<AgGridReact>(null);
     const [rowData, setRowData] = useState<Steps[]>([]);
@@ -639,7 +636,6 @@ export default function ProductionSteps() {
 				<h1 className=" text-[40px] font-semibold text-center mb-3">
 					Etapas de Produção
 				</h1>
-
 				<Tabs.Root
 					value={activeTab}
 					onValueChange={setActiveTab}
@@ -681,7 +677,6 @@ export default function ProductionSteps() {
 											/>
 										</div>
 									</div>
-
 									{/* Lista rolável */}
 									<div className="flex-1 overflow-y-auto custom-scrollbar-products">
 										{loading.has("steps") ? (
@@ -707,23 +702,21 @@ export default function ProductionSteps() {
 															key={index}
 															className={`break-words px-4 py-2 text-black font-medium cursor-pointer hover:bg-gray-300 rounded-lg ${
 																selectedProduct?.produto_nome ===
-																produto.produto_nome
-																	? "bg-gray-300"
-																	: ""
+																produto.produto_nome ? "bg-gray-300" : ""
 															}`}
 															onClick={() => setSelectedProduct(produto)}
 														>
 															{produto.produto_nome}
 														</li>
-													))}
+													))
+												}
 											</ul>
 										)}
 									</div>
-
 									{/* Botão fixo */}
 									<div className="p-1 bg-gray-300 hover:bg-gray-400 rounded-b-xl">
 										<button
-											onClick={() => {setOpenNewProductModal(true); setNewProduct({ produto: "" });}}
+											onClick={() => { setOpenNewProductModal(true); setNewProduct({ produto: "" }); }}
 											className="w-full cursor-pointer flex place-content-center gap-2 text-black font-semibold py-2 rounded-lg"
 										>
 											<Plus />
@@ -732,8 +725,7 @@ export default function ProductionSteps() {
 									</div>
 								</div>
 
-
-								{/* Tabela de Etapas */}
+								{/* Nome do Produto Final e Botão de Nova Etapa */}
 								<div className="w-[60vw]">
 									{loading.has("steps") ? (
 										<div className="flex justify-center items-center h-full w-[50vw]">
@@ -807,7 +799,7 @@ export default function ProductionSteps() {
 													Nova Etapa
 												</button>
 											</div>
-											{/* Tabela de Lotes */}
+											{/* Tabela de Etapas */}
 											{selectedProduct.etapas && selectedProduct.etapas.length === 0 ? (
 												<div className="flex justify-center items-center h-[63vh]">
 													<p className="text-gray-800 text-lg text-center px-4">
@@ -827,7 +819,7 @@ export default function ProductionSteps() {
 													pagination
 													paginationPageSize={10}
 													paginationPageSizeSelector={[10, 25, 50, 100]}
-													loading={loading.has("batches")}
+													loading={loading.has("steps")}
 													overlayLoadingTemplate={overlayLoadingTemplate}
 													overlayNoRowsTemplate={overlayNoRowsTemplate}
 													/>
@@ -859,22 +851,26 @@ export default function ProductionSteps() {
 					isLoading={loading.has("registerProduct")}
 					onSubmit={handleProductSubmit}
 				>
-					<SmartField
-						fieldName="produto"
-						fieldText="Produto"
-						isSelect
-						fieldClassname="flex flex-col flex-1"
-						error={errors.product ? "*" : undefined}
-						isLoading={loading.has("options")}
-						value={newProduct.produto}
-						placeholder="Selecione o novo Produto"
-						onChangeSelect={handleChange}
-						options={options?.produtos.map((produto) => ({
-							label: produto.produto_nome,
-							value: String(produto.produto_id),
-						}))}
+					<ProductRegister
+						newProduct={newProduct}
+						options={options}
+						loading={loading}
+						errors={errors}
+						handleChange={handleChange}
 					/>
 				</Modal>
+
+				{/* Alert para confirmar exclusão do Produto */}
+				<ConfirmationModal
+					openModal={openDeleteProductModal}
+					setOpenModal={setOpenDeleteProductModal}
+					confirmationModalTitle="Tem certeza que deseja excluir o produto da lista de produtos com etapas de produção?"
+					confirmationText="Todos as etapas desse produto serão excluídas junto com ele. Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+					onConfirm={deleteProduct}
+					isLoading={loading.has("deleteProduct")}
+					confirmationLeftButtonText="Cancelar"
+					confirmationRightButtonText="Sim, excluir Produto"
+				/>
 
 				{/* Modal de Cadastro de Nova Etapa */}
 				<Modal
@@ -888,96 +884,18 @@ export default function ProductionSteps() {
 					isLoading={loading.has("registerStep")}
 					onSubmit={handleStepSubmit}
 				>	
-					<div className="flex flex-col gap-4">
-						<SmartField
-							fieldName="produto_nome"
-							fieldText="Produto Final"
-							fieldClassname="flex flex-col flex-1"
-							type="text"
-							value={selectedProduct?.produto_nome}
-							onChange={handleChange}
-							readOnly
-						/>
-						<SmartField
-							fieldName="etapa_nome_id"
-							fieldText="Nome da Etapa"
-							isSelect
-							isCreatableSelect
-							fieldClassname="flex flex-col flex-1"
-							isLoading={loading.has("options")}
-							error={errors.step ? "*" : undefined}
-							value={formData.etapa_nome_id}
-							onCreateNewOption={createStepName}
-							placeholder="Digite o Nome da Etapa"
-							onChangeSelect={handleChange}
-							options={options?.nome_etapas.map((etapa) => ({
-								label: etapa.etapa_nome,
-								value: String(etapa.etapa_nome_id),
-							}))}
-						/>
-						<div className="flex gap-10">
-							<SmartField
-								fieldName="etor_tempo"
-								fieldText="Tempo Estimado"
-								type="text"
-								error={errors.time ? "*" : undefined}
-								fieldClassname="flex flex-col flex-1"
-								placeholder="Tempo Estimado da etapa"
-								value={formData.etor_tempo}
-								onChange={handleChange}
-								pattern="^([0-9]{1,4}|[0-9]{1,2}:[0-5][0-9](?::[0-5][0-9])?)$"
-							/>
-
-							<SmartField
-								fieldName="etor_unidade"
-								fieldText="Unidade de Medida"
-								isSelect
-								fieldClassname="flex flex-col flex-1"
-								isLoading={loading.has("options")}
-								error={errors.unit ? "*" : undefined}
-								value={formData.etor_unidade}
-								placeholder="Selecione"
-								onChangeSelect={handleChange}
-								options={[
-									{ value: 's', label: 'Segundo' },
-									{ value: 'min', label: 'Minutos' },
-									{ value: 'h', label: 'Hora ' },
-									{ value: ' Dia(s)', label: 'Dia' },
-									{ value: ' Mês(es)', label: 'Mês' },
-									{ value: ' Ano(s)', label: 'Ano' },
-								]}
-							/>
-						</div>
-						<SmartField
-							fieldName="etor_insumos"
-							fieldText="Insumos Utilizados"
-							isSelect
-							fieldClassname="flex flex-col flex-1"
-							isLoading={loading.has("options")}
-							isMulti
-							error={errors.insoum ? "*" : undefined}
-							value={formData.etor_insumos}
-							placeholder="Selecione os Insumos dessa etapa"
-							onChangeSelect={handleChange}
-							options={options?.produtos.map((produto) => ({
-								label: produto.produto_nome,
-								value: produto.produto_nome,
-							}))}
-						/>
-						<SmartField
-							isTextArea
-							fieldName="etor_observacoes"
-							fieldText="Observações"
-							fieldClassname="flex flex-col flex-1"
-							placeholder="Digite as observações da Etapa"
-							value={formData.etor_observacoes}
-							onChange={handleChange}
-							rows={2}
-						/>
-					</div>
+					<NewStep
+						formData={formData}
+						selectedProduct={selectedProduct}
+						options={options}
+						loading={loading}
+						errors={errors}
+						createStepName={createStepName}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
-				{/* Modal de Edição de Nova Etapa */}
+				{/* Modal de Edição de Etapa */}
 				<Modal
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
@@ -989,110 +907,18 @@ export default function ProductionSteps() {
 					isLoading={loading.has("updateStep")}
 					onSubmit={handleUpdateStep}
 				>	
-					<div className="flex flex-col gap-4">
-						<SmartField
-							fieldName="produto_nome"
-							fieldText="Produto Final"
-							fieldClassname="flex flex-col flex-1"
-							type="text"
-							value={selectedProduct?.produto_nome}
-							onChange={handleChange}
-							readOnly
-							isDisable
-						/>
-						<div className="flex gap-10">
-							<SmartField
-								fieldName="etor_ordem"
-								fieldText="Ordem"
-								inputWidth="w-[120px]"
-								value={formData.etor_ordem}
-								onChange={handleChange}
-								readOnly
-								isDisable
-							/>
-							<SmartField
-								fieldName="etapa_nome_id"
-								fieldText="Nome da Etapa"
-								isSelect
-								isCreatableSelect
-								isClearable={false}
-								fieldClassname="flex flex-col flex-1"
-								isLoading={loading.has("options")}
-								error={errors.step ? "*" : undefined}
-								value={formData.etapa_nome_id}
-								onCreateNewOption={createStepName}
-								placeholder="Digite o Nome da Etapa"
-								onChangeSelect={handleChange}
-								options={options?.nome_etapas.map((etapa) => ({
-									label: etapa.etapa_nome,
-									value: String(etapa.etapa_nome_id),
-								}))}
-							/>
-						</div>
-						<div className="flex gap-10">
-							<SmartField
-								fieldName="etor_tempo"
-								fieldText="Tempo Estimado"
-								type="text"
-								error={errors.time ? "*" : undefined}
-								fieldClassname="flex flex-col flex-1"
-								placeholder="Tempo Estimado da etapa"
-								value={formData.etor_tempo}
-								onChange={handleChange}
-								pattern="^([0-9]{1,4}|[0-9]{1,2}:[0-5][0-9](?::[0-5][0-9])?)$"
-							/>
-
-							<SmartField
-								fieldName="etor_unidade"
-								fieldText="Unidade de Medida"
-								isSelect
-								fieldClassname="flex flex-col flex-1"
-								isClearable={false}
-								isLoading={loading.has("options")}
-								error={errors.unit ? "*" : undefined}
-								value={formData.etor_unidade}
-								placeholder="Selecione"
-								onChangeSelect={handleChange}
-								options={[
-									{ value: 's', label: 'Segundo' },
-									{ value: 'min', label: 'Minutos' },
-									{ value: 'h', label: 'Hora ' },
-									{ value: ' Dia(s)', label: 'Dia' },
-									{ value: ' Mês(es)', label: 'Mês' },
-									{ value: ' Ano(s)', label: 'Ano' },
-								]}
-							/>
-						</div>
-						<SmartField
-							fieldName="etor_insumos"
-							fieldText="Insumos Utilizados"
-							isSelect
-							fieldClassname="flex flex-col flex-1"
-							isLoading={loading.has("options")}
-							isMulti
-							error={errors.insoum ? "*" : undefined}
-							value={formData.etor_insumos}
-							placeholder="Selecione os Insumos dessa etapa"
-							onChangeSelect={handleChange}
-							options={options?.produtos.map((produto) => ({
-								label: produto.produto_nome,
-								value: produto.produto_nome,
-							}))}
-						/>
-						<SmartField
-							isTextArea
-							fieldName="etor_observacoes"
-							fieldText="Observações"
-							fieldClassname="flex flex-col flex-1"
-							placeholder="Digite as observações da Etapa"
-							value={formData.etor_observacoes}
-							onChange={handleChange}
-							rows={2}
-						/>
-					</div>
+					<UpdateStep
+						formData={formData}
+						selectedProduct={selectedProduct}
+						options={options}
+						loading={loading}
+						errors={errors}
+						createStepName={createStepName}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
-				{/* Modal de Exclusão */}
+				{/* Modal de Exclusão de Etapa*/}
 				<Modal
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
@@ -1104,46 +930,14 @@ export default function ProductionSteps() {
 						setOpenDeleteModal(false);
 					}}
 				>
-					<div className="flex flex-col gap-4 mb-5">
-						<SmartField
-							fieldName="produto_nome"
-							fieldText="Produto Final"
-							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							value={selectedProduct?.produto_nome}
-							onChange={handleChange}
-							readOnly
-						/>
-						<SmartField
-							fieldName="dstep"
-							fieldText="Nome da Etapa a ser excluída"
-							isSelect
-							isClearable={false}
-							menuIsOpen={false}
-							isSearchable={false}
-							components={customComponents}
-							fieldClassname="flex flex-col flex-1"
-							isLoading={loading.has("options")}
-							value={deleteStep.dstep}
-							onChangeSelect={handleChange}
-							options={options?.nome_etapas.map((etapa) => ({
-								label: etapa.etapa_nome,
-								value: String(etapa.etapa_nome_id),
-							}))}
-						/>
-						<SmartField
-							isTextArea
-							fieldName="reason"
-							required
-							autoFocus
-							fieldText="Motivo da Exclusão"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite o motivo da exclusão da Etapa"
-							value={deleteStep.reason}
-							onChange={handleChange}
-						/>
-					</div>
+					<DeleteStep
+						deleteStep={deleteStep}
+						selectedProduct={selectedProduct}
+						options={options}
+						loading={loading}
+						customComponents={customComponents}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
 				{/* Alert para confirmar exclusão da etapa */}
@@ -1156,18 +950,6 @@ export default function ProductionSteps() {
 					isLoading={loading.has("deleteStep")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir etapa"
-				/>
-
-				{/* Alert para confirmar exclusão do Produto */}
-				<ConfirmationModal
-					openModal={openDeleteStepConfirmModal}
-					setOpenModal={setOpenDeleteStepConfirmModal}
-					confirmationModalTitle="Tem certeza que deseja excluir o produto da lista de produtos com etapas de produção?"
-					confirmationText="Todos as etapas desse produto serão excluídas junto com ele. Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-					onConfirm={deleteProduct}
-					isLoading={loading.has("deleteProduct")}
-					confirmationLeftButtonText="Cancelar"
-					confirmationRightButtonText="Sim, excluir Produto"
 				/>
 
 				{/* Modal de Avisos */}
