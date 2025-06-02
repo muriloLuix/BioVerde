@@ -52,7 +52,7 @@ const Dashboard = () => {
 					spacing: 8,
 				},
 				interval: {
-					step: 2,
+					step: 3,
 				},
 			},
 			{
@@ -171,9 +171,10 @@ const Dashboard = () => {
 					series: {
 						strokeWidth: 3,
 						marker: {
-							size: 6,
+							size: 8,
 							fill: "#fff",
 							stroke: "#fff",
+							shape: "square",
 						},
 					},
 					axes: {
@@ -203,14 +204,14 @@ const Dashboard = () => {
 				xKey: "monthName",
 				yKey: "rawValue",
 				yName: "Valor Bruto",
-				stroke: "lightgreen",
+				stroke: "#00FF01",
 			},
 			{
 				type: "line",
 				xKey: "monthName",
 				yKey: "quantity",
 				yName: "Quantidade",
-				stroke: "gray",
+				stroke: "#228B22",
 			},
 		],
 		title: {

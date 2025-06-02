@@ -12,11 +12,11 @@ if ($conn->connect_error) {
 /*********************************************************************/
 
 /**************** QUERY PARA PESQUISA ************************/
-$sql = "SELECT cp.classificacao_nome, COUNT(cp.classificacao_id) AS quantity";
-$sql .= " FROM classificacao_produto AS cp";
-$sql .= " LEFT JOIN lote AS lt ON cp.classificacao_id = lt.classificacao_id";
-$sql .= " GROUP BY cp.classificacao_nome";
-$sql .= " ORDER BY cp.classificacao_nome";
+$query = "SELECT cp.classificacao_nome, COUNT(cp.classificacao_id) AS quantity";
+$query .= " FROM classificacao_produto AS cp";
+$query .= " LEFT JOIN lote AS lt ON cp.classificacao_id = lt.classificacao_id";
+$query .= " GROUP BY cp.classificacao_nome";
+$query .= " ORDER BY cp.classificacao_nome";
 
 advancedSearch($conn, $query);
 /************************************************************/
