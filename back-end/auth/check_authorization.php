@@ -3,12 +3,8 @@
 header('Content-Type: application/json');
 session_start();
 include_once "../inc/funcoes.inc.php";
+verificarAutenticacao($conn);
 /*************************************************/
-
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(["success" => false, "message" => "Sessão inválida"]);
-    exit;
-}
 
 /**************** QUERY ************************/
 $sql = "SELECT nivel_id FROM usuarios WHERE user_id = ?";
