@@ -1748,8 +1748,6 @@ function formatarEtapasLog($etapas) {
     return implode("\n---\n", $etapasLog);
 }
 
-
-
 /**
  * Executa uma query mais complexa no banco de dados e retorna um resultado formatado em JSON.
  *
@@ -1791,6 +1789,26 @@ function advancedSearch(mysqli $conn, string $query): void {
         'data' => $data
     ]);
 }
+
+function verificarAutenticacao($conn) {
+    // Garante que a sessão está iniciada
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        session_start();
+    }
+
+    // Verifica se o usuário está autenticado
+    if (!isset($_SESSION["user_id"])) {
+        echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
+        exit();
+    }
+
+    // Verifica se a conexão com o banco está ativa
+    if (!isset($conn) || $conn->connect_error) {
+        echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
+        exit();
+    }
+}
+
 
 
 ?>

@@ -47,6 +47,11 @@ class Acoes
     const EDITAR_LOTE = 24;
     const EXCLUIR_LOTE = 25;
 
+    /*************************** MOVIMENTAÇÕES *******************************/
+
+    const CADASTRAR_ENTRADA = 26;
+    
+    const CADASTRAR_SAIDA = 27;
 }
 
 ?>

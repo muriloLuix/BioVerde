@@ -1,19 +1,16 @@
-<?php 
+<?php
+/**************** HEADERS ************************/
 session_start();
-ini_set("display_errors", '1');
-
 include_once "../inc/funcoes.inc.php";
+include_once "../MVC/Model.php";
+include_once "../usuarios/User.class.php";
+include_once "../produtos/Produtos.class.php";
+include_once "../lotes/Lote.class.php";
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
+/*************************************************/
 
-if (!isset($_SESSION["user_id"])) {
-    echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
-    exit();
-}
-
-if (!isset($conn) || $conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
-}
-
+/******************* RECEBE AS INFORMAÇÕES DO FRONT-END ***************************/
 $rawData = file_get_contents("php://input");
 if (!$rawData) {
     echo json_encode(["success" => false, "message" => "Erro ao receber os dados."]);
@@ -21,8 +18,10 @@ if (!$rawData) {
 }
 
 $data = json_decode($rawData, true);
+/*********************************************************************************/
 
-// Validação dos campos obrigatórios
+
+/**************** VALIDAÇÃO DOS CAMPOS ************************/
 $camposObrigatorios = ['produto', 'motivo', 'lote', 'quantidade', 'unidade'];
 $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 
@@ -30,6 +29,7 @@ if ($validacaoDosCampos !== null) {
     echo json_encode($validacaoDosCampos);
     exit();
 }
+/**************************************************************/
 
 /**************** DEFINE E CONVERTE VALORES *******************/
 $motivo_id = (int) $data['motivo'];
@@ -73,18 +73,8 @@ $preco_movimentado = $quantidade * $produto_preco;
 $novo_preco_total = $lote_preco + $preco_movimentado;
 
 /**************** INSERE NA movimentacoes_estoque *******************/
-$sql = "INSERT INTO movimentacoes_estoque (
-    mov_tipo,
-    motivo_id,
-    produto_id,
-    uni_id,
-    mov_quantidade,
-    preco_movimentado,
-    lote_id,
-    user_id,
-    localArmazenamento_id,
-    mov_obs
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+$sql = " INSERT INTO movimentacoes_estoque (mov_tipo, motivo_id, produto_id, uni_id, mov_quantidade, preco_movimentado, lote_id, user_id, ";
+$sql .= " localArmazenamento_id, mov_obs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -105,14 +95,43 @@ $stmt->bind_param(
     $localArmazenamento_id,
     $mov_obs
 );
+/******************************************************************/
+
+/**************** INSTANCIA A CLASSE PARA BUSCAR INFORMAÇÕES *******************/
+$user = Usuario::find($user_id);
+$produto = Produtos::find($produto_id);
+$lote = Lote::find($lote_id);
+/******************************************************************************/
 
 if ($stmt->execute()) {
-    // Atualiza o lote com nova quantidade e novo preço total
+    /********************** ATUALIZA O LOTE COM A NOVA QUANTIDADE E NOVO PREÇO TOTAL **********************/
     $updateLote = $conn->prepare("UPDATE lote SET lote_quantAtual = ?, lote_preco = ? WHERE lote_id = ?");
     $updateLote->bind_param("ddi", $nova_quantidade, $novo_preco_total, $lote_id);
     $updateLote->execute();
-
+    /******************************************************************************************************/
     echo json_encode(["success" => true, "message" => "Movimentação de entrada registrada e lote atualizado com sucesso!"]);
+    SalvarLog(
+        "O usuário ({$user->user_id} - {$user->user_nome}), cadastrou a movimentação de entrada para o produto: \n\n 
+    ID:{$produto->produto_id}\n\n 
+    Nome: {$produto->produto_nome}\n\n 
+    Quantidade: {$quantidade}\n\n 
+    Preço movimentado: {$preco_movimentado}\n\n 
+    Lote: {$lote->lote_codigo}",
+        Acoes::CADASTRAR_ENTRADA,
+        "sucesso"
+    );
+
 } else {
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar movimentação: " . $stmt->error]);
+    SalvarLog(
+        "O usuário ({$user->user_id} - {$user->user_nome}), tentou cadastrar a movimentação de entrada para o produto: \n\n 
+    ID:{$produto->produto_id}\n\n 
+    Nome: {$produto->produto_nome}\n\n 
+    Quantidade: {$quantidade}\n\n 
+    Preço movimentado: {$preco_movimentado}\n\n 
+    Lote: {$lote->lote_codigo}\n\n 
+    Erro: {$stmt->error}",
+        Acoes::CADASTRAR_ENTRADA,
+        "erro"
+    );
 }
