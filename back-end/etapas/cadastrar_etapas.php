@@ -1,29 +1,27 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
 include_once "../inc/funcoes.inc.php";
 require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
-
 header('Content-Type: application/json');
-
+verificarAutenticacao($conn);
+/*************************************************/
 try {
-    if (!isset($_SESSION["user_id"])) {
-        throw new Exception("Usuário não autenticado!");
-    }
 
-    if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco de dados: " . $conn->connect_error);
-    }
-
+    /**************** INSTÂNCIA AS CLASSES ************************/
     $user_id = $_SESSION['user_id'];
     $user = Usuario::find($user_id);
+    /**************************************************************/
 
+    /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
     $rawData = file_get_contents("php://input");
     if (!$rawData) {
         throw new Exception("Erro ao receber os dados.");
     }
 
     $data = json_decode($rawData, true);
+    /***************************************************************************/
 
     /**************** VALIDACAO DOS CAMPOS ************************/
     $camposObrigatorios = ['etapa_nome_id', 'etor_tempo', 'etor_unidade'];
@@ -32,6 +30,7 @@ try {
         echo json_encode($validacaoDosCampos);
         exit();
     }
+    /**************************************************************/
 
     /**************** BUSCA O ID DO PRODUTO FINAL ************************/
     $produto = $data['produto_final'];
@@ -45,10 +44,11 @@ try {
         throw new Exception("Produto não encontrado na lista de Produtos com Etapas.");
     }
 
-    $produtoId = (int)$idProduto['etapa_id'];
+    $produtoId = (int) $idProduto['etapa_id'];
+    /*******************************************************************/
 
     /**************** VERIFICA SE O NOME DA ETAPA EXISTE ************************/
-    $nomeEtapaId = (int)$data['etapa_nome_id'];
+    $nomeEtapaId = (int) $data['etapa_nome_id'];
     $buscaEtapaId = $conn->prepare("SELECT etapa_nome_id, etapa_nome FROM etapa_nomes WHERE etapa_nome_id = ?");
     $buscaEtapaId->bind_param("i", $nomeEtapaId);
     $buscaEtapaId->execute();
@@ -59,9 +59,10 @@ try {
         throw new Exception("Nome da Etapa não encontrado.");
     }
 
-    $nomeEtapa = (int)$idEtapa['etapa_nome'];
+    $nomeEtapa = (int) $idEtapa['etapa_nome'];
+    /***************************************************************************/
 
-    /****** FAZER CONTAGEM DE QUANTAS ETAPAS ESSE PRODUTO POSSUI E SETA SUA ORDEM ********/
+    /************* FAZER CONTAGEM DE QUANTAS ETAPAS ESSE PRODUTO POSSUI E SETA SUA ORDEM ****************/
     $etapaOrdem = 1;
     $consultaOrdem = $conn->prepare("SELECT COUNT(*) as total FROM etapa_ordem WHERE producao_id = ?");
     $consultaOrdem->bind_param("i", $produtoId);
@@ -70,24 +71,18 @@ try {
     $totalEtapas = $resultOrdem->fetch_assoc();
 
     if ($totalEtapas && $totalEtapas['total'] > 0) {
-        $etapaOrdem = (int)$totalEtapas['total'] + 1;
+        $etapaOrdem = (int) $totalEtapas['total'] + 1;
     }
+    /****************************************************************************************************/
 
     /**************** FORMATA OS INSUMOS ************************/
     $insumosArray = $data['etor_insumos'];
     $insumosFormatado = implode(', ', $insumosArray);
+    /************************************************************/
 
     /**************** CADASTRAR A ETAPA ************************/
-    $sql = "INSERT INTO etapa_ordem (
-        etor_ordem,
-        etor_nome_id,
-        etor_tempo,
-        etor_unidade,
-        etor_insumos,
-        etor_observacoes,
-        producao_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
+    $sql = "INSERT INTO etapa_ordem (etor_ordem, etor_nome_id, etor_tempo, etor_unidade, etor_insumos, etor_observacoes, producao_id)";
+    $sql .= " VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         throw new Exception("Erro ao preparar o cadastro: " . $conn->error);
@@ -107,12 +102,13 @@ try {
     if (!$stmt->execute()) {
         throw new Exception("Erro ao cadastrar Etapa: " . $stmt->error);
     }
+    /*********************************************************/
 
-    // **** LOG DE SUCESSO ****
-       $etapasStr = 
-        "Ordem: {$etapaOrdem}\n" . 
-        "Etapa {$nomeEtapa}\n" . 
-        "Insumos {$insumosFormatado}\n" . 
+    /**************** LOG DE SUCESSO ************************/
+    $etapasStr =
+        "Ordem: {$etapaOrdem}\n" .
+        "Etapa {$nomeEtapa}\n" .
+        "Insumos {$insumosFormatado}\n" .
         formatarEtapasLog([$data]);
 
     SalvarLog(
@@ -124,12 +120,12 @@ try {
     echo json_encode(["success" => true, "message" => "Etapa cadastrada com sucesso!"]);
 
 } catch (Exception $e) {
-    // **** LOG DE ERRO ****
-    $etapasStr = !empty($data) ? 
-        "Ordem: {$etapaOrdem}\n" . 
-        "Etapa {$nomeEtapa}\n" . 
-        "Insumos {$insumosFormatado}\n" . 
-        formatarEtapasLog([$data])  : '';
+    /**************** LOG DE ERRO ************************/
+    $etapasStr = !empty($data) ?
+        "Ordem: {$etapaOrdem}\n" .
+        "Etapa {$nomeEtapa}\n" .
+        "Insumos {$insumosFormatado}\n" .
+        formatarEtapasLog([$data]) : '';
 
     SalvarLog(
         "Erro ao cadastrar etapas para o produto {$produtoId}.\nMotivo: {$e->getMessage()}\nEtapas:\n{$etapasStr}",

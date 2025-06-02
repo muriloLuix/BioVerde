@@ -30,6 +30,8 @@ class Acoes
     const CADASTRAR_ETAPA = 12;
     const EDITAR_ETAPA = 13;
     const EXCLUIR_ETAPA = 14;
+    const CADASTRAR_PRODUTO_ETAPA = 28;
+    const EDITAR_PRODUTO_ETAPA = 29;
 
     /*************************** FORNECEDORES *******************************/
 

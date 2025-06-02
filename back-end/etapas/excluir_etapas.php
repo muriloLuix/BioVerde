@@ -7,21 +7,10 @@ require_once "../usuarios/User.class.php";
 require_once "../etapas/Etapa.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 /*************************************************/
 
 try {
-    /**************** VERIFICA A AUTENTICAÇÃO ************************/
-    if (!isset($_SESSION["user_id"])) {
-        checkLoggedUSer($conn, $_SESSION['user_id']);
-        exit;
-    }
-    /*************************************************************/
-
-    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
-    if ($conn->connect_error) {
-        throw new Exception("Falha na conexão com o banco de dados. Tente novamente mais tarde.");
-    }
-    /***********************************************************************/
 
     $user_id = $_SESSION['user_id'];
     $user = Usuario::find($user_id);

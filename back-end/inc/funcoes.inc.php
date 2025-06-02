@@ -1807,6 +1807,8 @@ function verificarAutenticacao($conn) {
         echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
         exit();
     }
+
+    return $_SESSION["user_id"];
 }
 
 

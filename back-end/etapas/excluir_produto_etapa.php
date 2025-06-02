@@ -1,22 +1,11 @@
 <?php
 session_start();
 include_once "../inc/funcoes.inc.php";
-
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 
 try {
-    // Verificação de autenticação
-
-    if (!isset($_SESSION["user_id"])) {
-        checkLoggedUSer($conn, $_SESSION['user_id']);
-        exit;
-    }
-
-    // Verificação da conexão com o banco
-    if ($conn->connect_error) {
-        throw new Exception("Falha na conexão com o banco de dados. Tente novamente mais tarde.");
-    }
 
     // Processamento dos dados de entrada
     $rawData = file_get_contents("php://input");
