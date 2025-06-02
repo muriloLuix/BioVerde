@@ -1,25 +1,24 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
-ini_set('display_errors', 1);
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+/*************************************************/
 
+/**************** VERIFICA CONEXÃO COM O BANCO ************************/
 if ($conn->connect_error) {
     throw new Exception("Erro na conexão com o banco de dados");
 }
+/*********************************************************************/
 
-$query = '
-    SELECT 
-        cp.classificacao_nome,
-        COUNT(cp.classificacao_id) AS quantity 
-    FROM classificacao_produto AS cp  
-    LEFT JOIN lote AS lt  
-        ON cp.classificacao_id = lt.classificacao_id
-    GROUP BY cp.classificacao_nome 
-    ORDER BY cp.classificacao_nome 
-';
+/**************** QUERY PARA PESQUISA ************************/
+$sql = "SELECT cp.classificacao_nome, COUNT(cp.classificacao_id) AS quantity";
+$sql .= " FROM classificacao_produto AS cp";
+$sql .= " LEFT JOIN lote AS lt ON cp.classificacao_id = lt.classificacao_id";
+$sql .= " GROUP BY cp.classificacao_nome";
+$sql .= " ORDER BY cp.classificacao_nome";
 
 advancedSearch($conn, $query);
-
+/************************************************************/
 $conn->close();
 ?>

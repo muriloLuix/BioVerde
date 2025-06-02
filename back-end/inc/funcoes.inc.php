@@ -1750,6 +1750,19 @@ function formatarEtapasLog($etapas) {
 
 
 
+/**
+ * Executa uma query mais complexa no banco de dados e retorna um resultado formatado em JSON.
+ *
+ * A função executa a query recebida como parâmetro e retorna um array associativo com os seguintes campos:
+ *  - success: booleano que indica se a query foi executada com sucesso
+ *  - message: string que descreve o resultado da query
+ *  - data: array com os resultados da query, onde cada item é um array associativo com os nomes das colunas como chave e os valores como valor
+ *
+ * @param mysqli $conn Conexão com o banco de dados
+ * @param string $query Query a ser executada
+ *
+ * @return void
+ */
 function advancedSearch(mysqli $conn, string $query): void {
     
     $result = mysqli_query($conn, $query);
