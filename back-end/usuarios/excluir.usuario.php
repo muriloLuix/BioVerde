@@ -2,14 +2,13 @@
 session_start();
 include_once "../inc/funcoes.inc.php";
 require_once "../MVC/Model.php";
-require_once "../User.class.php";
+require_once __DIR__ . '/User.class.php';
 authorize(3);
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
 
 try {
     // Verificação de autenticação
-
     if (!isset($_SESSION["user_id"])) {
         checkLoggedUSer($conn, $_SESSION['user_id']);
         exit;
@@ -44,14 +43,11 @@ try {
         throw new Exception("ID do usuário inválido. Por favor, verifique os dados.");
     }
 
+    // Buscar informações do usuário
+    $user = Usuario::find($user_id);
+
     // Início da transação
     $conn->begin_transaction();
-
-    $camposExclusao = [
-        'usuex_excluido' => $data['dname'],
-        'usuex_exclusao' => $user_id,
-        'usuex_motivo_exclusao' => $data['reason'],
-    ];
 
     // 1. Deleta o usuário
     $exclusao = deleteData($conn, $user_id, 'usuarios', 'user_id');
@@ -70,8 +66,6 @@ try {
         'message' => 'Usuário excluído com sucesso',
         'deleted_id' => $user_id // Envia o ID do usuário excluído
     ]);
-
-    $user = Usuario::find($user_id);
 
     salvarLog("O usuário, ID: ({$user->user_id} - {$user->user_nome}), excluiu o usuário, Nome: {$data['dname']} | Motivo: {$data['reason']}", Acoes::EXCLUIR_USUARIO);
 

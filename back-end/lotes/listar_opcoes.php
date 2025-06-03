@@ -12,7 +12,7 @@ try {
     }
     /********************************************************************/
 
-    /**************** BUSCAR PRODUTOS ************************/
+    /**************** BUSCAR OPÇÕES ************************/
     $produtos = buscarProdutos($conn);
 
     $unidade_medida = buscarUnidadeMedida($conn);

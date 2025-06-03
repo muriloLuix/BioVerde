@@ -1,22 +1,73 @@
-export interface SelectEvent {
-	target: {
-		name: string;
-		value: string | string[];
-	};
+// ******** Usuários ********
+export interface UserOptions {
+	cargos: JobPosition[];
+	niveis: AccessLevel[];
+}
+export interface JobPosition {
+	car_id: number;
+	car_nome: string;
+}
+export interface AccessLevel {
+	nivel_id: number;
+	nivel_nome: string;
+}
+export interface User {
+	user_id: number;
+	user_nome: string;
+	user_email: string;
+	user_telefone: string;
+	user_CPF: string;
+	car_nome: string;
+	nivel_nome: string;
+	user_dtcadastro: string;
+	estaAtivo: number;
+}
+export interface FormDataUser {
+	user_id: number;
+	name: string;
+	email: string;
+	tel: string;
+	cpf: string;
+	cargo: string;
+	nivel: string;
+	password: string;
+	status: string;
 }
 
-export interface Product {
-	produto_id: number;
-	produto_nome: string;
-	tproduto_nome: string;
-	produto_preco: string;
-	lote_nome: number;
-	lote_id: number;
+export interface DeleteUser {
+	user_id: number,
+	dname: string,
+	reason: string,
+}
+
+// ******** Fornecedores e Clientes ********
+export interface UF {
+	id: number;
+	sigla: string;
+	nome: string;
+}
+export interface City {
+	id: number;
+	nome: string;
+}
+export interface Supplier {
+	fornecedor_id: number;
 	fornecedor_nome: string;
-	produto_observacoes: string;
-	staproduto_nome: string;
+	fornecedor_razao_social: string;
+	fornecedor_email: string;
+	fornecedor_telefone: string;
+	fornecedor_tipo: string;
+	fornecedor_documento: string;
+	fornecedor_endereco: string;
+	fornecedor_num_endereco: number;
+	fornecedor_cidade: string;
+	fornecedor_estado: string;
+	fornecedor_cep: string;
+	fornecedor_responsavel: string;
+	fornecedor_dtcadastro: string;
+	fornecedor_complemento: string;
+	estaAtivo: number;
 }
-
 export interface Client {
 	cliente_id: number;
 	cliente_nome: string;
@@ -36,136 +87,7 @@ export interface Client {
 	estaAtivo: number;
 }
 
-export interface Supplier {
-	fornecedor_id: number;
-	fornecedor_nome: string;
-	fornecedor_razao_social: string;
-	fornecedor_email: string;
-	fornecedor_telefone: string;
-	fornecedor_tipo: string;
-	fornecedor_documento: string;
-	fornecedor_endereco: string;
-	fornecedor_num_endereco: number;
-	fornecedor_cidade: string;
-	fornecedor_estado: string;
-	fornecedor_cep: string;
-	fornecedor_responsavel: string;
-	fornecedor_dtcadastro: string;
-	fornecedor_complemento: string;
-	estaAtivo: number;
-}
-
-export interface User {
-	user_id: number;
-	user_nome: string;
-	user_email: string;
-	user_telefone: string;
-	user_CPF: string;
-	car_nome: string;
-	nivel_nome: string;
-	user_dtcadastro: string;
-	estaAtivo: number;
-}
-
-export interface Batch {
-    lote_id: number;
-    lote_codigo: string;
-    lote_dtColheita: string;
-    lote_dtValidade: string;
-    lote_quantMax: number;
-    lote_quantAtual: number;
-    lote_obs: string;
-	produto_preco: number;
-
-    produto_id: number;
-    produto_nome: string;
-
-    fornecedor_id: number;
-    fornecedor_nome: string;
-
-    uni_id: number;
-    uni_sigla: string;
-
-    tproduto_id: number;
-    tproduto_nome: string;
-
-    classificacao_id: number;
-    classificacao_nome: string;
-
-    localArmazenamento_id: number;
-    localArmazenamento_nome: string;
-}
-
-export interface JobPosition {
-	car_id: number;
-	car_nome: string;
-}
-
-export interface Storage {
-	localArmazenamento_id: number;
-	localArmazenamento_nome: string;
-}
-
-export interface Classification {
-	classificacao_id: number;
-	classificacao_nome: string;
-}
-
-export interface Unit {
-	uni_id: number;
-	uni_nome: string;
-	uni_sigla: string;
-}
-
-export interface AccessLevel {
-	nivel_id: number;
-	nivel_nome: string;
-}
-
-export interface ProductType {
-	tproduto_id: number;
-	tproduto_nome: string;
-}
-
-export interface ProductStatus {
-	staproduto_id: number;
-	staproduto_nome: string;
-}
-
-export interface OrderType {
-	pedido_id: number;
-}
-
-export interface OrderStatus {
-	stapedido_id: number;
-	stapedido_nome: string;
-}
-
-export interface PositionType {
-	car_id: number;
-	car_nome: string;
-}
-
-export interface ReasenType {
-	motivo_id: number;
-	mov_tipo: string;
-	motivo: string;
-}
-
-export interface Option {
-	value: string;
-	label: string;
-}
-
-export interface UF {
-	id: number;
-	sigla: string;
-	nome: string;
-}
-export interface City {
-	id: number;
-	nome: string;
-}
+// ******** Logs ********
 export interface Logs {
 	log_id: number;
 	log_user_nome: string;
@@ -176,6 +98,46 @@ export interface Logs {
 	log_conteudo: string;
 }
 
+// ******** Controle de Estoque ********
+export interface Batch {
+	lote_id: number;
+	lote_codigo: string;
+	lote_dtColheita: string;
+	lote_dtValidade: string;
+	lote_quantMax: number;
+	lote_quantAtual: number;
+	lote_obs: string;
+	produto_preco: number;
+
+	produto_id: number;
+	produto_nome: string;
+
+	fornecedor_id: number;
+	fornecedor_nome: string;
+
+	uni_id: number;
+	uni_sigla: string;
+
+	tproduto_id: number;
+	tproduto_nome: string;
+
+	classificacao_id: number;
+	classificacao_nome: string;
+
+	localArmazenamento_id: number;
+	localArmazenamento_nome: string;
+}
+export interface Product {
+	produto_id: number;
+	produto_nome: string;
+	tproduto_nome: string;
+	produto_preco: string;
+	lote_nome: number;
+	lote_id: number;
+	fornecedor_nome: string;
+	produto_observacoes: string;
+	staproduto_nome: string;
+}
 export interface BatchOptions {
 	produtos: Product[];
 	unidade_medida: Unit[];
@@ -184,41 +146,6 @@ export interface BatchOptions {
 	classificacoes: Classification[];
 	locaisArmazenamento: Storage[];
 }
-
-export interface Movements {
-	produtos: Product[];
-	unidade_medida: Unit[];
-	lotes: Batch[];
-	motivos: ReasenType[];
-	pedidos: OrderType[];
-}
-
-export interface ProductsWithSteps {
-	produto_id: number;
-	produto_nome: string;
-	etapas: Steps[];
-};
-
-export interface Steps extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
-	producao_id: number;
-	etor_dtCadastro?: string;
-}
-
-export interface StepNames {
-	etapa_nome_id: number;
-	etapa_nome: string;
-}
-
-export interface StepOptions {
-	produtos: Product[];
-	nome_etapas: StepNames[];
-}
-
-
-
-
-// ------ FormsData ------
-
 export interface FormDataBatch {
   lote_id: number;
   lote_codigo: string;
@@ -235,7 +162,19 @@ export interface FormDataBatch {
   localArmazenado: string;
   obs: string;
 }
-
+export interface DeleteBatch {
+	lote_id: number;
+	lote_codigo: string;
+	dproduto: string;
+	reason: string;
+}
+export interface Movements {
+	produtos: Product[];
+	unidade_medida: Unit[];
+	lotes: Batch[];
+	motivos: ReasenType[];
+	pedidos: OrderType[];
+}
 export interface FormDataMovements {
   produto: string;
   motivo: string;
@@ -246,7 +185,42 @@ export interface FormDataMovements {
   destino: string;
   obs: string;
 }
+export interface ReasenType {
+	motivo_id: number;
+	mov_tipo: string;
+	motivo: string;
+}
+export interface Storage {
+	localArmazenamento_id: number;
+	localArmazenamento_nome: string;
+}
+export interface Classification {
+	classificacao_id: number;
+	classificacao_nome: string;
+}
+export interface OrderType {
+	pedido_id: number;
+}
+export interface Unit {
+	uni_id: number;
+	uni_nome: string;
+	uni_sigla: string;
+}
+export interface ProductType {
+	tproduto_id: number;
+	tproduto_nome: string;
+}
 
+// ******** Etapas de Produção ********
+export interface ProductsWithSteps {
+	produto_id: number;
+	produto_nome: string;
+	etapas: Steps[];
+};
+export interface Steps extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
+	producao_id: number;
+	etor_dtCadastro?: string;
+}
 export interface FormDataSteps {
 	etor_id: number;
 	etor_ordem: number;
@@ -256,18 +230,46 @@ export interface FormDataSteps {
 	etor_observacoes: string;
 	etor_unidade: string;
 };
-
-// ------ FormsDataDelete ------
-
-export interface DeleteBatch {
-	lote_id: number;
-	lote_codigo: string;
-	dproduto: string;
-	reason: string;
-}
-
 export interface DeleteSteps {
 	etor_id: number,
 	dstep: string,
 	reason: string,
 }
+export interface StepOptions {
+	produtos: Product[];
+	nome_etapas: StepNames[];
+}
+export interface StepNames {
+	etapa_nome_id: number;
+	etapa_nome: string;
+}
+
+// ******** Pedidos ********
+export interface OrderStatus {
+	stapedido_id: number;
+	stapedido_nome: string;
+}
+
+// ******** Outros ********
+export interface SelectEvent {
+	target: {
+		name: string;
+		value: string | string[];
+	};
+}
+export interface Option {
+	value: string;
+	label: string;
+}
+
+
+
+
+
+
+
+
+
+
+
+

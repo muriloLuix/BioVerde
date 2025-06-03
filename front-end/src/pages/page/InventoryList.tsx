@@ -238,20 +238,20 @@ export default function InventoryList() {
     //função para puxar os dados do lote que será editado
     const handleEdit = (lote: Batch) => {
         setFormData({
-            lote_id: lote.lote_id,
-            lote_codigo: lote.lote_codigo,
-            produto: String(lote.produto_id),
-            fornecedor: String(lote.fornecedor_id),
-            quant_max: lote.lote_quantMax,
-            quant_atual: lote.lote_quantAtual,
-            unidade: String(lote.uni_id),
-            preco: lote.produto_preco,
-            dt_colheita: formatDate(lote.lote_dtColheita),
-            tipo: String(lote.tproduto_id),
-            dt_validade: formatDate(lote.lote_dtValidade),
-            classificacao: String(lote.classificacao_id),
-            localArmazenado: String(lote.localArmazenamento_id),
-            obs: lote.lote_obs,
+            lote_id:            lote.lote_id,
+            lote_codigo:        lote.lote_codigo,
+            produto:            String(lote.produto_id),
+            fornecedor:         String(lote.fornecedor_id),
+            quant_max:          lote.lote_quantMax,
+            quant_atual:        lote.lote_quantAtual,
+            unidade:            String(lote.uni_id),
+            preco:              lote.produto_preco,
+            dt_colheita:        formatDate(lote.lote_dtColheita),
+            tipo:               String(lote.tproduto_id),
+            dt_validade:        formatDate(lote.lote_dtValidade),
+            classificacao:      String(lote.classificacao_id),
+            localArmazenado:    String(lote.localArmazenamento_id),
+            obs:                lote.lote_obs,
         });
         setOpenEditModal(true);
     };
@@ -564,12 +564,14 @@ export default function InventoryList() {
             headerName: "Data De Validade", field: "lote_dtValidade", width: 180, filter: true,
             valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
         },
-        {   field: "produto_preco", headerName: "Preço do Produto", width: 160, filter: true,
+        {   
+            field: "produto_preco", headerName: "Preço do Produto", width: 160, filter: true,
             valueFormatter: (params) => {
                 return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
             }
         },
-        {   field: "lote_preco", headerName: "Preço Total do Lote", width: 180, filter: true,
+        {   
+            field: "lote_preco", headerName: "Preço Total do Lote", width: 180, filter: true,
             valueFormatter: (params) => {
                 return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
             }

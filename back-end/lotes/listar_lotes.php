@@ -51,29 +51,11 @@ try {
 
     $lotes = search($conn, "lote l", implode(",", $cols), $joins);
 
-    $produtos = buscarProdutos($conn);
-
-    $unidade_medida = buscarUnidadeMedida($conn);
-
-    $tp_produto = buscarTipoProduto($conn);
-
-    $fornecedores = buscarFornecedores($conn);
-
-    $classficacao = buscarClassificacaoProduto($conn);
-
-    $localArmazenado = buscarLocaisArmazenamento($conn);
-
     /***************************************************************************/
 
     echo json_encode([
         "success" => true,
         "lotes" => $lotes,
-        "produtos" => $produtos,
-        "unidade_medida" => $unidade_medida,
-        "tp_produto" => $tp_produto,
-        "fornecedores" => $fornecedores,
-        "classificacao" => $classficacao,
-        "localArmazenado" => $localArmazenado
     ]);
 
 } catch (Exception $e) {

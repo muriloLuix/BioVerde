@@ -19,7 +19,6 @@ try {
         "u.user_CPF", 
         "c.car_nome", 
         "n.nivel_nome",
-        "CASE WHEN u.estaAtivo = 1 THEN 'ATIVO' ELSE 'INATIVO' END",
         "u.user_dtcadastro", 
         "u.estaAtivo",       
         "u.car_id", 
