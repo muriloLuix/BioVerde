@@ -9,21 +9,10 @@ header_remove('X-Powered-By');
 header('Content-Type: application/json');
 $user_id = $_SESSION['user_id'];
 $user = Usuario::find($user_id);
+verificarAutenticacao($conn);
 /************************************************/
 
 try {
-    /**************** VERIFICA A AUTENTICAÇÃO ************************/
-    if (!isset($_SESSION["user_id"])) {
-        checkLoggedUser($conn, $_SESSION['user_id']);;
-        exit;
-    }
-    /*****************************************************************/
-
-    /**************** VERIFICA A CONEXÃO COM O BANCO ************************/
-    if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco: " . $conn->connect_error);
-    }
-    /*********************************************************************/
 
     /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
     $rawData = file_get_contents("php://input");

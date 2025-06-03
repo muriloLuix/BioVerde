@@ -1,14 +1,13 @@
 <?php
+/**************** HEADERS ************************/
 session_start();
-
 include_once "../inc/funcoes.inc.php";
-
 header('Content-Type: application/json');
-
+/*************************************************/
 try {
-    if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco de dados");
-    }
+    /**************** BUSCAR E VERIFICAÇÕES ************************/
+
+    verificarAutenticacao($conn);
 
     $produtos = buscarProdutos($conn);
 
@@ -18,8 +17,9 @@ try {
 
     $motivoMovimentacoes = buscarMotivoMovimentacoes($conn);
 
-    $pedidos =buscarPedidos($conn);
-
+    $pedidos = buscarPedidos($conn);
+    
+    /*************************************************/
     echo json_encode([
         "success" => true,
         "produtos" => $produtos,

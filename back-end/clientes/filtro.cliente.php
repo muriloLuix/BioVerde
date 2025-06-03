@@ -4,21 +4,8 @@ session_start();
 include_once "../inc/funcoes.inc.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 /************************************************/
-
-/**************** VERIFICA A AUTENTICAÇÃO ************************/
-if (!isset($_SESSION["user_id"])) {
-    echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
-    exit();
-}
-/*************************************************************/
-
-/**************** VERIFICA A CONEXÃO COM O BANCO ************************/
-if ($conn->connect_error) {
-    echo json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]);
-    exit();
-}
-/*********************************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
 $rawData = file_get_contents("php://input");

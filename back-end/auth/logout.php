@@ -5,6 +5,7 @@ include_once "../inc/funcoes.inc.php";
 require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 /*************************************************/
 
 /**************** MVC ************************/

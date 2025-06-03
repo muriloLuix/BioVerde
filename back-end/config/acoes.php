@@ -30,6 +30,8 @@ class Acoes
     const CADASTRAR_ETAPA = 12;
     const EDITAR_ETAPA = 13;
     const EXCLUIR_ETAPA = 14;
+    const CADASTRAR_PRODUTO_ETAPA = 28;
+    const EDITAR_PRODUTO_ETAPA = 29;
 
     /*************************** FORNECEDORES *******************************/
 
@@ -47,6 +49,11 @@ class Acoes
     const EDITAR_LOTE = 24;
     const EXCLUIR_LOTE = 25;
 
+    /*************************** MOVIMENTAÇÕES *******************************/
+
+    const CADASTRAR_ENTRADA = 26;
+    
+    const CADASTRAR_SAIDA = 27;
 }
 
 ?>

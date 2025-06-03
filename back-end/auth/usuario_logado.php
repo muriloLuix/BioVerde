@@ -4,9 +4,7 @@ session_start();
 include_once("../inc/funcoes.inc.php");
 checkLoggedUser($conn, $_SESSION['user_id']);
 header('Content-Type: application/json');
-if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
-}
+verificarAutenticacao($conn);
 /*************************************************/
 
 $usuarioId = $_SESSION['user_id'];

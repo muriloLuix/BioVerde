@@ -3,12 +3,10 @@
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 /************************************************/
 
 try {
-    if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco de dados");
-    }
 
     /**************** COLUNAS E JOINS ************************/
     $cols_etapa = array(

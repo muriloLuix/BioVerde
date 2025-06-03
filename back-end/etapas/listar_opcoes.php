@@ -3,14 +3,10 @@
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
+verificarAutenticacao($conn);
 /*************************************************/
 
 try {
-    /**************** VERIFICA CONEXÃO COM O BANCO ************************/
-    if ($conn->connect_error) {
-        throw new Exception("Erro na conexão com o banco de dados");
-    }
-    /********************************************************************/
 
     /**************** BUSCAR OPÇÕES ************************/
 

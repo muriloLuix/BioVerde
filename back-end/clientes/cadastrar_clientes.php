@@ -5,15 +5,9 @@ session_start();
 include_once("../inc/funcoes.inc.php");
 require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
-if (!isset($_SESSION["user_id"])) {
-    checkLoggedUSer($conn, $_SESSION['user_id']);
-    exit;
-}
 $user_id = $_SESSION['user_id'];
 $user = Usuario::find($user_id);
-if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Erro na conexão com o banco de dados: " . $conn->connect_error]));
-}
+verificarAutenticacao($conn);
 /*************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/
