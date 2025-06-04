@@ -295,6 +295,8 @@ const Dashboard = () => {
 
 			const data = res.data.data;
 
+			console.log(res);
+
 			const pieData = [
 				{
 					value: Number(data[0].estoque_atual),
