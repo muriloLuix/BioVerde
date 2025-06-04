@@ -3,7 +3,7 @@
 session_start();
 include_once "../inc/funcoes.inc.php";
 header('Content-Type: application/json');
-verificarAutenticacao($conn);
+// verificarAutenticacao($conn);
 /*************************************************/
 
 $query = "SELECT * FROM estoque";

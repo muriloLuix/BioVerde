@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 
 interface QuantityByStatus {
+	id: Number;
 	status: string;
-	total_orders: Number;
+	totalOrders: Number;
 }
 
 const Dashboard = () => {
@@ -363,7 +364,7 @@ const Dashboard = () => {
 								</div>
 								<div className="h-3/4 w-full flex items-center justify-center font-medium">
 									<span className="text-5xl text-white">
-										{product.total_orders?.toString()}
+										{product.totalOrders?.toString()}
 									</span>
 								</div>
 							</div>
