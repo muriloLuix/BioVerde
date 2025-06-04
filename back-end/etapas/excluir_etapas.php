@@ -7,7 +7,7 @@ require_once "../usuarios/User.class.php";
 require_once "../etapas/Etapa.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
-verificarAutenticacao($conn);
+verificarAutenticacao($conn, $_SESSION['user_id']);
 /*************************************************/
 
 try {

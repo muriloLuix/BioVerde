@@ -7,7 +7,7 @@ require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
 $user_id = $_SESSION['user_id'];
 $user = Usuario::find($user_id);
-verificarAutenticacao($conn);
+verificarAutenticacao($conn, $_SESSION['user_id']);
 /*************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/

@@ -1790,14 +1790,14 @@ function advancedSearch(mysqli $conn, string $query): void {
     ]);
 }
 
-function verificarAutenticacao($conn) {
+function verificarAutenticacao($conn, $userSession) {
     // Garante que a sessão está iniciada
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
 
     // Verifica se o usuário está autenticado
-    if (!isset($_SESSION["user_id"])) {
+    if (!isset($userSession)) {
         echo json_encode(["success" => false, "message" => "Usuário não autenticado!"]);
         exit();
     }
@@ -1808,7 +1808,7 @@ function verificarAutenticacao($conn) {
         exit();
     }
 
-    return $_SESSION["user_id"];
+    return $userSession;
 }
 
 

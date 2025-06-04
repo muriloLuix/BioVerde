@@ -7,7 +7,7 @@ include_once "../usuarios/User.class.php";
 include_once "../produtos/Produtos.class.php";
 include_once "../lotes/Lote.class.php";
 header('Content-Type: application/json');
-verificarAutenticacao($conn);
+verificarAutenticacao($conn, $_SESSION['user_id']);
 /*************************************************/
 
 /******************* RECEBE AS INFORMAÇÕES DO FRONT-END ***************************/

@@ -290,9 +290,9 @@ const Dashboard = () => {
 			setIsLoading(true);
 
 			const res = await axios.get(
-				"http://localhost/BioVerde/back-end/estoque/listar_dados.php"
+				"http://localhost/BioVerde/back-end/estoque/listar_dados.php",
+				{ withCredentials: true, headers: { Accept: "application/json" } }
 			);
-
 			const data = res.data.data;
 
 			console.log(res);

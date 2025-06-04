@@ -8,7 +8,7 @@ include_once "../etapas/Etapa.class.php";
 include_once "../etapas/EtapaProducao.class.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
-$user_id = verificarAutenticacao($conn);
+$user_id = verificarAutenticacao($conn, $_SESSION['user_id']);
 $user = Usuario::find($user_id);
 /*************************************************/
 try {

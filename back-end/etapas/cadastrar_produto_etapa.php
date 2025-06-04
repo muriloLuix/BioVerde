@@ -6,7 +6,7 @@ require_once "../MVC/Model.php";
 require_once "../usuarios/User.class.php";
 require_once "../etapas/Etapa.class.php";
 header('Content-Type: application/json');
-$user_id = verificarAutenticacao($conn);
+$user_id = verificarAutenticacao($conn, $_SESSION['user_id']);
 /*************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/

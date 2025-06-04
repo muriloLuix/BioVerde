@@ -4,7 +4,7 @@ session_start();
 include_once "../inc/funcoes.inc.php";
 header_remove('X-Powered-By');
 header('Content-Type: application/json');
-verificarAutenticacao($conn);
+verificarAutenticacao($conn, $_SESSION['user_id']);
 /************************************************/
 
 /**************** RECEBE AS INFORMAÇÕES DO FRONT-END ************************/

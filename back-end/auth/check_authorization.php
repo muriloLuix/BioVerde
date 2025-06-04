@@ -3,7 +3,6 @@
 header('Content-Type: application/json');
 session_start();
 include_once "../inc/funcoes.inc.php";
-verificarAutenticacao($conn);
 /*************************************************/
 
 /**************** QUERY ************************/

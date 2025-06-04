@@ -7,7 +7,7 @@ header('Content-Type: application/json');
 try {
     /**************** BUSCAR E VERIFICAÇÕES ************************/
 
-    verificarAutenticacao($conn);
+    verificarAutenticacao($conn, $_SESSION['user_id']);
 
     $produtos = buscarProdutos($conn);
 

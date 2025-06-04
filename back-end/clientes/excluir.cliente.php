@@ -8,7 +8,7 @@ header_remove('X-Powered-By');
 header('Content-Type: application/json');
 $user_id = $_SESSION['user_id'];
 $user = Usuario::find($user_id);
-verificarAutenticacao($conn);
+verificarAutenticacao($conn, $_SESSION['user_id']);
 /************************************************/
 
 try {
