@@ -22,8 +22,9 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 
 $query = '
     SELECT 
+        p.stapedido_id AS id,
         sp.stapedido_nome AS status, 
-        COUNT(p.pedido_id) AS total_orders
+        COUNT(p.pedido_id) AS totalOrders
     FROM status_pedido sp
     LEFT JOIN pedidos p 
         ON p.stapedido_id = sp.stapedido_id
