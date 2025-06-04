@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
-import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, PencilLine, Trash, FileText, X } from "lucide-react";
+import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
@@ -156,6 +156,7 @@ export default function InventoryList() {
                     classificacoes:      response.data.classificacao,
                     locaisArmazenamento: response.data.localArmazenado,
                 });
+                setRowDataProduct(response.data.produtos)
             } else {
                 setOpenNoticeModal(true);
                 setMessage(response.data.message || "Erro ao carregar opções");
@@ -342,18 +343,6 @@ export default function InventoryList() {
 
     /* ----- Funções para CRUD de Produtos ----- */
 
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [deletedId, setDeletedId] = useState<number | null>(null);
-	const [editedValue, setEditedValue] = useState<string>("");
-    
-    const handleEditProduct = (produto: Product) => {
-		setEditingId(produto.produto_id);
-		setEditedValue(produto.produto_nome);
-	};
-	const handleDeleteProduct = (produto: Product) => {
-		setDeletedId(produto.produto_id);
-		setOpenProductConfirmModal(true);
-	};
     //Função para criar produto
 	const createProduct = async (produtoNome: string) => {
 		setLoading((prev) => new Set([...prev, "options"]));
@@ -415,7 +404,6 @@ export default function InventoryList() {
             setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
-			setEditingId(null);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
@@ -423,7 +411,14 @@ export default function InventoryList() {
 			});
 		}
 	};
+
     //Função para excluir produto
+    const [deletedId, setDeletedId] = useState<number | null>(null);
+    
+    const handleDeleteProduct = (produto: Product) => {
+        setDeletedId(produto.produto_id);
+        setOpenProductConfirmModal(true);
+    };
 	const deleteProduct = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading((prev) => new Set([...prev, "deleteProduct"]));
@@ -449,7 +444,6 @@ export default function InventoryList() {
             setMessage("Erro ao conectar com o servidor")
 		} finally {
 			setOpenNoticeModal(true);
-			setEditingId(null);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("deleteProduct");
@@ -608,6 +602,54 @@ export default function InventoryList() {
             sortable: false,
             filter: false
         }
+    ]);
+
+    /* ----- Definição de colunas e dados que da tabela de produtos ----- */
+    
+    const [rowDataProduct, setRowDataProduct] = useState<Product[]>([]);
+    const [columnDefsProduct] = useState<ColDef[]>([
+        {
+            field: "produto_nome",
+            headerName: "Produto",
+            filter: true,
+            flex: 1,
+            editable: true,
+        },
+        {
+            headerName: "Ações",
+            field: "acoes",
+            width: 100,
+            cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
+            cellRenderer: (params: ICellRendererParams) => {
+            return (
+                <div className="flex gap-2 items-center justify-center">
+                <button
+                    className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                    title="Editar Produto"
+                    onClick={() => {
+                        params.api.startEditingCell({
+                            rowIndex: Number(params.node.rowIndex),
+                            colKey: "produto_nome",
+                        });
+                    }}
+                >
+                    <Pencil size={18} />
+                </button>
+                {params.context.userLevel === "Administrador" && (
+                    <button
+                        className="text-red-600 hover:text-red-800 cursor-pointer"
+                        title="Excluir Produto"
+                        onClick={() => handleDeleteProduct(params.data)}
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                )}
+                </div>
+            );
+            },
+            sortable: false,
+            filter: false,
+        },
     ]);
 
     //Esilos da Tabela
@@ -775,101 +817,26 @@ export default function InventoryList() {
             withXButton
             isLoading={loading.has("options")}
         >
-            <div className="min-w-[30vw] max-w-[50vw] overflow-auto max-h-[60vh] mb-5 mt-2">
-                <table className="w-full border-collapse">
-                    {/* Tabela Cabeçalho */}
-                    <thead>
-                        <tr className="bg-verdePigmento text-white shadow-thead">
-                            {["Produto", "Ações"].map((header) => (
-                                <th key={header} className="border border-black p-3 whitespace-nowrap">
-                                    {header}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading.has("options") ? (
-                            <tr>
-                                <td colSpan={9} className="text-center py-3">
-                                    <Loader2 className="animate-spin h-8 w-8 mx-auto" />
-                                </td>
-                            </tr>
-                        ) : options?.produtos.length === 0 ? (
-                            <tr>
-                                <td colSpan={9} className="text-center py-3">
-                                    Nenhum produto encontrado
-                                </td>
-                            </tr>
-                        ) : (
-                            //Tabela Dados
-                            options?.produtos.map((produto, index) => (
-                                <tr
-                                    key={produto.produto_id}
-                                    className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-                                >
-                                    <td className="border border-black p-3 text-center whitespace-nowrap">
-                                        {editingId === produto.produto_id ? (
-                                            <input
-                                                type="text"
-                                                className="border p-1"
-                                                value={editedValue}
-                                                onChange={(e) => setEditedValue(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter")
-                                                        updateProduct(produto.produto_id, editedValue);
-                                                }}
-                                                autoFocus
-                                            />
-                                        ) : (
-                                            produto.produto_nome
-                                        )}
-                                    </td>
-                                    <td className="border border-black p-3 text-center whitespace-nowrap">
-                                        {editingId === produto.produto_id ? (
-                                            <>
-                                                <button
-                                                    className="ml-2 cursor-pointer"
-                                                    onClick={() =>
-                                                        updateProduct(produto.produto_id, editedValue)
-                                                    }
-                                                    title="Salvar"
-                                                >
-                                                    ✔
-                                                </button>
-                                                <button
-                                                    className="ml-2 cursor-pointer"
-                                                    onClick={() => setEditingId(null)}
-                                                    title="Cancelar"
-                                                >
-                                                    ❌
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    className="text-black cursor-pointer"
-                                                    onClick={() => handleEditProduct(produto)}
-                                                    title="Editar produto"
-                                                >
-                                                    <PencilLine />
-                                                </button>
-                                                {userLevel === "Administrador" && (
-                                                    <button
-                                                        className="text-red-500 cursor-pointer ml-3"
-                                                        onClick={() => handleDeleteProduct(produto)}
-                                                        title="Excluir produto"
-                                                    >
-                                                        <Trash />
-                                                    </button>
-                                                )}
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            {/* Tabela de Produtos */}
+            <div className="h-[65vh]">
+                <AgGridReact
+                    modules={[AllCommunityModule]}
+                    theme={myTheme}
+                    ref={gridRef}
+                    rowData={rowDataProduct}
+                    columnDefs={columnDefsProduct}
+                    context={{ userLevel }}
+                    localeText={agGridTranslation}
+                    pagination
+                    paginationPageSize={10}
+                    paginationPageSizeSelector={[10, 25, 50, 100]}
+                    loading={loading.has("options")}
+                    overlayLoadingTemplate={overlayLoadingTemplate}
+                    overlayNoRowsTemplate={overlayNoRowsTemplate}
+                    onCellValueChanged={(params) => {
+                        updateProduct(params.data.produto_id, params.data.produto_nome);
+                    }}
+                />
             </div>
         </Modal>
 
