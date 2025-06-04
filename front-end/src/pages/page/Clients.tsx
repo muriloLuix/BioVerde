@@ -1,52 +1,39 @@
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Tabs, Form } from "radix-ui";
+import { checkAuth } from "../../utils/checkAuth";
+import { Tabs } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
-import {
-	Search,
-	PencilLine,
-	Trash,
-	Loader2,
-	Eye,
-	FilterX,
-	Printer,
-	X,
-} from "lucide-react";
-
-import {
-	SmartField,
-	ConfirmationModal,
-	NoticeModal,
-	Modal,
-} from "../../shared";
-import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ICellRendererParams, CellValueChangedEvent, ColDef, themeQuartz } from "ag-grid-community";
+import { agGridTranslation } from "../../utils/agGridTranslation";
+import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
+import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
 import { cepApi } from "../../utils/cepApi";
-import { Client, UF, City, SelectEvent } from "../../utils/types";
+import { Client, UF, City, SelectEvent, FormDataClient, DeleteClient } from "../../utils/types";
+import { ClientRegister, ClientUpdate, ClientDelete } from "../pageComponents";
+import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function Clients() {
 	const [activeTab, setActiveTab] = useState("list");
-	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
-	const [relatorioContent, setRelatorioContent] = useState<string>("");
-	const [cpfCnpjMask, setCpfCnpjMask] = useState("");
 	const [clientType, setClientType] = useState("juridica");
 	const [openEditModal, setOpenEditModal] = useState(false);
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
-	const [openObsModal, setOpenObsModal] = useState(false);
+	const [openRegisterModal, setOpenRegisterModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [message, setMessage] = useState("");
-	const [currentObs, setCurrentObs] = useState("");
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	const [clientes, setClientes] = useState<Client[]>([]);
+	const [ufs, setUfs] = useState<UF[]>();
+	const [cities, setCities] = useState<City[]>();
 	const [errors, setErrors] = useState({
 		states: false,
-		isCepValid: false,
+		cities: false,
 	});
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<FormDataClient>({
 		cliente_id: 0,
 		nome_empresa_cliente: "",
 		razao_social: "",
@@ -63,59 +50,305 @@ export default function Clients() {
 		cidade: "",
 		obs: "",
 	});
-	const [filters, setFilters] = useState({
-		fnome_cliente: "",
-		fcpf_cnpj: "",
-		ftel: "",
-		fcidade: "",
-		festado: "",
-		fdataCadastro: "",
-		fstatus: "",
-	});
-	const [deleteClient, setDeleteClient] = useState({
+	const [deleteClient, setDeleteClient] = useState<DeleteClient>({
 		cliente_id: 0,
 		dnome_cliente: "",
 		reason: "",
 	});
-	const [ufs, setUfs] = useState<UF[]>();
-	const [cities, setCities] = useState<City[]>();
 
-	const handleObsClick = (cliente: Client) => {
-		setCurrentObs(cliente.cliente_observacoes);
-		setOpenObsModal(true);
-	};
+	/* ----- useEffects e Requisições via Axios ----- */
 
+	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+	}, [navigate]);
 
 	useEffect(() => {
-		const checkAuth = async () => {
+		const fetchData = async () => {
 			try {
-				const response = await axios.get(
-					"http://localhost/BioVerde/back-end/auth/check_session.php",
-					{ withCredentials: true }
-				);
+				setLoading((prev) => new Set([...prev, "clients", "ufs", "cities"]));
+				const [clientesResponse, userLevelResponse, ufsResponse, citiesResponse] = await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+						{ withCredentials: true, headers: { Accept: "application/json" } }
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+					),
+				]);
+				console.log("Resposta do back-end:", clientesResponse.data);
 
-				if (!response.data.loggedIn) {
-					setMessage("Sessão expirada. Por favor, faça login novamente.");
+				if (clientesResponse.data.success) {
+					setRowData(clientesResponse.data.clientes || []);
+				} else {
 					setOpenNoticeModal(true);
+					setMessage(clientesResponse.data.message || "Erro ao carregar clientes");
+				}
 
-					setTimeout(() => {
-						navigate("/");
-					}, 1900);
+				if (userLevelResponse.data.success) {
+					setUserLevel(userLevelResponse.data.userLevel);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+				}
+
+				if (ufsResponse.status === 200) {
+					setUfs(ufsResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
+
+				if (citiesResponse.status === 200) {
+					setCities(citiesResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar municípios");
 				}
 			} catch (error) {
-				console.error("Erro ao verificar sessão:", error);
-				setMessage("Sessão expirada. Por favor, faça login novamente.");
+				console.error(error);
 				setOpenNoticeModal(true);
-
-				setTimeout(() => {
-					navigate("/");
-				}, 1900);
+				setMessage("Erro ao conectar com o servidor");
+			} finally {
+				setLoading((prev) => {
+					const newLoading = new Set(prev);
+					["clients", "ufs", "cities"].forEach((item) => newLoading.delete(item));
+					return newLoading;
+				});
 			}
 		};
+		fetchData();
+	}, []);
 
-		checkAuth();
-	}, [navigate]);
+	//Função para Atualizar a Tabela após ação
+	const refreshData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "clients"]));
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
+				{ withCredentials: true }
+			);
+			if (response.data.success) {
+				setRowData(response.data.clientes || []);
+			} else {
+				setMessage(response.data.message || "Erro ao carregar clientes");
+				setOpenNoticeModal(true);
+			}
+		} catch (error) {
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("clients");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Funções para CRUD de Clientes ----- */
+
+	//Submit de cadastrar clientes
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		// Validações
+		const error = {
+			states: !formData.estado,
+			cities: !formData.cidade,
+		};
+		setErrors(error);
+		if (Object.values(error).some((error) => error)) {return}
+
+		setLoading((prev) => new Set([...prev, "submit"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/clientes/cadastrar_clientes.php",
+				formData,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setOpenRegisterModal(false);
+				setMessage("Cliente cadastrado com sucesso!");
+				clearFormData();
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar cliente");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("submit");
+				return newLoading;
+			});
+		}
+	};
+
+		//função para puxar os dados do cliente que será editado
+	const handleEditClick = (cliente: Client) => {
+		cepApi(
+			cliente.cliente_cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+		setFormData({
+			cliente_id: 			cliente.cliente_id,
+			nome_empresa_cliente: 	cliente.cliente_nome,
+			razao_social: 			cliente.cliente_razao_social,
+			email: 					cliente.cliente_email,
+			tel: 					cliente.cliente_telefone,
+			cpf_cnpj: 				cliente.cliente_documento,
+			status: 				String(cliente.estaAtivo),
+			cep: 					cliente.cliente_cep,
+			endereco: 				cliente.cliente_endereco,
+			estado: 				cliente.cliente_estado,
+			cidade: 				cliente.cliente_cidade,
+			num_endereco: 			Number(cliente.cliente_numendereco),
+			complemento: 			cliente.cliente_complemento,
+			obs: 					cliente.cliente_observacoes,
+			tipo: 					cliente.cliente_tipo,
+		});
+		setClientType(cliente.cliente_tipo);
+		setOpenEditModal(true);
+	};
+
+	// submit para atualizar o cliente após a edição dele
+	const handleUpdateClient = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "updateClient"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
+				formData,
+				{headers: { "Content-Type": "application/json" }, withCredentials: true}
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setOpenEditModal(false);
+				setSuccessMsg(true);
+				setMessage("Cliente atualizado com sucesso!");
+				clearFormData();
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar cliente.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("updateClient");
+				return newLoading;
+			});
+		}
+	};
+
+	//função para puxar o nome do cliente que será excluido
+	const handleDeleteClick = (cliente: Client) => {
+		setDeleteClient({
+			cliente_id: cliente.cliente_id,
+			dnome_cliente: cliente.cliente_nome,
+			reason: "",
+		});
+		setOpenDeleteModal(true);
+	};
+
+	//submit para excluir um cliente
+	const handleDeleteClient = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "deleteClient"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/clientes/excluir.cliente.php",
+				deleteClient,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setMessage("Cliente Excluído com sucesso!");
+				setOpenConfirmModal(false);
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir cliente.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteClient");
+				return newLoading;
+			});
+		}
+	};
+
+	//Função para Atualizar o Status do cliente
+	const handleStatusChange = async (params: CellValueChangedEvent<Client>) => {
+		if (params.colDef?.field === "estaAtivo") {
+			const dataToSend = {
+				cliente_id: params.data?.cliente_id,
+				estaAtivo: params.data?.estaAtivo
+			};
+			try {
+				const response = await axios.post(
+					"http://localhost/BioVerde/back-end/clientes/atualizar.status.cliente.php",
+					dataToSend,
+					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				);
+				console.log("Resposta do back-end:", response.data);
+				if (response.data.success) {
+					await refreshData(); 
+				} else {
+					setSuccessMsg(false);
+					setMessage(response.data.message || "Erro ao atualizar status.");
+					setOpenNoticeModal(true);
+				}
+			} catch (error) {
+				console.error(error);
+				setMessage("Erro ao conectar com o servidor");
+				setOpenNoticeModal(true);
+			} 
+		}
+	};
+
+	/* ----- Outras Funções ----- */
+
+	//Verifica nível de acesso do usuário
+	useCheckAccessLevel();
 
 	//OnChange dos campos
 	const handleChange = (
@@ -128,13 +361,9 @@ export default function Clients() {
 	) => {
 		const { name, value } = event.target;
 
-		//Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
-		switchCpfCnpjMask(name, value, setCpfCnpjMask);
-
 		if (name === "tipo") {
 			const tipo = value ?? "juridica";
-			setClientType(tipo);
-
+			setClientType(String(tipo));
 			if (tipo === "fisica") {
 				setFormData((prev) => ({
 					...prev,
@@ -151,20 +380,15 @@ export default function Clients() {
 					nome_empresa_cliente: "",
 				}));
 			}
-
 			return;
 		}
 
 		if (name in formData) {
 			setFormData({ ...formData, [name]: value });
 		}
-		if (name in filters) {
-			setFilters({ ...filters, [name]: value });
-		}
 		if (name in deleteClient) {
 			setDeleteClient({ ...deleteClient, [name]: value });
 		}
-
 		setErrors(
 			(prevErrors) =>
 				Object.fromEntries(
@@ -173,7 +397,53 @@ export default function Clients() {
 		);
 	};
 
-	const generateReportatorio = async () => {
+	//Função para chamar a api de CEP
+	const handleCepBlur = () => {
+		cepApi(
+			formData.cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+	};
+
+	//Limpar FormData
+	const clearFormData = () => {
+		setFormData(
+			(prev) =>
+				Object.fromEntries(
+					Object.entries(prev).map(([key, value]) => {
+						if (key === "tipo") return [key, "juridica"];
+						if (key === "status") return [key, "1"];
+						return [key, typeof value === "number" ? 0 : ""];
+					})
+				) as unknown as FormDataClient
+		);
+	};
+
+	const handleCities = async (id: number | undefined) => {
+		if (formData.estado) {
+			try {
+				const response = await axios.get(
+					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
+				);
+
+				if (response.status === 200) {
+					setCities(response.data);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
+	};
+
+	// Função para Gerar Relatório PDF
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
+	const gerarRelatorio = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -210,437 +480,98 @@ export default function Clients() {
 		}
 	};
 
-	//Função para chamar a api de CEP
-	const handleCepBlur = () => {
-		cepApi(
-			formData.cep,
-			setFormData,
-			setOpenNoticeModal,
-			setMessage,
-			setSuccessMsg,
-			setCities,
-			setErrors
-		);
-	};
+	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
-	//função para puxar os dados do cliente que será editado
-	const handleEditClick = (cliente: Client) => {
-		console.log("Dados completos do cliente:", cliente);
-
-		cepApi(
-			cliente.cliente_cep,
-			setFormData,
-			setOpenNoticeModal,
-			setMessage,
-			setSuccessMsg,
-			setCities,
-			setErrors
-		);
-
-		setFormData({
-			cliente_id: cliente.cliente_id,
-			nome_empresa_cliente: cliente.cliente_nome,
-			razao_social: cliente.cliente_razao_social,
-			email: cliente.cliente_email,
-			tel: cliente.cliente_telefone,
-			cpf_cnpj: cliente.cliente_documento,
-			status: String(cliente.estaAtivo),
-			cep: cliente.cliente_cep,
-			endereco: cliente.cliente_endereco,
-			estado: cliente.cliente_estado,
-			cidade: cliente.cliente_cidade,
-			num_endereco: Number(cliente.cliente_numendereco),
-			complemento: cliente.cliente_complemento,
-			obs: cliente.cliente_observacoes,
-			tipo: cliente.cliente_tipo,
-		});
-		setClientType(cliente.cliente_tipo);
-		setOpenEditModal(true);
-	};
-
-	//função para puxar o nome do cliente que será excluido
-	const handleDeleteClick = (cliente: Client) => {
-		setDeleteClient({
-			cliente_id: cliente.cliente_id,
-			dnome_cliente: cliente.cliente_nome,
-			reason: "",
-		});
-		setOpenDeleteModal(true);
-	};
-
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading(
-					(prev) => new Set([...prev, "clients", "options", "ufs", "cities"])
-				);
-
-				const [
-					clientesResponse,
-					userLevelResponse,
-					ufsResponse,
-					citiesResponse,
-				] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-					axios.get(
-						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
-					),
-					axios.get(
-						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
-					),
-				]);
-
-				console.log("Resposta do back-end:", clientesResponse.data);
-
-				if (clientesResponse.data.success) {
-					setClientes(clientesResponse.data.clientes || []);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						clientesResponse.data.message || "Erro ao carregar clientes"
-					);
-				}
-
-				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						userLevelResponse.data.message ||
-							"Erro ao carregar nível do usuário"
-					);
-				}
-
-				if (ufsResponse.status === 200) {
-					setUfs(ufsResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar UFs");
-				}
-
-				if (citiesResponse.status === 200) {
-					setCities(citiesResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar municípios");
-				}
-			} catch (error) {
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-
-				if (axios.isAxiosError(error)) {
-					console.error(
-						"Erro na requisição:",
-						error.response?.data || error.message
-					);
-					if (error.response?.data?.message) {
-						setMessage(error.response.data.message);
-					}
-				} else {
-					console.error("Erro desconhecido:", error);
-				}
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["clients", "options", "ufs", "cities"].forEach((item) =>
-						newLoading.delete(item)
-					);
-					return newLoading;
-				});
-			}
-		};
-
-		fetchData();
-	}, []);
-
-	//Função para Atualizar a Tabela após ação
-	const refreshData = async () => {
-		try {
-			setLoading((prev) => new Set([...prev, "clients"]));
-
-			const response = await axios.get(
-				"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
-				{ withCredentials: true }
-			);
-
-			if (response.data.success) {
-				setClientes(response.data.clientes || []);
+	const gridRef = useRef<AgGridReact>(null);
+	const [rowData, setRowData] = useState<Client[]>([]);
+	const [columnDefs] = useState<ColDef[]>([
+		{ field: "cliente_id", headerName: "ID", filter: true, width: 100 },
+		{ field: "cliente_nome", headerName: "Nome Cliente/Empresa", filter: true, width: 250 },
+		{
+			field: "cliente_tipo",
+			headerName: "Tipo",
+			filter: true,
+			width: 150,
+			valueGetter: (params) => 
+				params.data.cliente_tipo === "juridica" ? "Pessoa Jurídica" : "Pessoa Física"
+		},
+		{field: "cliente_documento", headerName: "CPF/CNPJ", filter: true, width: 180},
+		{field: "cliente_email", headerName: "Email", filter: true, width: 180},
+		{
+			field: "estaAtivo", headerName: "Ativo / Inativo", width: 130,
+			cellRenderer: 'agCheckboxCellRenderer',
+			cellRendererParams: { disabled: false },
+			valueGetter: (params) => params.data.estaAtivo === "1",
+			valueSetter: (params) => {
+				params.data.estaAtivo = params.newValue ? "1" : "0";
 				return true;
-			} else {
-				setMessage(response.data.message || "Erro ao carregar clientes");
-				setOpenNoticeModal(true);
-				return false;
-			}
-		} catch (error) {
-			let errorMessage = "Erro ao conectar com o servidor";
-			if (axios.isAxiosError(error)) {
-				errorMessage = error.response?.data?.message || error.message;
-			}
-			setMessage(errorMessage);
-			setOpenNoticeModal(true);
-			return false;
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("clients");
-				return newLoading;
-			});
+			},
+			editable: true,
+			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+		},
+		{field: "cliente_telefone", headerName: "Telefone", filter: true, width: 180},
+		{field: "cliente_razao_social", headerName: "Razão Social", width: 180},
+		{field: "cliente_cep", headerName: "CEP", filter: true, width: 150},
+		{field: "cliente_endereco", headerName: "Endereço", width: 180},
+		{field: "cliente_numendereco", headerName: "Nº", width: 100},
+		{field: "cliente_complemento", headerName: "Complemento", width: 180},
+		{field: "cliente_cidade", headerName: "Cidade", width: 180},
+		{field: "cliente_estado", headerName: "Estado", width: 100},
+		{
+			field: "cliente_data_cadastro", headerName: "Data de Cadastro", width: 180,
+			valueGetter: (params) => new Date(params.data.cliente_data_cadastro).toLocaleDateString("pt-BR")
+		},
+		{field: "cliente_observacoes", headerName: "Observações", width: 200},
+		{
+			headerName: "Ações",
+			field: "acoes",
+			width: 100,
+			cellRenderer: (params: ICellRendererParams<Client>) => (
+				<div className="flex gap-2 mt-2.5 items-center justify-center">
+					<button
+						className="text-blue-600 hover:text-blue-800 cursor-pointer"
+						title="Editar Lote"
+						onClick={() => { if(params.data) handleEditClick(params.data) }}
+					>
+						<Pencil size={18} />
+					</button>
+					{params.context.userLevel === "Administrador" && (
+						<button
+							className="text-red-600 hover:text-red-800 cursor-pointer"
+							title="Excluir Lote"
+							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+						>
+							<Trash2 size={18} />
+						</button>
+					)}
+				</div>
+			),
+			pinned: "right",
+			sortable: false,
+			filter: false
 		}
-	};
+	]);
 
-	//Submit de cadastrar clientes
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "submit"]));
-		setSuccessMsg(false);
-
-		try {
-			if (Object.values(errors).some((error) => error)) {
-				return;
-			}
-
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/clientes/cadastrar_clientes.php",
-				formData,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setSuccessMsg(true);
-				setMessage("Cliente cadastrado com sucesso!");
-				clearFormData();
-			} else {
-				setMessage(response.data.message || "Erro ao cadastrar cliente");
-			}
-		} catch (error) {
-			let errorMessage = "Erro ao conectar com o servidor";
-
-			if (axios.isAxiosError(error)) {
-				if (error.response) {
-					errorMessage = error.response.data.message || "Erro no servidor";
-					console.error("Erro na resposta:", error.response.data);
-				} else {
-					console.error("Erro na requisição:", error.message);
-				}
-			} else {
-				console.error("Erro desconhecido:", error);
-			}
-
-			setMessage(errorMessage);
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("submit");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit de Filtrar clientes
-	const handleFilterSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		console.log(filters);
-		setLoading((prev) => new Set([...prev, "filterSubmit"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/clientes/filtro.cliente.php",
-				filters,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				setClientes(response.data.clientes);
-			} else {
-				setOpenNoticeModal(true);
-				setMessage(
-					response.data.message || "Nenhum cliente encontrado com esse filtro"
-				);
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("filterSubmit");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit para atualizar o cliente após a edição dele
-	const handleUpdateClient = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "updateClient"]));
-		setSuccessMsg(false);
-
-		try {
-			if (Object.values(errors).some((error) => error)) {
-				return;
-			}
-
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
-				formData,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setOpenEditModal(false);
-				setSuccessMsg(true);
-				setMessage("Cliente atualizado com sucesso!");
-				clearFormData();
-			} else {
-				setMessage(response.data.message || "Erro ao atualizar cliente.");
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				setMessage(error.response?.data?.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response?.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("updateClient");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit para excluir um cliente
-	const handleDeleteClient = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "deleteClient"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/clientes/excluir.cliente.php",
-				deleteClient,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setSuccessMsg(true);
-				setMessage("Cliente Excluído com sucesso!");
-				setOpenConfirmModal(false);
-			} else {
-				setMessage(response.data.message || "Erro ao excluir cliente.");
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("deleteClient");
-				return newLoading;
-			});
-		}
-	};
-
-	//Limpar FormData
-	const clearFormData = () => {
-		setFormData(
-			(prev) =>
-				Object.fromEntries(
-					Object.entries(prev).map(([key, value]) => {
-						if (key === "tipo") return [key, "juridica"];
-						if (key === "status") return [key, "1"];
-						return [key, typeof value === "number" ? 0 : ""];
-					})
-				) as typeof prev
-		);
-	};
-
-	const handleCities = async (id: number | undefined) => {
-		if (formData.estado) {
-			try {
-				const response = await axios.get(
-					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
-				);
-
-				if (response.status === 200) {
-					setCities(response.data);
-				}
-			} catch (err) {
-				console.log(err);
-			}
-		}
-	};
+	//Esilos da Tabela
+	const myTheme = themeQuartz.withParams({
+		spacing: 9,
+		headerBackgroundColor: '#89C988',
+		foregroundColor: '#1B1B1B',
+		rowHoverColor: '#E2FBE2',
+		oddRowBackgroundColor: '#f5f5f5',
+		fontFamily: '"Inter", sans-serif',
+	});
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
 			<div className="px-6 font-[inter]">
-				<h1 className="text-[40px] font-semibold text-center mb-3">Clientes</h1>
+				<h1 className="h-10 w-full flex items-center justify-center mb-3">
+					<span className="text-4xl font-semibold text-center">Clientes</span>
+				</h1>
 
 				{/* Selelcionar Abas */}
-				<Tabs.Root
-					defaultValue="list"
-					className="w-full"
-					onValueChange={(value) => setActiveTab(value)}
-				>
-					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative mb-7">
+				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
 							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
@@ -649,653 +580,103 @@ export default function Clients() {
 						>
 							Lista de Clientes
 						</Tabs.Trigger>
-
-						<Tabs.Trigger
-							value="register"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "register" ? "select animation-tab" : ""
-							}`}
-						>
-							Cadastrar Clientes
-						</Tabs.Trigger>
 					</Tabs.List>
 
 					{/* Aba de Lista de Clientes */}
-					<Tabs.Content value="list" className="flex flex-col w-full">
-						{/* Filtro de Clientes */}
-						<Form.Root
-							className="flex flex-col gap-4"
-							onSubmit={handleFilterSubmit}
-						>
-							<h2 className="text-3xl">Filtros:</h2>
-							<div className="flex gap-7">
-								{/* Coluna Nome e Cidade */}
-								<div className="flex flex-col gap-7 mb-10 justify-between">
-									<SmartField
-										fieldName="fnome_cliente"
-										fieldText="Nome do cliente"
-										type="text"
-										placeholder="Nome completo do Cliente"
-										autoComplete="name"
-										value={filters.fnome_cliente}
-										onChange={handleChange}
-										inputWidth="w-[280px]"
-									/>
-
-									<SmartField
-										fieldName="festado"
-										fieldText="Estado"
-										isSelect
-										isLoading={loading.has("options")}
-										value={filters.festado}
-										placeholder="Selecione"
-										autoComplete="address-level1"
-										inputWidth="w-[280px]"
-										onChangeSelect={handleChange}
-										options={ufs?.map((uf: UF) => ({
-											label: uf.nome,
-											value: uf.sigla,
-										}))}
-										onBlur={() => {
-											const uf = ufs?.find(
-												(uf: UF) => formData.estado === uf.sigla
-											);
-
-											handleCities(uf?.id);
-										}}
-										isDisabled={!ufs}
-									/>
-								</div>
-
-								{/* Coluna CPF e Estado */}
-								<div className="flex flex-col gap-7 mb-10 justify-between">
-									<SmartField
-										fieldName="fcpf_cnpj"
-										fieldText="CPF/CNPJ"
-										withInputMask
-										unstyled
-										type="text"
-										mask={cpfCnpjMask}
-										autoClear={false}
-										placeholder="Digite o CPF/CNPJ"
-										value={filters.fcpf_cnpj}
-										onChange={handleChange}
-										inputWidth="w-[200px]"
-									/>
-
-									<SmartField
-										fieldName="fcidade"
-										fieldText="Cidade"
-										isSelect
-										isLoading={loading.has("cities")}
-										value={filters.fcidade}
-										placeholder="Selecione"
-										autoComplete="address-level2"
-										error={errors.states ? "*" : undefined}
-										inputWidth="w-[200px]"
-										onChangeSelect={handleChange}
-										options={cities?.map((city: City) => ({
-											label: city.nome,
-											value: city.nome,
-										}))}
-										isDisabled={!cities}
-									/>
-								</div>
-
-								{/* Coluna Telefone e Status */}
-								<div className="flex flex-col gap-7 mb-10 justify-between">
-									<SmartField
-										fieldName="fstatus"
-										fieldText="Status"
-										isSelect
-										isLoading={loading.has("options")}
-										value={filters.fstatus}
-										placeholder="Selecione"
-										inputWidth="w-[200px]"
-										onChangeSelect={handleChange}
-										options={[
-											{ value: "1", label: "Ativo" },
-											{ value: "0", label: "Inativo" },
-										]}
-									/>
-
-									<SmartField
-										fieldName="ftel"
-										fieldText="Telefone"
-										withInputMask
-										unstyled
-										type="tel"
-										mask="(99) 9999?9-9999"
-										autoClear={false}
-										placeholder="Digite o Telefone"
-										autoComplete="tel"
-										value={filters.ftel}
-										onChange={handleChange}
-										inputWidth="w-[200px]"
-									/>
-								</div>
-
-								{/* Coluna Data de Cadastro e Botão Filtrar */}
-								<div className="flex flex-col gap-7 mb-10 justify-between">
-									<Form.Field name="fdataCadastro" className="flex flex-col">
-										<Form.Label asChild>
-											<span className="text-xl pb-2 font-light">
-												Data de Cadastro:
-											</span>
-										</Form.Label>
-										<Form.Control asChild>
-											<input
-												type="date"
-												name="fdataCadastro"
-												id="fdataCadastro"
-												value={filters.fdataCadastro}
-												onChange={handleChange}
-												className="bg-white border w-[200px] border-separator rounded-lg p-2.5"
-											/>
-										</Form.Control>
-									</Form.Field>
-
-									<Form.Submit asChild>
-										<div className="flex gap-4 mt-8">
-											<button
-												type="submit"
-												className="bg-verdeMedio p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-verdeEscuro"
-												disabled={loading.size > 0}
-											>
-												{loading.has("filterSubmit") ? (
-													<Loader2 className="animate-spin h-6 w-6" />
-												) : (
-													<>
-														<Search size={23} />
-														Filtrar
-													</>
-												)}
-											</button>
-											<button
-												type="button"
-												className="bg-verdeLimparFiltros p-3 w-[105px] rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-hoverLimparFiltros "
-												disabled={loading.size > 0}
-												onClick={() =>
-													setFilters(
-														(prev) =>
-															Object.fromEntries(
-																Object.keys(prev).map((key) => [key, ""])
-															) as typeof prev
-													)
-												}
-											>
-												<FilterX />
-												Limpar
-											</button>
-										</div>
-									</Form.Submit>
-								</div>
-							</div>
-						</Form.Root>
-
-						{/* Tabela Lista de Clientes */}
-						<div className="min-w-[966px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
-							<table className="w-full border-collapse">
-								{/* Tabela Cabeçalho */}
-								<thead>
-									<tr className="bg-verdePigmento text-white shadow-thead">
-										{[
-											"ID",
-											"Nome Cliente/Empresa",
-											"Tipo",
-											"CPF/CNPJ",
-											"Email",
-											"Telefone",
-											"CEP",
-											"Endereço",
-											"Nº",
-											"Complemento",
-											"Estado",
-											"Cidade",
-											"Status",
-											"Observações",
-											"Data de Cadastro",
-											"Ações",
-										].map((header) => (
-											<th
-												key={header}
-												className="border border-black px-4 py-4 whitespace-nowrap"
-											>
-												{header}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{loading.has("clients") ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
-											</td>
-										</tr>
-									) : clientes.length === 0 ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												Nenhum cliente encontrado
-											</td>
-										</tr>
-									) : (
-										//Tabela Dados
-										clientes.map((cliente, index) => (
-											<tr
-												key={cliente.cliente_id}
-												className={
-													index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-												}
-											>
-												{Object.values(cliente)
-													.slice(0, 13)
-													.map((value, idx) => (
-														<td
-															key={idx}
-															className="border border-black p-4 whitespace-nowrap"
-														>
-															{value}
-														</td>
-													))}
-												<td className="border border-black p-4 text-center">
-													<button
-														className="text-blue-600 cursor-pointer"
-														onClick={() => handleObsClick(cliente)}
-														title="Ver observações"
-													>
-														<Eye />
-													</button>
-												</td>
-												<td className="border border-black p-4 text-center whitespace-nowrap">
-													{new Date(
-														cliente.cliente_data_cadastro
-													).toLocaleDateString("pt-BR")}
-												</td>
-												<td className="border border-black p-4 text-center whitespace-nowrap">
-													<button
-														className="text-black cursor-pointer"
-														onClick={() => handleEditClick(cliente)}
-														title="Editar produto"
-													>
-														<PencilLine />
-													</button>
-													{userLevel === "Administrador" && (
-														<button
-															className="text-red-500 cursor-pointer ml-3"
-															onClick={() => handleDeleteClick(cliente)}
-															title="Excluir produto"
-														>
-															<Trash />
-														</button>
-													)}
-												</td>
-											</tr>
-										))
-									)}
-								</tbody>
-							</table>
-						</div>
-						{clientes.length !== 0 && (
-							<div className="min-w-[966px] max-w-[73vw]">
+					<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+						<div className="flex justify-between">
+							{/* Botão de Abrir Modal de Cadastro de Cliente */}
+							<div className="mt-1 mb-3">
 								<button
 									type="button"
-									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={generateReportatorio}
+									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+									onClick={() => {
+										setOpenRegisterModal(true); 
+										clearFormData(); 
+										setClientType("juridica");
+									}}
+								>
+									<Plus />
+									Novo Cliente
+								</button>
+							</div>
+							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
+							<div className="flex items-center gap-5 mt-1 mb-3">
+								<button
+									onClick={gerarRelatorio}
+									className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
 									) : (
 										<>
-											<Printer />
-											Gerar Relatório
+											<FileText />
+											Exportar PDF
 										</>
 									)}
 								</button>
-							</div>
-						)}
-
-						{/* Modal de Observações */}
-						<Modal
-							withExitButton
-							isObsModal
-							openModal={openObsModal}
-							setOpenModal={setOpenObsModal}
-							modalWidth="min-w-[300px] max-w-[500px]"
-							modalTitle="Observações"
-							obsText={currentObs}
-						/>
-					</Tabs.Content>
-
-					{/* Aba de Cadastro de Clientes */}
-					<Tabs.Content
-						value="register"
-						className="flex items-center justify-center"
-					>
-						<Form.Root className="flex flex-col" onSubmit={handleSubmit}>
-							<h2 className="text-3xl mb-8">Cadastro de clientes:</h2>
-
-							<div className="flex mb-8 gap-x-7 justify-between">
-								<SmartField
-									fieldName="tipo"
-									fieldText="Tipo"
-									isClearable={false}
-									isSelect
-									value={formData.tipo}
-									inputWidth="w-[220px]"
-									onChangeSelect={handleChange}
-									options={[
-										{ value: "juridica", label: "Pessoa Jurídica" },
-										{ value: "fisica", label: "Pessoa Física" },
-									]}
-								/>
-
-								{clientType === "juridica" && (
-									<SmartField
-										fieldName="cpf_cnpj"
-										fieldText="CNPJ"
-										withInputMask
-										unstyled
-										required
-										type="text"
-										mask="99.999.999/9999-99"
-										autoClear={false}
-										pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
-										placeholder="Digite o CNPJ"
-										value={formData.cpf_cnpj}
-										onChange={handleChange}
-										inputWidth="w-[220px]"
-									/>
-								)}
-
-								{clientType === "fisica" && (
-									<SmartField
-										fieldName="cpf_cnpj"
-										fieldText="CPF"
-										withInputMask
-										unstyled
-										required
-										type="text"
-										mask="999.999.999-99"
-										autoClear={false}
-										pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-										placeholder="Digite o CPF"
-										value={formData.cpf_cnpj}
-										onChange={handleChange}
-										inputWidth="w-[220px]"
-									/>
-								)}
-
-								{clientType === "fisica" && (
-									<SmartField
-										fieldName="email"
-										fieldText="Email"
-										fieldClassname="flex flex-col flex-1"
-										required
-										type="email"
-										placeholder="Digite o e-mail do cliente"
-										autoComplete="email"
-										value={formData.email}
-										onChange={handleChange}
-									/>
-								)}
-
-								{clientType === "juridica" && (
-									<SmartField
-										fieldName="razao_social"
-										fieldText="Razão Social"
-										fieldClassname="flex flex-col flex-1"
-										required
-										type="text"
-										placeholder="Digite a Razão Social da Empresa"
-										autoComplete="name"
-										value={formData.razao_social}
-										onChange={handleChange}
-									/>
-								)}
-							</div>
-
-							<div className="flex mb-8 gap-x-7 justify-between">
-								{clientType === "fisica" && (
-									<SmartField
-										fieldName="nome_empresa_cliente"
-										fieldText="Nome do cliente"
-										type="text"
-										required
-										placeholder="Digite o nome completo do Cliente"
-										autoComplete="name"
-										value={formData.nome_empresa_cliente}
-										onChange={handleChange}
-										fieldClassname="flex flex-col flex-1"
-									/>
-								)}
-
-								{clientType === "juridica" && (
-									<SmartField
-										fieldName="nome_empresa_cliente"
-										fieldText="Nome Fantasia da Empresa"
-										required
-										type="text"
-										placeholder="Digite o nome Fantasia da empresa"
-										autoComplete="name"
-										value={formData.nome_empresa_cliente}
-										onChange={handleChange}
-										inputWidth="w-[300px]"
-									/>
-								)}
-
-								{clientType === "juridica" && (
-									<SmartField
-										fieldName="email"
-										fieldText="Email"
-										required
-										type="email"
-										placeholder="Digite o e-mail do cliente"
-										autoComplete="email"
-										value={formData.email}
-										onChange={handleChange}
-										inputWidth="w-[240px]"
-									/>
-								)}
-
-								<SmartField
-									fieldName="tel"
-									fieldText="Telefone"
-									withInputMask
-									unstyled
-									required
-									type="tel"
-									mask="(99) 9999?9-9999"
-									autoClear={false}
-									pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-									placeholder="Digite o Telefone"
-									autoComplete="tel"
-									value={formData.tel}
-									onChange={handleChange}
-									inputWidth="w-[190px]"
-								/>
-
-								<SmartField
-									fieldName="cep"
-									fieldText="CEP"
-									withInputMask
-									unstyled
-									required
-									type="text"
-									mask="99999-999"
-									autoClear={false}
-									pattern="^\d{5}-\d{3}$"
-									placeholder="Digite o CEP"
-									autoComplete="postal-code"
-									value={formData.cep}
-									onChange={handleChange}
-									onBlur={handleCepBlur}
-									inputWidth="w-[150px]"
-								/>
-							</div>
-
-							<div className="flex mb-8 gap-x-7 justify-between">
-								<SmartField
-									fieldName="endereco"
-									fieldText="Endereço"
-									fieldClassname="flex flex-col flex-1"
-									required
-									type="text"
-									placeholder="Endereço Completo"
-									value={formData.endereco}
-									onChange={handleChange}
-									autoComplete="street-address"
-								/>
-
-								<SmartField
-									fieldName="num_endereco"
-									fieldText="Número"
-									required
-									type="number"
-									placeholder="Número"
-									value={formData.num_endereco}
-									onChange={handleChange}
-									autoComplete="address-line1"
-									inputWidth="w-[90px]"
-								/>
-
-								<SmartField
-									fieldName="complemento"
-									fieldText="Complemento"
-									inputWidth="w-[160px]"
-									type="text"
-									placeholder="Complemento"
-									value={formData.complemento}
-									onChange={handleChange}
-								/>
-
-								<SmartField
-									fieldName="estado"
-									fieldText="Estado"
-									isSelect
-									isLoading={loading.has("ufs")}
-									value={formData.estado}
-									placeholder="Selecione"
-									autoComplete="address-level1"
-									error={errors.states ? "*" : undefined}
-									inputWidth="w-[180px]"
-									onChangeSelect={handleChange}
-									options={ufs?.map((uf: UF) => ({
-										label: uf.nome,
-										value: uf.sigla,
-									}))}
-									onBlur={() => {
-										const uf = ufs?.find(
-											(uf: UF) => formData.estado === uf.sigla
-										);
-
-										handleCities(uf?.id);
+								<button
+									onClick={() => {
+										const params = {
+											fileName: "clientes.csv",
+											columnSeparator: ";",
+										};
+										gridRef.current?.api.exportDataAsCsv(params);
 									}}
-									isDisabled={!!formData.cep}
-								/>
-
-								<SmartField
-									fieldName="cidade"
-									fieldText="Cidade"
-									isSelect
-									isLoading={loading.has("cities")}
-									value={formData.cidade}
-									placeholder="Selecione"
-									autoComplete="address-level2"
-									error={errors.states ? "*" : undefined}
-									inputWidth="w-[180px]"
-									onChangeSelect={handleChange}
-									options={cities?.map((city: City) => ({
-										label: city.nome,
-										value: city.nome,
-									}))}
-									isDisabled={!!formData.cep || !cities}
-								/>
-							</div>
-
-							<div className="flex mb-10">
-								<SmartField
-									isTextArea
-									fieldName="obs"
-									fieldText="Observações"
-									fieldClassname="flex flex-col w-full"
-									placeholder="Digite as observações do cliente"
-									value={formData.obs}
-									onChange={handleChange}
-								/>
-							</div>
-
-							<Form.Submit asChild>
-								<div className="flex place-content-center mb-5">
-									<button
-										type="submit"
-										className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
-										disabled={loading.size > 0}
-									>
-										{loading.has("submit") ? (
-											<Loader2 className="animate-spin h-6 w-6" />
-										) : (
-											"Cadastrar Cliente"
-										)}
-									</button>
-								</div>
-							</Form.Submit>
-						</Form.Root>
-					</Tabs.Content>
-				</Tabs.Root>
-
-				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
-
-				{/* Modal de Relatório */}
-				{relatorioModalOpen && (
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-xl font-bold">Relatório de Clientes</h2>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="text-gray-500 hover:text-gray-700"
+									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
 								>
-									<X size={24} />
-								</button>
-							</div>
-
-							<div className="flex-1 overflow-auto mb-4">
-								{relatorioContent ? (
-									<iframe
-										src={relatorioContent}
-										className="w-full h-full min-h-[70vh] border"
-										title="Relatório de Clientes"
-									/>
-								) : (
-									<p>Carregando relatório...</p>
-								)}
-							</div>
-
-							<div className="flex justify-end gap-4">
-								<a
-									href={relatorioContent}
-									download="relatorio_usuarios.pdf"
-									className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
-								>
-									Baixar Relatório
-								</a>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-								>
-									Fechar
+									<FileSpreadsheet />
+									Exportar CSV
 								</button>
 							</div>
 						</div>
-					</div>
-				)}
+				
+						{/* Tabela de Clientes */}
+						<div className="h-[75vh]">
+							<AgGridReact
+								modules={[AllCommunityModule]}
+								theme={myTheme}
+								ref={gridRef}
+								rowData={rowData}
+								columnDefs={columnDefs}
+								context={{ userLevel }}
+								localeText={agGridTranslation}
+								onCellValueChanged={handleStatusChange}
+								pagination
+								paginationPageSize={10}
+								paginationPageSizeSelector={[10, 25, 50, 100]}
+								loading={loading.has("clients")}
+								overlayLoadingTemplate={overlayLoadingTemplate}
+								overlayNoRowsTemplate={overlayNoRowsTemplate}
+							/>
+						</div>
+					</Tabs.Content>
+				</Tabs.Root>
+
+				{/* Modal de Cadastro de Clientes */}
+				<Modal
+					isRegister
+					withXButton
+					openModal={openRegisterModal}
+					setOpenModal={setOpenRegisterModal}
+					modalTitle="Cadastrar Cliente:"
+					modalWidth="w-1/2"
+					registerButtonText="Cadastrar Cliente"
+					isLoading={loading.has("submit")}
+					onSubmit={handleSubmit}
+				>	
+					<ClientRegister
+						formData={formData}
+						loading={loading}
+						errors={errors}
+						ufs={ufs}
+						cities={cities}
+						clientType={clientType}
+						handleCities={handleCities}
+						handleCepBlur={handleCepBlur}
+						handleChange={handleChange}
+					/>
+				</Modal>
 
 				{/* Modal de Edição */}
 				<Modal
@@ -1304,259 +685,20 @@ export default function Clients() {
 					modalTitle="Editar Cliente:"
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
+					modalWidth="w-1/2"
 					isLoading={loading.has("updateClient")}
-					onCancel={() => {
-						clearFormData();
-						setClientType("juridica");
-					}}
 					onSubmit={handleUpdateClient}
 				>
-					<div className="flex mb-6 gap-x-7 justify-between">
-						{clientType === "juridica" && (
-							<>
-								<SmartField
-									fieldName="nome_empresa_cliente"
-									fieldText="Nome Fantasia da Empresa"
-									required
-									type="text"
-									placeholder="Digite o nome Fantasia da empresa"
-									autoComplete="name"
-									value={formData.nome_empresa_cliente}
-									onChange={handleChange}
-									inputWidth="w-[300px]"
-								/>
-								<SmartField
-									fieldName="razao_social"
-									fieldText="Razão Social"
-									fieldClassname="flex flex-col flex-1"
-									required
-									type="text"
-									placeholder="Digite a Razão Social da Empresa"
-									autoComplete="name"
-									value={formData.razao_social}
-									onChange={handleChange}
-								/>
-							</>
-						)}
-
-						{clientType === "fisica" && (
-							<SmartField
-								fieldName="nome_empresa_cliente"
-								fieldText="Nome do cliente"
-								fieldClassname="flex flex-col flex-1"
-								type="text"
-								required
-								placeholder="Digite o nome completo do Cliente"
-								autoComplete="name"
-								value={formData.nome_empresa_cliente}
-								onChange={handleChange}
-							/>
-						)}
-
-						<SmartField
-							fieldName="tipo"
-							fieldText="Tipo"
-							inputWidth="w-[220px]"
-							isClearable={false}
-							isSelect
-							value={formData.tipo}
-							onChangeSelect={handleChange}
-							options={[
-								{ value: "juridica", label: "Pessoa Jurídica" },
-								{ value: "fisica", label: "Pessoa Física" },
-							]}
-						/>
-					</div>
-
-					<div className="flex mb-6 gap-x-7 justify-between">
-						<SmartField
-							fieldName="email"
-							fieldText="Email"
-							required
-							type="email"
-							placeholder="Digite o e-mail do cliente"
-							autoComplete="email"
-							value={formData.email}
-							onChange={handleChange}
-							inputWidth="w-[300px]"
-						/>
-
-						{clientType === "juridica" && (
-							<SmartField
-								fieldName="cpf_cnpj"
-								fieldText="CNPJ"
-								withInputMask
-								unstyled
-								required
-								type="text"
-								mask="99.999.999/9999-99"
-								autoClear={false}
-								pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
-								placeholder="Digite o CNPJ"
-								value={formData.cpf_cnpj}
-								onChange={handleChange}
-								inputWidth="w-[180px]"
-							/>
-						)}
-
-						{clientType === "fisica" && (
-							<SmartField
-								fieldName="cpf_cnpj"
-								fieldText="CPF"
-								withInputMask
-								unstyled
-								required
-								type="text"
-								mask="999.999.999-99"
-								autoClear={false}
-								pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-								placeholder="Digite o CPF"
-								value={formData.cpf_cnpj}
-								onChange={handleChange}
-								inputWidth="w-[160px]"
-							/>
-						)}
-
-						<SmartField
-							fieldName="tel"
-							fieldText="Telefone"
-							withInputMask
-							unstyled
-							required
-							type="tel"
-							mask="(99) 9999?9-9999"
-							autoClear={false}
-							pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-							placeholder="Digite o Telefone"
-							autoComplete="tel"
-							value={formData.tel}
-							onChange={handleChange}
-							inputWidth="w-[180px]"
-						/>
-
-						<SmartField
-							fieldName="status"
-							fieldText="Status"
-							isSelect
-							isClearable={false}
-							isLoading={loading.has("options")}
-							value={formData.status}
-							inputWidth="w-[150px]"
-							onChangeSelect={handleChange}
-							options={[
-								{ value: "1", label: "Ativo" },
-								{ value: "0", label: "Inativo" },
-							]}
-						/>
-
-						<SmartField
-							fieldName="cep"
-							fieldText="CEP"
-							withInputMask
-							unstyled
-							required
-							type="text"
-							mask="99999-999"
-							autoClear={false}
-							pattern="^\d{5}-\d{3}$"
-							placeholder="Digite o CEP"
-							autoComplete="postal-code"
-							value={formData.cep}
-							onChange={handleChange}
-							onBlur={handleCepBlur}
-							inputWidth="w-[150px]"
-						/>
-					</div>
-
-					<div className="flex mb-6 gap-x-7 justify-between">
-						<SmartField
-							fieldName="endereco"
-							fieldText="Endereço"
-							fieldClassname="flex flex-col flex-1"
-							required
-							type="text"
-							placeholder="Endereço Completo"
-							value={formData.endereco}
-							onChange={handleChange}
-							autoComplete="street-address"
-						/>
-
-						<SmartField
-							fieldName="num_endereco"
-							fieldText="Número"
-							required
-							type="number"
-							placeholder="Número"
-							value={formData.num_endereco}
-							onChange={handleChange}
-							autoComplete="address-line1"
-							inputWidth="w-[90px]"
-						/>
-
-						<SmartField
-							fieldName="complemento"
-							fieldText="Complemento"
-							inputWidth="w-[160px]"
-							type="text"
-							placeholder="Complemento"
-							value={formData.complemento}
-							onChange={handleChange}
-						/>
-
-						<SmartField
-							fieldName="estado"
-							fieldText="Estado"
-							isSelect
-							isLoading={loading.has("ufs")}
-							value={formData.estado}
-							placeholder="Selecione"
-							autoComplete="address-level1"
-							error={errors.states ? "*" : undefined}
-							inputWidth="w-[200px]"
-							onChangeSelect={handleChange}
-							options={ufs?.map((uf: UF) => ({
-								label: uf.nome,
-								value: uf.sigla,
-							}))}
-							onBlur={() => {
-								const uf = ufs?.find((uf: UF) => formData.estado === uf.sigla);
-
-								handleCities(uf?.id);
-							}}
-							isDisabled={!!formData.cep || !ufs}
-						/>
-
-						<SmartField
-							fieldName="cidade"
-							fieldText="Cidade"
-							isSelect
-							isLoading={loading.has("cities")}
-							value={formData.cidade}
-							placeholder="Selecione"
-							autoComplete="address-level2"
-							error={errors.states ? "*" : undefined}
-							inputWidth="w-[195px]"
-							onChangeSelect={handleChange}
-							options={cities?.map((city: City) => ({
-								label: city.nome,
-								value: city.nome,
-							}))}
-							isDisabled={!!formData.cidade || !cities}
-						/>
-					</div>
-
-					<div className="flex mb-6">
-						<SmartField
-							isTextArea
-							fieldName="obs"
-							fieldText="Observações"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite as observações do cliente"
-							value={formData.obs}
-							onChange={handleChange}
-							rows={2}
-						/>
-					</div>
+					<ClientUpdate
+						formData={formData}
+						loading={loading}
+						ufs={ufs}
+						cities={cities}
+						clientType={clientType}
+						handleCities={handleCities}
+						handleCepBlur={handleCepBlur}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
 				<Modal
@@ -1570,33 +712,10 @@ export default function Clients() {
 						setOpenDeleteModal(false);
 					}}
 				>
-					<div className="flex mb-10">
-						<SmartField
-							fieldName="dnome_cliente"
-							fieldText="Nome do Cliente"
-							fieldClassname="flex flex-col w-full"
-							type="text"
-							autoComplete="name"
-							required
-							readOnly
-							value={deleteClient.dnome_cliente}
-							onChange={handleChange}
-						/>
-					</div>
-
-					<div className="flex mb-10 ">
-						<SmartField
-							isTextArea
-							fieldName="reason"
-							required
-							autoFocus
-							fieldText="Motivo da Exclusão"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite o motivo da exclusão do cliente"
-							value={deleteClient.reason}
-							onChange={handleChange}
-						/>
-					</div>
+					<ClientDelete
+						deleteClient={deleteClient}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
 				{/* Alert para confirmar exclusão do cliente */}
@@ -1609,6 +728,23 @@ export default function Clients() {
 					isLoading={loading.has("deleteClient")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir cliente"
+				/>
+
+				{/* Modal de Relatório */}
+				<ReportModal
+					openModal={relatorioModalOpen}
+					setOpenModal={setRelatorioModalOpen}
+					reportUrl={relatorioContent}
+					reportTitle="Relatório de Clientes"
+					fileName="relatorio_clientes.pdf"
+				/>
+
+				{/* Modal de Avisos */}
+				<NoticeModal
+					openModal={openNoticeModal}
+					setOpenModal={setOpenNoticeModal}
+					successMsg={successMsg}
+					message={message}
 				/>
 			</div>
 		</div>

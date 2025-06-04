@@ -15,19 +15,19 @@ try {
     // Recebe JSON do front
     $rawData = file_get_contents("php://input");
     $data = json_decode($rawData, true);
-    if (!$data || !isset($data['user_id'], $data['estaAtivo'])) {
+    if (!$data || !isset($data['cliente_id'], $data['estaAtivo'])) {
         throw new Exception("Dados inválidos.");
     }
 
-    $userId = (int)$data['user_id'];
+    $clienteId = (int)$data['cliente_id'];
     $novoStatus = (int)$data['estaAtivo'];
 
-    if (!verifyExist($conn, $userId, "user_id", "usuarios")) {
-        throw new Exception("Usuário não encontrado.");
+    if (!verifyExist($conn, $clienteId, "cliente_id", "clientes")) {
+        throw new Exception("cliente não encontrado.");
     }
 
-    $stmt = $conn->prepare("UPDATE usuarios SET estaAtivo = ?, force_logout = 1 WHERE user_id = ?");
-    $stmt->bind_param("ii", $novoStatus, $userId);
+    $stmt = $conn->prepare("UPDATE clientes SET estaAtivo = ? WHERE cliente_id = ?");
+    $stmt->bind_param("ii", $novoStatus, $clienteId);
     $stmt->execute();
     $stmt->close();
 

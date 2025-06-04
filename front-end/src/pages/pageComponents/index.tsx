@@ -10,3 +10,11 @@ export { default as DeleteStep } from "./productionSteps/DeleteStep";
 export { default as UserRegister } from "./users/UserRegister";
 export { default as UserUpdate } from "./users/UserUpdate";
 export { default as UserDelete } from "./users/UserDelete";
+
+export { default as SupplierRegister } from "./suppliers/SupplierRegister";
+export { default as SupplierUpdate } from "./suppliers/SupplierUpdate";
+export { default as SupplierDelete } from "./suppliers/SupplierDelete";
+
+export { default as ClientRegister } from "./clients/ClientRegister";
+export { default as ClientUpdate } from "./clients/ClientUpdate";
+export { default as ClientDelete } from "./clients/ClientDelete";

@@ -87,6 +87,7 @@ const BatchRegister: React.FC<Props> = ({
           fieldText="Capacidade Máxima"
           error={errors.quantityMax ? "*" : undefined}
           fieldClassname="flex flex-col flex-1"
+          min={1}
           type="number"
           value={formData.quant_max}
           onChange={handleChange}

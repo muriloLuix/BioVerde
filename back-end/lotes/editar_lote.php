@@ -51,6 +51,26 @@ try {
         echo json_encode($validacaoDosCampos);
         exit();
     }
+    /**************************************************/
+    
+    /**************** VALIDAÇÕES DE DATA *******************/
+    $hoje = date('Y-m-d');
+    $dataColheita = $data['dt_colheita']; // Exemplo: '2025-05-23'
+    $dataColheitaFormatada = date('Ymd', strtotime($dataColheita)); // Resultado: '20250523'
+    $dataValidade = $data['dt_validade'];
+
+    if ($dataColheita < $hoje) {
+        echo json_encode(["success" => false, "message" => "A data da colheita não pode ser menor que a data atual."]);
+        exit();
+    }
+    if ($dataValidade < $hoje) {
+        echo json_encode(["success" => false, "message" => "A data de validade não pode ser menor que a data atual."]);
+        exit();
+    }
+    if ($dataColheita > $dataValidade) {
+        echo json_encode(["success" => false, "message" => "A data da colheita não pode ser maior que a data de validade."]);
+        exit();
+    }
 
     $lote_dtColheita = $data['dt_colheita'] . ' 00:00:00';
     $lote_dtValidade = $data['dt_validade'] . ' 00:00:00';

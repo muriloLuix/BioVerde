@@ -68,6 +68,28 @@ export interface Supplier {
 	fornecedor_complemento: string;
 	estaAtivo: number;
 }
+export interface FormDataSupplier {
+	fornecedor_id: number;
+	nome_empresa_fornecedor: string;
+	razao_social: string;
+	email: string;
+	tel: string;
+	cpf_cnpj: string;
+	tipo: string;
+	cep: string;
+	endereco: string;
+	estado: string;
+	cidade: string;
+	num_endereco: number;
+	complemento: string;
+	status: string;
+}
+export interface DeleteSupplier {
+	fornecedor_id: number;
+	dnome_empresa: string;
+	reason: string;
+}
+
 export interface Client {
 	cliente_id: number;
 	cliente_nome: string;
@@ -86,6 +108,29 @@ export interface Client {
 	cliente_complemento: string;
 	estaAtivo: number;
 }
+export interface FormDataClient {
+	cliente_id: number;
+	nome_empresa_cliente: string;
+	razao_social: string;
+	email: string;
+	tel: string;
+	tipo: string;
+	cpf_cnpj: string;
+	status: string;
+	cep: string;
+	endereco: string;
+	num_endereco: number;
+	complemento: string;
+	estado: string;
+	cidade: string;
+	obs: string;
+}
+export interface DeleteClient {
+	cliente_id: number;
+	dnome_cliente: string;
+	reason: string;
+}
+
 
 // ******** Logs ********
 export interface Logs {

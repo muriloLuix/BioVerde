@@ -309,6 +309,35 @@ export default function UsersPage() {
 		}
 	};
 
+	//Função para Atualizar o Status do usuário
+	const handleStatusChange = async (params: CellValueChangedEvent<User>) => {
+		if (params.colDef?.field === "estaAtivo") {
+			const dataToSend = {
+				user_id: params.data?.user_id,
+				estaAtivo: params.data?.estaAtivo
+			};
+			try {
+				const response = await axios.post(
+					"http://localhost/BioVerde/back-end/usuarios/atualizar.status.usuario.php",
+					dataToSend,
+					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				);
+				console.log("Resposta do back-end:", response.data);
+				if (response.data.success) {
+					await refreshData(); 
+				} else {
+					setSuccessMsg(false);
+					setMessage(response.data.message || "Erro ao atualizar status.");
+					setOpenNoticeModal(true);
+				}
+			} catch (error) {
+				console.error(error);
+				setMessage("Erro ao conectar com o servidor");
+				setOpenNoticeModal(true);
+			} 
+		}
+	};
+
 	/* ----- Funções para CRUD de Cargos ----- */
 	const [deletedId, setDeletedId] = useState<number | null>(null);
 
@@ -322,7 +351,7 @@ export default function UsersPage() {
 		setLoading((prev) => new Set([...prev, "options"]));
 		try {
 			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/usuarios/cadastrar_cargo.php",
+				"http://localhost/BioVerde/back-end/cargos/cadastrar_cargo.php",
 				{ cargo: cargoNome },
 				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 			);
@@ -359,7 +388,7 @@ export default function UsersPage() {
 				car_nome: editedValue,
 			};
 			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/usuarios/editar_cargo.php",
+				"http://localhost/BioVerde/back-end/cargos/editar_cargo.php",
 				dataToSend,
 				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 			);
@@ -393,7 +422,7 @@ export default function UsersPage() {
 		setLoading((prev) => new Set([...prev, "deletePosition"]));
 		try {
 			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/usuarios/excluir_cargo.php",
+				"http://localhost/BioVerde/back-end/cargos/excluir_cargo.php",
 				{car_id: deletedId },
 				{headers: { "Content-Type": "application/json" },withCredentials: true }
 			);
@@ -418,37 +447,6 @@ export default function UsersPage() {
 				newLoading.delete("deletePosition");
 				return newLoading;
 			});
-		}
-	};
-
-	//Função para Atualizar o Status do usuário
-	const handleStatusChange = async (params: CellValueChangedEvent<User>) => {
-		if (params.colDef?.field === "estaAtivo") {
-			const userId = params.data?.user_id;
-			const newStatus = params.data?.estaAtivo; 
-			const dataToSend = {
-				user_id: userId,
-				estaAtivo: newStatus
-			};
-			try {
-				const response = await axios.post(
-					"http://localhost/BioVerde/back-end/usuarios/atualizar.status.usuario.php",
-					dataToSend,
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
-				);
-				console.log("Resposta do back-end:", response.data);
-				if (response.data.success) {
-					await refreshData(); 
-				} else {
-					setSuccessMsg(false);
-					setMessage(response.data.message || "Erro ao atualizar status.");
-					setOpenNoticeModal(true);
-				}
-			} catch (error) {
-				console.error(error);
-				setMessage("Erro ao conectar com o servidor");
-				setOpenNoticeModal(true);
-			} 
 		}
 	};
 
@@ -677,9 +675,8 @@ export default function UsersPage() {
 
 					{/* Aba de Lista de Usuários */}
 					<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
-						{/* Botões de Exportar CSV e Novo Usuário */}
 						<div className="flex justify-between">
-							{/* Botão de Abrir Modal de Cadastro de Lote */}
+							{/* Botão de Abrir Modal de Cadastro de Usuário */}
 							<div className="mt-1 mb-3">
 								<button
 									type="button"

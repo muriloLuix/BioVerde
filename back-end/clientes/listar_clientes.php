@@ -12,7 +12,6 @@ try {
     $cols = [
         "c.cliente_id",
         "c.cliente_nome",
-        "CASE WHEN c.cliente_tipo = 'juridica' THEN 'Pessoa Jurídica' ELSE 'Pessoa Física' END",
         "c.cliente_documento",
         "c.cliente_email",
         "c.cliente_telefone",

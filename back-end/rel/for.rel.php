@@ -34,7 +34,7 @@ try {
     $sql .= " THEN fornecedor_nome ";
     $sql .= " ELSE fornecedor_razao_social ";
     $sql .= " END as fornecedor_razao_social, ";
-    $sql .= " fornecedor_email, fornecedor_documento, fornecedor_responsavel, ";
+    $sql .= " fornecedor_email, fornecedor_documento, ";
     $sql .= " CASE ";
     $sql .= " WHEN fornecedor_tipo = 'fisica' THEN 'Física' ";
     $sql .= " WHEN fornecedor_tipo = 'juridica' THEN 'Jurídica' ";
@@ -85,7 +85,6 @@ try {
                     <th style="width: 25%;">Razão Social</th>
                     <th style="width: 20%;">Email</th>
                     <th style="width: 15%;">CPF/CNPJ</th>
-                    <th style="width: 10%;">Responsável</th>
                     <th style="width: 10%;">Tipo</th>
                 </tr>
             </thead>
@@ -98,7 +97,6 @@ try {
                     <td>' . htmlspecialchars($fornecedor['fornecedor_razao_social']) . '</td>
                     <td>' . htmlspecialchars($fornecedor['fornecedor_email']) . '</td>
                     <td>' . htmlspecialchars($fornecedor['fornecedor_documento']) . '</td>
-                    <td>' . htmlspecialchars($fornecedor['fornecedor_responsavel']) . '</td>
                     <td>' . htmlspecialchars($fornecedor['fornecedor_tipo']) . '</td>
                 </tr>';
     }

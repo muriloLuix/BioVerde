@@ -69,6 +69,7 @@ const BatchUpdate: React.FC<Props> = ({
                 fieldName="quant_max"
                 fieldText="Capacidade Máxima"
                 required
+                min={1}
                 fieldClassname="flex flex-col flex-1"
                 type="number"
                 value={formData.quant_max}

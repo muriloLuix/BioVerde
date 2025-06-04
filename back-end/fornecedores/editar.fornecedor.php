@@ -39,7 +39,7 @@ try {
     /***************************************************************************/
 
     /**************** VALIDAÇÃO DOS CAMPOS ************************/
-    $camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'responsavel', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
+    $camposObrigatorios = ['nome_empresa_fornecedor', 'email', 'tel', 'tipo', 'cpf_cnpj', 'cep', 'endereco', 'estado', 'cidade', 'num_endereco'];
     $validacaoDosCampos = validarCampos($data, $camposObrigatorios);
 
     if ($validacaoDosCampos !== null) {
@@ -87,7 +87,6 @@ try {
         'fornecedor_telefone' => $data['tel'],
         'fornecedor_tipo' => $data['tipo'],
         'fornecedor_documento' => $data['cpf_cnpj'],
-        'fornecedor_responsavel' => $data['responsavel'],
         'fornecedor_cep' => $data['cep'],
         'fornecedor_endereco' => $data['endereco'],
         'fornecedor_num_endereco' => $data['num_endereco'],
@@ -115,7 +114,6 @@ try {
     f.fornecedor_complemento,
     f.fornecedor_estado,
     f.fornecedor_cidade,
-    f.fornecedor_responsavel,
     f.fornecedor_razao_social,
     f.fornecedor_dtcadastro,
     f.estaAtivo

@@ -1,35 +1,24 @@
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Tabs, Form } from "radix-ui";
+import { checkAuth } from "../../utils/checkAuth";
+import { Tabs } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
-import {
-	Search,
-	PencilLine,
-	Trash,
-	Loader2,
-	FilterX,
-	Printer,
-	X,
-} from "lucide-react";
-// import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
-import { switchCpfCnpjMask } from "../../utils/switchCpfCnpjMask";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ICellRendererParams, CellValueChangedEvent, ColDef, themeQuartz } from "ag-grid-community";
+import { agGridTranslation } from "../../utils/agGridTranslation";
+import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
+import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier, SelectEvent, UF, City } from "../../utils/types";
-import {
-	SmartField,
-	ConfirmationModal,
-	Modal,
-	NoticeModal,
-} from "../../shared";
+import { Supplier, SelectEvent, UF, City, FormDataSupplier, DeleteSupplier } from "../../utils/types";
+import { SupplierRegister, SupplierUpdate, SupplierDelete } from "../pageComponents";
+import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function Suppliers() {
 	const [activeTab, setActiveTab] = useState("list");
-	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
-	const [relatorioContent, setRelatorioContent] = useState<string>("");
-	const [cpfCnpjMask, setCpfCnpjMask] = useState("");
 	const [supplierType, setSupplierType] = useState("juridica");
+	const [openRegisterModal, setOpenRegisterModal] = useState(false);
 	const [openEditModal, setOpenEditModal] = useState(false);
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -38,21 +27,19 @@ export default function Suppliers() {
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [loading, setLoading] = useState<Set<string>>(new Set());
-	const [fornecedores, setFornecedores] = useState<Supplier[]>([]);
 	const [ufs, setUfs] = useState<UF[]>();
 	const [cities, setCities] = useState<City[]>();
 	const [errors, setErrors] = useState({
 		states: false,
-		isCepValid: false,
+		cities: false,
 	});
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<FormDataSupplier>({
 		fornecedor_id: 0,
 		nome_empresa_fornecedor: "",
 		razao_social: "",
 		email: "",
 		tel: "",
 		cpf_cnpj: "",
-		responsavel: "",
 		tipo: "juridica",
 		cep: "",
 		endereco: "",
@@ -62,73 +49,316 @@ export default function Suppliers() {
 		complemento: "",
 		status: "1",
 	});
-	const [filters, setFilters] = useState({
-		fnome_empresa: "",
-		fresponsavel: "",
-		fcnpj: "",
-		ftel: "",
-		fcidade: "",
-		festado: "",
-		fdataCadastro: "",
-		fstatus: "",
-	});
-	const [deleteSupplier, setDeleteSupplier] = useState({
+	const [deleteSupplier, setDeleteSupplier] = useState<DeleteSupplier>({
 		fornecedor_id: 0,
 		dnome_empresa: "",
 		reason: "",
 	});
 
-	// useCheckAccessLevel();
+	/* ----- useEffects e Requisições via Axios ----- */
 
+	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+	}, [navigate]);
 
 	useEffect(() => {
-		const checkAuth = async () => {
+		const fetchData = async () => {
 			try {
-				const response = await axios.get(
-					"http://localhost/BioVerde/back-end/auth/check_session.php",
-					{ withCredentials: true }
-				);
+				setLoading((prev) => new Set([...prev, "suppliers", "ufs", "cities"]));
+				const [fornecedoresResponse, userLevelResponse, ufsResponse, citiesResponse] = await Promise.all([
+					axios.get(
+						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+						{ withCredentials: true, headers: { Accept: "application/json" } }
+					),
+					axios.get(
+						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
+					),
+					axios.get(
+						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+					),
+				]);
+				console.log("Resposta do back-end:", fornecedoresResponse.data);
 
-				if (!response.data.loggedIn) {
-					setMessage("Sessão expirada. Por favor, faça login novamente.");
+				if (fornecedoresResponse.data.success) {
+					setRowData(fornecedoresResponse.data.fornecedores || []);
+				} else {
 					setOpenNoticeModal(true);
+					setMessage(fornecedoresResponse.data.message || "Erro ao carregar fornecedores");
+				}
 
-					setTimeout(() => {
-						navigate("/");
-					}, 1900);
+				if (userLevelResponse.data.success) {
+					setUserLevel(userLevelResponse.data.userLevel);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage(userLevelResponse.data.message ||"Erro ao carregar nível do usuário");
+				}
+
+				if (ufsResponse.status === 200) {
+					setUfs(ufsResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar UFs");
+				}
+
+				if (citiesResponse.status === 200) {
+					setCities(citiesResponse.data);
+				} else {
+					setOpenNoticeModal(true);
+					setMessage("Erro ao carregar municípios");
 				}
 			} catch (error) {
-				console.error("Erro ao verificar sessão:", error);
-				setMessage("Sessão expirada. Por favor, faça login novamente.");
+				console.error(error);
 				setOpenNoticeModal(true);
-
-				setTimeout(() => {
-					navigate("/");
-				}, 1900);
+				setMessage("Erro ao conectar com o servidor");
+			} finally {
+				setLoading((prev) => {
+					const newLoading = new Set(prev);
+					["suppliers", "ufs", "cities"].forEach((item) => newLoading.delete(item));
+					return newLoading;
+				});
 			}
 		};
+		fetchData();
+	}, []);
 
-		checkAuth();
-	}, [navigate]);
+	//Função para Atualizar a Tabela após ação
+	const refreshData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "suppliers"]));
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
+				{ withCredentials: true }
+			);
+			if (response.data.success) {
+				setRowData(response.data.fornecedores || []);
+			} else {
+				setMessage(response.data.message || "Erro ao carregar fornecedores");
+				setOpenNoticeModal(true);
+			}
+		} catch (error) {
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("suppliers");
+				return newLoading;
+			});
+		}
+	};
+
+	/* ----- Funções para CRUD de Fornecedores ----- */
+
+	//Submit de cadastrar fornecedores
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		
+		// Validações
+		const error = {
+			states: !formData.estado,
+			cities: !formData.cidade,
+		};
+		setErrors(error);
+		if (Object.values(error).some((error) => error)) {return}
+
+		setLoading((prev) => new Set([...prev, "submit"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/fornecedores/cadastrar_fornecedores.php",
+				formData,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setOpenRegisterModal(false);
+				setMessage("Fornecedor cadastrado com sucesso!");
+				clearFormData();
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao cadastrar fornecedor");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("submit");
+				return newLoading;
+			});
+		}
+	};
+
+	//função para puxar os dados do fornecedor que será editado
+	const handleEditClick = (fornecedor: Supplier) => {
+		cepApi(
+			fornecedor.fornecedor_cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+		setFormData({
+			fornecedor_id: 			 fornecedor.fornecedor_id,
+			nome_empresa_fornecedor: fornecedor.fornecedor_nome,
+			razao_social: 			 fornecedor.fornecedor_razao_social,
+			email: 					 fornecedor.fornecedor_email,
+			tel: 					 fornecedor.fornecedor_telefone,
+			cpf_cnpj: 				 fornecedor.fornecedor_documento,
+			status: 				 String(fornecedor.estaAtivo),
+			cep: 					 fornecedor.fornecedor_cep,
+			endereco: 				 fornecedor.fornecedor_endereco,
+			estado: 				 fornecedor.fornecedor_estado,
+			cidade: 				 fornecedor.fornecedor_cidade,
+			num_endereco: 			 fornecedor.fornecedor_num_endereco,
+			complemento: 			 fornecedor.fornecedor_complemento,
+			tipo: 					 fornecedor.fornecedor_tipo,
+		});
+		setSupplierType(fornecedor.fornecedor_tipo);
+		setOpenEditModal(true);
+	};
+
+	// submit para atualizar o fornecedor após a edição dele
+	const handleUpdateSupplier = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "updateSupplier"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
+				formData,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setOpenEditModal(false);
+				setSuccessMsg(true);
+				setMessage("Fornecedor atualizado com sucesso!");
+				clearFormData();
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar fornecedor.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("updateSupplier");
+				return newLoading;
+			});
+		}
+	};
+
+	//função para puxar o nome do fornecedor que será excluido
+	const handleDeleteClick = (fornecedor: Supplier) => {
+		setDeleteSupplier({
+			fornecedor_id: fornecedor.fornecedor_id,
+			dnome_empresa: fornecedor.fornecedor_nome,
+			reason: "",
+		});
+		setOpenDeleteModal(true);
+	};
+
+	// submit para excluir um fornecedor
+	const handleDeleteSupplier = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "deleteSupplier"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/fornecedores/excluir.fornecedor.php",
+				deleteSupplier,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await refreshData();
+				setSuccessMsg(true);
+				setMessage("Fornecedor Excluído com sucesso!");
+				setOpenConfirmModal(false);
+			} else {
+				setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir fornecedor.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteSupplier");
+				return newLoading;
+			});
+		}
+	};
+
+	//Função para Atualizar o Status do fornecedor
+	const handleStatusChange = async (params: CellValueChangedEvent<Supplier>) => {
+		if (params.colDef?.field === "estaAtivo") {
+			const dataToSend = {
+				fornecedor_id: params.data?.fornecedor_id,
+				estaAtivo: params.data?.estaAtivo
+			};
+			try {
+				const response = await axios.post(
+					"http://localhost/BioVerde/back-end/fornecedores/atualizar.status.fornecedor.php",
+					dataToSend,
+					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				);
+				console.log("Resposta do back-end:", response.data);
+				if (response.data.success) {
+					await refreshData(); 
+				} else {
+					setSuccessMsg(false);
+					setMessage(response.data.message || "Erro ao atualizar status.");
+					setOpenNoticeModal(true);
+				}
+			} catch (error) {
+				console.error(error);
+				setMessage("Erro ao conectar com o servidor");
+				setOpenNoticeModal(true);
+			} 
+		}
+	};
+
+	/* ----- Outras Funções ----- */
+
+	//Verifica nível de acesso do usuário
+	useCheckAccessLevel();
 
 	//OnChange dos campos
 	const handleChange = (
 		event:
-			| React.ChangeEvent<
-					HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-			  >
+			| React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 			| InputMaskChangeEvent
 			| SelectEvent
 	) => {
 		const { name, value } = event.target;
 
-		//Função para alternar o campo entre cpf e cnjp dependendo do número de caracteres
-		switchCpfCnpjMask(name, value, setCpfCnpjMask);
-
 		if (name === "tipo") {
 			const tipo = value ?? "juridica";
-			setSupplierType(tipo);
+			setSupplierType(String(tipo));
 
 			if (tipo === "fisica") {
 				setFormData((prev) => ({
@@ -146,7 +376,6 @@ export default function Suppliers() {
 					nome_empresa_fornecedor: "",
 				}));
 			}
-
 			return;
 		}
 
@@ -157,15 +386,9 @@ export default function Suppliers() {
 				setFormData({ ...formData, [name]: value });
 			}
 		}
-		if (name in filters) {
-			setFilters({ ...filters, [name]: value });
-		}
 		if (name in deleteSupplier) {
 			setDeleteSupplier({ ...deleteSupplier, [name]: value });
 		}
-
-		console.log(formData);
-
 		setErrors(
 			(prevErrors) =>
 				Object.fromEntries(
@@ -174,25 +397,52 @@ export default function Suppliers() {
 		);
 	};
 
-	const generateReport = async () => {
-		setLoading((prev) => new Set([...prev, "reports"]));
+	//Função para chamar a api de CEP
+	const handleCepBlur = () => {
+		setSuccessMsg(false);
+		cepApi(
+			formData.cep,
+			setFormData,
+			setOpenNoticeModal,
+			setMessage,
+			setSuccessMsg,
+			setCities,
+			setErrors
+		);
+	};
 
+	// API para buscar cidades de acordo com o estado
+	const handleCities = async (id: number | undefined) => {
+		if (formData.estado) {
+			try {
+				const response = await axios.get(
+					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
+				);
+
+				if (response.status === 200) {
+					setCities(response.data);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
+	};
+	
+	// Função para Gerar Relatório PDF
+	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
+	const [relatorioContent, setRelatorioContent] = useState<string>("");
+	const gerarRelatorio = async () => {
+		setLoading((prev) => new Set([...prev, "reports"]));
 		try {
 			const response = await axios.get(
 				"http://localhost/BioVerde/back-end/rel/for.rel.php",
-				{
-					responseType: "blob",
-					withCredentials: true,
-				}
+				{ responseType: "blob",withCredentials: true }
 			);
-
 			const contentType = response.headers["content-type"];
-
 			if (contentType !== "application/pdf") {
 				const errorText = await response.data.text();
 				throw new Error(`Erro ao gerar relatório: ${errorText}`);
 			}
-
 			const fileURL = URL.createObjectURL(
 				new Blob([response.data], { type: "application/pdf" })
 			);
@@ -211,403 +461,6 @@ export default function Suppliers() {
 		}
 	};
 
-	//função para puxar os dados do fornecedor que será editado
-	const handleEditClick = (fornecedor: Supplier) => {
-		cepApi(
-			fornecedor.fornecedor_cep,
-			setFormData,
-			setOpenNoticeModal,
-			setMessage,
-			setSuccessMsg,
-			setCities,
-			setErrors
-		);
-
-		setFormData({
-			fornecedor_id: fornecedor.fornecedor_id,
-			nome_empresa_fornecedor: fornecedor.fornecedor_nome,
-			razao_social: fornecedor.fornecedor_razao_social,
-			email: fornecedor.fornecedor_email,
-			tel: fornecedor.fornecedor_telefone,
-			cpf_cnpj: fornecedor.fornecedor_documento,
-			responsavel: fornecedor.fornecedor_responsavel,
-			status: String(fornecedor.estaAtivo),
-			cep: fornecedor.fornecedor_cep,
-			endereco: fornecedor.fornecedor_endereco,
-			estado: fornecedor.fornecedor_estado,
-			cidade: fornecedor.fornecedor_cidade,
-			num_endereco: fornecedor.fornecedor_num_endereco,
-			complemento: fornecedor.fornecedor_complemento,
-			tipo: fornecedor.fornecedor_tipo,
-		});
-		setSupplierType(fornecedor.fornecedor_tipo);
-		setOpenEditModal(true);
-	};
-
-	//função para puxar o nome do fornecedor que será excluido
-	const handleDeleteClick = (fornecedor: Supplier) => {
-		setDeleteSupplier({
-			fornecedor_id: fornecedor.fornecedor_id,
-			dnome_empresa: fornecedor.fornecedor_nome,
-			reason: "",
-		});
-		setOpenDeleteModal(true);
-	};
-
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading(
-					(prev) => new Set([...prev, "suppliers", "options", "ufs", "cities"])
-				);
-
-				const [
-					fornecedoresResponse,
-					userLevelResponse,
-					ufsResponse,
-					citiesResponse,
-				] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
-						{
-							withCredentials: true,
-							headers: {
-								Accept: "application/json",
-							},
-						}
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-					axios.get(
-						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
-					),
-					axios.get(
-						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
-					),
-				]);
-
-				console.log("Resposta do back-end:", fornecedoresResponse.data);
-
-				if (fornecedoresResponse.data.success) {
-					setFornecedores(fornecedoresResponse.data.fornecedores || []);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						fornecedoresResponse.data.message || "Erro ao carregar fornecedores"
-					);
-				}
-
-				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						userLevelResponse.data.message ||
-							"Erro ao carregar nível do usuário"
-					);
-				}
-
-				if (ufsResponse.status === 200) {
-					setUfs(ufsResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar UFs");
-				}
-
-				if (citiesResponse.status === 200) {
-					setCities(citiesResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar municípios");
-				}
-			} catch (error) {
-				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-
-				if (axios.isAxiosError(error)) {
-					console.error(
-						"Erro na requisição:",
-						error.response?.data || error.message
-					);
-					if (error.response?.data?.message) {
-						setMessage(error.response.data.message);
-					}
-				} else {
-					console.error("Erro desconhecido:", error);
-				}
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["suppliers", "options"].forEach((item) => newLoading.delete(item));
-					return newLoading;
-				});
-			}
-		};
-
-		fetchData();
-	}, []);
-
-	//Função para Atualizar a Tabela após ação
-	const refreshData = async () => {
-		try {
-			setLoading((prev) => new Set([...prev, "suppliers"]));
-
-			const response = await axios.get(
-				"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
-				{ withCredentials: true }
-			);
-
-			if (response.data.success) {
-				setFornecedores(response.data.fornecedores || []);
-				return true;
-			} else {
-				setMessage(response.data.message || "Erro ao carregar fornecedores");
-				setOpenNoticeModal(true);
-				return false;
-			}
-		} catch (error) {
-			let errorMessage = "Erro ao conectar com o servidor";
-			if (axios.isAxiosError(error)) {
-				errorMessage = error.response?.data?.message || error.message;
-			}
-			setMessage(errorMessage);
-			setOpenNoticeModal(true);
-			return false;
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("suppliers");
-				return newLoading;
-			});
-		}
-	};
-
-	//Submit de cadastrar fornecedores
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		// Validações
-		const err = {
-			states: !formData.estado,
-			isCepValid: errors.isCepValid,
-		};
-
-		setErrors(err);
-
-		// Se algum erro for true, interrompe a execução
-		if (Object.values(errors).some((error) => error)) {
-			return;
-		}
-
-		setLoading((prev) => new Set([...prev, "submit"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/fornecedores/cadastrar_fornecedores.php",
-				formData,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setSuccessMsg(true);
-				setMessage("Fornecedor cadastrado com sucesso!");
-				clearFormData();
-			} else {
-				setMessage(response.data.message || "Erro ao cadastrar fornecedor");
-			}
-		} catch (error) {
-			let errorMessage = "Erro ao conectar com o servidor";
-
-			if (axios.isAxiosError(error)) {
-				if (error.response) {
-					errorMessage = error.response.data.message || "Erro no servidor";
-					console.error("Erro na resposta:", error.response.data);
-				} else {
-					console.error("Erro na requisição:", error.message);
-				}
-			} else {
-				console.error("Erro desconhecido:", error);
-			}
-
-			setMessage(errorMessage);
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("submit");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit de Filtrar fornecedores
-	const handleFilterSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		console.log(filters);
-		setLoading((prev) => new Set([...prev, "filterSubmit"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/fornecedores/filtro.fornecedor.php",
-				filters,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				setFornecedores(response.data.fornecedores);
-			} else {
-				setOpenNoticeModal(true);
-				setMessage(
-					response.data.message ||
-						"Nenhum fornecedor encontrado com esse filtro"
-				);
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("filterSubmit");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit para atualizar o fornecedor após a edição dele
-	const handleUpdateSupplier = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		console.log("Dados sendo enviados:", formData);
-
-		setLoading((prev) => new Set([...prev, "updateSupplier"]));
-		setSuccessMsg(false);
-
-		try {
-			if (Object.values(errors).some((error) => error)) {
-				return;
-			}
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
-				formData,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setOpenEditModal(false);
-				setSuccessMsg(true);
-				setMessage("Fornecedor atualizado com sucesso!");
-				clearFormData();
-			} else {
-				setMessage(response.data.message || "Erro ao atualizar fornecedor.");
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error)) {
-				setMessage(error.response?.data?.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response?.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("updateSupplier");
-				return newLoading;
-			});
-		}
-	};
-
-	// submit para excluir um fornecedor
-	const handleDeleteSupplier = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		setLoading((prev) => new Set([...prev, "deleteSupplier"]));
-		setSuccessMsg(false);
-
-		try {
-			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/fornecedores/excluir.fornecedor.php",
-				deleteSupplier,
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-
-			console.log("Resposta do back-end:", response.data);
-
-			if (response.data.success) {
-				await refreshData();
-				setSuccessMsg(true);
-				setMessage("Fornecedor Excluído com sucesso!");
-				setOpenConfirmModal(false);
-			} else {
-				setMessage(response.data.message || "Erro ao excluir fornecedor.");
-			}
-		} catch (error) {
-			if (axios.isAxiosError(error) && error.response) {
-				setMessage(error.response.data.message || "Erro no servidor");
-				console.error("Erro na resposta:", error.response.data);
-			} else {
-				setMessage("Erro ao conectar com o servidor");
-				console.error("Erro na requisição:", error);
-			}
-		} finally {
-			setOpenNoticeModal(true);
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("deleteSupplier");
-				return newLoading;
-			});
-		}
-	};
-
-	//Função para chamar a api de CEP
-	const handleCepBlur = () => {
-		setSuccessMsg(false);
-		cepApi(
-			formData.cep,
-			setFormData,
-			setOpenNoticeModal,
-			setMessage,
-			setSuccessMsg,
-			setCities,
-			setErrors
-		);
-	};
-
 	//Limpar FormData
 	const clearFormData = () => {
 		setFormData(
@@ -618,40 +471,100 @@ export default function Suppliers() {
 						if (key === "status") return [key, "1"];
 						return [key, typeof value === "number" ? 0 : ""];
 					})
-				) as typeof prev
+				) as unknown as FormDataSupplier
 		);
 	};
 
-	const handleCities = async (id: number | undefined) => {
-		if (formData.estado) {
-			try {
-				const response = await axios.get(
-					`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${id}/municipios`
-				);
+	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
-				if (response.status === 200) {
-					setCities(response.data);
-				}
-			} catch (err) {
-				console.log(err);
-			}
+	const gridRef = useRef<AgGridReact>(null);
+	const [rowData, setRowData] = useState<Supplier[]>([]);
+	const [columnDefs] = useState<ColDef[]>([
+		{ field: "fornecedor_id", headerName: "ID", filter: true, width: 100 },
+		{ field: "fornecedor_nome", headerName: "Nome Fornecedor/Empresa", filter: true, width: 250 },
+		{
+			field: "fornecedor_tipo",
+			headerName: "Tipo",
+			filter: true,
+			width: 150,
+			valueGetter: (params) => 
+				params.data.fornecedor_tipo === "juridica" ? "Pessoa Jurídica" : "Pessoa Física"
+		},
+		{field: "fornecedor_documento", headerName: "CPF/CNPJ", filter: true, width: 180},
+		{field: "fornecedor_email", headerName: "Email", filter: true, width: 180},
+		{
+			field: "estaAtivo", headerName: "Ativo / Inativo", width: 130,
+			cellRenderer: 'agCheckboxCellRenderer',
+			cellRendererParams: { disabled: false },
+			valueGetter: (params) => params.data.estaAtivo === "1",
+			valueSetter: (params) => {
+				params.data.estaAtivo = params.newValue ? "1" : "0";
+				return true;
+			},
+			editable: true,
+			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+		},
+		{field: "fornecedor_telefone", headerName: "Telefone", filter: true, width: 180},
+		{field: "fornecedor_razao_social", headerName: "Razão Social", width: 180},
+		{field: "fornecedor_cep", headerName: "CEP", filter: true, width: 150},
+		{field: "fornecedor_endereco", headerName: "Endereço", width: 180},
+		{field: "fornecedor_num_endereco", headerName: "Nº", width: 100},
+		{field: "fornecedor_complemento", headerName: "Complemento", width: 180},
+		{field: "fornecedor_cidade", headerName: "Cidade", width: 180},
+		{field: "fornecedor_estado", headerName: "Estado", width: 100},
+		{
+			field: "fornecedor_dtcadastro", headerName: "Data de Cadastro", width: 180,
+			valueGetter: (params) => new Date(params.data.fornecedor_dtcadastro).toLocaleDateString("pt-BR")
+		},
+		{
+			headerName: "Ações",
+			field: "acoes",
+			width: 100,
+			cellRenderer: (params: ICellRendererParams<Supplier>) => (
+				<div className="flex gap-2 mt-2.5 items-center justify-center">
+					<button
+						className="text-blue-600 hover:text-blue-800 cursor-pointer"
+						title="Editar Lote"
+						onClick={() => { if(params.data) handleEditClick(params.data) }}
+					>
+						<Pencil size={18} />
+					</button>
+					{params.context.userLevel === "Administrador" && (
+						<button
+							className="text-red-600 hover:text-red-800 cursor-pointer"
+							title="Excluir Lote"
+							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+						>
+							<Trash2 size={18} />
+						</button>
+					)}
+				</div>
+			),
+			pinned: "right",
+			sortable: false,
+			filter: false
 		}
-	};
+	]);
+
+	//Esilos da Tabela
+    const myTheme = themeQuartz.withParams({
+        spacing: 9,
+        headerBackgroundColor: '#89C988',
+        foregroundColor: '#1B1B1B',
+        rowHoverColor: '#E2FBE2',
+        oddRowBackgroundColor: '#f5f5f5',
+        fontFamily: '"Inter", sans-serif',
+    });
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
 			<div className="px-6 font-[inter]">
-				<h1 className=" text-[40px] font-semibold text-center mb-3">
-					Fornecedores
+				<h1 className="h-10 w-full flex items-center justify-center mb-3">
+					<span className="text-4xl font-semibold text-center">Fornecedores</span>
 				</h1>
-
 				{/* Selelcionar Abas */}
-				<Tabs.Root
-					defaultValue="list"
-					className="w-full"
-					onValueChange={(value) => setActiveTab(value)}
-				>
-					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative mb-7">
+				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
 							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
@@ -660,628 +573,102 @@ export default function Suppliers() {
 						>
 							Lista de Fornecedores
 						</Tabs.Trigger>
-
-						<Tabs.Trigger
-							value="register"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-								activeTab === "register" ? "select animation-tab" : ""
-							}`}
-						>
-							Cadastrar Fornecedores
-						</Tabs.Trigger>
 					</Tabs.List>
-
 					{/* Aba de Lista de Fornecedores */}
-					<Tabs.Content value="list" className="flex flex-col w-full">
-						{/* Filtro de Fornecedores */}
-						<Form.Root
-							className="flex flex-col gap-4"
-							onSubmit={handleFilterSubmit}
-						>
-							<h2 className="text-3xl">Filtros:</h2>
-							<div className="flex flex-col">
-								<div className="flex gap-7 mb-8">
-									<SmartField
-										fieldName="fnome_empresa"
-										fieldText="Nome da Empresa"
-										type="text"
-										placeholder="Nome Fantasia da empresa"
-										autoComplete="name"
-										value={filters.fnome_empresa}
-										onChange={handleChange}
-										inputWidth="w-[350px]"
-									/>
-
-									<SmartField
-										fieldName="fcnpj"
-										fieldText="CPF/CNPJ"
-										withInputMask
-										unstyled
-										type="text"
-										mask={cpfCnpjMask}
-										autoClear={false}
-										placeholder="Digite o CPF/CNPJ"
-										value={filters.fcnpj}
-										onChange={handleChange}
-										inputWidth="w-[250px]"
-									/>
-
-									<SmartField
-										fieldName="ftel"
-										fieldText="Telefone"
-										withInputMask
-										unstyled
-										type="tel"
-										mask="(99) 9999?9-9999"
-										autoClear={false}
-										placeholder="(xx)xxxxx-xxxx"
-										autoComplete="tel"
-										value={filters.ftel}
-										onChange={handleChange}
-										inputWidth="w-[250px]"
-									/>
-								</div>
-
-								<div className="flex gap-7 mb-8">
-									<SmartField
-										fieldName="fresponsavel"
-										fieldText="Responsável"
-										type="text"
-										placeholder="Digite o responsável"
-										autoComplete="name"
-										value={filters.fresponsavel}
-										onChange={handleChange}
-										inputWidth="w-[350px]"
-									/>
-
-									<SmartField
-										fieldName="fstatus"
-										fieldText="Status"
-										isSelect
-										isLoading={loading.has("options")}
-										value={filters.fstatus}
-										placeholder="Selecione"
-										inputWidth="w-[250px]"
-										onChangeSelect={handleChange}
-										options={[
-											{ value: "1", label: "Ativo" },
-											{ value: "0", label: "Inativo" },
-										]}
-									/>
-
-									{/* Input do tipo date não funciona com o SmartField (verificar depois solução) */}
-									<Form.Field name="fdataCadastro" className="flex flex-col">
-										<Form.Label asChild>
-											<span className="text-xl pb-2 font-light">
-												Data de Cadastro:
-											</span>
-										</Form.Label>
-										<Form.Control asChild>
-											<input
-												type="date"
-												name="fdataCadastro"
-												id="fdataCadastro"
-												value={filters.fdataCadastro}
-												onChange={handleChange}
-												className="bg-white border w-[250px] border-separator rounded-lg p-2.5 "
-											/>
-										</Form.Control>
-									</Form.Field>
-								</div>
-
-								<div className="flex mb-7 gap-7 items-center">
-									<SmartField
-										fieldName="fcidade"
-										fieldText="Cidade"
-										isSelect
-										isLoading={loading.has("options")}
-										value={filters.fcidade}
-										placeholder="Selecione"
-										autoComplete="address-level2"
-										error={errors.states ? "*" : undefined}
-										inputWidth="w-[350px]"
-										onChangeSelect={handleChange}
-										options={cities?.map((city: City) => ({
-											label: city.nome,
-											value: city.nome,
-										}))}
-										isDisabled={!!formData.cep || !cities}
-									/>
-
-									<SmartField
-										fieldName="festado"
-										fieldText="Estado"
-										isSelect
-										isLoading={loading.has("options")}
-										value={filters.festado}
-										placeholder="Selecione"
-										autoComplete="address-level1"
-										error={errors.states ? "*" : undefined}
-										inputWidth="w-[250px]"
-										onChangeSelect={handleChange}
-										options={ufs?.map((uf: UF) => ({
-											label: uf.nome,
-											value: uf.sigla,
-										}))}
-										onBlur={() => {
-											const uf = ufs?.find(
-												(uf: UF) => formData.estado === uf.sigla
-											);
-
-											handleCities(uf?.id);
-										}}
-										isDisabled={!!formData.cep || !ufs}
-									/>
-
-									<Form.Submit asChild>
-										<div className="flex gap-4 mt-8">
-											<button
-												type="submit"
-												className="bg-verdeMedio p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-verdeEscuro "
-											>
-												{loading.has("filterSubmit") ? (
-													<Loader2 className="animate-spin h-6 w-6" />
-												) : (
-													<>
-														<Search size={23} />
-														Filtrar
-													</>
-												)}
-											</button>
-											<button
-												type="button"
-												className="bg-verdeLimparFiltros p-3 w-[115px] rounded-full text-white cursor-pointer flex place-content-center gap-2  sombra hover:bg-hoverLimparFiltros "
-												onClick={() =>
-													setFilters(
-														(prev) =>
-															Object.fromEntries(
-																Object.keys(prev).map((key) => [key, ""])
-															) as typeof prev
-													)
-												}
-											>
-												<FilterX />
-												Limpar
-											</button>
-										</div>
-									</Form.Submit>
-								</div>
-							</div>
-						</Form.Root>
-
-						{/* Tabela Lista de Fornecedores */}
-						<div className="min-w-[966px] max-w-[73vw] overflow-x-auto max-h-[570px] overflow-y-auto mb-5">
-							<table className="w-full border-collapse">
-								{/* Tabela Cabeçalho */}
-								<thead>
-									<tr className="bg-verdePigmento text-white shadow-thead">
-										{[
-											"ID",
-											"Nome Fornecedor/Empresa",
-											"Tipo",
-											"CPF/CNPJ",
-											"Email",
-											"Telefone",
-											"Responsável",
-											"CEP",
-											"Endereço",
-											"Nº",
-											"Complemento",
-											"Cidade",
-											"Estado",
-											"Status",
-											"Data de Cadastro",
-											"Ações",
-										].map((header) => (
-											<th
-												key={header}
-												className="border border-black px-4 py-4 whitespace-nowrap"
-											>
-												{header}
-											</th>
-										))}
-									</tr>
-								</thead>
-								<tbody>
-									{loading.has("suppliers") ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
-											</td>
-										</tr>
-									) : fornecedores.length === 0 ? (
-										<tr>
-											<td colSpan={9} className="text-center py-4">
-												Nenhum fornecedor encontrado
-											</td>
-										</tr>
-									) : (
-										//Tabela Dados
-										fornecedores.map((fornecedor, index) => (
-											<tr
-												key={fornecedor.fornecedor_id}
-												className={
-													index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-												}
-											>
-												{Object.values(fornecedor)
-													.slice(0, 14)
-													.map((value, idx) => (
-														<td
-															key={idx}
-															className="border border-black p-4 whitespace-nowrap"
-														>
-															{value}
-														</td>
-													))}
-												<td className="border border-black p-4 text-center whitespace-nowrap">
-													{new Date(
-														fornecedor.fornecedor_dtcadastro
-													).toLocaleDateString("pt-BR")}
-												</td>
-												<td className="border border-black p-4 text-center whitespace-nowrap">
-													<button
-														className="text-black cursor-pointer"
-														onClick={() => handleEditClick(fornecedor)}
-														title="Editar produto"
-													>
-														<PencilLine />
-													</button>
-													{userLevel === "Administrador" && (
-														<button
-															className="text-red-500 cursor-pointer ml-3"
-															onClick={() => handleDeleteClick(fornecedor)}
-															title="Excluir produto"
-														>
-															<Trash />
-														</button>
-													)}
-												</td>
-											</tr>
-										))
-									)}
-								</tbody>
-							</table>
-						</div>
-						{fornecedores.length !== 0 && (
-							<div className="min-w-[966px] max-w-[73vw]">
+					<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+						<div className="flex justify-between">
+							{/* Botão de Abrir Modal de Cadastro de Fornecedor */}
+							<div className="mt-1 mb-3">
 								<button
 									type="button"
-									className="bg-verdeGrama p-3 w-[180px] ml-auto mb-5 rounded-full text-white cursor-pointer flex place-content-center gap-2 sombra hover:bg-[#246127]"
-									onClick={generateReport}
+									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+									onClick={() => {
+										setOpenRegisterModal(true); 
+										clearFormData(); 
+										setSupplierType("juridica");
+									}}
+								>
+									<Plus />
+									Novo Fornecedor
+								</button>
+							</div>
+							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
+							<div className="flex items-center gap-5 mt-1 mb-3">
+								<button
+									onClick={gerarRelatorio}
+									className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
 									) : (
 										<>
-											<Printer />
-											Gerar Relatório
+											<FileText />
+											Exportar PDF
 										</>
 									)}
 								</button>
-							</div>
-						)}
-
-						{/* Fim aba de Lista de Fornecedores */}
-					</Tabs.Content>
-
-					{/* Aba de Cadastro de Fornecedores */}
-					<Tabs.Content
-						value="register"
-						className="flex items-center justify-center"
-					>
-						<Form.Root className="flex flex-col" onSubmit={handleSubmit}>
-							<h2 className="text-3xl mb-8">Cadastro de fornecedores:</h2>
-
-							{/* Linha Email, tipo e cnpj/cpf*/}
-							<div className="flex mb-10 gap-x-15">
-								<SmartField
-									fieldName="email"
-									fieldText="Email"
-									required
-									type="email"
-									placeholder="Digite o email"
-									autoComplete="email"
-									value={formData.email}
-									onChange={handleChange}
-									inputWidth="w-[400px]"
-								/>
-
-								<SmartField
-									fieldName="tipo"
-									fieldText="Tipo"
-									isClearable={false}
-									isSelect
-									value={formData.tipo}
-									inputWidth="w-[220px]"
-									placeholder="Selecione"
-									onChangeSelect={handleChange}
-									options={[
-										{ value: "juridica", label: "Pessoa Jurídica" },
-										{ value: "fisica", label: "Pessoa Física" },
-									]}
-								/>
-
-								{supplierType === "juridica" && (
-									<SmartField
-										fieldName="cpf_cnpj"
-										fieldText="CNPJ"
-										withInputMask
-										unstyled
-										required
-										type="text"
-										mask="99.999.999/9999-99"
-										autoClear={false}
-										pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
-										placeholder="Digite o CNPJ"
-										value={formData.cpf_cnpj}
-										onChange={handleChange}
-										inputWidth="w-[220px]"
-									/>
-								)}
-
-								{supplierType === "fisica" && (
-									<SmartField
-										fieldName="cpf_cnpj"
-										fieldText="CPF"
-										withInputMask
-										unstyled
-										required
-										type="text"
-										mask="999.999.999-99"
-										autoClear={false}
-										pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-										placeholder="Digite o CPF"
-										value={formData.cpf_cnpj}
-										onChange={handleChange}
-										inputWidth="w-[220px]"
-									/>
-								)}
-							</div>
-
-							{/* Linha Nome e razão social*/}
-							<div className="flex gap-x-15 mb-10">
-								{supplierType === "juridica" && (
-									<>
-										<SmartField
-											fieldName="nome_empresa_fornecedor"
-											fieldText="Nome Fantasia da Empresa"
-											required
-											type="text"
-											placeholder="Digite o nome Fantasia da empresa"
-											autoComplete="name"
-											value={formData.nome_empresa_fornecedor}
-											onChange={handleChange}
-											inputWidth="w-[400px]"
-										/>
-
-										<SmartField
-											fieldName="razao_social"
-											fieldText="Razão Social"
-											fieldClassname="flex flex-col w-full"
-											required
-											type="text"
-											placeholder="Digite a Razão Social da Empresa"
-											autoComplete="name"
-											value={formData.razao_social}
-											onChange={handleChange}
-										/>
-									</>
-								)}
-
-								{supplierType === "fisica" && (
-									<SmartField
-										fieldName="nome_empresa_fornecedor"
-										fieldText="Nome do Fornecedor"
-										fieldClassname="flex flex-col w-full"
-										required
-										type="text"
-										placeholder="Digite o Nome do Fornecedor"
-										autoComplete="name"
-										value={formData.nome_empresa_fornecedor}
-										onChange={handleChange}
-									/>
-								)}
-							</div>
-
-							<div className="flex mb-10 gap-x-7">
-								<SmartField
-									fieldName="responsavel"
-									fieldText="Responsável"
-									required
-									type="text"
-									placeholder="Digite o responsável"
-									autoComplete="name"
-									value={formData.responsavel}
-									onChange={handleChange}
-									inputWidth="w-[250px]"
-								/>
-
-								<SmartField
-									fieldName="tel"
-									fieldText="Telefone"
-									withInputMask
-									unstyled
-									required
-									type="tel"
-									mask="(99) 9999?9-9999"
-									autoClear={false}
-									pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-									placeholder="(xx)xxxxx-xxxx"
-									autoComplete="tel"
-									value={formData.tel}
-									onChange={handleChange}
-									inputWidth="w-[190px]"
-								/>
-
-								<SmartField
-									fieldName="cep"
-									fieldText="CEP"
-									withInputMask
-									unstyled
-									required
-									type="text"
-									mask="99999-999"
-									autoClear={false}
-									pattern="^\d{5}-\d{3}$"
-									placeholder="Digite o CEP"
-									autoComplete="postal-code"
-									value={formData.cep}
-									onChange={handleChange}
-									onBlur={handleCepBlur}
-									inputWidth="w-[150px]"
-								/>
-
-								<SmartField
-									fieldName="endereco"
-									fieldText="Endereço"
-									fieldClassname="flex flex-col flex-1"
-									required
-									type="text"
-									placeholder="Endereço Completo"
-									value={formData.endereco}
-									onChange={handleChange}
-									autoComplete="street-address"
-								/>
-							</div>
-
-							<div className="flex mb-10 gap-x-7">
-								<SmartField
-									fieldName="num_endereco"
-									fieldText="Número"
-									required
-									type="number"
-									placeholder="Número"
-									value={formData.num_endereco}
-									onChange={handleChange}
-									autoComplete="address-line1"
-									inputWidth="w-[90px]"
-								/>
-
-								<SmartField
-									fieldName="complemento"
-									fieldText="Complemento"
-									fieldClassname="flex flex-col flex-1"
-									type="text"
-									placeholder="Complemento"
-									value={formData.complemento}
-									onChange={handleChange}
-								/>
-
-								<SmartField
-									fieldName="estado"
-									fieldText="Estado"
-									isSelect
-									isLoading={loading.has("options")}
-									value={formData.estado}
-									placeholder="Selecione"
-									autoComplete="address-level1"
-									error={errors.states ? "*" : undefined}
-									fieldClassname="flex flex-col flex-1"
-									onChangeSelect={handleChange}
-									options={ufs?.map((uf: UF) => ({
-										label: uf.nome,
-										value: uf.sigla,
-									}))}
-									onBlur={() => {
-										const uf = ufs?.find(
-											(uf: UF) => formData.estado === uf.sigla
-										);
-
-										handleCities(uf?.id);
+								<button
+									onClick={() => {
+										const params = {
+											fileName: "fornecedores.csv",
+											columnSeparator: ";",
+										};
+										gridRef.current?.api.exportDataAsCsv(params);
 									}}
-									isDisabled={!!formData.cep || !ufs}
-								/>
-
-								<SmartField
-									fieldName="cidade"
-									fieldText="Cidade"
-									isSelect
-									isLoading={loading.has("options")}
-									value={formData.cidade}
-									placeholder="Selecione"
-									autoComplete="address-level2"
-									error={errors.states ? "*" : undefined}
-									inputWidth="w-[200px]"
-									onChangeSelect={handleChange}
-									options={cities?.map((city: City) => ({
-										label: city.nome,
-										value: city.nome,
-									}))}
-									isDisabled={!!formData.cep || !cities}
-								/>
-							</div>
-
-							<Form.Submit asChild>
-								<div className="flex place-content-center mb-5 mt-5">
-									<button
-										type="submit"
-										className="bg-verdePigmento p-5 rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center w-52"
-									>
-										{loading.has("submit") ? (
-											<Loader2 className="animate-spin h-6 w-6" />
-										) : (
-											"Cadastrar Fornecedor"
-										)}
-									</button>
-								</div>
-							</Form.Submit>
-						</Form.Root>
-					</Tabs.Content>
-				</Tabs.Root>
-
-				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
-
-				{/* Modal de Relatório */}
-				{relatorioModalOpen && (
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-						<div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-							<div className="flex justify-between items-center mb-4">
-								<h2 className="text-xl font-bold">Relatório de Fornecedores</h2>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="text-gray-500 hover:text-gray-700"
+									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
 								>
-									<X size={24} />
-								</button>
-							</div>
-
-							<div className="flex-1 overflow-auto mb-4">
-								{relatorioContent ? (
-									<iframe
-										src={relatorioContent}
-										className="w-full h-full min-h-[70vh] border"
-										title="Relatório de Fornecedores"
-									/>
-								) : (
-									<p>Carregando relatório...</p>
-								)}
-							</div>
-
-							<div className="flex justify-end gap-4">
-								<a
-									href={relatorioContent}
-									download="relatorio_usuarios.pdf"
-									className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
-								>
-									Baixar Relatório
-								</a>
-								<button
-									onClick={() => setRelatorioModalOpen(false)}
-									className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-								>
-									Fechar
+									<FileSpreadsheet />
+									Exportar CSV
 								</button>
 							</div>
 						</div>
-					</div>
-				)}
+				
+						{/* Tabela de Fornecedores */}
+						<div className="h-[75vh]">
+							<AgGridReact
+								modules={[AllCommunityModule]}
+								theme={myTheme}
+								ref={gridRef}
+								rowData={rowData}
+								columnDefs={columnDefs}
+								context={{ userLevel }}
+								localeText={agGridTranslation}
+								onCellValueChanged={handleStatusChange}
+								pagination
+								paginationPageSize={10}
+								paginationPageSizeSelector={[10, 25, 50, 100]}
+								loading={loading.has("suppliers")}
+								overlayLoadingTemplate={overlayLoadingTemplate}
+								overlayNoRowsTemplate={overlayNoRowsTemplate}
+							/>
+						</div>
+					</Tabs.Content>
+				</Tabs.Root>
+
+				{/* Modal de Cadastro de Fornecedores */}
+				<Modal
+					isRegister
+					withXButton
+					openModal={openRegisterModal}
+					setOpenModal={setOpenRegisterModal}
+					modalTitle="Cadastrar Fornecedor:"
+					modalWidth="w-1/2"
+					registerButtonText="Cadastrar Fornecedor"
+					isLoading={loading.has("submit")}
+					onSubmit={handleSubmit}
+				>	
+					<SupplierRegister
+						formData={formData}
+						loading={loading}
+						errors={errors}
+						ufs={ufs}
+						cities={cities}
+						supplierType={supplierType}
+						handleCities={handleCities}
+						handleCepBlur={handleCepBlur}
+						handleChange={handleChange}
+					/>
+				</Modal>
 
 				{/* Modal de Edição */}
 				<Modal
@@ -1290,266 +677,23 @@ export default function Suppliers() {
 					modalTitle="Editar Fornecedor:"
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
+					modalWidth="w-1/2"
 					isLoading={loading.has("updateSupplier")}
-					onCancel={() => {
-						clearFormData();
-						setSupplierType("juridica");
-					}}
 					onSubmit={handleUpdateSupplier}
 				>
-					{/* Linha Nome e razão social*/}
-					<div className="flex gap-x-10 mb-7">
-						{supplierType === "juridica" && (
-							<>
-								<SmartField
-									fieldName="nome_empresa_fornecedor"
-									fieldText="Nome da Empresa"
-									required
-									type="text"
-									placeholder="Digite o nome Fantasia da empresa"
-									autoComplete="name"
-									value={formData.nome_empresa_fornecedor}
-									onChange={handleChange}
-									inputWidth="w-[300px]"
-								/>
-
-								<SmartField
-									fieldName="razao_social"
-									fieldText="Razão Social"
-									inputWidth="w-[400px]"
-									required
-									type="text"
-									placeholder="Digite a Razão Social da Empresa"
-									autoComplete="name"
-									value={formData.razao_social}
-									onChange={handleChange}
-								/>
-							</>
-						)}
-
-						{supplierType === "fisica" && (
-							<SmartField
-								fieldName="nome_empresa_fornecedor"
-								fieldText="Nome do Fornecedor"
-								inputWidth="w-[740px]"
-								required
-								type="text"
-								placeholder="Digite o Nome do Fornecedor"
-								autoComplete="name"
-								value={formData.nome_empresa_fornecedor}
-								onChange={handleChange}
-							/>
-						)}
-
-						<SmartField
-							fieldName="tipo"
-							fieldText="Tipo"
-							inputWidth="w-[170px]"
-							isClearable={false}
-							isSelect
-							value={formData.tipo}
-							onChangeSelect={handleChange}
-							options={[
-								{ value: "juridica", label: "Pessoa Jurídica" },
-								{ value: "fisica", label: "Pessoa Física" },
-							]}
-						/>
-					</div>
-
-					{/* Linha Email, telefone e cnpj*/}
-					<div className="flex mb-7 gap-x-10">
-						<SmartField
-							fieldName="email"
-							fieldText="Email"
-							required
-							type="email"
-							placeholder="Digite o email"
-							autoComplete="email"
-							value={formData.email}
-							onChange={handleChange}
-							inputWidth="w-[300px]"
-						/>
-
-						{supplierType === "juridica" && (
-							<SmartField
-								fieldName="cpf_cnpj"
-								fieldText="CNPJ"
-								withInputMask
-								unstyled
-								required
-								type="text"
-								mask="99.999.999/9999-99"
-								autoClear={false}
-								pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
-								placeholder="Digite o CNPJ"
-								inputWidth="w-[170px]"
-								value={formData.cpf_cnpj}
-								onChange={handleChange}
-							/>
-						)}
-
-						{supplierType === "fisica" && (
-							<SmartField
-								fieldName="cpf_cnpj"
-								fieldText="CPF"
-								withInputMask
-								unstyled
-								required
-								type="text"
-								mask="999.999.999-99"
-								autoClear={false}
-								pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-								placeholder="Digite o CPF"
-								inputWidth="w-[170px]"
-								value={formData.cpf_cnpj}
-								onChange={handleChange}
-							/>
-						)}
-
-						<SmartField
-							fieldName="responsavel"
-							fieldText="Responsável"
-							required
-							type="text"
-							placeholder="Digite o responsável"
-							autoComplete="name"
-							value={formData.responsavel}
-							onChange={handleChange}
-							fieldClassname="flex flex-col flex-1"
-						/>
-					</div>
-
-					<div className="flex mb-7 gap-x-10 ">
-						<SmartField
-							fieldName="status"
-							fieldText="Status"
-							isSelect
-							isClearable={false}
-							isLoading={loading.has("options")}
-							value={formData.status}
-							inputWidth="w-[140px]"
-							onChangeSelect={handleChange}
-							options={[
-								{ value: "1", label: "Ativo" },
-								{ value: "0", label: "Inativo" },
-							]}
-						/>
-
-						<SmartField
-							fieldName="tel"
-							fieldText="Telefone"
-							withInputMask
-							unstyled
-							required
-							type="tel"
-							mask="(99) 9999?9-9999"
-							autoClear={false}
-							pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-							placeholder="(xx)xxxxx-xxxx"
-							autoComplete="tel"
-							value={formData.tel}
-							onChange={handleChange}
-							inputWidth="w-[170px]"
-						/>
-
-						<SmartField
-							fieldName="cep"
-							fieldText="CEP"
-							withInputMask
-							unstyled
-							required
-							type="text"
-							mask="99999-999"
-							autoClear={false}
-							pattern="^\d{5}-\d{3}$"
-							placeholder="Digite o CEP"
-							autoComplete="postal-code"
-							value={formData.cep}
-							onChange={handleChange}
-							onBlur={handleCepBlur}
-							inputWidth="w-[170px]"
-						/>
-
-						<SmartField
-							fieldName="endereco"
-							fieldText="Endereço"
-							required
-							type="text"
-							placeholder="Endereço Completo"
-							value={formData.endereco}
-							onChange={handleChange}
-							autoComplete="street-address"
-							fieldClassname="flex flex-col flex-1"
-						/>
-					</div>
-
-					{/* Linha Nivel de Acesso e Senha*/}
-					<div className="flex mb-9 gap-x-10 ">
-						<SmartField
-							fieldName="num_endereco"
-							fieldText="Número"
-							required
-							type="number"
-							placeholder="Número"
-							value={formData.num_endereco}
-							onChange={handleChange}
-							autoComplete="address-line1"
-							inputWidth="w-[90px]"
-						/>
-
-						<SmartField
-							fieldName="complemento"
-							fieldText="Complemento"
-							fieldClassname="flex flex-col flex-1"
-							type="text"
-							placeholder="Complemento"
-							value={formData.complemento}
-							onChange={handleChange}
-						/>
-
-						<SmartField
-							fieldName="estado"
-							fieldText="Estado"
-							isSelect
-							isLoading={loading.has("options")}
-							value={formData.estado}
-							placeholder="Selecione"
-							autoComplete="address-level1"
-							error={errors.states ? "*" : undefined}
-							inputWidth="w-[220px]"
-							onChangeSelect={handleChange}
-							options={ufs?.map((uf: UF) => ({
-								label: uf.nome,
-								value: uf.sigla,
-							}))}
-							onBlur={() => {
-								const uf = ufs?.find((uf: UF) => formData.estado === uf.sigla);
-
-								handleCities(uf?.id);
-							}}
-							isDisabled={!!formData.cep || !ufs}
-						/>
-
-						<SmartField
-							fieldName="cidade"
-							fieldText="Cidade"
-							isSelect
-							isLoading={loading.has("options")}
-							value={formData.cidade}
-							placeholder="Selecione"
-							autoComplete="address-level2"
-							error={errors.states ? "*" : undefined}
-							fieldClassname="flex flex-col flex-1"
-							onChangeSelect={handleChange}
-							options={cities?.map((city: City) => ({
-								label: city.nome,
-								value: city.nome,
-							}))}
-							isDisabled={!!formData.cep || !cities}
-						/>
-					</div>
+					<SupplierUpdate
+						formData={formData}
+						loading={loading}
+						ufs={ufs}
+						cities={cities}
+						supplierType={supplierType}
+						handleCities={handleCities}
+						handleCepBlur={handleCepBlur}
+						handleChange={handleChange}
+					/>
 				</Modal>
-
+				
+				{/* Modal de Exclusão */}
 				<Modal
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
@@ -1561,32 +705,10 @@ export default function Suppliers() {
 						setOpenDeleteModal(false);
 					}}
 				>
-					<div className="flex mb-10">
-						<SmartField
-							fieldName="dnome_empresa"
-							fieldText="Nome da Empresa"
-							fieldClassname="flex flex-col w-full"
-							type="text"
-							required
-							readOnly
-							value={deleteSupplier.dnome_empresa}
-							onChange={handleChange}
-						/>
-					</div>
-
-					<div className="flex mb-10 ">
-						<SmartField
-							isTextArea
-							fieldName="reason"
-							required
-							autoFocus
-							fieldText="Motivo da Exclusão"
-							fieldClassname="flex flex-col w-full"
-							placeholder="Digite o motivo da exclusão do fornecedor"
-							value={deleteSupplier.reason}
-							onChange={handleChange}
-						/>
-					</div>
+					<SupplierDelete
+						deleteSupplier={deleteSupplier}
+						handleChange={handleChange}
+					/>
 				</Modal>
 
 				{/* Alert para confirmar exclusão do fornecedor */}
@@ -1600,6 +722,24 @@ export default function Suppliers() {
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir fornecedor"
 				/>
+
+				{/* Modal de Relatório */}
+				<ReportModal
+					openModal={relatorioModalOpen}
+					setOpenModal={setRelatorioModalOpen}
+					reportUrl={relatorioContent}
+					reportTitle="Relatório de Fornecedores"
+					fileName="relatorio_fornecedores.pdf"
+				/>
+
+				{/* Modal de Avisos */}
+				<NoticeModal
+					openModal={openNoticeModal}
+					setOpenModal={setOpenNoticeModal}
+					successMsg={successMsg}
+					message={message}
+				/>
+
 			</div>
 		</div>
 	);
