@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Dispatch, SetStateAction } from "react";
 import { City } from "./types";
 
@@ -10,7 +11,6 @@ type CepResponse = {
 
 export async function cepApi(
 	cep: string,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	setFormData: React.Dispatch<React.SetStateAction<any>>,
 	setOpenModal: (open: boolean) => void,
 	setMessage: (msg: string) => void,

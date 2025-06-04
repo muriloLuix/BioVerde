@@ -18,3 +18,6 @@ export { default as SupplierDelete } from "./suppliers/SupplierDelete";
 export { default as ClientRegister } from "./clients/ClientRegister";
 export { default as ClientUpdate } from "./clients/ClientUpdate";
 export { default as ClientDelete } from "./clients/ClientDelete";
+
+export { default as OrderUpdate } from "./orders/OrderUpdate";
+export { default as OrderDelete } from "./orders/OrderDelete";

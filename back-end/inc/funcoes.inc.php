@@ -378,6 +378,31 @@ function buscarStatusPedido($conn)
 }
 
 /**
+ * Busca todos os status do pedido registrados no banco de dados.
+ *
+ * @param mysqli $conn Conexão com o banco de dados.
+ *
+ * @return array Retorna um array com os clientes, onde cada cliente
+ *         é representado por um array com as chaves 'cliente_id' e 'cliente_nome'.
+ *
+ * @throws Exception Caso ocorra um erro ao buscar os clientes.
+ */
+function buscarClientes($conn)
+{
+    $result = $conn->query("SELECT cliente_id, cliente_nome FROM clientes");
+    if (!$result) {
+        throw new Exception("Erro ao buscar status: " . $conn->error);
+    }
+
+    $clientes = [];
+    while ($row = $result->fetch_assoc()) {
+        $clientes[] = $row;
+    }
+
+    return $clientes;
+}
+
+/**
  * Busca todos os status do produto registrados no banco de dados.
  *
  * @param mysqli $conn Conex o com o banco de dados.

@@ -3,12 +3,19 @@ import { SmartField } from "../../../shared";
 import { FormDataSupplier, SelectEvent, UF, City } from "../../../utils/types";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 
+type FieldErrors = {
+  [key in
+    | "isCepValid"
+  ]: boolean;
+};
+
 interface Props {
   formData: FormDataSupplier;
   loading: Set<string>;
   supplierType: string;
   ufs?: UF[];
   cities?: City[];
+  errors: FieldErrors;
   handleCities: (id: number | undefined) => Promise<void>;
   handleCepBlur: () => void;
   handleChange: (
@@ -24,6 +31,7 @@ const SupplierUpdate: React.FC<Props> = ({
   loading,
   ufs,
   cities,
+  errors,
   supplierType,
   handleCities,
   handleCepBlur,
@@ -156,6 +164,7 @@ const SupplierUpdate: React.FC<Props> = ({
                 required
                 type="text"
                 mask="99999-999"
+                error={errors.isCepValid ? "*" : undefined}
                 autoClear={false}
                 pattern="^\d{5}-\d{3}$"
                 placeholder="Digite o CEP"

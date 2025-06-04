@@ -10,12 +10,14 @@ try {
         throw new Exception("Erro na conexão com o banco de dados");
     }
 
-    // Buscar cargos
+    // Buscar Status
     $statusPedido = buscarStatusPedido($conn);
-    // Buscar níveis de acesso
+    // Buscar Clientes
+    $clientes = buscarClientes($conn);
 
     echo json_encode([
         "success" => true,
+        "clientes" => $clientes,
         "status" => $statusPedido,
     ]);
 

@@ -40,22 +40,10 @@ try {
         throw new Exception("Pedido nao encontrado");
     }
 
-    // Pesquisar id pelo nome
-    $sql = "SELECT cliente_id FROM clientes WHERE cliente_nome = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $data['nome_cliente']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows === 0) {
-        throw new Exception("Cliente não encontrado");
-    }
-    $row = $result->fetch_assoc();
-    $id_cliente = $row['cliente_id'];
-
     $camposAtualizados = [
-        'cliente_id' => $id_cliente,
+        'cliente_id' => (int)$data['nome_cliente'],
         'pedido_cep' => $data['cep'],
-        'stapedido_id' => $data['status'],
+        'stapedido_id' => (int)$data['status'],
         'pedido_endereco' => $data['endereco'],
         'pedido_num_endereco' => $data['num_endereco'],
         'pedido_estado' => $data['estado'],

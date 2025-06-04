@@ -34,6 +34,17 @@ try {
     // Início da transação
     $conn->begin_transaction();
 
+    // Verifica se há lotes vinculados a esse produto
+    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM lote WHERE produto_id = ?");
+    $stmt->bind_param("i", $produto_id);
+    $stmt->execute();
+    $resultado = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($resultado['total'] > 0) {
+        throw new Exception("Não é possível excluir o produto. Existem lotes vinculados a ele.");
+    }
+
     // 1. Deleta o usuário
     $exclusao = deleteData($conn, $produto_id, 'produtos', "produto_id");
     if (!$exclusao['success']) {

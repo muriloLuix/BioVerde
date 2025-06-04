@@ -7,6 +7,7 @@ type FieldErrors = {
   [key in
     | "states"
     | "cities"
+    | "isCepValid"
   ]: boolean;
 };
 
@@ -168,6 +169,7 @@ const ClientRegister: React.FC<Props> = ({
                 required
                 type="text"
                 mask="99999-999"
+                error={errors.isCepValid ? "*" : undefined}
                 autoClear={false}
                 pattern="^\d{5}-\d{3}$"
                 placeholder="Digite o CEP"

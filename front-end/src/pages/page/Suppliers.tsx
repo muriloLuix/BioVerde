@@ -32,6 +32,7 @@ export default function Suppliers() {
 	const [errors, setErrors] = useState({
 		states: false,
 		cities: false,
+		isCepValid: false,
 	});
 	const [formData, setFormData] = useState<FormDataSupplier>({
 		fornecedor_id: 0,
@@ -164,6 +165,7 @@ export default function Suppliers() {
 		const error = {
 			states: !formData.estado,
 			cities: !formData.cidade,
+			isCepValid: errors.isCepValid,
 		};
 		setErrors(error);
 		if (Object.values(error).some((error) => error)) {return}
@@ -235,6 +237,7 @@ export default function Suppliers() {
 	// submit para atualizar o fornecedor após a edição dele
 	const handleUpdateSupplier = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if(errors.isCepValid) {return};
 		setLoading((prev) => new Set([...prev, "updateSupplier"]));
 		try {
 			const response = await axios.post(
@@ -525,7 +528,10 @@ export default function Suppliers() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Editar Lote"
-						onClick={() => { if(params.data) handleEditClick(params.data) }}
+						onClick={() => { if(params.data) {
+							handleEditClick(params.data); 
+							setErrors({...errors, isCepValid: false})
+						} }}
 					>
 						<Pencil size={18} />
 					</button>
@@ -686,6 +692,7 @@ export default function Suppliers() {
 						loading={loading}
 						ufs={ufs}
 						cities={cities}
+						errors={errors}
 						supplierType={supplierType}
 						handleCities={handleCities}
 						handleCepBlur={handleCepBlur}

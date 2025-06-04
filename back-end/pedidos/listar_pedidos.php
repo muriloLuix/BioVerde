@@ -12,6 +12,7 @@ try {
     $cols_pedidos = [
         "d.pedido_id",
         "e.cliente_nome",
+        "e.cliente_id",
         "d.pedido_dtCadastro",
         "f.stapedido_nome",
         "d.pedido_prevEntrega AS pedido_prevEntrega",
@@ -80,11 +81,13 @@ try {
             $pedidosAgrupados[$id] = [
                 'pedido_id'         => $id,
                 'pedido_dtCadastro' => $item['pedido_dtCadastro'],
+                'cliente_id'        => $item['cliente_id'],
+                'cliente_nome'      => $item['cliente_nome'],
                 'stapedido_nome'    => $item['stapedido_nome'],
+                'stapedido_id'      => $item['stapedido_id'],
                 'pedido_prevEntrega'=> $item['pedido_prevEntrega'],
-                'cliente_nome' => $item['cliente_nome'],
                 'pedido_valor_total'=> (float)$item['pedido_valor_total'],
-                'pedido_telefone'  => $item['pedido_telefone'],
+                'pedido_telefone'   => $item['pedido_telefone'],
                 'pedido_cep'        => $item['pedido_cep'],
                 'pedido_endereco'   => $item['pedido_endereco'],
                 'pedido_num_endereco'=> $item['pedido_num_endereco'],

@@ -1,23 +1,21 @@
 import React from "react";
 import { SmartField } from "../../../shared";
-import { FormDataSupplier, SelectEvent, UF, City } from "../../../utils/types";
+import { FormDataOrders, SelectEvent, UF, City, OrderOptions } from "../../../utils/types";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 
 type FieldErrors = {
   [key in
-    | "states"
-    | "cities"
     | "isCepValid"
   ]: boolean;
 };
 
 interface Props {
-  formData: FormDataSupplier;
+  formData: FormDataOrders;
   loading: Set<string>;
-  errors: FieldErrors;
-  supplierType: string;
+  options?: OrderOptions;
   ufs?: UF[];
   cities?: City[];
+  errors: FieldErrors;
   handleCities: (id: number | undefined) => Promise<void>;
   handleCepBlur: () => void;
   handleChange: (
@@ -28,13 +26,13 @@ interface Props {
   ) => void;
 }
 
-const SupplierRegister: React.FC<Props> = ({
+const OrderUpdate: React.FC<Props> = ({
   formData,
   loading,
-  errors,
   ufs,
   cities,
-  supplierType,
+  errors,
+  options,
   handleCities,
   handleCepBlur,
   handleChange,
@@ -43,104 +41,62 @@ const SupplierRegister: React.FC<Props> = ({
     <div className="flex flex-col gap-4">
         <div className="flex gap-7">
             <SmartField
-                fieldName="tipo"
-                fieldText="Tipo"
-                isClearable={false}
+                fieldName="num_pedido"
+                fieldText="Nº Pedido"
+                type="number"
+                required
+                isDisable
+                placeholder="Nº Pedido"
+                value={formData.pedido_id}
+                onChange={handleChange}
+                inputWidth="w-[100px]"
+            />
+
+            <SmartField
+                fieldName="nome_cliente"
+                fieldText="Cliente"
                 isSelect
-                value={formData.tipo}
+                isClearable={false}
+                isLoading={loading.has("options")}
+                value={formData.nome_cliente}
+                onChange={handleChange}
+                placeholder="Selecione o cliente"
                 fieldClassname="flex flex-col flex-1"
-                placeholder="Selecione"
                 onChangeSelect={handleChange}
-                options={[
-                    { value: "juridica", label: "Pessoa Jurídica" },
-                    { value: "fisica", label: "Pessoa Física" },
-                ]}
+                options={options?.clientes.map((cliente) => ({
+                    label: cliente.cliente_nome,
+                    value: String(cliente.cliente_id),
+                }))}
             />
-            {supplierType === "juridica" && (
-                <SmartField
-                    fieldName="cpf_cnpj"
-                    fieldText="CNPJ"
-                    withInputMask
-                    unstyled
-                    required
-                    type="text"
-                    mask="99.999.999/9999-99"
-                    autoClear={false}
-                    pattern="^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$"
-                    placeholder="Digite o CNPJ"
-                    value={formData.cpf_cnpj}
-                    onChange={handleChange}
-                    fieldClassname="flex flex-col flex-1"
-                />
-            )}
-            {supplierType === "fisica" && (
-                <SmartField
-                    fieldName="cpf_cnpj"
-                    fieldText="CPF"
-                    withInputMask
-                    unstyled
-                    required
-                    type="text"
-                    mask="999.999.999-99"
-                    autoClear={false}
-                    pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$"
-                    placeholder="Digite o CPF"
-                    value={formData.cpf_cnpj}
-                    onChange={handleChange}
-                    fieldClassname="flex flex-col flex-1"
-                />
-            )}
         </div>
-
-        {supplierType === "juridica" && (
-            <>
+        <div className="flex gap-7">
             <SmartField
-                fieldName="nome_empresa_fornecedor"
-                fieldText="Nome Fantasia da Empresa"
+                type="date"
                 required
-                type="text"
-                placeholder="Digite o nome Fantasia da empresa"
-                autoComplete="name"
-                value={formData.nome_empresa_fornecedor}
+                fieldName="prev_entrega"
+                fieldText="Previsão de entrega"
+                value={formData.prev_entrega}
                 onChange={handleChange}
+                fieldClassname="flex flex-col flex-1"
             />
-
             <SmartField
-                fieldName="razao_social"
-                fieldText="Razão Social"
-                required
-                type="text"
-                placeholder="Digite a Razão Social da Empresa"
-                autoComplete="name"
-                value={formData.razao_social}
+                fieldName="status"
+                fieldText="Status do Pedido"
+                isSelect
+                isClearable={false}
+                isLoading={loading.has("options")}
+                value={formData.status}
                 onChange={handleChange}
+                placeholder="Selecione o Status"
+                fieldClassname="flex flex-col flex-1"
+                onChangeSelect={handleChange}
+                options={options?.status.map((status) => ({
+                    label: status.stapedido_nome,
+                    value: String(status.stapedido_id),
+                }))}
             />
-            </>
-        )}
-        {supplierType === "fisica" && (
-            <SmartField
-                fieldName="nome_empresa_fornecedor"
-                fieldText="Nome do Fornecedor"
-                required
-                type="text"
-                placeholder="Digite o Nome do Fornecedor"
-                autoComplete="name"
-                value={formData.nome_empresa_fornecedor}
-                onChange={handleChange}
-            />
-        )}
-
-        <SmartField
-            fieldName="email"
-            fieldText="Email"
-            required
-            type="email"
-            placeholder="Digite o email"
-            autoComplete="email"
-            value={formData.email}
-            onChange={handleChange}
-        />
-
+        </div>
+        
         <div className="flex gap-7">
             <SmartField
                 fieldName="tel"
@@ -152,7 +108,7 @@ const SupplierRegister: React.FC<Props> = ({
                 mask="(99) 9999?9-9999"
                 autoClear={false}
                 pattern="^\(\d{2}\) \d{5}-\d{3,4}$"
-                placeholder="(xx)xxxxx-xxxx"
+                placeholder="Digite o Telefone"
                 autoComplete="tel"
                 value={formData.tel}
                 onChange={handleChange}
@@ -165,8 +121,8 @@ const SupplierRegister: React.FC<Props> = ({
                 unstyled
                 required
                 type="text"
-                error={errors.isCepValid ? "*" : undefined}
                 mask="99999-999"
+                error={errors.isCepValid ? "*" : undefined}
                 autoClear={false}
                 pattern="^\d{5}-\d{3}$"
                 placeholder="Digite o CEP"
@@ -178,25 +134,13 @@ const SupplierRegister: React.FC<Props> = ({
             />
         </div>
 
-        <SmartField
-            fieldName="endereco"
-            fieldText="Endereço"
-            fieldClassname="flex flex-col flex-1"
-            required
-            type="text"
-            placeholder="Endereço Completo"
-            value={formData.endereco}
-            onChange={handleChange}
-            autoComplete="street-address"
-        />
-
         <div className="flex gap-7">
             <SmartField
                 fieldName="num_endereco"
                 fieldText="Número"
                 required
-                type="number"
                 min={1}
+                type="number"
                 placeholder="Número"
                 value={formData.num_endereco}
                 onChange={handleChange}
@@ -213,6 +157,19 @@ const SupplierRegister: React.FC<Props> = ({
                 onChange={handleChange}
             />
         </div>
+    
+        <SmartField
+            fieldName="endereco"
+            fieldText="Endereço"
+            required
+            type="text"
+            placeholder="Endereço"
+            value={formData.endereco}
+            onChange={handleChange}
+            autoComplete="street-address"
+            fieldClassname="flex flex-col flex-1"
+        />
+
         <SmartField
             fieldName="estado"
             fieldText="Estado"
@@ -221,7 +178,7 @@ const SupplierRegister: React.FC<Props> = ({
             value={formData.estado}
             placeholder="Selecione"
             autoComplete="address-level1"
-            error={errors.cities ? "*" : undefined}
+            isClearable={false}
             fieldClassname="flex flex-col flex-1"
             onChangeSelect={handleChange}
             isDisabled={!!formData.cep || !ufs}
@@ -234,15 +191,16 @@ const SupplierRegister: React.FC<Props> = ({
                 handleCities(uf?.id);
             }}
         />
+
         <SmartField
             fieldName="cidade"
             fieldText="Cidade"
             isSelect
+            isClearable={false}
             isLoading={loading.has("cities")}
             value={formData.cidade}
             placeholder="Selecione"
             autoComplete="address-level2"
-            error={errors.states ? "*" : undefined}
             fieldClassname="flex flex-col flex-1"
             onChangeSelect={handleChange}
             isDisabled={!!formData.cep || !cities}
@@ -251,8 +209,21 @@ const SupplierRegister: React.FC<Props> = ({
                 value: city.nome,
             }))}
         />
+
+        <div className="mb-5">
+            <SmartField
+                isTextArea
+                fieldName="obs"
+                fieldText="Observações"
+                fieldClassname="flex flex-col w-full"
+                placeholder="Digite as observações do pedido"
+                value={formData.obs}
+                onChange={handleChange}
+                rows={2}
+            />
+        </div>
     </div>
   );
 };
 
-export default SupplierRegister;
+export default OrderUpdate;

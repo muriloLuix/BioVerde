@@ -35,9 +35,9 @@ export interface FormDataUser {
 }
 
 export interface DeleteUser {
-	user_id: number,
-	dname: string,
-	reason: string,
+	user_id: number;
+	dname: string;
+	reason: string;
 }
 
 // ******** Fornecedores e Clientes ********
@@ -276,9 +276,9 @@ export interface FormDataSteps {
 	etor_unidade: string;
 };
 export interface DeleteSteps {
-	etor_id: number,
-	dstep: string,
-	reason: string,
+	etor_id: number;
+	dstep: string;
+	reason: string;
 }
 export interface StepOptions {
 	produtos: Product[];
@@ -289,11 +289,70 @@ export interface StepNames {
 	etapa_nome: string;
 }
 
+
 // ******** Pedidos ********
 export interface OrderStatus {
 	stapedido_id: number;
 	stapedido_nome: string;
 }
+export interface Cliente {
+	cliente_id: number;
+	cliente_nome: string;
+	pedido_telefone: string;
+}
+export interface OrderOptions {
+	clientes: Cliente[];
+	status: OrderStatus[];
+}
+export interface Order {
+	pedido_id: number;
+	cliente_nome: string;
+	cliente_id: string;
+	pedido_telefone: string;
+	pedido_cep: string;
+	pedido_endereco: string;
+	pedido_num_endereco: string;
+	pedido_complemento: string;
+	pedido_cidade: string;
+	pedido_estado: string;
+	pedido_prevEntrega: string;
+	pedido_dtCadastro: string;
+	pedido_observacoes: string;
+	pedido_valor_total: number;
+	stapedido_nome: string;
+	stapedido_id: number;
+	pedidoitem_id?: number;
+	pedido_itens: OrderItem[];
+}
+export interface OrderItem {
+	pedidoitem_id: number;
+	produto_nome: string;
+	pedidoitem_quantidade: number;
+	unidade_nome: string;
+	pedidoitem_preco: number;
+	pedidoitem_subtotal: number;
+}
+export interface FormDataOrders {
+	pedido_id: number;
+	nome_cliente: string;
+	tel: string;
+	cep: string;
+	status: string;
+	endereco: string;
+	num_endereco: string;
+	complemento: string;
+	estado: string;
+	cidade: string;
+	prev_entrega: string;
+	obs: string;
+};
+
+export interface DeleteOrders {
+	pedido_id: number;
+	dnum_pedido: number;
+	dnome_cliente: string;
+	reason: string;
+};
 
 // ******** Outros ********
 export interface SelectEvent {
