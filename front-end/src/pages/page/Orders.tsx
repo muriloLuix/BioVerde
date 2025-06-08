@@ -2,17 +2,46 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { checkAuth } from "../../utils/checkAuth";
 import { Tabs } from "radix-ui";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
+import {
+	AllCommunityModule,
+	ICellRendererParams,
+	ColDef,
+	themeQuartz,
+} from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
-import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { Pencil, Trash2, FileSpreadsheet, Loader2, FileText, Eye } from "lucide-react";
+import {
+	overlayLoadingTemplate,
+	overlayNoRowsTemplate,
+} from "../../utils/gridOverlays";
+import {
+	Pencil,
+	Trash2,
+	FileSpreadsheet,
+	Loader2,
+	FileText,
+	Eye,
+} from "lucide-react";
 import { cepApi } from "../../utils/cepApi";
-import { City, SelectEvent, UF, OrderOptions, Order, OrderItem, FormDataOrders, DeleteOrders } from "../../utils/types";
+import {
+	City,
+	SelectEvent,
+	UF,
+	OrderOptions,
+	Order,
+	OrderItem,
+	FormDataOrders,
+	DeleteOrders,
+} from "../../utils/types";
 import { OrderUpdate, OrderDelete } from "../pageComponents";
-import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import {
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+	ReportModal,
+} from "../../shared";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function Orders() {
@@ -58,27 +87,68 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
-
+	const [rowData, setRowData] = useState<Order[]>([]);
 	/* ----- useEffects e Requisições via Axios ----- */
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
-	useEffect(() => {
-		checkAuth({ navigate, setMessage, setOpenNoticeModal });
-	}, [navigate]);
+	const url = useLocation();
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "orders", "options", "ufs", "cities"]));
-				const [ pedidosResponse, userLevelResponse, ufsResponse, citiesResponse ] = await Promise.all([
+	//Carrega os clientes e status do pedido
+	const fetchOptions = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "options"]));
+
+			const response = await axios.get(
+				"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
+				{
+					withCredentials: true,
+					headers: {
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+				}
+			);
+			if (response.data.success) {
+				setOptions({
+					clientes: response.data.clientes,
+					status: response.data.status,
+				});
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(response.data.message || "Erro ao carregar opções");
+			}
+		} catch (error) {
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+	const fetchData = async () => {
+		try {
+			setLoading(
+				(prev) => new Set([...prev, "orders", "options", "ufs", "cities"])
+			);
+
+			const [pedidosResponse, userLevelResponse, ufsResponse, citiesResponse] =
+				await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/pedidos/listar_pedidos.php",
 						{ withCredentials: true, headers: { Accept: "application/json" } }
 					),
 					axios.get(
 						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
 					),
 					axios.get(
 						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
@@ -87,52 +157,49 @@ export default function Orders() {
 						"https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
 					),
 				]);
-				await fetchOptions();
-				console.log("Resposta do back-end Pedidos:", pedidosResponse.data);
+			await fetchOptions();
 
-				if (pedidosResponse.data.success) {
-					setRowData(pedidosResponse.data.pedidos || []);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(pedidosResponse.data.message || "Erro ao carregar pedidos");
-				}
-
-				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						userLevelResponse.data.message || "Erro ao carregar nível do usuário"
-					);
-				}
-
-				if (ufsResponse.status === 200) {
-					setUfs(ufsResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar UFs");
-				}
-
-				if (citiesResponse.status === 200) {
-					setCities(citiesResponse.data);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage("Erro ao carregar municípios");
-				}
-			} catch (error) {
-				console.error(error);
+			if (pedidosResponse.data.success) {
+				setRowData(pedidosResponse.data.pedidos || []);
+			} else {
 				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["orders", "ufs", "cities"].forEach((item) => newLoading.delete(item));
-					return newLoading;
-				});
+				setMessage(pedidosResponse.data.message || "Erro ao carregar pedidos");
 			}
-		};
-		fetchData();
-	}, []);
+
+			if (userLevelResponse.data.success) {
+				setUserLevel(userLevelResponse.data.userLevel);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(
+					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
+			}
+
+			if (ufsResponse.status === 200) {
+				setUfs(ufsResponse.data);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage("Erro ao carregar UFs");
+			}
+
+			if (citiesResponse.status === 200) {
+				setCities(citiesResponse.data);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage("Erro ao carregar municípios");
+			}
+		} catch (error) {
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				["orders", "ufs", "cities"].forEach((item) => newLoading.delete(item));
+				return newLoading;
+			});
+		}
+	};
 
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
@@ -162,37 +229,6 @@ export default function Orders() {
 		}
 	};
 
-	//Carrega os clientes e status do pedido
-	const fetchOptions = async () => {
-		try {
-			setLoading((prev) => new Set([...prev, "options"]));
-
-			const response = await axios.get(
-				"http://localhost/BioVerde/back-end/pedidos/listar_opcoes.php",
-				{ withCredentials: true, headers: { Accept: "application/json", "Content-Type": "application/json"} }
-			);
-			if (response.data.success) {
-				setOptions({
-					clientes: response.data.clientes,
-					status: response.data.status,
-				});
-			} else {
-				setOpenNoticeModal(true);
-				setMessage(response.data.message || "Erro ao carregar opções");
-			}
-		} catch (error) {
-			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
-		} finally {
-			setLoading((prev) => {
-				const newLoading = new Set(prev);
-				newLoading.delete("options");
-				return newLoading;
-			});
-		}
-	}
-
 	// ---------- Funções para edição do Pedido -----------
 
 	//função para puxar os dados do pedido que será editado
@@ -202,18 +238,18 @@ export default function Orders() {
 			return date.toISOString().split("T")[0];
 		};
 		setFormData({
-			pedido_id: 		pedido.pedido_id,
-			nome_cliente: 	String(pedido.cliente_id),
-			tel: 			pedido.pedido_telefone,
-			cep: 			pedido.pedido_cep,
-			status: 		String(pedido.stapedido_id),
-			endereco: 		pedido.pedido_endereco,
-			num_endereco: 	pedido.pedido_num_endereco,
-			complemento: 	pedido.pedido_complemento,
-			estado: 		pedido.pedido_estado,
-			cidade: 		pedido.pedido_cidade,
-			prev_entrega: 	formatDate(pedido.pedido_prevEntrega),
-			obs: 			pedido.pedido_observacoes,
+			pedido_id: pedido.pedido_id,
+			nome_cliente: String(pedido.cliente_id),
+			tel: pedido.pedido_telefone,
+			cep: pedido.pedido_cep,
+			status: String(pedido.stapedido_id),
+			endereco: pedido.pedido_endereco,
+			num_endereco: pedido.pedido_num_endereco,
+			complemento: pedido.pedido_complemento,
+			estado: pedido.pedido_estado,
+			cidade: pedido.pedido_cidade,
+			prev_entrega: formatDate(pedido.pedido_prevEntrega),
+			obs: pedido.pedido_observacoes,
 		});
 		setOpenEditModal(true);
 	};
@@ -222,14 +258,17 @@ export default function Orders() {
 	const handleUpdateOrder = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if(errors.isCepValid) return;
+		if (errors.isCepValid) return;
 		setLoading((prev) => new Set([...prev, "updateOrder"]));
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/pedidos/editar.pedido.php",
 				formData,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
-			)
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
 			console.log("Resposta do back-end:", response.data);
 
 			if (response.data.success) {
@@ -245,8 +284,8 @@ export default function Orders() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -337,7 +376,7 @@ export default function Orders() {
 		if (name in deleteOrder) {
 			setDeleteOrder({ ...deleteOrder, [name]: value });
 		}
-		setErrors({isCepValid: false});
+		setErrors({ isCepValid: false });
 	};
 
 	const handleCities = async (id: number | undefined) => {
@@ -432,19 +471,31 @@ export default function Orders() {
 	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
 	const gridRef = useRef<AgGridReact>(null);
-	const [rowData, setRowData] = useState<Order[]>([]);
 	const [columnDefs] = useState<ColDef[]>([
 		{ field: "pedido_id", headerName: "ID", filter: true, width: 100 },
 		{ field: "cliente_nome", headerName: "Cliente", filter: true, width: 250 },
 		{
-			field: "pedido_dtCadastro", headerName: "Data do Pedido", filter: true, width: 180,
-			valueGetter: (params) => new Date(params.data.pedido_dtCadastro).toLocaleDateString("pt-BR")
+			field: "pedido_dtCadastro",
+			headerName: "Data do Pedido",
+			filter: true,
+			width: 180,
+			valueGetter: (params) =>
+				new Date(params.data.pedido_dtCadastro).toLocaleDateString("pt-BR"),
 		},
 		{
-			field: "pedido_prevEntrega", headerName: "Previsão de Entrega", filter: true, width: 200,
-			valueGetter: (params) => new Date(params.data.pedido_prevEntrega).toLocaleDateString("pt-BR")
+			field: "pedido_prevEntrega",
+			headerName: "Previsão de Entrega",
+			filter: true,
+			width: 200,
+			valueGetter: (params) =>
+				new Date(params.data.pedido_prevEntrega).toLocaleDateString("pt-BR"),
 		},
-		{ field: "stapedido_nome", headerName: "Status do Pedido", filter: true, width: 200 },
+		{
+			field: "stapedido_nome",
+			headerName: "Status do Pedido",
+			filter: true,
+			width: 200,
+		},
 		{
 			headerName: "Itens do Pedido",
 			field: "pedidoitem_id",
@@ -454,24 +505,31 @@ export default function Orders() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Visualizar itens do pedido"
-						onClick={() => { if(params.data) handleSeeOrderClick(params.data) }}
+						onClick={() => {
+							if (params.data) handleSeeOrderClick(params.data);
+						}}
 					>
 						<Eye size={18} />
 					</button>
 				</div>
 			),
 			sortable: false,
-			filter: false
+			filter: false,
 		},
-		{field: "pedido_valor_total", headerName: "Valor Total", width: 130},
-		{field: "pedido_telefone", headerName: "Telefone", filter: true, width: 160},
-		{field: "pedido_cep", headerName: "CEP", filter: true, width: 180},
-		{field: "pedido_endereco", headerName: "Endereço", width: 200},
-		{field: "pedido_num_endereco", headerName: "Nº", width: 100},
-		{field: "pedido_complemento", headerName: "Complemento", width: 180},
-		{field: "pedido_cidade", headerName: "Cidade", filter: true, width: 180},
-		{field: "pedido_estado", headerName: "Estado", filter: true, width: 120},
-		{field: "pedido_observacoes", headerName: "Observações", width: 200},
+		{ field: "pedido_valor_total", headerName: "Valor Total", width: 130 },
+		{
+			field: "pedido_telefone",
+			headerName: "Telefone",
+			filter: true,
+			width: 160,
+		},
+		{ field: "pedido_cep", headerName: "CEP", filter: true, width: 180 },
+		{ field: "pedido_endereco", headerName: "Endereço", width: 200 },
+		{ field: "pedido_num_endereco", headerName: "Nº", width: 100 },
+		{ field: "pedido_complemento", headerName: "Complemento", width: 180 },
+		{ field: "pedido_cidade", headerName: "Cidade", filter: true, width: 180 },
+		{ field: "pedido_estado", headerName: "Estado", filter: true, width: 120 },
+		{ field: "pedido_observacoes", headerName: "Observações", width: 200 },
 		{
 			headerName: "Ações",
 			field: "acoes",
@@ -481,7 +539,12 @@ export default function Orders() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Editar Lote"
-						onClick={() => { if(params.data) {handleEditClick(params.data); setErrors({isCepValid: false})} }}
+						onClick={() => {
+							if (params.data) {
+								handleEditClick(params.data);
+								setErrors({ isCepValid: false });
+							}
+						}}
 					>
 						<Pencil size={18} />
 					</button>
@@ -489,7 +552,9 @@ export default function Orders() {
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
 							title="Excluir Lote"
-							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+							onClick={() => {
+								if (params.data) handleDeleteClick(params.data);
+							}}
 						>
 							<Trash2 size={18} />
 						</button>
@@ -498,19 +563,51 @@ export default function Orders() {
 			),
 			pinned: "right",
 			sortable: false,
-			filter: false
-		}
+			filter: false,
+		},
 	]);
 
 	//Esilos da Tabela
 	const myTheme = themeQuartz.withParams({
 		spacing: 9,
-		headerBackgroundColor: '#89C988',
-		foregroundColor: '#1B1B1B',
-		rowHoverColor: '#E2FBE2',
-		oddRowBackgroundColor: '#f5f5f5',
+		headerBackgroundColor: "#89C988",
+		foregroundColor: "#1B1B1B",
+		rowHoverColor: "#E2FBE2",
+		oddRowBackgroundColor: "#f5f5f5",
 		fontFamily: '"Inter", sans-serif',
 	});
+
+	const [params] = useSearchParams();
+
+	const buildFilter = () => {
+		try {
+			const param = params.get("status");
+
+			if (param) {
+				gridRef.current?.api.setFilterModel({
+					stapedido_nome: {
+						type: "lessThan",
+						filter: param,
+					},
+				});
+			}
+		} catch (err) {
+			console.error(err);
+		} finally {
+			navigate(url.pathname, { replace: true });
+		}
+	};
+
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+		fetchData();
+	}, []);
+
+	useEffect(() => {
+		if (rowData.length > 0) {
+			buildFilter();
+		}
+	}, [loading]);
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
@@ -519,7 +616,11 @@ export default function Orders() {
 					<span className="text-4xl font-semibold text-center">Pedidos</span>
 				</h1>
 				{/* Selelcionar Abas */}
-				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+				<Tabs.Root
+					defaultValue="list"
+					className="w-full"
+					onValueChange={(value) => setActiveTab(value)}
+				>
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
@@ -563,7 +664,7 @@ export default function Orders() {
 								</button>
 							</div>
 						</div>
-				
+
 						{/* Tabela de Fornecedores */}
 						<div className="h-[75vh]">
 							<AgGridReact
@@ -608,20 +709,16 @@ export default function Orders() {
 						<table className="w-full border-collapse">
 							<thead className="bg-verdePigmento text-white shadow-thead">
 								<tr>
-									{[
-										"#",
-										"Produto",
-										"Qtd.",
-										"Preço Unitário",
-										"Subtotal",
-									].map((header) => (
-										<th
-											key={header}
-											className="border border-black px-2 py-3 whitespace-nowrap"
-										>
-											{header}
-										</th>
-									))}
+									{["#", "Produto", "Qtd.", "Preço Unitário", "Subtotal"].map(
+										(header) => (
+											<th
+												key={header}
+												className="border border-black px-2 py-3 whitespace-nowrap"
+											>
+												{header}
+											</th>
+										)
+									)}
 								</tr>
 							</thead>
 							<tbody>
@@ -636,9 +733,7 @@ export default function Orders() {
 									return (
 										<tr
 											key={index}
-											className={
-												index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"
-											}
+											className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
 										>
 											{itemData.map((value, i) => (
 												<td
@@ -708,10 +803,7 @@ export default function Orders() {
 						setOpenDeleteModal(false);
 					}}
 				>
-					<OrderDelete
-						deleteOrder={deleteOrder}
-						handleChange={handleChange}
-					/>
+					<OrderDelete deleteOrder={deleteOrder} handleChange={handleChange} />
 				</Modal>
 
 				{/* Alert para confirmar exclusão do fornecedor */}

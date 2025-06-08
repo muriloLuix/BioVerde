@@ -13,6 +13,7 @@ import {
 	PackageOpen,
 	PackageSearch,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface QuantityByStatus {
 	id: Number;
@@ -154,9 +155,11 @@ const Dashboard = () => {
 		},
 		overlays: {
 			loading: {
+				enabled: true,
 				text: "Carregando dados...",
 			},
 			noData: {
+				enabled: true,
 				text: "Sem dados disponíveis",
 			},
 		},
@@ -295,8 +298,6 @@ const Dashboard = () => {
 			);
 			const data = res.data.data;
 
-			console.log(res);
-
 			const pieData = [
 				{
 					value: Number(data[0].estoque_atual),
@@ -360,9 +361,15 @@ const Dashboard = () => {
 							>
 								<div className="h-1/4 w-full flex p-1 item-center justify-center gap-2 font-medium">
 									{icons[index]}
-									<span className="text-white text-center text-xl">
+									<Link
+										to={{
+											pathname: "/app/pedidos",
+											search: `?status=${product.status}`,
+										}}
+										className="text-white text-center text-xl hover:underline"
+									>
 										{product.status.toUpperCase()}
-									</span>
+									</Link>
 								</div>
 								<div className="h-3/4 w-full flex items-center justify-center font-medium">
 									<span className="text-5xl text-white">
