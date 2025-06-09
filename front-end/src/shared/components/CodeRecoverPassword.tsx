@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { StepProps } from "./../../pages";
 import axios from "axios";
- import { Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-type CodeRecoverPasswordProps = StepProps
+type CodeRecoverPasswordProps = StepProps;
 
-export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPasswordProps) {
+export default function CodeRecoverPassword({
+  onNext,
+  onBack,
+}: CodeRecoverPasswordProps) {
   const [codigo, setCodigo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [timer, setTimer] = useState(0);
@@ -15,7 +18,7 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
 
   useEffect(() => {
     codeInputRef.current?.focus();
-    aguardarReenvio(); 
+    aguardarReenvio();
   }, []);
 
   useEffect(() => {
@@ -38,15 +41,8 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
       setLoading(true);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/verificar-codigo.php",
-        { codigo }, 
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { codigo }
       );
-
-      console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
         setSuccess(true);
@@ -55,98 +51,110 @@ export default function CodeRecoverPassword({ onNext, onBack }: CodeRecoverPassw
           onNext();
         }, 1000);
       } else {
+        setSuccess(false);
         setMensagem(response.data.message);
       }
     } catch (error) {
+      setSuccess(false);
       setMensagem("Erro ao validar o código.");
-      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const enviarCodigo = async () => {   
+  const enviarCodigo = async () => {
     try {
-      setLoading(true); 
+      setLoading(true);
       const response = await axios.post(
         "http://localhost/BioVerde/back-end/recuperar-senha/reenviar.codigo.php",
-        {}, 
+        {},
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
         }
       );
-
-      console.log("Resposta do back-end:", response.data);
 
       if (response.data.success) {
         setSuccess(true);
         setMensagem("Código reenviado com sucesso!");
+        aguardarReenvio();
       } else {
+        setSuccess(false);
         setMensagem(response.data.message);
       }
     } catch (error) {
+      setSuccess(false);
       setMensagem("Erro ao reenviar o código.");
-      console.error(error);
     } finally {
       setLoading(false);
     }
-};
+  };
 
-const aguardarReenvio = () => {
-  setTimer(60); 
-};
+  const aguardarReenvio = () => {
+    setTimer(60);
+  };
 
   return (
-    <div className="flex flex-col items-start gap-5">
-      <h2 className="font-[open_sans] text-lg shadow-text">Verificação</h2>
-      <div className="flex flex-col gap-2">
-        <span className="mb-1">
+    <div className="w-full font-montserrat space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-700">Verificação</h2>
+        <p className="text-sm text-gray-600">
           Digite o código de recuperação enviado ao seu e-mail.
-          <p className="text-gray-300 cursor-pointer underline" onClick={onBack}>
-            Alterar
-          </p>
-        </span>
-        <input
-          type="text"
-          ref={codeInputRef}
-          placeholder="Código"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          className="p-2 rounded text-black bg-brancoSal w-full"
-        />
-        <button
-          className={`w-[155px] text-start ${
-            timer > 0
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-300 cursor-pointer hover:underline"
-          }`}
-          onClick={enviarCodigo}
-          disabled={timer > 0}
-        >
-          {timer > 0 ? `Reenviar Código (${timer}s)` : "Reenviar Código"}
-        </button>
+          <span
+            onClick={onBack}
+            className="ml-2 text-green-700 hover:underline cursor-pointer"
+          >
+            Alterar e-mail
+          </span>
+        </p>
       </div>
+
+      <input
+        type="text"
+        ref={codeInputRef}
+        placeholder="Código"
+        value={codigo}
+        onChange={(e) => setCodigo(e.target.value)}
+        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-black"
+      />
+
+      <button
+        onClick={enviarCodigo}
+        disabled={timer > 0}
+        className={`text-sm ${
+          timer > 0
+            ? "text-gray-400 cursor-not-allowed"
+            : "text-green-700 hover:underline cursor-pointer"
+        }`}
+      >
+        {timer > 0 ? `Reenviar Código (${timer}s)` : "Reenviar Código"}
+      </button>
+
       {mensagem && (
-        <p className={`w-full p-2 text-center rounded-sm ${success ? "bg-corSucesso" : "bg-corErro "}`}>
+        <p
+          className={`text-center p-2 rounded font-medium text-sm ${
+            success ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
+          }`}
+        >
           {mensagem}
         </p>
       )}
+
       <button
-        className="bg-verdePigmento cursor-pointer flex place-content-center tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra"
         onClick={verificarCodigo}
         disabled={loading}
+        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center"
       >
         {loading ? (
-          <Loader2 className="animate-spin h-7 w-7" />
+          <Loader2 className="animate-spin h-6 w-6" />
         ) : (
           "Validar Código"
         )}
       </button>
-      <p>
-        Se não encontrar o e-mail na sua caixa de entrada verifique a pasta de spam
+
+      <p className="text-xs text-gray-500 text-center">
+        Se não encontrar o e-mail na sua caixa de entrada, verifique a pasta de
+        spam.
       </p>
     </div>
   );

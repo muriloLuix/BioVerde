@@ -9,6 +9,7 @@ const config: Config = {
         open_sans: ['Open Sans', 'sans-serif'], 
         bebas_neue: ['Bebas Neue', 'sans-serif'],
         inter: ['Inter' , 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
       },
     },
   },

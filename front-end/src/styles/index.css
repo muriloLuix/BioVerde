@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap'); /* Font Opens Sans */
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap'); /* Font Bebas Neue */
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap'); /* Font Inter */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap'); /* Font Montserrat */
 
 
 @import "tailwindcss";
@@ -123,7 +124,6 @@ background: #a0a0a0; /* cor mais escura no hover */
     animation: border-expand 0.3s ease-in-out forwards;
 }
 
-
-
-
-
+body {
+  font-family: 'Montserrat', sans-serif;
+}

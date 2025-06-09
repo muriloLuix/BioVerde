@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import { Toast } from "radix-ui";
 import { Loader2 } from "lucide-react";
-
 
 export default function NewPassword({ onNext }: StepProps) {
   const [senha, setSenha] = useState("");
@@ -17,42 +15,41 @@ export default function NewPassword({ onNext }: StepProps) {
   const navigate = useNavigate();
 
   const api = axios.create({
-    baseURL: 'http://localhost/BioVerde/back-end/',
+    baseURL: "http://localhost/BioVerde/back-end/",
     withCredentials: true,
     headers: {
-      'Content-Type': 'application/json',
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   const redefinirSenha = async () => {
     if (!senha || !confirmarSenha) {
       setMensagem("Por favor, insira a nova senha nos dois campos.");
       return;
-    } else if (senha.length < 8) {
-      setMensagem("A senha deve ter pelo menos 8 caracteres");
+    }
+    if (senha.length < 8) {
+      setMensagem("A senha deve ter pelo menos 8 caracteres.");
       return;
-    } else if (senha !== confirmarSenha) {
-      setMensagem("As Senhas devem ser iguais.");
+    }
+    if (senha !== confirmarSenha) {
+      setMensagem("As senhas devem ser iguais.");
       return;
     }
 
     try {
       setLoading(true);
-      const sessionId = localStorage.getItem('session_id');
+      const sessionId = localStorage.getItem("session_id");
+
       const response = await api.post(
-        'recuperar-senha/nova.senha.php',
-        { senha },    {
-          headers: {
-            'X-Session-ID': sessionId
-          },
-          withCredentials: true
-        },
+        "recuperar-senha/nova.senha.php",
+        { senha },
+        {
+          headers: { "X-Session-ID": sessionId || "" },
+        }
       );
 
-      console.log("Resposta do back-end:", response.data); 
-       
       if (response.data.success) {
-        setMensagem("")
+        setMensagem("");
         setOpen(true);
         setTimeout(() => {
           onNext();
@@ -63,65 +60,76 @@ export default function NewPassword({ onNext }: StepProps) {
       }
     } catch {
       setMensagem("Erro ao redefinir a senha.");
-
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      <span className="font-[open_sans] text-lg shadow-text">
-        Crie um nova senha
-      </span>
-      <p>Digite sua nova senha e confirme:</p>
+    <div className="w-full font-montserrat space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-700">Nova Senha</h2>
+        <p className="text-sm text-gray-600">
+          Digite e confirme sua nova senha abaixo.
+        </p>
+      </div>
+
       <Password
         id="newPassword"
         name="newPassword"
-        placeholder="Insira sua nova senha"
+        placeholder="Nova senha"
         value={senha}
         onChange={(e) => setSenha(e.target.value)}
+        className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
       />
+
       <Password
         id="confirmPassword"
         name="confirmPassword"
-        placeholder="Confirme sua nova senha"
+        placeholder="Confirmar nova senha"
         value={confirmarSenha}
         onChange={(e) => setConfirmarSenha(e.target.value)}
+        className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
       />
+
       {mensagem && (
-        <p className="bg-corErro w-full p-3 text-center rounded-sm">
+        <p className="text-red-600 bg-red-100 p-2 text-center rounded text-sm font-medium">
           {mensagem}
         </p>
       )}
+
       <button
-        className="bg-verdePigmento cursor-pointer tracking-wide w-[200px] h-12 p-2 m-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-[25px] sombra flex place-content-center"
         onClick={redefinirSenha}
         disabled={loading}
+        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center"
       >
         {loading ? (
-          <Loader2 className="animate-spin h-7 w-7" />
+          <Loader2 className="animate-spin h-6 w-6" />
         ) : (
           "Redefinir Senha"
         )}
       </button>
-      <Link to={"/"} className="text-gray-300 cursor-pointer hover:underline">
-        <i className="fa-solid fa-arrow-left" /> Voltar para o login
+
+      <Link
+        to="/"
+        className="text-sm text-gray-500 hover:underline text-center block"
+      >
+        ← Voltar para o login
       </Link>
 
       <Toast.Provider swipeDirection="right">
-          <Toast.Root
-          className="fixed bottom-4 right-4 w-80 p-4 rounded-lg text-white bg-verdePigmento shadow-lg"
+        <Toast.Root
+          className="fixed bottom-4 left-4 w-80 p-4 rounded-lg text-white bg-green-700 shadow-lg z-50"
           open={open}
           onOpenChange={setOpen}
           duration={3000}
-          >
-            <Toast.Title className="font-bold">Sucesso!</Toast.Title>
-            <Toast.Description>Senha redefinida com sucesso!</Toast.Description>
-          </Toast.Root>
+        >
+          <Toast.Title className="font-bold">Sucesso!</Toast.Title>
+          <Toast.Description>Senha redefinida com sucesso!</Toast.Description>
+        </Toast.Root>
 
-          <Toast.Viewport className="fixed bottom-4 right-4" />
-        </Toast.Provider>
+        <Toast.Viewport className="fixed bottom-4 left-4 z-50" />
+      </Toast.Provider>
     </div>
   );
 }

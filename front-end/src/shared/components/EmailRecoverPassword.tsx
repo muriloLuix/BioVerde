@@ -11,36 +11,27 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
   const [success, setSuccess] = useState(false);
 
   const api = axios.create({
-    baseURL: 'http://localhost/BioVerde/back-end/',
-    withCredentials: true, 
+    baseURL: "http://localhost/BioVerde/back-end/",
+    withCredentials: true,
     headers: {
-      'Content-Type': 'application/json',
-    }
+      "Content-Type": "application/json",
+    },
   });
 
   const verificarEmail = async () => {
-
     if (!email) {
       setMensagem("Por favor, insira um e-mail.");
       return;
     }
-  
+
     try {
       setLoading(true);
-      const response = await api.post(
-        "recuperar-senha/recuperar.senha.php",
-        { email },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true
-        }
-      );
-      console.log("Resposta do back-end:", response.data);
-      
+      const response = await api.post("recuperar-senha/recuperar.senha.php", {
+        email,
+      });
+
       if (response.data.success) {
-        localStorage.setItem('session_id', response.data.session_id);
+        localStorage.setItem("session_id", response.data.session_id);
         setSuccess(true);
         setMensagem("Código enviado para seu e-mail!");
         setTimeout(() => {
@@ -48,55 +39,49 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
         }, 2000);
       } else {
         setMensagem("E-mail não cadastrado.");
-        setTimeout(() => {
-          setMensagem("");
-        }, 3000);
+        setSuccess(false);
+        setTimeout(() => setMensagem(""), 3000);
       }
     } catch (error) {
       setMensagem("Erro ao conectar com o servidor.");
-      setTimeout(() => {
-        setMensagem("");
-      }, 2000);
-      console.error(error);
+      setSuccess(false);
+      setTimeout(() => setMensagem(""), 3000);
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
-    <div className="h-full box-border p-6 flex flex-col justify-center ">
-      <div className="h-full flex flex-col gap-8">
-        <span className="font-[open_sans] text-lg shadow-text">
-          Redefina a senha em duas Etapas
-        </span>
-        <span>Digite seu e-mail para receber um código de recuperação:</span>
-        <Email 
-          value={email}
-          onChange={(e) => { setEmail(e.target.value); }}
-          required
-          autoFocus 
-        />
-        {mensagem && (
-          <p className={`w-full p-2 text-center rounded-sm ${success ? "bg-corSucesso" : "bg-corErro "}`}>
-            {mensagem}
-          </p>
+    <div className="w-full space-y-6 font-montserrat">
+      <Email
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+        autoFocus
+        className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-green-500 focus:border-green-500"
+      />
+
+      {mensagem && (
+        <p
+          className={`text-center p-2 rounded font-medium text-sm ${
+            success ? "bg-green-100 text-green-800" : "bg-red-100 text-red-700"
+          }`}
+        >
+          {mensagem}
+        </p>
+      )}
+
+      <button
+        onClick={verificarEmail}
+        disabled={loading}
+        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center"
+      >
+        {loading ? (
+          <Loader2 className="animate-spin h-6 w-6" />
+        ) : (
+          "Enviar Código"
         )}
-        {/*Mensagem para erros*/}
-        {/* <div className="flex justify-center items-center  w-full"> */}
-          <button
-            className="bg-verdePigmento cursor-pointer flex place-content-center tracking-wide w-full h-12 p-2 m-x-auto rounded text-white font-[bebas_neue] hover:bg-verdeGrama transition text-xl sombra"
-            onClick={verificarEmail}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="animate-spin h-7 w-7" />
-            ) : (
-              "Enviar Código"
-            )}
-          </button>
-        {/* </div> */}
-      </div>
+      </button>
     </div>
   );
 }
