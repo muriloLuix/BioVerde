@@ -468,7 +468,6 @@ export default function Orders() {
 		setOpenOrderModal(true);
 	};
 
-	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 	/* ----- Definição de colunas e dados que a tabela de Pedidos vai receber ----- */
 
 	const gridRef = useRef<AgGridReact>(null);
@@ -539,6 +538,7 @@ export default function Orders() {
 				<div className="flex gap-2 mt-2.5 items-center justify-center">
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
+<<<<<<< Updated upstream
 						title="Editar Lote"
 						onClick={() => {
 							if (params.data) {
@@ -556,6 +556,7 @@ export default function Orders() {
 					{params.context.userLevel === "Administrador" && (
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
+<<<<<<< Updated upstream
 							title="Excluir Lote"
 							onClick={() => {
 								if (params.data) handleDeleteClick(params.data);
