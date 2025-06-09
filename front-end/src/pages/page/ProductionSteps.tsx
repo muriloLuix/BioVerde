@@ -61,7 +61,7 @@ export default function ProductionSteps() {
         checkAuth({ navigate, setMessage, setOpenNoticeModal });
     }, [navigate]);
 
-    //Carrega a lista os lotes e as opções nos selects ao renderizar a página
+    //Carrega a lista de Etapas e as opções nos selects ao renderizar a página
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -255,7 +255,7 @@ export default function ProductionSteps() {
 		setOpenEditModal(true);
 	};
 
-	// função para atualizar o lote após a edição dele
+	// função para atualizar a Etapa após a edição dela
 	const handleUpdateStep = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -303,7 +303,7 @@ export default function ProductionSteps() {
 
 	/* ----- Funcões para Exclusão de Etapas ----- */
 
-	//função para puxar os dados do lote que será excluido
+	//função para puxar os dados da Etapa que será excluido
     const handleDelete = (etapa: Steps) => {
         setDeleteStep({
             etor_id: etapa.etor_id,
@@ -313,7 +313,7 @@ export default function ProductionSteps() {
         setOpenDeleteModal(true);
     }; 
     
-    // função para excluir um lote
+    // função para excluir uma Etapa
 	const handleDeleteStep = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const dataToSend = { ...deleteStep, dproduct: selectedProduct?.produto_nome };
@@ -598,7 +598,7 @@ export default function ProductionSteps() {
                 <div className="flex gap-2 mt-2.5 items-center justify-center">
                     <button
                         className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                        title="Editar Lote"
+                        title="Editar Etapa"
                         onClick={() => { if(params.data) handleEdit(params.data) }}
                     >
                         <Pencil size={18} />
@@ -606,7 +606,7 @@ export default function ProductionSteps() {
                     {params.context.userLevel === "Administrador" && (
                         <button
                             className="text-red-600 hover:text-red-800 cursor-pointer"
-                            title="Excluir Lote"
+                            title="Excluir Etapa"
                             onClick={() => { if(params.data) handleDelete(params.data) }}
                         >
                             <Trash2 size={18} />

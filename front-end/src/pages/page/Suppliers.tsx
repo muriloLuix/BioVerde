@@ -478,7 +478,7 @@ export default function Suppliers() {
 		);
 	};
 
-	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
+	/* ----- Definição de colunas e dados que a tabela de Fornecedores vai receber ----- */
 
 	const gridRef = useRef<AgGridReact>(null);
 	const [rowData, setRowData] = useState<Supplier[]>([]);
@@ -527,7 +527,7 @@ export default function Suppliers() {
 				<div className="flex gap-2 mt-2.5 items-center justify-center">
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
-						title="Editar Lote"
+						title="Editar Fornecedor"
 						onClick={() => { if(params.data) {
 							handleEditClick(params.data); 
 							setErrors({...errors, isCepValid: false})
@@ -538,7 +538,7 @@ export default function Suppliers() {
 					{params.context.userLevel === "Administrador" && (
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
-							title="Excluir Lote"
+							title="Excluir Fornecedor"
 							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
 						>
 							<Trash2 size={18} />

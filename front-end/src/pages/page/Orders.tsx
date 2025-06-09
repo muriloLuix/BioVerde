@@ -469,6 +469,7 @@ export default function Orders() {
 	};
 
 	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
+	/* ----- Definição de colunas e dados que a tabela de Pedidos vai receber ----- */
 
 	const gridRef = useRef<AgGridReact>(null);
 	const [columnDefs] = useState<ColDef[]>([
@@ -545,6 +546,10 @@ export default function Orders() {
 								setErrors({ isCepValid: false });
 							}
 						}}
+=======
+						title="Editar Pedido"
+						onClick={() => { if(params.data) {handleEditClick(params.data); setErrors({isCepValid: false})} }}
+>>>>>>> Stashed changes
 					>
 						<Pencil size={18} />
 					</button>
@@ -555,6 +560,10 @@ export default function Orders() {
 							onClick={() => {
 								if (params.data) handleDeleteClick(params.data);
 							}}
+=======
+							title="Excluir Pedido"
+							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+>>>>>>> Stashed changes
 						>
 							<Trash2 size={18} />
 						</button>

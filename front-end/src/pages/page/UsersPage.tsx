@@ -538,7 +538,7 @@ export default function UsersPage() {
 		);
 	};
 
-	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
+	/* ----- Definição de colunas e dados que a tabela de usuarios vai receber ----- */
 
     const gridRef = useRef<AgGridReact>(null);
     const [rowData, setRowData] = useState<User[]>([]);
@@ -574,7 +574,7 @@ export default function UsersPage() {
                 <div className="flex gap-2 mt-2.5 items-center justify-center">
                     <button
                         className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                        title="Editar Lote"
+                        title="Editar Usuário"
                         onClick={() => { if(params.data) handleEditClick(params.data) }}
                     >
                         <Pencil size={18} />
@@ -582,7 +582,7 @@ export default function UsersPage() {
                     {params.context.userLevel === "Administrador" && (
                         <button
                             className="text-red-600 hover:text-red-800 cursor-pointer"
-                            title="Excluir Lote"
+                            title="Excluir Usuário"
                             onClick={() => { if(params.data) handleDeleteClick(params.data) }}
                         >
                             <Trash2 size={18} />

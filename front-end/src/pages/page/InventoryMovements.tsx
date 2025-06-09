@@ -10,6 +10,8 @@ import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridO
 import { PackagePlus, PackageMinus, FileSpreadsheet, FileText, Loader2, X } from "lucide-react";
 import { Modal, NoticeModal, SmartField } from "../../shared";
 import { SelectEvent, Movements, FormDataMovements } from "../../utils/types";
+// import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
+import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function InventoryMovements() {
     const [openStockInModal, setOpenStockInModal] = useState(false);
@@ -18,7 +20,6 @@ export default function InventoryMovements() {
     const [successMsg, setSuccessMsg] = useState(false);
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState<Set<string>>(new Set());
-    // const [userLevel, setUserLevel] = useState("");
     const [options, setOptions] = useState<Movements>();
     const [formData, setFormData] = useState<FormDataMovements>({
         produto: "",
@@ -265,6 +266,9 @@ export default function InventoryMovements() {
 	};
 
     /* ----- Outras Funções ----- */
+
+    //Verifica nível de acesso do usuário
+	useCheckAccessLevel();
 
     //OnChange dos campos
     const handleChange = (
