@@ -538,33 +538,16 @@ export default function Orders() {
 				<div className="flex gap-2 mt-2.5 items-center justify-center">
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
-<<<<<<< Updated upstream
-						title="Editar Lote"
-						onClick={() => {
-							if (params.data) {
-								handleEditClick(params.data);
-								setErrors({ isCepValid: false });
-							}
-						}}
-=======
 						title="Editar Pedido"
 						onClick={() => { if(params.data) {handleEditClick(params.data); setErrors({isCepValid: false})} }}
->>>>>>> Stashed changes
 					>
 						<Pencil size={18} />
 					</button>
 					{params.context.userLevel === "Administrador" && (
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
-<<<<<<< Updated upstream
-							title="Excluir Lote"
-							onClick={() => {
-								if (params.data) handleDeleteClick(params.data);
-							}}
-=======
 							title="Excluir Pedido"
 							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
->>>>>>> Stashed changes
 						>
 							<Trash2 size={18} />
 						</button>
