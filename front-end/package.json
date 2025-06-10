@@ -20,7 +20,7 @@
     "ag-grid-react": "^33.2.4",
     "axios": "^1.8.2",
     "classnames": "^2.5.1",
-    "framer-motion": "^12.6.2",
+    "framer-motion": "^12.16.0",
     "lucide-react": "^0.479.0",
     "primereact": "^10.9.3",
     "radix-ui": "^1.1.3",

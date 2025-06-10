@@ -84,7 +84,7 @@ const BatchRegister: React.FC<Props> = ({
       <div className="flex gap-10">
         <SmartField
           fieldName="quant_max"
-          fieldText="Capacidade Máxima"
+          fieldText="Capacidade Máx"
           error={errors.quantityMax ? "*" : undefined}
           fieldClassname="flex flex-col flex-1"
           min={1}

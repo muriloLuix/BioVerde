@@ -88,7 +88,7 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
-	const [rowData, setRowData] = useState<Order[]>([]);
+	
 	/* ----- useEffects e Requisições via Axios ----- */
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
@@ -142,6 +142,8 @@ export default function Orders() {
 			});
 		}
 	};
+
+	console.log(selectedOrder)
 
 	const fetchData = async () => {
 		try {
@@ -482,6 +484,7 @@ export default function Orders() {
 
 	/* ----- Definição de colunas e dados que a tabela de Pedidos vai receber ----- */
 
+	const [rowData, setRowData] = useState<Order[]>([]);
 	const gridRef = useRef<AgGridReact>(null);
 	const [columnDefs] = useState<ColDef[]>([
 		{ field: "pedido_id", headerName: "ID", filter: true, width: 100 },
@@ -529,12 +532,7 @@ export default function Orders() {
 			filter: false,
 		},
 		{ field: "pedido_valor_total", headerName: "Valor Total", width: 130 },
-		{
-			field: "pedido_telefone",
-			headerName: "Telefone",
-			filter: true,
-			width: 160,
-		},
+		{ field: "pedido_telefone", headerName: "Telefone", filter: true, width: 160 },
 		{ field: "pedido_cep", headerName: "CEP", filter: true, width: 180 },
 		{ field: "pedido_endereco", headerName: "Endereço", width: 200 },
 		{ field: "pedido_num_endereco", headerName: "Nº", width: 100 },
@@ -571,6 +569,23 @@ export default function Orders() {
 			filter: false,
 		},
 	]);
+
+	/* ----- Definição de colunas e dados que a tabela de Itens do Pedido vai receber ----- */
+
+	const [columnDefsItems] = useState<ColDef[]>([
+		{ field: "pedidoitem_id", headerName: "ID", width: 50, filter: true },
+		{ field: "produto_nome", headerName: "Produto", width: 180 },
+		{ field: "pedidoitem_quantidade", headerName: "Qtd.", width: 110 },
+		{
+			field: "pedidoitem_preco", headerName: "Preço Unitário", width: 150,
+			valueFormatter: (params) => `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`
+		},
+		{
+			field: "pedidoitem_subtotal", headerName: "Subtotal", width: 140,
+			valueFormatter: (params) => `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`
+		}
+	]);
+
 
 	//Esilos da Tabela
 	const myTheme = themeQuartz.withParams({
@@ -646,7 +661,7 @@ export default function Orders() {
 								<button
 									onClick={() => {
 										const params = {
-											fileName: "fornecedores.csv",
+											fileName: "pedidos.csv",
 											columnSeparator: ";",
 										};
 										gridRef.current?.api.exportDataAsCsv(params);
@@ -659,7 +674,7 @@ export default function Orders() {
 							</div>
 						</div>
 
-						{/* Tabela de Fornecedores */}
+						{/* Tabela de pedidos */}
 						<div className="h-[75vh]">
 							<AgGridReact
 								modules={[AllCommunityModule]}
@@ -686,7 +701,7 @@ export default function Orders() {
 					withExitButton
 					openModal={openOrderModal}
 					setOpenModal={setOpenOrderModal}
-					modalWidth="min-w-[700px]"
+					modalWidth="min-w-[700px] min-h-[40vh]"
 					modalTitle={
 						<span>
 							Nº do Pedido: <span className="font-normal">{numOrder}</span>
@@ -697,52 +712,31 @@ export default function Orders() {
 							Cliente: <span className="font-normal">{clientOrder}</span>
 						</span>
 					}
-					totalPedido={totalOrder}
+					totalPedido={selectedOrder.length > 0 ? totalOrder : 0}
 				>
-					<div className="max-w-[910px] max-h-[300px] overflow-x-auto overflow-y-auto">
-						<table className="w-full border-collapse">
-							<thead className="bg-verdePigmento text-white shadow-thead">
-								<tr>
-									{["#", "Produto", "Qtd.", "Preço Unitário", "Subtotal"].map(
-										(header) => (
-											<th
-												key={header}
-												className="border border-black px-2 py-3 whitespace-nowrap"
-											>
-												{header}
-											</th>
-										)
-									)}
-								</tr>
-							</thead>
-							<tbody>
-								{selectedOrder.map((item, index) => {
-									const itemData = [
-										index + 1,
-										item.produto_nome,
-										`${item.pedidoitem_quantidade} ${item.pedidoitem_quantidade}`,
-										`R$ ${item.pedidoitem_preco}`,
-										`R$ ${item.pedidoitem_subtotal.toFixed(2)}`,
-									];
-									return (
-										<tr
-											key={index}
-											className={index % 2 === 0 ? "bg-white" : "bg-[#E7E7E7]"}
-										>
-											{itemData.map((value, i) => (
-												<td
-													key={i}
-													className="border border-black px-3 py-3 text-center whitespace-nowrap"
-												>
-													{value}
-												</td>
-											))}
-										</tr>
-									);
-								})}
-							</tbody>
-						</table>
-					</div>
+					{/* Tabela de Itens dos Pedidos */}
+					{selectedOrder.length > 0 ? (
+						<div className="h-[40vh]">
+							<AgGridReact
+								modules={[AllCommunityModule]}
+								theme={myTheme}
+								ref={gridRef}
+								rowData={selectedOrder}
+								columnDefs={columnDefsItems}
+								localeText={agGridTranslation}
+								pagination
+								paginationPageSize={10}
+								paginationPageSizeSelector={[10, 25, 50, 100]}
+								loading={loading.has("orders")}
+								overlayLoadingTemplate={overlayLoadingTemplate}
+								overlayNoRowsTemplate={overlayNoRowsTemplate}
+							/>
+						</div>
+					) : (
+						<p className="flex justify-center items-center flex-1">
+							Esse pedido não possui itens cadastrados.
+						</p>
+					)}
 				</Modal>
 
 				{/* Modal de Relatório */}
@@ -800,7 +794,7 @@ export default function Orders() {
 					<OrderDelete deleteOrder={deleteOrder} handleChange={handleChange} />
 				</Modal>
 
-				{/* Alert para confirmar exclusão do fornecedor */}
+				{/* Alert para confirmar exclusão do pedido */}
 				<ConfirmationModal
 					openModal={openConfirmModal}
 					setOpenModal={setOpenConfirmModal}

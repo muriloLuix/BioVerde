@@ -1,4 +1,5 @@
 import { Login } from "../../shared";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   return (
@@ -6,7 +7,13 @@ export default function LoginPage() {
       {/* Seção de Login */}
       <div className="w-full md:w-1/2 flex items-center justify-center bg-white px-6 py-12 shadow-lg">
         <div className="max-w-md w-full">
-          <div className="flex items-center mb-6 gap-4">
+          {/* Logo */}
+          <motion.div
+            initial={{ y: 0, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex items-center mb-6 gap-4"
+          >
             <img
               src="/logo-bioverde.png"
               alt="Logo Bio Verde"
@@ -15,7 +22,8 @@ export default function LoginPage() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-wide text-green-700">
               BIOVERDE
             </h1>
-          </div>
+          </motion.div>
+
           <h2 className="text-2xl font-bold italic mb-1">Seja bem vindo</h2>
           <p className="text-gray-600 mb-8">
             Por favor, faça o login na sua conta.
@@ -36,12 +44,19 @@ export default function LoginPage() {
 			<div className="absolute inset-0 bg-green-200 opacity-40 mix-blend-multiply"></div>
 
 			{/* Texto alinhado à direita e centralizado verticalmente */}
-			<div className="relative z-10 flex items-center justify-end w-full h-full pr-10">
-				<div className="text-white text-4xl font-semibold text-right">
-					<p className="leading-relaxed">Da terra com cuidado,</p>
-					<p>para sua mesa com saúde.</p>
-				</div>
-			</div>
+			<div className="w-full h-full overflow-hidden">
+        <motion.div
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 1 }}
+                className="relative z-10 flex items-center justify-end w-full h-full pr-10"
+              >
+                <div className="text-white text-4xl font-semibold text-right">
+                  <p className="leading-relaxed">Da terra com cuidado,</p>
+                  <p>para sua mesa com saúde.</p>
+                </div>
+              </motion.div>
+      </div>
 		</div>
 	  </div>
 	);

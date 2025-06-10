@@ -9,8 +9,6 @@ type ModalProps = {
 	buttonClassname?: string;
 	modalTitle: string | React.ReactNode;
 	modalSecondTitle?: string | React.ReactNode;
-	obsText?: string;
-	isObsModal?: boolean;
 	withExitButton?: boolean;
 	withXButton?: boolean;
 	leftButtonText?: string;
@@ -37,8 +35,6 @@ const Modal = ({
 	modalSecondTitle,
 	withExitButton,
 	modalWidth,
-	obsText,
-	isObsModal,
 	rightButtonText,
 	leftButtonText,
 	isOrderModal,
@@ -76,21 +72,12 @@ const Modal = ({
 							modalSecondTitle
 						)}
 					</Dialog.Title>
-					<Dialog.Description className="py-4 px-2 pb-0 flex flex-col gap-2">
+					<Dialog.Description className={`py-4 px-2 pb-0 flex flex-col gap-2 ${isOrderModal && "justify-between min-h-[40vh]"}`}>
 						{withExitButton ? (
-							<>
-								{isObsModal ? (
-									obsText ? (
-										<p className="text-gray-800 break-words">{obsText}</p>
-									) : (
-										<p className="text-gray-800 break-words">
-											Não há nenhuma observação.
-										</p>
-									)
-								) : (
-									children
-								)}
-
+							<>	
+			
+								{children}
+	
 								<div
 									className={`mt-3 ${
 										isOrderModal && "flex justify-between items-center"
