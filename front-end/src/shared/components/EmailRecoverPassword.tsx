@@ -30,26 +30,26 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
 				email,
 			});
 
-			if (response.data.success) {
-				localStorage.setItem("session_id", response.data.session_id);
-				setSuccess(true);
-				setMensagem("Código enviado para seu e-mail!");
-				setTimeout(() => {
-					onNext();
-				}, 2000);
-			} else {
-				setMensagem("E-mail não cadastrado.");
-				setSuccess(false);
-				setTimeout(() => setMensagem(""), 3000);
-			}
-		} catch (error) {
-			setMensagem("Erro ao conectar com o servidor.");
-			setSuccess(false);
-			setTimeout(() => setMensagem(""), 3000);
-		} finally {
-			setLoading(false);
-		}
-	};
+      if (response.data.success) {
+        localStorage.setItem("session_id", response.data.session_id);
+        setSuccess(true);
+        setMensagem("Código enviado para seu e-mail!");
+        setTimeout(() => {
+          onNext();
+        }, 2000);
+      } else {
+        setMensagem("E-mail não cadastrado.");
+        setSuccess(false);
+        setTimeout(() => setMensagem(""), 3000);
+      }
+    } catch {
+      setMensagem("Erro ao conectar com o servidor.");
+      setSuccess(false);
+      setTimeout(() => setMensagem(""), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 	return (
 		<div className="w-full space-y-6 font-montserrat">
@@ -71,17 +71,17 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
 				</p>
 			)}
 
-			<button
-				onClick={verificarEmail}
-				disabled={loading}
-				className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center hover:cursor-pointer"
-			>
-				{loading ? (
-					<Loader2 className="animate-spin h-6 w-6" />
-				) : (
-					"Enviar Código"
-				)}
-			</button>
-		</div>
-	);
+      <button
+        onClick={verificarEmail}
+        disabled={loading}
+        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center"
+      >
+        {loading ? (
+          <Loader2 className="animate-spin h-6 w-6" />
+        ) : (
+          "Enviar Código"
+        )}
+      </button>
+    </div>
+  );
 }

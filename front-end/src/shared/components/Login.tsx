@@ -42,19 +42,19 @@ export default function Login() {
 				}
 			);
 
-			if (response.data.success) {
-				setMessage("");
-				setOpen(true);
-				setTimeout(() => navigate("/app/dashboard"), 1000);
-			} else {
-				setMessage(response.data.message);
-			}
-		} catch (error) {
-			setMessage("Erro ao conectar com o servidor");
-		} finally {
-			setLoading(false);
-		}
-	};
+      if (response.data.success) {
+        setMessage("");
+        setOpen(true);
+        setTimeout(() => navigate("/app/dashboard"), 1000);
+      } else {
+        setMessage(response.data.message);
+      }
+    } catch {
+      setMessage("Erro ao conectar com o servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 	// mostrar erro inline enquanto digita
 	const passwordTooShort =
@@ -125,20 +125,15 @@ export default function Login() {
 				</p>
 			)}
 
-			{/* Botão de envio */}
-			<Form.Submit asChild>
-				<button
-					type="submit"
-					className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 hover:cursor-pointer"
-					disabled={loading}
-				>
-					{loading ? (
-						<Loader2 className="m-auto animate-spin h-6 w-6" />
-					) : (
-						"Entrar"
-					)}
-				</button>
-			</Form.Submit>
+      <Form.Submit asChild>
+        <button
+          type="submit"
+          className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex place-content-center cursor-pointer"
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="animate-spin h-6 w-6" /> : "Entrar"}
+        </button>
+      </Form.Submit>
 
 			{/* Toast de sucesso */}
 			<Toast.Provider swipeDirection="right">

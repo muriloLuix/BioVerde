@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { checkAuth } from "../../utils/checkAuth";
@@ -93,6 +94,17 @@ export default function Orders() {
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
 	const url = useLocation();
+
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+		fetchData();
+	}, []);
+
+	useEffect(() => {
+		if (rowData.length > 0) {
+			buildFilter();
+		}
+	}, [loading]);
 
 	//Carrega os clientes e status do pedido
 	const fetchOptions = async () => {
@@ -590,17 +602,6 @@ export default function Orders() {
 			navigate(url.pathname, { replace: true });
 		}
 	};
-
-	useEffect(() => {
-		checkAuth({ navigate, setMessage, setOpenNoticeModal });
-		fetchData();
-	}, []);
-
-	useEffect(() => {
-		if (rowData.length > 0) {
-			buildFilter();
-		}
-	}, [loading]);
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">

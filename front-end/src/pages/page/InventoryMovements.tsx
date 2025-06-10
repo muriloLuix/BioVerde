@@ -60,18 +60,8 @@ export default function InventoryMovements() {
                         "http://localhost/BioVerde/back-end/movimentacoes/listar_movimentacoes.php",
                         { withCredentials: true, headers: { Accept: "application/json" }}
                     ),
-                    // axios.get(
-                    //     "http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-                    //     { withCredentials: true, headers: { "Content-Type": "application/json" }}
-                    // ),
                 ]);
                 await fetchOptions();
-                // if (userLevelResponse.data.success) {
-                //     setUserLevel(userLevelResponse.data.userLevel);
-                // } else {
-                //     setOpenNoticeModal(true);
-                //     setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário" );
-                // }
                 if (movimentacoesResponse.data.success) {
                     setRowData(movimentacoesResponse.data.movimentacoes);
                 } else {
@@ -91,10 +81,6 @@ export default function InventoryMovements() {
             }
         };
         fetchData();
-    }, []);
-
-    useEffect(() => {
-        fetchOptions();
     }, []);
 
     //Função para Atualizar a Tabela após ação
