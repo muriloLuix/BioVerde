@@ -1,4 +1,4 @@
-// front-end/src/Login.tsx
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Form, Toast } from "radix-ui";

@@ -143,8 +143,6 @@ export default function Orders() {
 		}
 	};
 
-	console.log(selectedOrder)
-
 	const fetchData = async () => {
 		try {
 			setLoading(

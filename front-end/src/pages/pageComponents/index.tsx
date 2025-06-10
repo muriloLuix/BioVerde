@@ -21,3 +21,5 @@ export { default as ClientDelete } from "./clients/ClientDelete";
 
 export { default as OrderUpdate } from "./orders/OrderUpdate";
 export { default as OrderDelete } from "./orders/OrderDelete";
+
+export { default as StockInRegister } from "./movements/stockInRegister";
