@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
-import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText, X } from "lucide-react";
+import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ICellRendererParams, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
 import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { Modal, NoticeModal, ConfirmationModal } from "../../shared";
+import { Modal, NoticeModal, ConfirmationModal, ReportModal } from "../../shared";
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
@@ -457,6 +457,12 @@ export default function InventoryList() {
     //Verifica nível de acesso do usuário
 	useCheckAccessLevel();
 
+    //Para remover a barrinha vertical e a seta do select
+	const customComponents = {
+		DropdownIndicator: () => null, 
+		IndicatorSeparator: () => null, 
+	};
+
     //OnChange dos campos
     const handleChange = (
         event: 
@@ -768,6 +774,7 @@ export default function InventoryList() {
                 formData={formData}
                 options={options}
                 loading={loading}
+                customComponents={customComponents}
                 handleChange={handleChange}
                 handlePriceChange={handlePriceChange}
             />
@@ -853,47 +860,13 @@ export default function InventoryList() {
         />
 
         {/* Modal de Relatório */}
-        {relatorioModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">Relatório de Lotes</h2>
-                        <button
-                            onClick={() => setRelatorioModalOpen(false)}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            <X size={24} />
-                        </button>
-                    </div>
-                    <div className="flex-1 overflow-auto mb-4">
-                        {relatorioContent ? (
-                            <iframe
-                                src={relatorioContent}
-                                className="w-full h-full min-h-[70vh] border"
-                                title="Relatório de Lotes"
-                            />
-                        ) : (
-                            <p>Carregando relatório...</p>
-                        )}
-                    </div>
-                    <div className="flex justify-end gap-4">
-                        <a
-                            href={relatorioContent}
-                            download="relatorio_lotes.pdf"
-                            className="bg-verdeGrama text-white px-4 py-2 rounded hover:bg-[#246127]"
-                        >
-                            Baixar Relatório
-                        </a>
-                        <button
-                            onClick={() => setRelatorioModalOpen(false)}
-                            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                        >
-                            Fechar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
+        <ReportModal
+            openModal={relatorioModalOpen}
+            setOpenModal={setRelatorioModalOpen}
+            reportUrl={relatorioContent}
+            reportTitle="Relatório de Lotes"
+            fileName="relatorio_lotes.pdf"
+        />
         </>
     );
 }

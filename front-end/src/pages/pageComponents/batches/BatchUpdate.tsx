@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { SmartField } from "../../../shared";
 import { BatchOptions, FormDataBatch, SelectEvent } from "../../../utils/types";
@@ -5,6 +6,7 @@ import { BatchOptions, FormDataBatch, SelectEvent } from "../../../utils/types";
 interface Props {
   formData: FormDataBatch;
   options?: BatchOptions;
+  customComponents: any;
   loading: Set<string>;
   handleChange: (
     event:
@@ -18,6 +20,7 @@ const BatchUpdate: React.FC<Props> = ({
   formData,
   options,
   loading,
+  customComponents,
   handleChange,
   handlePriceChange,
 }) => {
@@ -28,6 +31,7 @@ const BatchUpdate: React.FC<Props> = ({
             fieldText="Código do lote"
             fieldClassname="flex flex-col flex-1"
             type="text"
+            isDisable
             value={formData.lote_codigo}
             onChange={handleChange}
             readOnly
@@ -36,6 +40,8 @@ const BatchUpdate: React.FC<Props> = ({
             fieldName="produto"
             fieldText="Produto"
             isSelect
+            isDisabled
+            components={customComponents}
             isClearable={false}
             placeholder="Selecione o produto"
             isLoading={loading.has("options")}

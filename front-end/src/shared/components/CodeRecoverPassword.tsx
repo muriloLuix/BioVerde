@@ -54,7 +54,7 @@ export default function CodeRecoverPassword({
 				setSuccess(false);
 				setMensagem(response.data.message);
 			}
-		} catch (error) {
+		} catch {
 			setSuccess(false);
 			setMensagem("Erro ao validar o código.");
 		} finally {
@@ -82,7 +82,7 @@ export default function CodeRecoverPassword({
 				setSuccess(false);
 				setMensagem(response.data.message);
 			}
-		} catch (error) {
+		} catch {
 			setSuccess(false);
 			setMensagem("Erro ao reenviar o código.");
 		} finally {

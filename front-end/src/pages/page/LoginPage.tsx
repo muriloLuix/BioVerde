@@ -1,7 +1,9 @@
 import { Login } from "../../shared";
 import { motion } from "framer-motion";
+import usePageTitle from "../../hooks/usePageTitle";
 
 export default function LoginPage() {
+  usePageTitle();
   return (
     <div className="flex flex-col md:flex-row h-screen font-montserrat">
       {/* Seção de Login */}

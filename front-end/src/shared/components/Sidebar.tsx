@@ -101,7 +101,7 @@ export default function Sidebar() {
         console.error("Erro ao fazer logout:", data.message);
         setLoggingOut(false);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Erro ao conectar: ", axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
         : err);

@@ -28,7 +28,7 @@ export default function RecoverPassword() {
 							className="h-14 w-14 md:h-20 md:w-20"
 						/>
 						<h1 className="text-4xl md:text-5xl font-bold tracking-wide text-green-700">
-							BIO VERDE<span className="text-blue-800">.</span>
+							BIOVERDE
 						</h1>
 					</div>
 					<h2 className="text-2xl font-bold italic mb-1">Recuperar Senha</h2>
