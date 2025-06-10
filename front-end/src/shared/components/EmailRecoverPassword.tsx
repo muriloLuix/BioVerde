@@ -74,7 +74,7 @@ export default function EmailRecoverPassword({ onNext }: StepProps) {
       <button
         onClick={verificarEmail}
         disabled={loading}
-        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center"
+        className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex justify-center items-center cursor-pointer"
       >
         {loading ? (
           <Loader2 className="animate-spin h-6 w-6" />
