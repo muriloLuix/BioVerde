@@ -15,8 +15,10 @@ interface Props {
   formData: FormDataSteps;
   selectedProduct: ProductsWithSteps | null;
   options?: StepOptions;
+  userLevel?: string;
   loading: Set<string>;
   errors: FieldErrors;
+  openStepNameModal?: () => void;
   createStepName?: (stepName: string) => Promise<void>;
   handleChange: (
     event:
@@ -31,6 +33,8 @@ const NewStep: React.FC<Props> = ({
   options,
   loading,
   errors,
+  userLevel,
+  openStepNameModal,
   createStepName,
   handleChange,
 }) => {
@@ -54,7 +58,10 @@ const NewStep: React.FC<Props> = ({
             isLoading={loading.has("options")}
             error={errors.step ? "*" : undefined}
             value={formData.etapa_nome_id}
+            userLevel={userLevel}
             onCreateNewOption={createStepName}
+            openManagementModal={openStepNameModal}
+            creatableConfigName="Gerenciar Nome de Etapas"
             placeholder="Digite o Nome da Etapa"
             onChangeSelect={handleChange}
             options={options?.nome_etapas.map((etapa) => ({

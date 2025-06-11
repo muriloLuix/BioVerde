@@ -734,6 +734,7 @@ export default function InventoryList() {
                 />
             </div>
         </Tabs.Content>
+
         {/* Modal de Cadastro de Lotes */}
         <Modal
             openModal={openRegisterModal}
@@ -758,6 +759,7 @@ export default function InventoryList() {
                 handlePriceChange={handlePriceChange}
             />
         </Modal>
+
         {/* Modal de Edição de Lotes */}
         <Modal
             openModal={openEditModal}
@@ -779,6 +781,7 @@ export default function InventoryList() {
                 handlePriceChange={handlePriceChange}
             />
         </Modal>
+
         {/* Modal de Exclusão */}
         <Modal
             openModal={openDeleteModal}
@@ -797,6 +800,7 @@ export default function InventoryList() {
                 handleChange={handleChange}
             />
         </Modal>
+        
         {/* Alert para confirmar exclusão do lote */}
         <ConfirmationModal
             openModal={openConfirmModal}
@@ -808,6 +812,7 @@ export default function InventoryList() {
             confirmationLeftButtonText="Cancelar"
             confirmationRightButtonText="Sim, excluir lote"
         />
+
         {/* Modal de Avisos */}
         <NoticeModal
             openModal={openNoticeModal}
@@ -815,7 +820,8 @@ export default function InventoryList() {
             successMsg={successMsg}
             message={message}
         />
-        {/* Modal de Cadastro de Produto */}
+
+        {/* Modal de Gerencimento de Produtos */}
         <Modal
             openModal={openProductModal}
             setOpenModal={setOpenProductModal}

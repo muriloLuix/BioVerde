@@ -10,7 +10,7 @@ import { Modal, NoticeModal, ConfirmationModal } from "../../shared";
 import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 import { ProductRegister, NewStep, UpdateStep, DeleteStep } from "../pageComponents";
-import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions, DeleteSteps } from "../../utils/types";
+import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions, DeleteSteps, StepNames } from "../../utils/types";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function ProductionSteps() {
@@ -22,6 +22,8 @@ export default function ProductionSteps() {
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openNewProductModal, setOpenNewProductModal] = useState(false);
 	const [openDeleteProductModal, setOpenDeleteProductModal] = useState(false);
+	const [openStepNameModal, setOpenStepNameModal] = useState(false);
+	const [openStepNameConfirmModal, setOpenStepNameConfirmModal] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [search, setSearch] = useState("");
@@ -170,6 +172,7 @@ export default function ProductionSteps() {
                     produtos: response.data.produtos,
 					nome_etapas: response.data.nome_etapas,
                 });
+				setRowDataStepName(response.data.nome_etapas)
             } else {
 				setSuccessMsg(false);
                 setOpenNoticeModal(true);
@@ -487,7 +490,7 @@ export default function ProductionSteps() {
 		setLoading((prev) => new Set([...prev, "options"]));
 		try {
 			const response = await axios.post(
-				"http://localhost/BioVerde/back-end/etapas/cadastrar_nome_etapa.php",
+				"http://localhost/BioVerde/back-end/nome_etapas/cadastrar_nome_etapa.php",
 				{ nomeEtapa: stepName },
 				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
 			);
@@ -510,6 +513,83 @@ export default function ProductionSteps() {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+	//Função para editar produto
+	const updateStepName = async (id: number, editedValue: string) => {
+		setLoading((prev) => new Set([...prev, "options"]));
+		try {
+			const dataToSend = {
+				etapa_nome_id: id,
+				etapa_nome: editedValue,
+			};
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/nome_etapas/editar_nome_etapa.php",
+				dataToSend,
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			console.log("Resposta do back-end:", response.data);
+			if (response.data.success) {
+				await fetchOptions();
+				setSuccessMsg(true);
+				setMessage("Nome da Etapa atualizada com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao atualizar Nome da Etapa.");
+			}
+		} catch (error) {
+            setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("options");
+				return newLoading;
+			});
+		}
+	};
+
+    //Função para excluir produto
+    const [deletedStepId, setDeletedStepId] = useState<number | null>(null);
+    
+    const handleDeleteStepName = (etapa: StepNames) => {
+        setDeletedStepId(etapa.etapa_nome_id);
+        setOpenStepNameConfirmModal(true);
+    };
+	const deleteStepName = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading((prev) => new Set([...prev, "deleteStepName"]));
+		try {
+			const response = await axios.post(
+				"http://localhost/BioVerde/back-end/nome_etapas/excluir_nome_etapa.php",
+				{ etapa_nome_id: deletedStepId },
+				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+			);
+			if (response.data.success) {
+				await fetchOptions();
+				setOpenStepNameConfirmModal(false);
+				setSuccessMsg(true);
+				setMessage("Nome da Etapa excluída com sucesso!");
+			} else {
+                setSuccessMsg(false);
+				setMessage(response.data.message || "Erro ao excluir Nome da Etapa.");
+			}
+		} catch (error) {
+			setSuccessMsg(false);
+            console.error(error);
+            setOpenNoticeModal(true);
+            setMessage("Erro ao conectar com o servidor")
+		} finally {
+			setOpenNoticeModal(true);
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				newLoading.delete("deleteStepName");
 				return newLoading;
 			});
 		}
@@ -619,6 +699,54 @@ export default function ProductionSteps() {
             filter: false
         }
     ]);
+
+	/* ----- Definição de colunas e dados que da tabela de produtos ----- */
+		
+	const [rowDataStepName, setRowDataStepName] = useState<StepNames[]>([]);
+	const [columnDefsStepName] = useState<ColDef[]>([
+		{
+			field: "etapa_nome",
+			headerName: "Nome da Etapa",
+			filter: true,
+			flex: 1,
+			editable: true,
+		},
+		{
+			headerName: "Ações",
+			field: "acoes",
+			width: 100,
+			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
+			cellRenderer: (params: ICellRendererParams) => {
+			return (
+				<div className="flex gap-2 items-center justify-center">
+				<button
+					className="text-blue-600 hover:text-blue-800 cursor-pointer"
+					title="Editar Etapa"
+					onClick={() => {
+						params.api.startEditingCell({
+							rowIndex: Number(params.node.rowIndex),
+							colKey: "etapa_nome",
+						});
+					}}
+				>
+					<Pencil size={18} />
+				</button>
+				{params.context.userLevel === "Administrador" && (
+					<button
+						className="text-red-600 hover:text-red-800 cursor-pointer"
+						title="Excluir Etapa"
+						onClick={() => handleDeleteStepName(params.data)}
+					>
+						<Trash2 size={18} />
+					</button>
+				)}
+				</div>
+			);
+			},
+			sortable: false,
+			filter: false,
+		},
+	]);
 
     //Esilos da Tabela
     const myTheme = themeQuartz.withParams({
@@ -889,6 +1017,8 @@ export default function ProductionSteps() {
 						selectedProduct={selectedProduct}
 						options={options}
 						loading={loading}
+						userLevel={userLevel}
+						openStepNameModal={() => setOpenStepNameModal(true)}
 						errors={errors}
 						createStepName={createStepName}
 						handleChange={handleChange}
@@ -950,6 +1080,50 @@ export default function ProductionSteps() {
 					isLoading={loading.has("deleteStep")}
 					confirmationLeftButtonText="Cancelar"
 					confirmationRightButtonText="Sim, excluir etapa"
+				/>
+
+				{/* Modal de Gerencimento de Nome de Etapas */}
+				<Modal
+					openModal={openStepNameModal}
+					setOpenModal={setOpenStepNameModal}
+					modalTitle="Gerenciamento de Nome de Etapas:"
+					withExitButton
+					withXButton
+					isLoading={loading.has("options")}
+				>
+					{/* Tabela de Produtos */}
+					<div className="h-[65vh]">
+						<AgGridReact
+							modules={[AllCommunityModule]}
+							theme={myTheme}
+							ref={gridRef}
+							rowData={rowDataStepName}
+							columnDefs={columnDefsStepName}
+							context={{ userLevel }}
+							localeText={agGridTranslation}
+							pagination
+							paginationPageSize={10}
+							paginationPageSizeSelector={[10, 25, 50, 100]}
+							loading={loading.has("options")}
+							overlayLoadingTemplate={overlayLoadingTemplate}
+							overlayNoRowsTemplate={overlayNoRowsTemplate}
+							onCellValueChanged={(params) => {
+								updateStepName(params.data.etapa_nome_id, params.data.etapa_nome);
+							}}
+						/>
+					</div>
+				</Modal>
+
+				{/* Alert para confirmar exclusão do nome da Etapa */}
+				<ConfirmationModal
+					openModal={openStepNameConfirmModal}
+					setOpenModal={setOpenStepNameConfirmModal}
+					confirmationModalTitle="Tem certeza que deseja excluir o nome da Etapa?"
+					confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+					onConfirm={deleteStepName}
+					isLoading={loading.has("deleteStepName")}
+					confirmationLeftButtonText="Cancelar"
+					confirmationRightButtonText="Sim, excluir"
 				/>
 
 				{/* Modal de Avisos */}
