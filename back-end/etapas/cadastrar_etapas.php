@@ -7,6 +7,14 @@ require_once "../usuarios/User.class.php";
 header('Content-Type: application/json');
 verificarAutenticacao($conn, $_SESSION['user_id']);
 /*************************************************/
+
+/**************** INICIALIZAÇÃO DE VARIÁVEIS ************************/
+$etapaOrdem = null;
+$nomeEtapa = '';
+$insumosFormatado = '';
+$data = [];
+$produtoId = null;
+/*************************************************/
 try {
 
     /**************** INSTÂNCIA AS CLASSES ************************/
@@ -121,11 +129,12 @@ try {
 
 } catch (Exception $e) {
     /**************** LOG DE ERRO ************************/
-    $etapasStr = !empty($data) ?
-        "Ordem: {$etapaOrdem}\n" .
-        "Etapa {$nomeEtapa}\n" .
-        "Insumos {$insumosFormatado}\n" .
-        formatarEtapasLog([$data]) : '';
+    $etapasStr = !empty($data) ? (
+        "Ordem: " . ($etapaOrdem ?? 'N/D') . "\n" .
+        "Etapa " . ($nomeEtapa ?? 'N/D') . "\n" .
+        "Insumos " . ($insumosFormatado ?? 'N/D') . "\n" .
+        formatarEtapasLog([$data])
+    ) : '';
 
     SalvarLog(
         "Erro ao cadastrar etapas para o produto {$produtoId}.\nMotivo: {$e->getMessage()}\nEtapas:\n{$etapasStr}",

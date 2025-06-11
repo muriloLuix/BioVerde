@@ -488,12 +488,10 @@ export default function Orders() {
 		{ field: "pedido_id", headerName: "ID", filter: true, width: 100 },
 		{ field: "cliente_nome", headerName: "Cliente", filter: true, width: 250 },
 		{
-			field: "pedido_dtCadastro",
-			headerName: "Data do Pedido",
+			field: "stapedido_nome",
+			headerName: "Status do Pedido",
 			filter: true,
-			width: 180,
-			valueGetter: (params) =>
-				new Date(params.data.pedido_dtCadastro).toLocaleDateString("pt-BR"),
+			width: 200,
 		},
 		{
 			field: "pedido_prevEntrega",
@@ -502,12 +500,6 @@ export default function Orders() {
 			width: 200,
 			valueGetter: (params) =>
 				new Date(params.data.pedido_prevEntrega).toLocaleDateString("pt-BR"),
-		},
-		{
-			field: "stapedido_nome",
-			headerName: "Status do Pedido",
-			filter: true,
-			width: 200,
 		},
 		{
 			headerName: "Itens do Pedido",
@@ -529,7 +521,12 @@ export default function Orders() {
 			sortable: false,
 			filter: false,
 		},
-		{ field: "pedido_valor_total", headerName: "Valor Total", width: 130 },
+		{ 
+			field: "pedido_valor_total", headerName: "Valor Total", width: 130,
+			valueFormatter: (params) => {
+                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
+            }
+		},
 		{ field: "pedido_telefone", headerName: "Telefone", filter: true, width: 160 },
 		{ field: "pedido_cep", headerName: "CEP", filter: true, width: 180 },
 		{ field: "pedido_endereco", headerName: "Endereço", width: 200 },
@@ -537,6 +534,14 @@ export default function Orders() {
 		{ field: "pedido_complemento", headerName: "Complemento", width: 180 },
 		{ field: "pedido_cidade", headerName: "Cidade", filter: true, width: 180 },
 		{ field: "pedido_estado", headerName: "Estado", filter: true, width: 120 },
+		{
+			field: "pedido_dtCadastro",
+			headerName: "Data do Pedido",
+			filter: true,
+			width: 180,
+			valueGetter: (params) =>
+				new Date(params.data.pedido_dtCadastro).toLocaleDateString("pt-BR"),
+		},
 		{ field: "pedido_observacoes", headerName: "Observações", width: 200 },
 		{
 			headerName: "Ações",

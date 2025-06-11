@@ -547,6 +547,10 @@ export default function InventoryList() {
             valueGetter: (params) => new Date(params.data.lote_dtColheita).toLocaleDateString("pt-BR")
         },
         {
+            headerName: "Data De Validade", field: "lote_dtValidade", width: 180, filter: true,
+            valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
+        },
+        {
             headerName: "Capacidade Máxima", width: 180,
             valueGetter: (params) => {
                 const value = Number(params.data.lote_quantMax);
@@ -559,10 +563,6 @@ export default function InventoryList() {
                 const value = Number(params.data.lote_quantAtual);
                 return `${Number.isInteger(value) ? value : value.toFixed(2)}${params.data.uni_sigla}`;
             }
-        },
-        {
-            headerName: "Data De Validade", field: "lote_dtValidade", width: 180, filter: true,
-            valueGetter: (params) => new Date(params.data.lote_dtValidade).toLocaleDateString("pt-BR")
         },
         {   
             field: "produto_preco", headerName: "Preço do Produto", width: 160, filter: true,

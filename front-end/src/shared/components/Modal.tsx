@@ -120,12 +120,12 @@ const Modal = ({
 										<div className="flex place-content-center mt-6">
 											<button
 												type="submit"
-												className={`bg-verdePigmento font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center ${isSideButton ? "p-2 w-40 h-11 mt-3 ml-7" : "p-4 w-50"}`}
+												className={`bg-verdePigmento font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center ${isSideButton ? "p-2 w-40 h-11 mt-3 ml-7 text-sm" : "p-4 w-50"}`}
 											>
 												{isLoading ? (
 													<Loader2 className="animate-spin h-6 w-6" />
 												) : (
-													registerButtonText
+													<span className={`${isSideButton && "mt-1"}`}>{registerButtonText}</span>
 												)}
 											</button>
 										</div>

@@ -61,22 +61,22 @@ $stmtInsert->bind_param("s", $produtoNome);
 /*********************************************************/
 
 $user = Usuario::find($user_id);
-$etapa = Etapa::find($etapa_id);
+// $etapa = Etapa::find($etor_id);
 
 if ($stmtInsert->execute()) {
     echo json_encode(["success" => true, "message" => "Produto cadastrado com sucesso!", "etapa_id" => $conn->insert_id]);
-    SalvarLog(
-        "O usuário ({$user->user_id} - {$user->user_nome}) cadastrou a etapa: \n\n Etapa: {$etapa->etapa_nome}\n\n No produto: {$produtoNome}",
-        Acoes::CADASTRAR_PRODUTO_ETAPA,
-        "sucesso"
-    );
+    // SalvarLog(
+    //     "O usuário ({$user->user_id} - {$user->user_nome}) cadastrou a etapa: \n\n Etapa: {$etapa->etapa_nome}\n\n No produto: {$produtoNome}",
+    //     Acoes::CADASTRAR_PRODUTO_ETAPA,
+    //     "sucesso"
+    // );
 } else {
     echo json_encode(["success" => false, "message" => "Erro ao cadastrar o Produto: " . $stmtInsert->error]);
-    SalvarLog(
-        "O usuário ({$user->user_id} - {$user->user_nome}) tentou cadastrar a etapa: \n\n Etapa: {$etapa->etapa_nome}\n\n No produto: {$produtoNome}. \n\n Erro: {$stmtInsert->error}",
-        Acoes::CADASTRAR_PRODUTO_ETAPA,
-        "erro"
-    );
+    // SalvarLog(
+    //     "O usuário ({$user->user_id} - {$user->user_nome}) tentou cadastrar a etapa: \n\n Etapa: {$etapa->etapa_nome}\n\n No produto: {$produtoNome}. \n\n Erro: {$stmtInsert->error}",
+    //     Acoes::CADASTRAR_PRODUTO_ETAPA,
+    //     "erro"
+    // );
 }
 
 $conn->close();
