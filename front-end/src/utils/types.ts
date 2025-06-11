@@ -245,6 +245,7 @@ export interface Classification {
 }
 export interface OrderType {
 	pedido_id: number;
+	pedido_endereco: string;
 }
 export interface Unit {
 	uni_id: number;

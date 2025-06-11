@@ -489,7 +489,7 @@ function buscarEtapasNome($conn)
  */
 function buscarPedidos($conn)
 {
-    $result = $conn->query("SELECT pedido_id FROM pedidos");
+    $result = $conn->query("SELECT pedido_id, pedido_endereco FROM pedidos");
     if (!$result) {
         throw new Exception("Erro ao buscar status: " . $conn->error);
     }

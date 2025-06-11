@@ -8,9 +8,9 @@ import { AllCommunityModule, ColDef, themeQuartz } from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
 import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
 import { PackagePlus, PackageMinus, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
-import { Modal, NoticeModal, SmartField, ReportModal } from "../../shared";
+import { Modal, NoticeModal, ReportModal } from "../../shared";
 import { SelectEvent, Movements, FormDataMovements, Batch } from "../../utils/types";
-import { StockInRegister } from "../pageComponents";
+import { StockInRegister, StockOutRegister } from "../pageComponents";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function InventoryMovements() {
@@ -254,16 +254,18 @@ export default function InventoryMovements() {
 
     //OnChange dos campos
     const handleChange = (
-    event:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | SelectEvent
+        event:
+            | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            | SelectEvent
     ) => {
         const { name, value } = event.target;
 
         let newFormData = { ...formData, [name]: value };
+
         if (name === "produto" && value === "") {
             newFormData.lote = "";
         }
+
         if (name === "lote") {
             const loteSelecionado = options?.lotes.find(
                 (lote) => String(lote.lote_id) === value
@@ -271,16 +273,31 @@ export default function InventoryMovements() {
             if (loteSelecionado) {
                 newFormData = {
                     ...newFormData,
-                    unidade: String(loteSelecionado.uni_id), 
+                    unidade: String(loteSelecionado.uni_id),
                 };
             }
         }
+
+        if (name === "pedido") {
+            const pedidoSelecionado = options?.pedidos.find(
+                (pedido) => String(pedido.pedido_id) === value
+            );
+
+            if (pedidoSelecionado?.pedido_endereco) {
+                newFormData = {
+                    ...newFormData,
+                    destino: pedidoSelecionado.pedido_endereco,
+                };
+            }
+        }
+
         setFormData(newFormData);
 
         setErrors((prevErrors) =>
             Object.fromEntries(Object.keys(prevErrors).map((key) => [key, false])) as typeof prevErrors
         );
     };
+
 
     //Limpar formData
     const clearFormData = () => {
@@ -501,123 +518,15 @@ export default function InventoryMovements() {
             isLoading={loading.has("stockOut")}
             onSubmit={handleStockOutProduct}
         >
-            <div className="flex flex-col gap-4">
-                <SmartField
-                    fieldName="produto"
-                    fieldText="Produto"
-                    isSelect
-                    error={errors.product ? "*" : undefined}
-                    placeholder="Selecione o produto"
-                    isLoading={loading.has("options")}
-                    value={formData.produto}
-                    onChangeSelect={handleChange}
-                    options={options?.produtos.map((produto) => ({
-                        label: produto.produto_nome,
-                        value: String(produto.produto_id),
-                    }))}
-                />
-
-                <SmartField
-                    fieldName="lote"
-                    fieldText="Lote"
-                    isSelect
-                    isLoading={loading.has("options")}
-                    error={errors.batch ? "*" : undefined}
-                    value={formData.lote}
-                    placeholder="Selecione o lote"
-                    noOptionsMessage={() => "Nenhum Lote encontrado com o Produto selecionado"}
-                    onChangeSelect={handleChange}
-                    // options={lotesFiltrados?.map((lote) => ({
-                    //     label: lote.lote_codigo,
-                    //     value: String(lote.lote_id),
-                    // }))}
-                />
-
-                <div className="flex gap-10">
-                    <SmartField
-                        fieldName="quantidade"
-                        fieldText="Quantidade"
-                        error={errors.quantity ? "*" : undefined}
-                        fieldClassname="flex flex-col flex-1"
-                        type="number"
-                        value={formData.quantidade}
-                        onChange={handleChange}
-                        placeholder="Quantidade"
-                    />
-                    {formData.lote && (
-                        <SmartField
-                            fieldName="unidade"
-                            fieldText="Unidade de Medida"
-                            isDisable
-                            inputWidth="w-[200px]"
-                            placeholder="Unidade de Medida"
-                            readOnly
-                            value={
-                                options?.unidade_medida.find(
-                                    (u) => String(u.uni_id) === formData.unidade
-                                )?.uni_nome || ""
-                            }
-                        />
-                    )}
-                </div>
-                
-                <div className="flex gap-10">
-                    <SmartField
-                        fieldName="motivo"
-                        fieldText="Motivo da Saída"
-                        isSelect
-                        fieldClassname="flex flex-col flex-1"
-                        isLoading={loading.has("options")}
-                        error={errors.reason ? "*" : undefined}
-                        value={formData.motivo}
-                        placeholder="Selecione o Motivo"
-                        onChangeSelect={handleChange}
-                        options={options?.motivos
-                            .filter((motivo) => motivo.mov_tipo === "saida")
-                            .map((motivo) => ({
-                                label: motivo.motivo,
-                                value: String(motivo.motivo_id),
-                            }))
-                        }
-                    />
-                    {isSaleCliente && (
-                        <SmartField
-                            fieldName="pedido"
-                            fieldText="Nº do Pedido"
-                            isSelect
-                            inputWidth="w-[180px]"
-                            isLoading={loading.has("options")}
-                            error={errors.order ? "*" : undefined}
-                            value={formData.pedido}
-                            placeholder="Selecione"
-                            onChangeSelect={handleChange}
-                            options={options?.pedidos.map((pedido) => ({
-                                label: String(pedido.pedido_id),
-                                value: String(pedido.pedido_id),
-                            }))}
-                        />
-                    ) }
-                </div>
-
-                <SmartField
-                    fieldName="destino"
-                    fieldText="Destino do Produto"
-                    error={errors.destination ? "*" : undefined}
-                    placeholder="Digite o Destino do Produto"
-                    value={formData.destino}
-                    onChange={handleChange}
-                />
-
-                <SmartField
-                    fieldName="obs"
-                    fieldText="Observações"
-                    rows={2}
-                    isTextArea
-                    placeholder="Adicione informações sobre a saída do produto"
-                    value={formData.obs}
-                    onChange={handleChange}
-                />
-            </div>   
+            <StockOutRegister
+                formData={formData}
+                options={options}
+                loading={loading}
+                errors={errors}
+                isSaleCliente={isSaleCliente}
+                BatchFilter={lotesFiltrados}
+                handleChange={handleChange}
+            />
         </Modal>
 
         {/* Modal de Relatório */}

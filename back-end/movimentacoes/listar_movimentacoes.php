@@ -34,6 +34,7 @@ try {
         "un.uni_sigla", 
         "l.lote_codigo", 
         "pe.pedido_id",
+        "pe.pedido_endereco",
         "u.user_nome"
     );
 
