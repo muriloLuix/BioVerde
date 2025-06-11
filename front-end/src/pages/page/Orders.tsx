@@ -88,7 +88,7 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
-	
+
 	/* ----- useEffects e Requisições via Axios ----- */
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
@@ -485,21 +485,42 @@ export default function Orders() {
 	const [rowData, setRowData] = useState<Order[]>([]);
 	const gridRef = useRef<AgGridReact>(null);
 	const [columnDefs] = useState<ColDef[]>([
-		{ field: "pedido_id", headerName: "ID", filter: true, width: 100 },
-		{ field: "cliente_nome", headerName: "Cliente", filter: true, width: 250 },
 		{
-			field: "stapedido_nome",
-			headerName: "Status do Pedido",
+			field: "pedido_id",
+			headerName: "ID",
+			cellDataType: "number",
 			filter: true,
-			width: 200,
+			width: 100,
+		},
+		{
+			field: "cliente_nome",
+			headerName: "Cliente",
+			cellDataType: "string",
+			filter: true,
+			width: 250,
+		},
+		{
+			field: "pedido_dtCadastro",
+			headerName: "Data do Pedido",
+			cellDataType: "date",
+			filter: true,
+			width: 180,
+			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
 		},
 		{
 			field: "pedido_prevEntrega",
-			headerName: "Previsão de Entrega",
+			headerName: "Previsão de entrega",
+			cellDataType: "date",
+			filter: true,
+			width: 180,
+			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
+		},
+		{
+			field: "stapedido_nome",
+			headerName: "Status do Pedido",
+			cellDataType: "string",
 			filter: true,
 			width: 200,
-			valueGetter: (params) =>
-				new Date(params.data.pedido_prevEntrega).toLocaleDateString("pt-BR"),
 		},
 		{
 			headerName: "Itens do Pedido",
@@ -521,27 +542,25 @@ export default function Orders() {
 			sortable: false,
 			filter: false,
 		},
-		{ 
-			field: "pedido_valor_total", headerName: "Valor Total", width: 130,
-			valueFormatter: (params) => {
-                return `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`;
-            }
+		{
+			field: "pedido_valor_total",
+			headerName: "Valor Total",
+			cellDataType: "number",
+			width: 130,
+			valueFormatter: (params) => "R$ " + params.value + ",00",
 		},
-		{ field: "pedido_telefone", headerName: "Telefone", filter: true, width: 160 },
+		{
+			field: "pedido_telefone",
+			headerName: "Telefone",
+			filter: true,
+			width: 160,
+		},
 		{ field: "pedido_cep", headerName: "CEP", filter: true, width: 180 },
 		{ field: "pedido_endereco", headerName: "Endereço", width: 200 },
 		{ field: "pedido_num_endereco", headerName: "Nº", width: 100 },
 		{ field: "pedido_complemento", headerName: "Complemento", width: 180 },
 		{ field: "pedido_cidade", headerName: "Cidade", filter: true, width: 180 },
 		{ field: "pedido_estado", headerName: "Estado", filter: true, width: 120 },
-		{
-			field: "pedido_dtCadastro",
-			headerName: "Data do Pedido",
-			filter: true,
-			width: 180,
-			valueGetter: (params) =>
-				new Date(params.data.pedido_dtCadastro).toLocaleDateString("pt-BR"),
-		},
 		{ field: "pedido_observacoes", headerName: "Observações", width: 200 },
 		{
 			headerName: "Ações",
@@ -552,7 +571,12 @@ export default function Orders() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Editar Pedido"
-						onClick={() => { if(params.data) {handleEditClick(params.data); setErrors({isCepValid: false})} }}
+						onClick={() => {
+							if (params.data) {
+								handleEditClick(params.data);
+								setErrors({ isCepValid: false });
+							}
+						}}
 					>
 						<Pencil size={18} />
 					</button>
@@ -560,7 +584,9 @@ export default function Orders() {
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
 							title="Excluir Pedido"
-							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+							onClick={() => {
+								if (params.data) handleDeleteClick(params.data);
+							}}
 						>
 							<Trash2 size={18} />
 						</button>
@@ -580,15 +606,20 @@ export default function Orders() {
 		{ field: "produto_nome", headerName: "Produto", width: 180 },
 		{ field: "pedidoitem_quantidade", headerName: "Qtd.", width: 110 },
 		{
-			field: "pedidoitem_preco", headerName: "Preço Unitário", width: 150,
-			valueFormatter: (params) => `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`
+			field: "pedidoitem_preco",
+			headerName: "Preço Unitário",
+			width: 150,
+			valueFormatter: (params) =>
+				`R$ ${Number(params.value).toFixed(2).replace(".", ",")}`,
 		},
 		{
-			field: "pedidoitem_subtotal", headerName: "Subtotal", width: 140,
-			valueFormatter: (params) => `R$ ${Number(params.value).toFixed(2).replace('.', ',')}`
-		}
+			field: "pedidoitem_subtotal",
+			headerName: "Subtotal",
+			width: 140,
+			valueFormatter: (params) =>
+				`R$ ${Number(params.value).toFixed(2).replace(".", ",")}`,
+		},
 	]);
-
 
 	//Esilos da Tabela
 	const myTheme = themeQuartz.withParams({
