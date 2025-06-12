@@ -51,7 +51,6 @@ export async function cepApi(
 
 		setCities(citiesData);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		setFormData((prevData: any) => ({
 			...prevData,
 			endereco: cepData.logradouro,

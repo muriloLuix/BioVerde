@@ -5,23 +5,23 @@ import usePageTitle from "../../hooks/usePageTitle";
 export default function LoginPage() {
   usePageTitle();
   return (
-    <div className="flex flex-col md:flex-row h-screen font-montserrat">
+    <div className="flex flex-col lg:flex-row h-screen font-montserrat">
       {/* Seção de Login */}
-      <div className="w-full md:w-1/2 flex items-center justify-center bg-white px-6 py-12 shadow-lg">
+      <div className="w-full h-full lg:w-1/2 flex items-center justify-center bg-white px-6 py-12 shadow-lg">
         <div className="max-w-md w-full">
           {/* Logo */}
           <motion.div
             initial={{ y: 0, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="flex items-center mb-6 gap-4"
+            className="flex items-center  mb-6 gap-4"
           >
             <img
               src="/logo-bioverde.png"
               alt="Logo Bio Verde"
-              className="h-14 w-14 md:h-20 md:w-20"
+              className="h-14 w-14 lg:h-20 lg:w-20"
             />
-            <h1 className="text-4xl md:text-5xl font-bold tracking-wide text-green-700">
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-wide text-green-700">
               BIOVERDE
             </h1>
           </motion.div>
@@ -34,7 +34,7 @@ export default function LoginPage() {
         </div>
       </div>
 		{/* Seção com imagem */}
-		<div className="hidden md:flex w-1/2 relative font-montserrat">
+		<div className="hidden lg:flex w-1/2 relative font-montserrat">
 			{/* Imagem de fundo */}
 			<img
 				src="/soja.jpg"
