@@ -655,7 +655,7 @@ export default function UsersPage() {
     });
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
+		<div className="flex-1 p-6 lg:pl-[280px]">
 			<div className="px-6 font-[inter]">
 				<h1 className="h-10 w-full flex items-center justify-center mb-3">
 					<span className="text-4xl font-semibold text-center">Usuários</span>
