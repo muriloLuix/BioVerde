@@ -58,7 +58,7 @@ const Modal = ({
 			<Dialog.Portal>
 				<Dialog.Overlay className="bg-black/50 fixed inset-0 z-50" />
 				<Dialog.Content
-					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg max-h-[90vh] overflow-auto custom-scrollbar-modal`}
+					className={`fixed z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${modalWidth} p-6 bg-brancoSal rounded-lg shadow-lg md:max-h-[90vh] max-h-[100vh] overflow-auto custom-scrollbar-modal`}
 				>
 					<Dialog.Title className="text-2xl font-[inter] font-semibold flex justify-between items-center">
 						{modalTitle}

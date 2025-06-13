@@ -193,7 +193,7 @@ export const agGridTranslation = {
     lastPage: 'Última Página',
     firstPage: 'Primeira Página',
     previousPage: 'Página Anterior',
-    pageSizeSelectorLabel: 'Tamanho da Página:',
+    pageSizeSelectorLabel: window.innerWidth < 1024 ? 'Tamanho:' : 'Tamanho da Página:',
     footerTotal: 'Total',
     statusBarLastRowUnknown: '?',
     scrollColumnIntoView: 'Rolar ${variable} para a visualização',

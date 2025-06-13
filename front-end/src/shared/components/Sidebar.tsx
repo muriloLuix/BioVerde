@@ -135,57 +135,12 @@ export default function Sidebar() {
         </div>
 
         
-        <div className="lg:flex lg:flex-col lg:h-full w-full ">
-          {/* <NavigationMenu.Root className="h-full w-full custom-scrollbar overflow-y-auto mb-10">
-            <NavigationMenu.List className="h-full w-full p-2">
-              {menuItems.map((tab, idx) => {
-                const showSep = tab.name === "Dashboard" || tab.name === "Usuários";
-                return (
-                  <Fragment key={idx}>
-                    {showSep && (
-                      <Separator.Root className="bg-separator h-0.25 w-9/10 m-auto" />
-                    )}
-                    <NavigationMenu.Item
-                      className={`
-                        h-12 w-full flex items-center p-3 my-2 gap-4 font-[inter] rounded-md cursor-pointer
-                        ${activeItem === tab.name
-                          ? "bg-brancoSal text-black"
-                          : "text-cinzaClaro hover:bg-hoverMenu"
-                        }
-                      `}
-                      onClick={() => mudarModulo(tab)}
-                    >
-                      {tab.icon}
-                      {tab.name}
-                    </NavigationMenu.Item>
-                  </Fragment>
-                );
-              })}
-            </NavigationMenu.List>
-          </NavigationMenu.Root> */}
-
+        <div className="lg:flex lg:flex-col lg:h-full w-full">
             <NavBar
               menuItems={menuItems}
               activeItem={activeItem}
               mudarModulo={mudarModulo}
             />
-
-          {/* <div className="bg-verdeEscuroConta gap-5 p-3 w-64 flex items-center sticky bottom-0 left-0 -m-5">
-            <Avatar.Root className="inline-flex size-[45px] select-none items-center justify-center overflow-hidden rounded-full bg-blackA1">
-              <Avatar.Fallback className="leading-1 flex size-full items-center justify-center bg-white text-black text-[15px] font-medium cursor-pointer">
-                {userInitials || "AD"}
-              </Avatar.Fallback>
-            </Avatar.Root>
-            <div className="flex flex-col">
-              <span className="text-sm font-[inter]">{userName}</span>
-              <span className="text-xs font-[inter]">{userLevel}</span>
-            </div>
-            <LogOut
-              size={30}
-              className="p-1 rounded-2xl hover:cursor-pointer hover:text-cinzaClaro hover:bg-hoverMenu active:bg-brancoSal active:text-black"
-              onClick={() => setOpenLogoutModal(true)}
-            />
-          </div> */}
 
           <div className="absolute w-full h-16 flex justify-end lg:z-1000 lg:bottom-1">
             <UserProfile
@@ -195,6 +150,7 @@ export default function Sidebar() {
               setOpenLogoutModal={() => setOpenLogoutModal(true)}
             />
           </div>
+
         </div>
 
         <ConfirmationModal

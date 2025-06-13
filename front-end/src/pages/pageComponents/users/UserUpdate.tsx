@@ -20,34 +20,32 @@ const UserUpdate: React.FC<Props> = ({
   handleChange,
 }) => {
   return (
-    <div className="flex flex-col gap-6 w-2xl">
-      <div className="flex gap-7 justify-between">
-        <SmartField
-          fieldName="name"
-          fieldText="Nome Completo"
-          required
-          type="text"
-          placeholder="Digite o nome completo"
-          autoComplete="name"
-          value={formData.name}
-          onChange={handleChange}
-          fieldClassname="flex flex-col flex-1"
-        />
+    <div className="flex flex-col gap-4">
+      <SmartField
+        fieldName="name"
+        fieldText="Nome Completo"
+        required
+        type="text"
+        placeholder="Digite o nome completo"
+        autoComplete="name"
+        value={formData.name}
+        onChange={handleChange}
+        fieldClassname="flex flex-col flex-1"
+      />
 
-        <SmartField
-          fieldName="email"
-          fieldText="Email"
-          required
-          type="email"
-          placeholder="Digite o email"
-          autoComplete="email"
-          value={formData.email}
-          onChange={handleChange}
-          fieldClassname="flex flex-col flex-1"
-        />
-      </div>
+      <SmartField
+        fieldName="email"
+        fieldText="Email"
+        required
+        type="email"
+        placeholder="Digite o email"
+        autoComplete="email"
+        value={formData.email}
+        onChange={handleChange}
+        fieldClassname="flex flex-col flex-1"
+      />
 
-      <div className="flex gap-7 justify-between">
+      <div className="flex flex-col lg:flex-row gap-7">
         <SmartField
           fieldName="tel"
           fieldText="Telefone"
@@ -98,7 +96,7 @@ const UserUpdate: React.FC<Props> = ({
         />
       </div>
 
-      <div className="flex gap-7 mb-7 justify-between">
+      <div className="flex flex-col lg:flex-row gap-7 mb-7">
         <SmartField
           fieldName="cargo"
           fieldText="Cargo"
