@@ -1,22 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import { checkAuth } from "../../utils/checkAuth";
-import { Tabs } from "radix-ui";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { InputMaskChangeEvent } from "primereact/inputmask";
-import { AgGridReact } from "ag-grid-react";
-import {
-	AllCommunityModule,
-	ICellRendererParams,
-	ColDef,
-	themeQuartz,
-} from "ag-grid-community";
-import { agGridTranslation } from "../../utils/agGridTranslation";
-import {
-	overlayLoadingTemplate,
-	overlayNoRowsTemplate,
-} from "../../utils/gridOverlays";
+
+import axios from "axios";
+import { Tabs } from "radix-ui";
 import {
 	Pencil,
 	Trash2,
@@ -25,6 +12,21 @@ import {
 	FileText,
 	Eye,
 } from "lucide-react";
+import { InputMaskChangeEvent } from "primereact/inputmask";
+import { AgGridReact } from "ag-grid-react";
+import {
+	AllCommunityModule,
+	ICellRendererParams,
+	ColDef,
+	themeQuartz,
+} from "ag-grid-community";
+
+import { checkAuth } from "../../utils/checkAuth";
+import { agGridTranslation } from "../../utils/agGridTranslation";
+import {
+	overlayLoadingTemplate,
+	overlayNoRowsTemplate,
+} from "../../utils/gridOverlays";
 import { cepApi } from "../../utils/cepApi";
 import {
 	City,
@@ -88,6 +90,8 @@ export default function Orders() {
 		dnome_cliente: "",
 		reason: "",
 	});
+	const [params] = useSearchParams();
+	const [isFiltered, setIsFiltered] = useState(false);
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
@@ -406,7 +410,7 @@ export default function Orders() {
 		}
 	};
 
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 
 		try {
@@ -458,7 +462,7 @@ export default function Orders() {
 	};
 
 	//Limpar FormData
-	const clearFormData = () => {
+	const clearFormData = () =>
 		setFormData(
 			(prev) =>
 				Object.fromEntries(
@@ -470,7 +474,6 @@ export default function Orders() {
 					})
 				) as typeof prev
 		);
-	};
 
 	const handleSeeOrderClick = (pedido: Order) => {
 		setNumOrder(pedido.pedido_id);
@@ -503,6 +506,7 @@ export default function Orders() {
 			field: "pedido_dtCadastro",
 			headerName: "Data do Pedido",
 			cellDataType: "date",
+			filterParams: { maxNumConditions: 1 },
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
@@ -511,6 +515,7 @@ export default function Orders() {
 			field: "pedido_prevEntrega",
 			headerName: "Previsão de entrega",
 			cellDataType: "date",
+			filterParams: { maxNumConditions: 1 },
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
@@ -547,7 +552,8 @@ export default function Orders() {
 			headerName: "Valor Total",
 			cellDataType: "number",
 			width: 130,
-			valueFormatter: (params) => "R$ " + params.value + ",00",
+			valueFormatter: (params) =>
+				`R$ ${Number(params.value).toFixed(2).replace(".", ",")}`,
 		},
 		{
 			field: "pedido_telefone",
@@ -557,7 +563,13 @@ export default function Orders() {
 		},
 		{ field: "pedido_cep", headerName: "CEP", filter: true, width: 180 },
 		{ field: "pedido_endereco", headerName: "Endereço", width: 200 },
-		{ field: "pedido_num_endereco", headerName: "Nº", width: 100 },
+		{
+			field: "pedido_num_endereco",
+			headerName: "Nº",
+			cellDataType: "number",
+			width: 100,
+			valueGetter: (params) => Number(params.data.pedido_num_endereco),
+		},
 		{ field: "pedido_complemento", headerName: "Complemento", width: 180 },
 		{ field: "pedido_cidade", headerName: "Cidade", filter: true, width: 180 },
 		{ field: "pedido_estado", headerName: "Estado", filter: true, width: 120 },
@@ -631,12 +643,12 @@ export default function Orders() {
 		fontFamily: '"Inter", sans-serif',
 	});
 
-	const [params] = useSearchParams();
-
+	// Cria um filtro com o paramtro status da url
 	const buildFilter = () => {
 		try {
 			const param = params.get("status");
 
+			// Checa se param tem valor
 			if (param) {
 				gridRef.current?.api.setFilterModel({
 					stapedido_nome: {
@@ -649,8 +661,79 @@ export default function Orders() {
 			console.error(err);
 		} finally {
 			navigate(url.pathname, { replace: true });
+			setIsFiltered(true);
 		}
 	};
+
+	// Limpa o filtro
+	const clearFilter = useCallback(() => {
+		gridRef.current?.api.setFilterModel(null);
+		gridRef.current?.api.resetColumnState();
+		setIsFiltered(false);
+	}, []);
+
+	// Ordena a coluna
+	const reorderColumn = useCallback(
+		(columnName: string, type: "asc" | "desc" | null) => {
+			gridRef.current?.api.applyColumnState({
+				state: [{ colId: columnName, sort: type }],
+			});
+			setIsFiltered(true);
+		},
+		[clearFilter]
+	);
+
+	// Calcula dia inicial e final do mês atual
+	const calculateMonthRange = useCallback(() => {
+		const fullMonths = [0, 2, 4, 6, 7, 9, 11];
+
+		const date = new Date();
+		const month = date.getMonth();
+		const year = date.getFullYear();
+
+		const limit = fullMonths.includes(month)
+			? date.getDate() - 31
+			: date.getDate() - 30;
+
+		const firstDay = date.getDate() / date.getDate();
+		const lastDay = date.getDate() - limit;
+
+		const begin = new Date(year, month, firstDay).toISOString();
+		const end = new Date(year, month, lastDay).toISOString();
+
+		return { begin, end };
+	}, []);
+
+	// Filtra pedidos do mês pelo status selecionado
+	const getMonthOrdersByStatus = useCallback(
+		(type: string, filter: string) => {
+			try {
+				// Checa se já tem um filtro
+				if (gridRef.current?.api.isAnyFilterPresent()) return;
+
+				const { begin, end } = calculateMonthRange();
+
+				gridRef.current?.api.setFilterModel({
+					pedido_prevEntrega: {
+						filterType: "date",
+						type: "inRange",
+						dateFrom: begin,
+						dateTo: end,
+					},
+					stapedido_nome: {
+						filterType: "string",
+						type: type,
+						filter: filter,
+					},
+				});
+
+				setIsFiltered(true);
+			} catch (error) {
+				console.error(error);
+			}
+		},
+		[clearFilter]
+	);
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
@@ -675,13 +758,52 @@ export default function Orders() {
 						</Tabs.Trigger>
 					</Tabs.List>
 
-					<Tabs.Content value="list" className="flex flex-col w-full py-2 px-4">
-						<div className="flex justify-end">
-							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
-							<div className="flex items-center gap-5 mt-1 mb-3">
+					<Tabs.Content
+						value="list"
+						className="flex flex-col w-full py-2 px-4 gap-2"
+					>
+						<div className="flex justify-between p-2">
+							<div className="flex items-center gap-2">
 								<button
-									onClick={gerarRelatorio}
-									className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+									disabled={loading.size > 0 || isFiltered}
+									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									onClick={() => {
+										getMonthOrdersByStatus("lessThan", "Entregue");
+										reorderColumn("pedido_prevEntrega", "asc");
+									}}
+								>
+									Concluídos no último mês
+								</button>
+								<button
+									disabled={loading.size > 0 || isFiltered}
+									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									onClick={() => {
+										getMonthOrdersByStatus("notEqual", "Entregue");
+										reorderColumn("pedido_prevEntrega", "asc");
+									}}
+								>
+									Entrega próxima
+								</button>
+								<button
+									disabled={loading.size > 0 || isFiltered}
+									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-100 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									onClick={() => reorderColumn("pedido_dtCadastro", "asc")}
+								>
+									Recentes
+								</button>
+								<button
+									disabled={loading.size > 0 || !isFiltered}
+									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									onClick={clearFilter}
+								>
+									Limpar filtro
+								</button>
+							</div>
+							<div className="flex items-center gap-2">
+								<button
+									disabled={loading.size > 0}
+									className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									onClick={generateReport}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -693,6 +815,8 @@ export default function Orders() {
 									)}
 								</button>
 								<button
+									disabled={loading.size > 0}
+									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={() => {
 										const params = {
 											fileName: "pedidos.csv",
@@ -700,7 +824,6 @@ export default function Orders() {
 										};
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
-									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
 								>
 									<FileSpreadsheet />
 									Exportar CSV
