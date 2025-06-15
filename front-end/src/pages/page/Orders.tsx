@@ -656,12 +656,12 @@ export default function Orders() {
 						filter: param,
 					},
 				});
+				setIsFiltered(true);
 			}
 		} catch (err) {
 			console.error(err);
 		} finally {
 			navigate(url.pathname, { replace: true });
-			setIsFiltered(true);
 		}
 	};
 
@@ -754,7 +754,7 @@ export default function Orders() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de Pedidos
+							Lista de pedidos
 						</Tabs.Trigger>
 					</Tabs.List>
 
