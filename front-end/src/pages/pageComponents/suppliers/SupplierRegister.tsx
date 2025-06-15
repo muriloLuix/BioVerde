@@ -41,7 +41,7 @@ const SupplierRegister: React.FC<Props> = ({
 }) => {
   return (
     <div className="flex flex-col gap-4">
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="tipo"
                 fieldText="Tipo"
@@ -141,7 +141,7 @@ const SupplierRegister: React.FC<Props> = ({
             onChange={handleChange}
         />
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="tel"
                 fieldText="Telefone"
@@ -190,7 +190,7 @@ const SupplierRegister: React.FC<Props> = ({
             autoComplete="street-address"
         />
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="num_endereco"
                 fieldText="Número"
@@ -201,7 +201,7 @@ const SupplierRegister: React.FC<Props> = ({
                 value={formData.num_endereco}
                 onChange={handleChange}
                 autoComplete="address-line1"
-                inputWidth="w-[160px]"
+                inputWidth={`${window.innerWidth < 1024 ? "w-auto" : "w-[160px]"}`}
             />
             <SmartField
                 fieldName="complemento"

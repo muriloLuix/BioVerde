@@ -39,7 +39,7 @@ const OrderUpdate: React.FC<Props> = ({
 }) => {
   return (
     <div className="flex flex-col gap-4">
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="num_pedido"
                 fieldText="Nº Pedido"
@@ -49,7 +49,7 @@ const OrderUpdate: React.FC<Props> = ({
                 placeholder="Nº Pedido"
                 value={formData.pedido_id}
                 onChange={handleChange}
-                inputWidth="w-[100px]"
+                inputWidth={`${window.innerWidth < 1024 ? "w-auto" : "w-[100px]"}`}
             />
 
             <SmartField
@@ -69,7 +69,7 @@ const OrderUpdate: React.FC<Props> = ({
                 }))}
             />
         </div>
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 type="date"
                 required
@@ -97,7 +97,7 @@ const OrderUpdate: React.FC<Props> = ({
             />
         </div>
         
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="tel"
                 fieldText="Telefone"
@@ -134,7 +134,7 @@ const OrderUpdate: React.FC<Props> = ({
             />
         </div>
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="num_endereco"
                 fieldText="Número"
@@ -145,7 +145,7 @@ const OrderUpdate: React.FC<Props> = ({
                 value={formData.num_endereco}
                 onChange={handleChange}
                 autoComplete="address-line1"
-                inputWidth="w-[160px]"
+                inputWidth={`${window.innerWidth < 1024 ? "w-auto" : "w-[160px]"}`}
             />
             <SmartField
                 fieldName="complemento"

@@ -84,7 +84,7 @@ const Modal = ({
 									}`}
 								>
 									{isOrderModal && (
-										<span className="text-lg">
+										<span className="lg:text-lg text-sm">
 											Total do Pedido:{" "}
 											<strong>R$ {totalPedido?.toFixed(2)}</strong>
 										</span>

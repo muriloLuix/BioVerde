@@ -153,7 +153,7 @@ export default function Orders() {
 
 			<Tabs.Root
 				defaultValue="list"
-				className="h-full w-full px-3"
+				className="w-full px-3 pb-5"
 				onValueChange={setActiveTab}
 			>
 				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
@@ -169,7 +169,7 @@ export default function Orders() {
 
 				<Tabs.Content
 					value="list"
-					className="h-full w-full flex flex-col py-2 px-4"
+					className="w-full flex flex-col py-2 lg:px-4 px-2"
 				>
 					<div className="flex justify-end mb-3">
 						<button
@@ -184,11 +184,11 @@ export default function Orders() {
 							className={`bg-verdePigmento hover:bg-verdeGrama text-white font-semibold sombra-botao flex place-content-center gap-2 rounded cursor-pointer ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 						>
 							<FileSpreadsheet />
-							{window.innerWidth > 1024 && "Exportar CSV"}
+							{window.innerWidth >= 1024 && "Exportar CSV"}
 						</button>
 					</div>
 
-					<div className="h-[75vh]">
+					<div className="md:h-[75vh] h-[63vh]">
 						<AgGridReact
 							modules={[AllCommunityModule]}
 							theme={myTheme}

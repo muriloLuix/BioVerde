@@ -701,8 +701,7 @@ export default function UsersPage() {
 									) : (
 										<>
 											<FileText />
-											{window.innerWidth > 1024 && "Exportar PDF"}
-										
+											{window.innerWidth >= 1024 && "Exportar PDF"}
 										</>
 									)}
 								</button>
@@ -719,13 +718,13 @@ export default function UsersPage() {
 									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 								>
 									<FileSpreadsheet />
-									{window.innerWidth > 1024 && "Exportar CSV"}
+									{window.innerWidth >= 1024 && "Exportar CSV"}
 								</button>
 							</div>
 						</div>
 				
 						{/* Tabela de Usuários */}
-						<div className="h-[75vh] w-[90vw] md:w-auto">
+						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
 								modules={[AllCommunityModule]}
 								theme={myTheme}
@@ -799,6 +798,7 @@ export default function UsersPage() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Usuário:"
+					withXButton
 					modalWidth="w-full md:w-4/5 lg:w-auto"
 					rightButtonText="Excluir"
 					leftButtonText="Cancelar"
@@ -830,6 +830,7 @@ export default function UsersPage() {
 					openModal={openPositionModal}
 					setOpenModal={setOpenPositionModal}
 					modalTitle="Gerenciamento de Cargos:"
+					modalWidth="w-full md:w-4/5 lg:w-auto"
 					withExitButton
 					withXButton
 					isLoading={loading.has("options")}

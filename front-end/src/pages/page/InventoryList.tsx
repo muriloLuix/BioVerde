@@ -670,7 +670,7 @@ export default function InventoryList() {
 
     return (
         <>
-        <Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+        <Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
             {/* Botões de Exportar CSV e Novo Lote */}
             <div className="flex justify-between">
                 {/* Botão de Abrir Modal de Cadastro de Lote */}
@@ -687,15 +687,17 @@ export default function InventoryList() {
                 {/* Botão de exportar para CSV e PDF dos dados da tabela */}
                 <div className="flex items-center gap-5 mt-1 mb-3">
                     <button
+                        title="Exportar PDF"
                         onClick={gerarRelatorio}
-                        className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+                        className={`bg-red-700 font-semibold 
+                            rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
                     >
                         {loading.has("reports") ? (
                             <Loader2 className="animate-spin h-6 w-6" />
                         ) : (
                             <>
                                 <FileText />
-                                Exportar PDF
+                                {window.innerWidth >= 1024 && "Exportar PDF"}
                             </>
                         )}
                     </button>
@@ -707,16 +709,18 @@ export default function InventoryList() {
                             };
                             gridRef.current?.api.exportDataAsCsv(params);
                         }}
-                        className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
+                        title="Exportar CSV"
+                        className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
+                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
                     >
                         <FileSpreadsheet />
-                        Exportar CSV
+                        {window.innerWidth >= 1024 && "Exportar CSV"}
                     </button>
                 </div>
             </div>
         
             {/* Tabela de Lotes */}
-            <div className="h-[75vh]">
+            <div className="md:h-[75vh] h-[58vh]">
                 <AgGridReact
                     modules={[AllCommunityModule]}
                     theme={myTheme}
@@ -743,7 +747,7 @@ export default function InventoryList() {
             withXButton
             isRegister
             registerButtonText="Cadastrar Lote"
-            modalWidth="w-1/2"
+            modalWidth="w-full md:w-4/5 lg:w-1/2"
             isLoading={loading.has("register")}
             onSubmit={handleRegister}
         >
@@ -768,7 +772,7 @@ export default function InventoryList() {
             withXButton
             rightButtonText="Editar"
             leftButtonText="Cancelar"
-            modalWidth="w-1/2"
+            modalWidth="w-full md:w-4/5 lg:w-1/2"
             isLoading={loading.has("updateBatch")}
             onSubmit={handleUpdateBatch}
         >
@@ -787,8 +791,10 @@ export default function InventoryList() {
             openModal={openDeleteModal}
             setOpenModal={setOpenDeleteModal}
             modalTitle="Excluir Lote"
+            withXButton
             rightButtonText="Excluir"
             leftButtonText="Cancelar"
+            modalWidth="w-full md:w-4/5 lg:w-auto"
             onDelete={() => {
                 setOpenConfirmModal(true);
                 setOpenDeleteModal(false);
@@ -826,6 +832,7 @@ export default function InventoryList() {
             openModal={openProductModal}
             setOpenModal={setOpenProductModal}
             modalTitle="Gerenciamento de Produtos:"
+            modalWidth="w-full md:w-4/5 lg:w-auto"
             withExitButton
             withXButton
             isLoading={loading.has("options")}

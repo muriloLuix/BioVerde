@@ -30,7 +30,7 @@ const NoticeModal = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 100, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className={`fixed bottom-4 right-4 w-95 p-4 rounded-lg text-white sombra z-102 ${
+            className={`fixed bottom-4 right-4 sm:w-95 w-[90vw] p-4 rounded-lg text-white sombra z-102 ${
                 successMsg ? "bg-verdePigmento" : "bg-ErroModal"
             }`}
             >

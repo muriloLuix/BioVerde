@@ -759,7 +759,7 @@ export default function ProductionSteps() {
     });
 
 	return (
-		<div className="flex-1 p-6 pl-[280px] h-screen">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20 h-screen">
 			<div className="px-6 font-[inter] bg-brancoSal">
 				<h1 className=" text-[40px] font-semibold text-center mb-3">
 					Etapas de Produção
