@@ -55,7 +55,8 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-background: transparent;
+/* background: transparent; */
+background: #83b68574;
 border-radius: 8px;
 }
 
