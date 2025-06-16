@@ -249,12 +249,7 @@ export default function Orders() {
 				</Modal>
 			</Tabs.Root>
 
-			<NoticeModal
-				openModal={openNoticeModal}
-				setOpenModal={setOpenNoticeModal}
-				successMsg={false}
-				message={message}
-			/>
+			{openNoticeModal && <NoticeModal successMsg={false} message={message} />}
 		</div>
 	);
 }

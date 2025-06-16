@@ -27,7 +27,7 @@ import {
 	ConfirmationModal,
 	ReportModal,
 } from "../../shared";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
 import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
 import {
@@ -87,65 +87,58 @@ export default function InventoryList() {
 		dproduto: "",
 		reason: "",
 	});
+	const [rowData, setRowData] = useState<Batch[]>([]);
 	const [isFiltered, setIsFiltered] = useState(false);
 
 	/* ----- useEffects e Requisições via Axios ----- */
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
+	const location = useLocation();
 
-	useEffect(() => {
-		checkAuth({ navigate, setMessage, setOpenNoticeModal });
-	}, [navigate]);
-
-	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading((prev) => new Set([...prev, "batches", "options"]));
-				const [lotesResponse, userLevelResponse] = await Promise.all([
-					axios.get(
-						"http://localhost/BioVerde/back-end/lotes/listar_lotes.php",
-						{ withCredentials: true, headers: { Accept: "application/json" } }
-					),
-					axios.get(
-						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{
-							withCredentials: true,
-							headers: { "Content-Type": "application/json" },
-						}
-					),
-				]);
-				await fetchOptions();
-				if (userLevelResponse.data.success) {
-					setUserLevel(userLevelResponse.data.userLevel);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(
-						userLevelResponse.data.message ||
-							"Erro ao carregar nível do usuário"
-					);
-				}
-				if (lotesResponse.data.success) {
-					setRowData(lotesResponse.data.lotes);
-				} else {
-					setOpenNoticeModal(true);
-					setMessage(lotesResponse.data.message || "Erro ao carregar lotes");
-				}
-			} catch (error) {
-				console.error(error);
+	const fetchData = async () => {
+		try {
+			setLoading((prev) => new Set([...prev, "batches", "options"]));
+			const [lotesResponse, userLevelResponse] = await Promise.all([
+				axios.get("http://localhost/BioVerde/back-end/lotes/listar_lotes.php", {
+					withCredentials: true,
+					headers: { Accept: "application/json" },
+				}),
+				axios.get(
+					"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
+					{
+						withCredentials: true,
+						headers: { "Content-Type": "application/json" },
+					}
+				),
+			]);
+			await fetchOptions();
+			if (userLevelResponse.data.success) {
+				setUserLevel(userLevelResponse.data.userLevel);
+			} else {
 				setOpenNoticeModal(true);
-				setMessage("Erro ao conectar com o servidor");
-			} finally {
-				setLoading((prev) => {
-					const newLoading = new Set(prev);
-					["batches", "options"].forEach((item) => newLoading.delete(item));
-					return newLoading;
-				});
+				setMessage(
+					userLevelResponse.data.message || "Erro ao carregar nível do usuário"
+				);
 			}
-		};
-		fetchData();
-	}, []);
+			if (lotesResponse.data.success) {
+				setRowData(lotesResponse.data.lotes);
+			} else {
+				setOpenNoticeModal(true);
+				setMessage(lotesResponse.data.message || "Erro ao carregar lotes");
+			}
+		} catch (error) {
+			console.error(error);
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
+		} finally {
+			setLoading((prev) => {
+				const newLoading = new Set(prev);
+				["batches", "options"].forEach((item) => newLoading.delete(item));
+				return newLoading;
+			});
+		}
+	};
 
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
@@ -173,6 +166,36 @@ export default function InventoryList() {
 			});
 		}
 	};
+
+	useEffect(() => {
+		setOpenNoticeModal(false);
+
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+
+		if (
+			rowData.length > 0 ||
+			location.pathname === "/app/controle-estoque/lista"
+		) {
+			rowData.map((row: any) => {
+				if (
+					row.lote_quantAtual >=
+					row.lote_quantMax - row.lote_quantMax * 0.9
+				) {
+					try {
+						setOpenNoticeModal(true);
+						setMessage(row.lote_codigo + " está quase lotado!");
+					} catch (error) {
+						console.error(error);
+					}
+				}
+			});
+		}
+	}, [navigate, fetchData, refreshData]);
+
+	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
+	useEffect(() => {
+		fetchData();
+	}, []);
 
 	// Função que busca as opções
 	const fetchOptions = async () => {
@@ -608,7 +631,6 @@ export default function InventoryList() {
 	/* ----- Definição de colunas e dados que a tabela de lotes vai receber ----- */
 
 	const gridRef = useRef<AgGridReact>(null);
-	const [rowData, setRowData] = useState<Batch[]>([]);
 	const [columnDefs] = useState<ColDef[]>([
 		{
 			field: "lote_codigo",
@@ -1021,12 +1043,9 @@ export default function InventoryList() {
 			/>
 
 			{/* Modal de Avisos */}
-			<NoticeModal
-				openModal={openNoticeModal}
-				setOpenModal={setOpenNoticeModal}
-				successMsg={successMsg}
-				message={message}
-			/>
+			{openNoticeModal && (
+				<NoticeModal successMsg={successMsg} message={message} />
+			)}
 
 			{/* Modal de Gerencimento de Produtos */}
 			<Modal

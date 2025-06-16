@@ -906,12 +906,9 @@ export default function Orders() {
 				/>
 
 				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
+				{openNoticeModal && (
+					<NoticeModal successMsg={successMsg} message={message} />
+				)}
 
 				{/* Modal de Edição */}
 				<Modal

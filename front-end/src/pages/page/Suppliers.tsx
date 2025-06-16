@@ -5,14 +5,46 @@ import { Tabs } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ICellRendererParams, CellValueChangedEvent, ColDef, themeQuartz } from "ag-grid-community";
+import {
+	AllCommunityModule,
+	ICellRendererParams,
+	CellValueChangedEvent,
+	ColDef,
+	themeQuartz,
+} from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
-import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
+import {
+	overlayLoadingTemplate,
+	overlayNoRowsTemplate,
+} from "../../utils/gridOverlays";
+import {
+	Pencil,
+	Trash2,
+	Plus,
+	FileSpreadsheet,
+	Loader2,
+	FileText,
+} from "lucide-react";
 import { cepApi } from "../../utils/cepApi";
-import { Supplier, SelectEvent, UF, City, FormDataSupplier, DeleteSupplier } from "../../utils/types";
-import { SupplierRegister, SupplierUpdate, SupplierDelete } from "../pageComponents";
-import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import {
+	Supplier,
+	SelectEvent,
+	UF,
+	City,
+	FormDataSupplier,
+	DeleteSupplier,
+} from "../../utils/types";
+import {
+	SupplierRegister,
+	SupplierUpdate,
+	SupplierDelete,
+} from "../pageComponents";
+import {
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+	ReportModal,
+} from "../../shared";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function Suppliers() {
@@ -68,14 +100,22 @@ export default function Suppliers() {
 		const fetchData = async () => {
 			try {
 				setLoading((prev) => new Set([...prev, "suppliers", "ufs", "cities"]));
-				const [fornecedoresResponse, userLevelResponse, ufsResponse, citiesResponse] = await Promise.all([
+				const [
+					fornecedoresResponse,
+					userLevelResponse,
+					ufsResponse,
+					citiesResponse,
+				] = await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/fornecedores/listar_fornecedores.php",
 						{ withCredentials: true, headers: { Accept: "application/json" } }
 					),
 					axios.get(
 						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
 					),
 					axios.get(
 						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
@@ -90,14 +130,19 @@ export default function Suppliers() {
 					setRowData(fornecedoresResponse.data.fornecedores || []);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(fornecedoresResponse.data.message || "Erro ao carregar fornecedores");
+					setMessage(
+						fornecedoresResponse.data.message || "Erro ao carregar fornecedores"
+					);
 				}
 
 				if (userLevelResponse.data.success) {
 					setUserLevel(userLevelResponse.data.userLevel);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(userLevelResponse.data.message ||"Erro ao carregar nível do usuário");
+					setMessage(
+						userLevelResponse.data.message ||
+							"Erro ao carregar nível do usuário"
+					);
 				}
 
 				if (ufsResponse.status === 200) {
@@ -120,7 +165,9 @@ export default function Suppliers() {
 			} finally {
 				setLoading((prev) => {
 					const newLoading = new Set(prev);
-					["suppliers", "ufs", "cities"].forEach((item) => newLoading.delete(item));
+					["suppliers", "ufs", "cities"].forEach((item) =>
+						newLoading.delete(item)
+					);
 					return newLoading;
 				});
 			}
@@ -160,7 +207,7 @@ export default function Suppliers() {
 	//Submit de cadastrar fornecedores
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		
+
 		// Validações
 		const error = {
 			states: !formData.estado,
@@ -168,14 +215,19 @@ export default function Suppliers() {
 			isCepValid: errors.isCepValid,
 		};
 		setErrors(error);
-		if (Object.values(error).some((error) => error)) {return}
+		if (Object.values(error).some((error) => error)) {
+			return;
+		}
 
 		setLoading((prev) => new Set([...prev, "submit"]));
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/fornecedores/cadastrar_fornecedores.php",
 				formData,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -215,20 +267,20 @@ export default function Suppliers() {
 			setErrors
 		);
 		setFormData({
-			fornecedor_id: 			 fornecedor.fornecedor_id,
+			fornecedor_id: fornecedor.fornecedor_id,
 			nome_empresa_fornecedor: fornecedor.fornecedor_nome,
-			razao_social: 			 fornecedor.fornecedor_razao_social,
-			email: 					 fornecedor.fornecedor_email,
-			tel: 					 fornecedor.fornecedor_telefone,
-			cpf_cnpj: 				 fornecedor.fornecedor_documento,
-			status: 				 String(fornecedor.estaAtivo),
-			cep: 					 fornecedor.fornecedor_cep,
-			endereco: 				 fornecedor.fornecedor_endereco,
-			estado: 				 fornecedor.fornecedor_estado,
-			cidade: 				 fornecedor.fornecedor_cidade,
-			num_endereco: 			 fornecedor.fornecedor_num_endereco,
-			complemento: 			 fornecedor.fornecedor_complemento,
-			tipo: 					 fornecedor.fornecedor_tipo,
+			razao_social: fornecedor.fornecedor_razao_social,
+			email: fornecedor.fornecedor_email,
+			tel: fornecedor.fornecedor_telefone,
+			cpf_cnpj: fornecedor.fornecedor_documento,
+			status: String(fornecedor.estaAtivo),
+			cep: fornecedor.fornecedor_cep,
+			endereco: fornecedor.fornecedor_endereco,
+			estado: fornecedor.fornecedor_estado,
+			cidade: fornecedor.fornecedor_cidade,
+			num_endereco: fornecedor.fornecedor_num_endereco,
+			complemento: fornecedor.fornecedor_complemento,
+			tipo: fornecedor.fornecedor_tipo,
 		});
 		setSupplierType(fornecedor.fornecedor_tipo);
 		setOpenEditModal(true);
@@ -237,13 +289,18 @@ export default function Suppliers() {
 	// submit para atualizar o fornecedor após a edição dele
 	const handleUpdateSupplier = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if(errors.isCepValid) {return};
+		if (errors.isCepValid) {
+			return;
+		}
 		setLoading((prev) => new Set([...prev, "updateSupplier"]));
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/fornecedores/editar.fornecedor.php",
 				formData,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -289,7 +346,10 @@ export default function Suppliers() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/fornecedores/excluir.fornecedor.php",
 				deleteSupplier,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -317,21 +377,26 @@ export default function Suppliers() {
 	};
 
 	//Função para Atualizar o Status do fornecedor
-	const handleStatusChange = async (params: CellValueChangedEvent<Supplier>) => {
+	const handleStatusChange = async (
+		params: CellValueChangedEvent<Supplier>
+	) => {
 		if (params.colDef?.field === "estaAtivo") {
 			const dataToSend = {
 				fornecedor_id: params.data?.fornecedor_id,
-				estaAtivo: params.data?.estaAtivo
+				estaAtivo: params.data?.estaAtivo,
 			};
 			try {
 				const response = await axios.post(
 					"http://localhost/BioVerde/back-end/fornecedores/atualizar.status.fornecedor.php",
 					dataToSend,
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+					{
+						headers: { "Content-Type": "application/json" },
+						withCredentials: true,
+					}
 				);
 				console.log("Resposta do back-end:", response.data);
 				if (response.data.success) {
-					await refreshData(); 
+					await refreshData();
 				} else {
 					setSuccessMsg(false);
 					setMessage(response.data.message || "Erro ao atualizar status.");
@@ -341,7 +406,7 @@ export default function Suppliers() {
 				console.error(error);
 				setMessage("Erro ao conectar com o servidor");
 				setOpenNoticeModal(true);
-			} 
+			}
 		}
 	};
 
@@ -430,7 +495,7 @@ export default function Suppliers() {
 			}
 		}
 	};
-	
+
 	// Função para Gerar Relatório PDF
 	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
 	const [relatorioContent, setRelatorioContent] = useState<string>("");
@@ -439,7 +504,7 @@ export default function Suppliers() {
 		try {
 			const response = await axios.get(
 				"http://localhost/BioVerde/back-end/rel/for.rel.php",
-				{ responseType: "blob",withCredentials: true }
+				{ responseType: "blob", withCredentials: true }
 			);
 			const contentType = response.headers["content-type"];
 			if (contentType !== "application/pdf") {
@@ -484,20 +549,39 @@ export default function Suppliers() {
 	const [rowData, setRowData] = useState<Supplier[]>([]);
 	const [columnDefs] = useState<ColDef[]>([
 		{ field: "fornecedor_id", headerName: "ID", filter: true, width: 100 },
-		{ field: "fornecedor_nome", headerName: "Nome Fornecedor/Empresa", filter: true, width: 250 },
+		{
+			field: "fornecedor_nome",
+			headerName: "Nome Fornecedor/Empresa",
+			filter: true,
+			width: 250,
+		},
 		{
 			field: "fornecedor_tipo",
 			headerName: "Tipo",
 			filter: true,
 			width: 150,
-			valueGetter: (params) => 
-				params.data.fornecedor_tipo === "juridica" ? "Pessoa Jurídica" : "Pessoa Física"
+			valueGetter: (params) =>
+				params.data.fornecedor_tipo === "juridica"
+					? "Pessoa Jurídica"
+					: "Pessoa Física",
 		},
-		{field: "fornecedor_documento", headerName: "CPF/CNPJ", filter: true, width: 180},
-		{field: "fornecedor_email", headerName: "Email", filter: true, width: 180},
 		{
-			field: "estaAtivo", headerName: "Ativo / Inativo", width: 130,
-			cellRenderer: 'agCheckboxCellRenderer',
+			field: "fornecedor_documento",
+			headerName: "CPF/CNPJ",
+			filter: true,
+			width: 180,
+		},
+		{
+			field: "fornecedor_email",
+			headerName: "Email",
+			filter: true,
+			width: 180,
+		},
+		{
+			field: "estaAtivo",
+			headerName: "Ativo / Inativo",
+			width: 130,
+			cellRenderer: "agCheckboxCellRenderer",
 			cellRendererParams: { disabled: false },
 			valueGetter: (params) => params.data.estaAtivo === "1",
 			valueSetter: (params) => {
@@ -505,19 +589,35 @@ export default function Suppliers() {
 				return true;
 			},
 			editable: true,
-			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+			cellStyle: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			},
 		},
-		{field: "fornecedor_telefone", headerName: "Telefone", filter: true, width: 180},
-		{field: "fornecedor_razao_social", headerName: "Razão Social", width: 180},
-		{field: "fornecedor_cep", headerName: "CEP", filter: true, width: 150},
-		{field: "fornecedor_endereco", headerName: "Endereço", width: 180},
-		{field: "fornecedor_num_endereco", headerName: "Nº", width: 100},
-		{field: "fornecedor_complemento", headerName: "Complemento", width: 180},
-		{field: "fornecedor_cidade", headerName: "Cidade", width: 180},
-		{field: "fornecedor_estado", headerName: "Estado", width: 100},
 		{
-			field: "fornecedor_dtcadastro", headerName: "Data de Cadastro", width: 180,
-			valueGetter: (params) => new Date(params.data.fornecedor_dtcadastro).toLocaleDateString("pt-BR")
+			field: "fornecedor_telefone",
+			headerName: "Telefone",
+			filter: true,
+			width: 180,
+		},
+		{
+			field: "fornecedor_razao_social",
+			headerName: "Razão Social",
+			width: 180,
+		},
+		{ field: "fornecedor_cep", headerName: "CEP", filter: true, width: 150 },
+		{ field: "fornecedor_endereco", headerName: "Endereço", width: 180 },
+		{ field: "fornecedor_num_endereco", headerName: "Nº", width: 100 },
+		{ field: "fornecedor_complemento", headerName: "Complemento", width: 180 },
+		{ field: "fornecedor_cidade", headerName: "Cidade", width: 180 },
+		{ field: "fornecedor_estado", headerName: "Estado", width: 100 },
+		{
+			field: "fornecedor_dtcadastro",
+			headerName: "Data de Cadastro",
+			width: 180,
+			valueGetter: (params) =>
+				new Date(params.data.fornecedor_dtcadastro).toLocaleDateString("pt-BR"),
 		},
 		{
 			headerName: "Ações",
@@ -528,10 +628,12 @@ export default function Suppliers() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Editar Fornecedor"
-						onClick={() => { if(params.data) {
-							handleEditClick(params.data); 
-							setErrors({...errors, isCepValid: false})
-						} }}
+						onClick={() => {
+							if (params.data) {
+								handleEditClick(params.data);
+								setErrors({ ...errors, isCepValid: false });
+							}
+						}}
 					>
 						<Pencil size={18} />
 					</button>
@@ -539,7 +641,9 @@ export default function Suppliers() {
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
 							title="Excluir Fornecedor"
-							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+							onClick={() => {
+								if (params.data) handleDeleteClick(params.data);
+							}}
 						>
 							<Trash2 size={18} />
 						</button>
@@ -548,28 +652,34 @@ export default function Suppliers() {
 			),
 			pinned: "right",
 			sortable: false,
-			filter: false
-		}
+			filter: false,
+		},
 	]);
 
 	//Esilos da Tabela
-    const myTheme = themeQuartz.withParams({
-        spacing: 9,
-        headerBackgroundColor: '#89C988',
-        foregroundColor: '#1B1B1B',
-        rowHoverColor: '#E2FBE2',
-        oddRowBackgroundColor: '#f5f5f5',
-        fontFamily: '"Inter", sans-serif',
-    });
+	const myTheme = themeQuartz.withParams({
+		spacing: 9,
+		headerBackgroundColor: "#89C988",
+		foregroundColor: "#1B1B1B",
+		rowHoverColor: "#E2FBE2",
+		oddRowBackgroundColor: "#f5f5f5",
+		fontFamily: '"Inter", sans-serif',
+	});
 
 	return (
 		<div className="flex-1 p-6 pl-[280px]">
 			<div className="px-6 font-[inter]">
 				<h1 className="h-10 w-full flex items-center justify-center mb-3">
-					<span className="text-4xl font-semibold text-center">Fornecedores</span>
+					<span className="text-4xl font-semibold text-center">
+						Fornecedores
+					</span>
 				</h1>
 				{/* Selelcionar Abas */}
-				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+				<Tabs.Root
+					defaultValue="list"
+					className="w-full"
+					onValueChange={(value) => setActiveTab(value)}
+				>
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
@@ -589,8 +699,8 @@ export default function Suppliers() {
 									type="button"
 									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
 									onClick={() => {
-										setOpenRegisterModal(true); 
-										clearFormData(); 
+										setOpenRegisterModal(true);
+										clearFormData();
 										setSupplierType("juridica");
 									}}
 								>
@@ -628,7 +738,7 @@ export default function Suppliers() {
 								</button>
 							</div>
 						</div>
-				
+
 						{/* Tabela de Fornecedores */}
 						<div className="h-[75vh]">
 							<AgGridReact
@@ -662,7 +772,7 @@ export default function Suppliers() {
 					registerButtonText="Cadastrar Fornecedor"
 					isLoading={loading.has("submit")}
 					onSubmit={handleSubmit}
-				>	
+				>
 					<SupplierRegister
 						formData={formData}
 						loading={loading}
@@ -699,7 +809,7 @@ export default function Suppliers() {
 						handleChange={handleChange}
 					/>
 				</Modal>
-				
+
 				{/* Modal de Exclusão */}
 				<Modal
 					openModal={openDeleteModal}
@@ -740,13 +850,9 @@ export default function Suppliers() {
 				/>
 
 				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
-
+				{openNoticeModal && (
+					<NoticeModal successMsg={successMsg} message={message} />
+				)}
 			</div>
 		</div>
 	);
