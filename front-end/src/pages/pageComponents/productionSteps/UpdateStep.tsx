@@ -35,7 +35,7 @@ const UpdateStep: React.FC<Props> = ({
   handleChange,
 }) => {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 mb-6">
         <SmartField
             fieldName="produto_nome"
             fieldText="Produto Final"
@@ -46,11 +46,11 @@ const UpdateStep: React.FC<Props> = ({
             readOnly
             isDisable
         />
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="etor_ordem"
                 fieldText="Ordem"
-                inputWidth="w-[120px]"
+                inputWidth={`${window.innerWidth < 1024 ? "w-auto" : "w-[120px]"}`}
                 value={formData.etor_ordem}
                 onChange={handleChange}
                 readOnly
@@ -75,7 +75,7 @@ const UpdateStep: React.FC<Props> = ({
                 }))}
             />
         </div>
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="etor_tempo"
                 fieldText="Tempo Estimado"
