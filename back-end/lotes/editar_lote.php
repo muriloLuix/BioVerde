@@ -52,21 +52,26 @@ try {
         exit();
     }
     /**************************************************/
+
+    /********* VERIFICA SE O LOTE PODE RECEBER AQUELA CLASSFICAÇÃO ******/
+    $hoje = date('Y-m-d');
+
+    if($data['dt_validade'] <= $hoje && $data['classificacao'] != "4") {
+        echo json_encode([
+            "success" => false,
+            "message" => "Um lote vencido só pode ter a classificação como Rejeitado."
+        ]);
+        exit();
+    }
+
+    /**************************************************/
     
     /**************** VALIDAÇÕES DE DATA *******************/
-    $hoje = date('Y-m-d');
+    
     $dataColheita = $data['dt_colheita']; // Exemplo: '2025-05-23'
     $dataColheitaFormatada = date('Ymd', strtotime($dataColheita)); // Resultado: '20250523'
     $dataValidade = $data['dt_validade'];
 
-    if ($dataColheita < $hoje) {
-        echo json_encode(["success" => false, "message" => "A data da colheita não pode ser menor que a data atual."]);
-        exit();
-    }
-    if ($dataValidade < $hoje) {
-        echo json_encode(["success" => false, "message" => "A data de validade não pode ser menor que a data atual."]);
-        exit();
-    }
     if ($dataColheita > $dataValidade) {
         echo json_encode(["success" => false, "message" => "A data da colheita não pode ser maior que a data de validade."]);
         exit();

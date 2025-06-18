@@ -119,9 +119,15 @@ export default function Login() {
     <Form.Root onSubmit={handleSubmit} className="space-y-6 font-montserrat">
       {/* E-mail */}
       <Form.Field name="email" className="w-full">
-        <Form.Label className="block text-sm font-medium text-gray-700">
-          E-mail
-        </Form.Label>
+        <Form.Label className="text-sm font-medium text-gray-700 flex justify-between items-center">
+          <span>E-mail</span>
+          <Form.Message className="text-red-500 text-xs" match="valueMissing">
+            *
+          </Form.Message>
+          <Form.Message className="text-red-500 text-xs" match="typeMismatch">
+            Insira um e-mail válido*
+          </Form.Message>
+        </Form.Label>  
         <Form.Control asChild>
           <Email
             value={email}
@@ -136,8 +142,13 @@ export default function Login() {
 
       {/* Senha */}
       <Form.Field name="password" className="w-full">
-        <Form.Label className="block text-sm font-medium text-gray-700">
-          Senha
+        <Form.Label className="text-sm font-medium text-gray-700 flex justify-between items-center">
+          <span>Senha</span>
+          {passwordTooShort && (
+            <p className="text-red-500 text-xs">
+              A senha deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres*
+            </p>
+          )}
         </Form.Label>
         <Form.Control asChild>
           <Password
@@ -147,11 +158,6 @@ export default function Login() {
             placeholder="Insira sua senha"
           />
         </Form.Control>
-        {passwordTooShort && (
-          <p className="text-red-600 text-sm mt-1">
-            A senha deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres.
-          </p>
-        )}
       </Form.Field>
 
       {/* Lembrar acesso */}
