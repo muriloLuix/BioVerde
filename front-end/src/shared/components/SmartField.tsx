@@ -263,7 +263,7 @@ const SmartField = ({
 					)}
 				</div>
 			) : isPassword ? (
-				<div className="flex gap-7">
+				<div className="flex flex-col lg:flex-row lg:gap-7 gap-3">
 					<div className="relative flex-1">
 						<input
 							{...(rest as React.InputHTMLAttributes<HTMLInputElement>)}

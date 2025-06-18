@@ -658,8 +658,8 @@ export default function Clients() {
 	});
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
-			<div className="px-6 font-[inter]">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20">
+			<div className="lg:px-6 px-3 font-[inter]">
 				<h1 className="h-10 w-full flex items-center justify-center mb-3">
 					<span className="text-4xl font-semibold text-center">Clientes</span>
 				</h1>
@@ -682,7 +682,7 @@ export default function Clients() {
 					</Tabs.List>
 
 					{/* Aba de Lista de Clientes */}
-					<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+					<Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
 						<div className="flex justify-between">
 							{/* Botão de Abrir Modal de Cadastro de Cliente */}
 							<div className="mt-1 mb-3">
@@ -702,15 +702,17 @@ export default function Clients() {
 							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
 							<div className="flex items-center gap-5 mt-1 mb-3">
 								<button
+									title="Exportar PDF"
 									onClick={gerarRelatorio}
-									className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+									className={`bg-red-700 font-semibold 
+										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
 									) : (
 										<>
 											<FileText />
-											Exportar PDF
+											{window.innerWidth >= 1024 && "Exportar PDF"}
 										</>
 									)}
 								</button>
@@ -722,16 +724,18 @@ export default function Clients() {
 										};
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
-									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
+									title="Exportar CSV"
+									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 								>
 									<FileSpreadsheet />
-									Exportar CSV
+									{window.innerWidth >= 1024 && "Exportar CSV"}
 								</button>
 							</div>
 						</div>
 
 						{/* Tabela de Clientes */}
-						<div className="h-[75vh]">
+						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
 								modules={[AllCommunityModule]}
 								theme={myTheme}
@@ -759,7 +763,7 @@ export default function Clients() {
 					openModal={openRegisterModal}
 					setOpenModal={setOpenRegisterModal}
 					modalTitle="Cadastrar Cliente:"
-					modalWidth="w-1/2"
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					registerButtonText="Cadastrar Cliente"
 					isLoading={loading.has("submit")}
 					onSubmit={handleSubmit}
@@ -782,9 +786,10 @@ export default function Clients() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Cliente:"
+					withXButton
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
-					modalWidth="w-1/2"
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={loading.has("updateClient")}
 					onSubmit={handleUpdateClient}
 				>
@@ -804,9 +809,11 @@ export default function Clients() {
 				<Modal
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
+					withXButton
 					modalTitle="Excluir Cliente:"
 					rightButtonText="Excluir"
 					leftButtonText="Cancelar"
+					modalWidth="w-full md:w-4/5 lg:w-auto"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);

@@ -10,7 +10,7 @@ const NoticeModal = ({ successMsg, message }: NoticeModalProps) => {
 	return (
 		<Toast.Provider swipeDirection="right">
 			<Toast.Root
-				className={`w-95 p-4 rounded-lg text-white sombra ${
+				className={`sm:w-95 w-[90vw] p-4 rounded-lg text-white sombra ${
 					successMsg ? "bg-verdePigmento" : "bg-ErroModal"
 				}`}
 			>

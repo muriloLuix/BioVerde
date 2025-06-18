@@ -667,8 +667,8 @@ export default function Suppliers() {
 	});
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
-			<div className="px-6 font-[inter]">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20">
+			<div className="lg:px-6 px-3 font-[inter]">
 				<h1 className="h-10 w-full flex items-center justify-center mb-3">
 					<span className="text-4xl font-semibold text-center">
 						Fornecedores
@@ -691,7 +691,7 @@ export default function Suppliers() {
 						</Tabs.Trigger>
 					</Tabs.List>
 					{/* Aba de Lista de Fornecedores */}
-					<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+					<Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
 						<div className="flex justify-between">
 							{/* Botão de Abrir Modal de Cadastro de Fornecedor */}
 							<div className="mt-1 mb-3">
@@ -711,15 +711,17 @@ export default function Suppliers() {
 							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
 							<div className="flex items-center gap-5 mt-1 mb-3">
 								<button
+									title="Exportar PDF"
 									onClick={gerarRelatorio}
-									className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+									className={`bg-red-700 font-semibold 
+										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
 									) : (
 										<>
 											<FileText />
-											Exportar PDF
+											{window.innerWidth >= 1024 && "Exportar PDF"}
 										</>
 									)}
 								</button>
@@ -731,16 +733,18 @@ export default function Suppliers() {
 										};
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
-									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
+									title="Exportar CSV"
+									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 								>
 									<FileSpreadsheet />
-									Exportar CSV
+									{window.innerWidth >= 1024 && "Exportar CSV"}
 								</button>
 							</div>
 						</div>
 
 						{/* Tabela de Fornecedores */}
-						<div className="h-[75vh]">
+						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
 								modules={[AllCommunityModule]}
 								theme={myTheme}
@@ -768,7 +772,7 @@ export default function Suppliers() {
 					openModal={openRegisterModal}
 					setOpenModal={setOpenRegisterModal}
 					modalTitle="Cadastrar Fornecedor:"
-					modalWidth="w-1/2"
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					registerButtonText="Cadastrar Fornecedor"
 					isLoading={loading.has("submit")}
 					onSubmit={handleSubmit}
@@ -791,9 +795,10 @@ export default function Suppliers() {
 					openModal={openEditModal}
 					setOpenModal={setOpenEditModal}
 					modalTitle="Editar Fornecedor:"
+					withXButton
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
-					modalWidth="w-1/2"
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={loading.has("updateSupplier")}
 					onSubmit={handleUpdateSupplier}
 				>
@@ -815,6 +820,8 @@ export default function Suppliers() {
 					openModal={openDeleteModal}
 					setOpenModal={setOpenDeleteModal}
 					modalTitle="Excluir Fornecedor:"
+					withXButton
+					modalWidth="w-full md:w-4/5 lg:w-auto"
 					rightButtonText="Excluir"
 					leftButtonText="Cancelar"
 					onDelete={() => {

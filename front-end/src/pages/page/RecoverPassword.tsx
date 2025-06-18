@@ -17,17 +17,17 @@ export default function RecoverPassword() {
 	};
 
 	return (
-		<div className="flex flex-col md:flex-row h-screen font-montserrat">
+		<div className="flex flex-col lg:flex-row h-screen font-montserrat">
 			{/* Seção esquerda com conteúdo */}
-			<div className="w-full md:w-1/2 flex items-center justify-center bg-[#F2F0EF] px-6 py-12 shadow-lg">
+			<div className="w-full h-full lg:w-1/2 flex items-center justify-center bg-[#F2F0EF] px-6 py-12 shadow-lg">
 				<div className="max-w-md w-full">
 					<div className="flex items-center mb-6 gap-4">
 						<img
 							src="/logo-bioverde.png"
 							alt="Logo Bio Verde"
-							className="h-14 w-14 md:h-20 md:w-20"
+							className="h-14 w-14 lg:h-20 lg:w-20"
 						/>
-						<h1 className="text-4xl md:text-5xl font-bold tracking-wide text-green-700">
+						<h1 className="text-4xl lg:text-5xl font-bold tracking-wide text-green-700">
 							BIOVERDE
 						</h1>
 					</div>
@@ -48,7 +48,7 @@ export default function RecoverPassword() {
 				</div>
 			</div>
 
-			<div className="hidden md:flex w-1/2 relative font-montserrat">
+			<div className="hidden lg:flex w-1/2 relative font-montserrat">
 				{/* Imagem de fundo */}
 				<img
 					src="/soja.jpg"

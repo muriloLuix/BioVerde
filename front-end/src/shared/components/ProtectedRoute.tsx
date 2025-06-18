@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children, nivelMinimo }: ProtectedRouteProps) => {
 
   if (autorizado === null) {
     return (
-      <div className="flex flex-1 justify-center items-center p-6 pl-[280px] font-[inter] h-screen">
+      <div className="flex flex-1 justify-center items-center p-6 lg:pl-[280px] font-[inter] h-screen">
         <Loader2 className="animate-spin h-8 w-8 text-black" />
       </div>
     );  
@@ -41,7 +41,7 @@ const ProtectedRoute = ({ children, nivelMinimo }: ProtectedRouteProps) => {
 
   if (autorizado === false) {
     return (
-      <div className="flex flex-1 justify-center items-center p-6 pl-[280px] font-[inter] h-screen">
+      <div className="flex flex-1 justify-center items-center p-6 lg:pl-[280px] font-[inter] h-screen">
         <div className="container">
             <div className="forbidden-sign"></div>
             <h1>O acesso a esta página é restrito</h1>

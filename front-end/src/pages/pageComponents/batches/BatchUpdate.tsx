@@ -70,7 +70,7 @@ const BatchUpdate: React.FC<Props> = ({
                 }))
             }
         />
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="quant_max"
                 fieldText="Capacidade Máxima"
@@ -100,7 +100,7 @@ const BatchUpdate: React.FC<Props> = ({
                 }
             />
         </div>
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 isPrice
                 fieldName="preco"
@@ -130,7 +130,7 @@ const BatchUpdate: React.FC<Props> = ({
                 }
             />
         </div>
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 type="date"
                 fieldName="dt_colheita"

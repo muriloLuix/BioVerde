@@ -69,7 +69,7 @@ const NewStep: React.FC<Props> = ({
                 value: String(etapa.etapa_nome_id),
             }))}
         />
-        <div className="flex gap-10">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="etor_tempo"
                 fieldText="Tempo Estimado"

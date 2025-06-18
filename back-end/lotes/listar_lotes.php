@@ -12,6 +12,32 @@ try {
     }
     /*********************************************************************/
 
+    /********* PROCURA LOTES COM DATA DE VALIDADE ULTRAPASSADA E SETA ELES COM CLASSIFICAÇÃO REJEITADO ******/
+
+    $hoje = date('Y-m-d');
+
+    $sqlUpdate = "
+        UPDATE lote 
+        SET classificacao_id = 4 
+        WHERE DATE(lote_dtValidade) <= ? 
+          AND classificacao_id != 4
+    ";
+
+    $stmt = $conn->prepare($sqlUpdate);
+    if (!$stmt) {
+        throw new Exception("Erro ao preparar statement: " . $conn->error);
+    }
+
+    $stmt->bind_param("s", $hoje);
+
+    if (!$stmt->execute()) {
+        throw new Exception("Erro ao executar atualização de lotes vencidos: " . $stmt->error);
+    }
+
+    $stmt->close();
+
+    /***************************************************************************/
+
     /**************** CRIA O ARRAY DAS COLUNAS NA TABELA DE LOTE PARA EXIBIÇÃO ************************/
 
     $cols = array("lote_id", "lote_codigo", "lote_dtColheita", "lote_dtValidade", "lote_quantMax", "lote_quantAtual", "l.produto_preco", "lote_preco", "lote_obs", "p.produto_id", "p.produto_nome", "u.uni_id", "u.uni_sigla", "t.tproduto_id", "t.tproduto_nome", "f.fornecedor_id", "f.fornecedor_nome", "c.classificacao_id", "c.classificacao_nome", "a.localArmazenamento_id", "a.localArmazenamento_nome");

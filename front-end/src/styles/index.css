@@ -30,7 +30,6 @@
     --color-hoverLimparFiltros: #64783b;
 
 }
-
 .shadow-title {
     text-shadow: 0px 10px 8px #00000040;
 }
@@ -56,7 +55,8 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-background: transparent;
+/* background: transparent; */
+background: #83b68574;
 border-radius: 8px;
 }
 
@@ -126,4 +126,14 @@ background: #a0a0a0; /* cor mais escura no hover */
 
 body {
   font-family: 'Montserrat', sans-serif;
+}
+
+@media (max-width: 1023px) {
+  .ag-paging-panel {
+    font-size: 11px !important;
+    gap: 10px;
+  }
+  .ag-paging-row-summary-panel {
+    display: none !important;
+  }
 }

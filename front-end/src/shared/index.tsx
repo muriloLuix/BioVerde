@@ -15,3 +15,5 @@ export { default as ConfirmationModal } from "./components/ConfirmationModal";
 export { default as NoticeModal } from "./components/NoticeModal";
 export { default as SmartField } from "./components/SmartField";
 export { default as ReportModal } from "./components/ReportModal";
+export { default as UserProfile } from "./components/UserProfile";
+export { default as NavBar } from "./components/NavBar";

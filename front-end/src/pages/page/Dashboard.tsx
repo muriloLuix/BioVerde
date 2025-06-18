@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useState } from "react";
 
 import axios from "axios";
@@ -16,9 +17,9 @@ import {
 import { Link } from "react-router-dom";
 
 interface QuantityByStatus {
-	id: Number;
+	id: number;
 	status: string;
-	totalOrders: Number;
+	totalOrders: number;
 }
 
 const Dashboard = () => {
@@ -346,18 +347,21 @@ const Dashboard = () => {
 	}, []);
 
 	return isLoading ? (
-		<div className="pl-64 h-screen w-full flex justify-center items-center">
+		<div className="lg:pl-64 h-screen w-full flex justify-center items-center">
 			<Loader2 className="animate-spin h-12 w-12" />
 		</div>
 	) : (
-		<div className="pl-64">
-			<div className="h-screen w-full flex flex-wrap items-start p-4">
-				<div className="h-3/12 w-full flex items-center justify-around p-2 shadow-2xl rounded-lg bg-verdeEscuroForte">
+		<div className="lg:pl-64 lg:pt-0 pt-16">
+			<div className="lg:h-screen min-h-screen w-full flex flex-col lg:flex-row lg:flex-wrap lg:items-start lg:gap-0 gap-4 p-4">
+				<div className="lg:h-3/12 w-full flex lg:flex-nowrap flex-wrap lg:items-center lg:justify-around justify-center lg:p-2 lg:gap-0 gap-2 md:gap-3 p-4 shadow-2xl rounded-lg bg-verdeEscuroForte">
 					{products?.map((product, index) => (
 						<>
 							<div
 								key={product.status}
-								className="h-full w-1/5 flex flex-col p-2"
+								className={`h-full lg:w-1/5 w-full md:w-2/5 flex flex-col items-center justify-center p-5 
+									lg:p-2 bg-[#83b68574] lg:bg-verdeEscuroForte lg:rounded-none rounded-lg shadow-md lg:shadow-none ${
+									index === products.length - 1 ? 'md:mr-2.5 lg:mr-0' : ''
+								}`}
 							>
 								<div className="h-1/4 w-full flex p-1 item-center justify-center gap-2 font-medium">
 									{icons[index]}
@@ -388,15 +392,15 @@ const Dashboard = () => {
 					))}
 				</div>
 
-				<div className="h-4/12 w-full gap-4 flex items-center justify-around">
-					<div className="h-full w-1/2 bg-verdeEscuroForte rounded-lg">
+				<div className="h-4/12 w-full gap-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-around">
+					<div className="h-full lg:w-1/2 w-full bg-verdeEscuroForte rounded-lg">
 						<AgCharts className="h-full w-full" options={barOptions} />
 					</div>
-					<div className="h-full w-1/2 flex flex-col items-center justify-center bg-verdeEscuroForte rounded-lg">
-						<AgCharts className="h-full w-full" options={pieOptions} />
+					<div className="h-full lg:w-1/2 w-full flex flex-col items-center justify-center bg-verdeEscuroForte rounded-lg">
+						<AgCharts className="w-full" options={pieOptions} />
 					</div>
 				</div>
-				<div className="h-4/12 w-full rounded-lg p-1 box-border text-center shadow-xl bg-verdeEscuroForte">
+				<div className="h-4/12 w-full  rounded-lg p-1 box-border text-center shadow-xl bg-verdeEscuroForte">
 					<AgCharts className="h-full w-full" options={lineOptions} />
 				</div>
 			</div>

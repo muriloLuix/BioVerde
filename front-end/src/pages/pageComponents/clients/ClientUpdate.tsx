@@ -39,7 +39,7 @@ const ClientUpdate: React.FC<Props> = ({
 }) => {
   return (
     <div className="flex flex-col gap-4">
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="tipo"
                 fieldText="Tipo"
@@ -142,7 +142,7 @@ const ClientUpdate: React.FC<Props> = ({
             onChange={handleChange}
         />
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="tel"
                 fieldText="Telefone"
@@ -203,7 +203,7 @@ const ClientUpdate: React.FC<Props> = ({
             autoComplete="street-address"
         />
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-4">
             <SmartField
                 fieldName="num_endereco"
                 fieldText="Número"
@@ -214,7 +214,7 @@ const ClientUpdate: React.FC<Props> = ({
                 value={formData.num_endereco}
                 onChange={handleChange}
                 autoComplete="address-line1"
-                inputWidth="w-[160px]"
+                inputWidth={`${window.innerWidth < 1024 ? "w-auto" : "w-[160px]"}`}
             />
 
             <SmartField
@@ -271,16 +271,18 @@ const ClientUpdate: React.FC<Props> = ({
             isDisabled={!!formData.cep || !cities}
         />
 
-        <SmartField
-            isTextArea
-            rows={2}
-            fieldName="obs"
-            fieldText="Observações"
-            fieldClassname="flex flex-col w-full"
-            placeholder="Digite as observações do cliente"
-            value={formData.obs}
-            onChange={handleChange}
-        />
+        <div className="mb-4">
+            <SmartField
+                isTextArea
+                rows={2}
+                fieldName="obs"
+                fieldText="Observações"
+                fieldClassname="flex flex-col w-full"
+                placeholder="Digite as observações do cliente"
+                value={formData.obs}
+                onChange={handleChange}
+            />
+        </div>
     </div>
   );
 };

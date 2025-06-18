@@ -48,20 +48,22 @@ export default function Orders() {
 		setOpenModal(true);
 	};
 
+	const isMobile = window.innerWidth < 1024;
+
 	const columnDefs: ColDef[] = [
-		{ field: "log_id", headerName: "Id", filter: true, flex: 0.5 },
-		{ field: "log_user_nome", headerName: "Usuário", filter: true, flex: 1 },
+		{ field: "log_id", headerName: "Id", filter: true, ...(isMobile ? { width: 100 } : { flex: 0.5 }) },
+		{ field: "log_user_nome", headerName: "Usuário", filter: true, ...(isMobile ? { width: 180 } : { flex: 1 }) },
 		{
 			field: "log_datahora",
 			headerName: "Data/hora",
-			flex: 1,
+			...(isMobile ? { width: 180 } : { flex: 1 }),
 			valueFormatter: (params: ValueFormatterParams) =>
 				formatDateBR(params.value as string),
 		},
-		{ field: "log_pag_id", headerName: "Página", flex: 1 },
-		{ field: "log_url", headerName: "URL", flex: 1 },
-		{ field: "log_acao", headerName: "Ação", flex: 1.2 },
-		{ field: "log_conteudo", headerName: "Conteúdo", flex: 2 },
+		{ field: "log_pag_id", headerName: "Página", ...(isMobile ? { width: 180 } : { flex: 1 }) },
+		{ field: "log_url", headerName: "URL", ...(isMobile ? { width: 180 } : { flex: 1 }) },
+		{ field: "log_acao", headerName: "Ação", ...(isMobile ? { width: 200 } : { flex: 1.2 }) },
+		{ field: "log_conteudo", headerName: "Conteúdo", ...(isMobile ? { width: 250 } : { flex: 2 }) },
 		{
 			headerName: "Ações",
 			field: "acoes",
@@ -79,7 +81,7 @@ export default function Orders() {
 			pinned: "right",
 			sortable: false,
 			filter: false,
-			width: 100,
+			...(isMobile ? { width: 80 } : { width: 100 })
 		},
 	];
 
@@ -144,14 +146,14 @@ export default function Orders() {
 	};
 
 	return (
-		<div className="h-screen w-full flex-1 p-6 pl-[280px]">
-			<div className="h-10 w-full flex items-center justify-center">
+		<div className="h-screen w-full flex-1 lg:p-6 pt-20 lg:pl-[280px]">
+			<div className="h-10 mb-3 w-full flex items-center justify-center">
 				<span className="text-4xl font-semibold text-center">Logs</span>
 			</div>
 
 			<Tabs.Root
 				defaultValue="list"
-				className="h-full w-full"
+				className="w-full px-3 pb-5"
 				onValueChange={setActiveTab}
 			>
 				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
@@ -167,7 +169,7 @@ export default function Orders() {
 
 				<Tabs.Content
 					value="list"
-					className="h-full w-full flex flex-col py-2 px-4"
+					className="w-full flex flex-col py-2 lg:px-4 px-2"
 				>
 					<div className="flex justify-end mb-3">
 						<button
@@ -178,14 +180,15 @@ export default function Orders() {
 								};
 								gridRef.current?.api.exportDataAsCsv(params);
 							}}
-							className="bg-verdePigmento hover:bg-verdeGrama text-white font-semibold py-2.5 px-4 sombra-botao flex place-content-center gap-2 rounded cursor-pointer"
+							title="Exportar CSV"
+							className={`bg-verdePigmento hover:bg-verdeGrama text-white font-semibold sombra-botao flex place-content-center gap-2 rounded cursor-pointer ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 						>
 							<FileSpreadsheet />
-							Exportar CSV
+							{window.innerWidth >= 1024 && "Exportar CSV"}
 						</button>
 					</div>
 
-					<div className="h-[75vh]">
+					<div className="md:h-[75vh] h-[63vh]">
 						<AgGridReact
 							modules={[AllCommunityModule]}
 							theme={myTheme}
@@ -208,7 +211,7 @@ export default function Orders() {
 					openModal={openLogModal}
 					setOpenModal={setOpenModal}
 					modalTitle="Visualizar Log"
-					modalWidth="w-1/2"
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={false}
 					withExitButton
 					isRegister={true}

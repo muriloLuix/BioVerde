@@ -736,8 +736,8 @@ export default function Orders() {
 	);
 
 	return (
-		<div className="flex-1 p-6 pl-[280px]">
-			<div className="px-6 font-[inter] bg-brancoSal">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20">
+			<div className="lg:px-6 px-3 font-[inter] bg-brancoSal">
 				<h1 className="h-10 w-full flex items-center justify-center mb-3">
 					<span className="text-4xl font-semibold text-center">Pedidos</span>
 				</h1>
@@ -760,7 +760,7 @@ export default function Orders() {
 
 					<Tabs.Content
 						value="list"
-						className="flex flex-col w-full py-2 px-4 gap-2"
+						className="flex flex-col w-full py-2 lg:px-4 px-2 gap-2"
 					>
 						<div className="flex justify-between p-2">
 							<div className="flex items-center gap-2">
@@ -810,7 +810,7 @@ export default function Orders() {
 									) : (
 										<>
 											<FileText />
-											Exportar PDF
+											{window.innerWidth >= 1024 && "Exportar PDF"}
 										</>
 									)}
 								</button>
@@ -824,15 +824,18 @@ export default function Orders() {
 										};
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
+									title="Exportar CSV"
+									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 								>
 									<FileSpreadsheet />
-									Exportar CSV
+									{window.innerWidth >= 1024 && "Exportar CSV"}
 								</button>
 							</div>
 						</div>
 
 						{/* Tabela de pedidos */}
-						<div className="h-[75vh]">
+						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
 								modules={[AllCommunityModule]}
 								theme={myTheme}
@@ -858,14 +861,14 @@ export default function Orders() {
 					withExitButton
 					openModal={openOrderModal}
 					setOpenModal={setOpenOrderModal}
-					modalWidth="min-w-[700px] min-h-[40vh]"
+					modalWidth="md:w-[700px] md:min-h-[40vh] w-full"
 					modalTitle={
-						<span>
+						<span className="md:text-2xl text-base">
 							Nº do Pedido: <span className="font-normal">{numOrder}</span>
 						</span>
 					}
 					modalSecondTitle={
-						<span>
+						<span className="md:text-2xl text-base">
 							Cliente: <span className="font-normal">{clientOrder}</span>
 						</span>
 					}
@@ -917,7 +920,8 @@ export default function Orders() {
 					modalTitle="Editar Pedido:"
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
-					modalWidth="w-1/2"
+					withXButton
+					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={loading.has("updateOrder")}
 					onSubmit={handleUpdateOrder}
 				>
@@ -940,6 +944,8 @@ export default function Orders() {
 					modalTitle="Excluir Pedido:"
 					rightButtonText="Excluir"
 					leftButtonText="Cancelar"
+					withXButton
+					modalWidth="w-full md:w-4/5 lg:w-auto"
 					onDelete={() => {
 						setOpenConfirmModal(true);
 						setOpenDeleteModal(false);

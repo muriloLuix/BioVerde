@@ -38,7 +38,7 @@ export default function InventoryControl() {
 	};
 
 	return (
-		<div className="h-screen w-full flex-1 p-6 pl-[280px] font-[inter]">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20 font-[inter]">
 			<div className="h-10 w-full flex items-center justify-center mb-3">
 				<span className="text-4xl font-semibold text-center">
 					Controle de estoque
@@ -46,7 +46,7 @@ export default function InventoryControl() {
 			</div>
 
 			<Tabs.Root
-				className="w-full"
+				className="w-full px-3"
 				value={activeTab}
 				onValueChange={handleChangeTab}
 			>
@@ -57,7 +57,7 @@ export default function InventoryControl() {
 							activeTab === "list" ? "select animation-tab" : ""
 						}`}
 					>
-						Lista de Lotes
+						Lotes em Estoque
 					</Tabs.Trigger>
 
 					<Tabs.Trigger
@@ -67,6 +67,15 @@ export default function InventoryControl() {
 						}`}
 					>
 						Movimentações do Estoque
+					</Tabs.Trigger>
+
+					<Tabs.Trigger
+						value="notices"
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							activeTab === "notices" ? "select animation-tab" : ""
+						}`}
+					>
+						Avisos do Estoque
 					</Tabs.Trigger>
 				</Tabs.List>
 

@@ -59,7 +59,7 @@ const UserRegister: React.FC<Props> = ({
             required
         />
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-7">
             <SmartField
                 fieldName="tel"
                 fieldText="Telefone"
@@ -94,7 +94,7 @@ const UserRegister: React.FC<Props> = ({
             />
         </div>
 
-        <div className="flex gap-7">
+        <div className="flex flex-col lg:flex-row gap-7">
             <SmartField
                 fieldName="cargo"
                 fieldText="Cargo"

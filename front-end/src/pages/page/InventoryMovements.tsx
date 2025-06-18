@@ -458,15 +458,17 @@ export default function InventoryMovements() {
 		<>
 			<Tabs.Content
 				value="movements"
-				className="w-full flex flex-col py-2 px-4"
+				className="w-full flex flex-col py-2 lg:px-4 px-2"
 			>
 				{/* Botões de Exportar CSV e Novo Lote */}
 				<div className="flex justify-between">
 					{/* Botão de Abrir Modal de Cadastro de Entrada e Saída de Produtos */}
 					<div className="flex items-center gap-5 mt-1 mb-3">
 						<button
+							title="Adicionar Produto"
 							type="button"
-							className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex       sombra-botao  place-content-center gap-2 
+                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 							onClick={() => {
 								setOpenStockInModal(true);
 								setHaveDestination(false);
@@ -474,11 +476,13 @@ export default function InventoryMovements() {
 							}}
 						>
 							<PackagePlus />
-							Adicionar Produto
+							{window.innerWidth >= 768 && "Adicionar Produto"}
 						</button>
 						<button
+							title="Retirar Produto"
 							type="button"
-							className="bg-gray-300 py-2.5 px-4 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2"
+							className={`bg-gray-300 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2
+                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"} `}
 							onClick={() => {
 								setOpenStockOutModal(true);
 								setHaveDestination(true);
@@ -486,42 +490,50 @@ export default function InventoryMovements() {
 							}}
 						>
 							<PackageMinus />
-							Retirar Produto
+							{window.innerWidth >= 768 && "Retirar Produto"}
 						</button>
 					</div>
 					{/* Botão de exportar para CSV e PDF dos dados da tabela */}
 					<div className="flex items-center gap-5 mt-1 mb-3">
 						<button
+							title="Exportar PDF"
 							onClick={gerarRelatorio}
-							className="bg-red-700 py-2.5 px-4 w-[165.16px] font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2"
+							className={`bg-red-700 font-semibold 
+                            rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
+															window.innerWidth < 1024
+																? "p-2"
+																: "py-2.5 px-4 w-[165.16px]"
+														}`}
 						>
 							{loading.has("reports") ? (
 								<Loader2 className="animate-spin h-6 w-6" />
 							) : (
 								<>
 									<FileText />
-									Exportar PDF
+									{window.innerWidth >= 1024 && "Exportar PDF"}
 								</>
 							)}
 						</button>
 						<button
 							onClick={() => {
 								const params = {
-									fileName: "lotes.csv",
+									fileName: "movimentacoes.csv",
 									columnSeparator: ";",
 								};
 								gridRef.current?.api.exportDataAsCsv(params);
 							}}
-							className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2"
+							title="Exportar CSV"
+							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex       sombra-botao  place-content-center gap-2 
+                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 						>
 							<FileSpreadsheet />
-							Exportar CSV
+							{window.innerWidth >= 1024 && "Exportar CSV"}
 						</button>
 					</div>
 				</div>
 
 				{/* Tabela de Lotes */}
-				<div className="h-[75vh]">
+				<div className="lg:h-[75vh] h-[58vh]">
 					<AgGridReact
 						modules={[AllCommunityModule]}
 						theme={myTheme}
@@ -547,7 +559,7 @@ export default function InventoryMovements() {
 				withXButton
 				isRegister
 				registerButtonText="Efetuar Entrada"
-				modalWidth="w-1/2"
+				modalWidth="w-full md:w-4/5 lg:w-1/2"
 				isLoading={loading.has("stockIn")}
 				onSubmit={handleStockInProduct}
 			>
@@ -569,7 +581,7 @@ export default function InventoryMovements() {
 				withXButton
 				isRegister
 				registerButtonText="Efetuar Saída"
-				modalWidth="w-1/2"
+				modalWidth="w-full md:w-4/5 lg:w-1/2"
 				isLoading={loading.has("stockOut")}
 				onSubmit={handleStockOutProduct}
 			>
