@@ -32,6 +32,7 @@ import {
 	NewStep,
 	UpdateStep,
 	DeleteStep,
+	SideBarMobile,
 } from "../pageComponents";
 import {
 	SelectEvent,
@@ -42,8 +43,6 @@ import {
 	DeleteSteps,
 	StepNames,
 } from "../../utils/types";
-import { ProductRegister, NewStep, UpdateStep, DeleteStep, SideBarMobile } from "../pageComponents";
-import { SelectEvent, FormDataSteps, ProductsWithSteps, Steps, StepOptions, DeleteSteps, StepNames } from "../../utils/types";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function ProductionSteps() {
@@ -58,7 +57,6 @@ export default function ProductionSteps() {
 	const [openStepNameModal, setOpenStepNameModal] = useState(false);
 	const [openStepNameConfirmModal, setOpenStepNameConfirmModal] =
 		useState(false);
-	const [openStepNameConfirmModal, setOpenStepNameConfirmModal] = useState(false);
 	const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 	const [successMsg, setSuccessMsg] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
@@ -917,75 +915,6 @@ export default function ProductionSteps() {
 						<div className="flex items-center justify-start">
 							<div className="flex lg:flex-row flex-col lg:gap-10 gap-4 w-full">
 								{/* SideBar Estrutura de produtos */}
-								<div className="bg-gray-200 rounded-xl max-w-[350px] sombra flex flex-col h-[70vh]">
-									{/* Cabeçalho */}
-									<div className="bg-green-800 p-4 rounded-t-xl">
-										<h2 className="text-white text-center text-lg font-semibold">
-											Etapas de Produção
-										</h2>
-										<div className="flex items-center gap-2 relative">
-											<Search className="text-black w-5 h-5 absolute right-2 bottom-2.5" />
-											<input
-												type="text"
-												name="searchProduct"
-												id="searchProduct"
-												placeholder="Buscar Produto"
-												value={search}
-												onChange={(e) => setSearch(e.target.value)}
-												className="bg-white text-black w-full pr-9 border border-separator rounded-lg text-base mt-3 p-1.5 shadow-xl"
-											/>
-										</div>
-									</div>
-									{/* Lista rolável */}
-									<div className="flex-1 overflow-y-auto custom-scrollbar-products">
-										{loading.has("steps") ? (
-											<div className="flex justify-center items-center h-full">
-												<Loader2 className="animate-spin h-8 w-8 mx-auto" />
-											</div>
-										) : productsWithSteps.length === 0 ? (
-											<div className="flex justify-center items-center h-full">
-												<p className="text-center text-gray-700">
-													Nenhum Produto Cadastrado
-												</p>
-											</div>
-										) : (
-											<ul className="flex flex-col gap-2 m-4">
-												{productsWithSteps
-													.filter((produto) =>
-														produto.produto_nome
-															.toLowerCase()
-															.includes(search.toLowerCase())
-													)
-													.map((produto, index) => (
-														<li
-															key={index}
-															className={`break-words px-4 py-2 text-black font-medium cursor-pointer hover:bg-gray-300 rounded-lg ${
-																selectedProduct?.produto_nome ===
-																produto.produto_nome
-																	? "bg-gray-300"
-																	: ""
-															}`}
-															onClick={() => setSelectedProduct(produto)}
-														>
-															{produto.produto_nome}
-														</li>
-													))}
-											</ul>
-										)}
-									</div>
-									{/* Botão fixo */}
-									<div className="p-1 bg-gray-300 hover:bg-gray-400 rounded-b-xl">
-										<button
-											onClick={() => {
-												setOpenNewProductModal(true);
-												setNewProduct({ produto: "" });
-											}}
-											className="w-full cursor-pointer flex place-content-center gap-2 text-black font-semibold py-2 rounded-lg"
-										>
-											<Plus />
-											Novo Produto
-										</button>
-									</div>
 								{window.innerWidth >= 1024 ? (
 									<div className="bg-gray-200 hidden lg:flex flex-col h-[70vh] max-w-[350px] rounded-xl sombra">
 										{/* Cabeçalho */}
@@ -1031,21 +960,25 @@ export default function ProductionSteps() {
 																key={index}
 																className={`break-words px-4 py-2 text-black font-medium cursor-pointer hover:bg-gray-300 rounded-lg ${
 																	selectedProduct?.produto_nome ===
-																	produto.produto_nome ? "bg-gray-300" : ""
+																	produto.produto_nome
+																		? "bg-gray-300"
+																		: ""
 																}`}
 																onClick={() => setSelectedProduct(produto)}
 															>
 																{produto.produto_nome}
 															</li>
-														))
-													}
+														))}
 												</ul>
 											)}
 										</div>
 										{/* Botão fixo */}
 										<div className="p-1 bg-gray-300 hover:bg-gray-400 rounded-b-xl">
 											<button
-												onClick={() => { setOpenNewProductModal(true); setNewProduct({ produto: "" }); }}
+												onClick={() => {
+													setOpenNewProductModal(true);
+													setNewProduct({ produto: "" });
+												}}
 												className="w-full cursor-pointer flex place-content-center gap-2 text-black font-semibold py-2 rounded-lg"
 											>
 												<Plus />
@@ -1062,12 +995,12 @@ export default function ProductionSteps() {
 										setSearch={(e) => setSearch(e.target.value)}
 										productsWithSteps={productsWithSteps}
 										selectedProduct={selectedProduct}
-										setSelectedProduct={setSelectedProduct}		
+										setSelectedProduct={setSelectedProduct}
 										setOpenNewProductModal={setOpenNewProductModal}
-										setNewProduct={setNewProduct}							
+										setNewProduct={setNewProduct}
 									/>
 								)}
-								
+
 								{/* Botão para selecionar o produto com etapas (apenas Mobile) */}
 								<div className="lg:hidden flex justify-center">
 									<button
@@ -1155,116 +1088,131 @@ export default function ProductionSteps() {
 															)}
 														</>
 													)}
-											<div className="flex md:flex-row flex-col md:items-center justify-between mb-4">
-												<h2 className="lg:text-2xl text-xl md:mt-3 lg:mt-0 flex flex-row flex-wrap gap-2 md:my-0">
-													<strong>Produto Final:</strong>
-													<div className="flex flex-row items-center gap-2 lg:mb-0 mb-3">
-														{editingId === selectedProduct.produto_id ? (
-															<input
-																type="text"
-																className="border p-1 text-xl"
-																value={editedValue}
-																onChange={(e) => setEditedValue(e.target.value)}
-																onKeyDown={(e) => {
-																	if (e.key === "Enter")
-																		updateProduct(selectedProduct.produto_id, editedValue);
-																}}
-																autoFocus
-															/>
-														) : (
-															selectedProduct.produto_nome
-														)}
-														{editingId === selectedProduct.produto_id ? (
-															<>
-															<button
-																className="cursor-pointer text-xl text-green-700"
-																onClick={() =>
-																	updateProduct(selectedProduct.produto_id, editedValue)
-																}
-																title="Salvar"
-															>
-																<Check  />
-															</button>
-															<button
-																className="cursor-pointer text-xl text-red-700"
-																onClick={() => setEditingId(null)}
-																title="Cancelar"
-															>
-																<X  />
-															</button>
-															</>
-														) : (
-															<>
-															<button
-																className="cursor-pointer ml-1 text-blue-600"
-																onClick={() => handleEditProduct(selectedProduct)}
-																title="Editar Produto"
-															>
-																<PencilLine size={21} />
-															</button>
-															{userLevel === "Administrador" && (
-																<button
-																	className="text-red-500 cursor-pointer"
-																	onClick={() => handleDeleteProduct(selectedProduct)}
-																	title="Excluir Produto"
-																>
-																	<Trash size={21} />
-																</button>
-															)}
-															</>
-														)}
-													</div>
 												</h2>
-												<button
-													onClick={() => {
-														setOpenRegisterModal(true);
-														clearFormData();
-													}}
-													className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-												>
-													<Plus />
-													Nova Etapa
-												</button>
-												<div className="flex">
+												<div className="flex md:flex-row flex-col md:items-center justify-between mb-4">
+													<h2 className="lg:text-2xl text-xl md:mt-3 lg:mt-0 flex flex-row flex-wrap gap-2 md:my-0">
+														<strong>Produto Final:</strong>
+														<div className="flex flex-row items-center gap-2 lg:mb-0 mb-3">
+															{editingId === selectedProduct.produto_id ? (
+																<input
+																	type="text"
+																	className="border p-1 text-xl"
+																	value={editedValue}
+																	onChange={(e) =>
+																		setEditedValue(e.target.value)
+																	}
+																	onKeyDown={(e) => {
+																		if (e.key === "Enter")
+																			updateProduct(
+																				selectedProduct.produto_id,
+																				editedValue
+																			);
+																	}}
+																	autoFocus
+																/>
+															) : (
+																selectedProduct.produto_nome
+															)}
+															{editingId === selectedProduct.produto_id ? (
+																<>
+																	<button
+																		className="cursor-pointer text-xl text-green-700"
+																		onClick={() =>
+																			updateProduct(
+																				selectedProduct.produto_id,
+																				editedValue
+																			)
+																		}
+																		title="Salvar"
+																	>
+																		<Check />
+																	</button>
+																	<button
+																		className="cursor-pointer text-xl text-red-700"
+																		onClick={() => setEditingId(null)}
+																		title="Cancelar"
+																	>
+																		<X />
+																	</button>
+																</>
+															) : (
+																<>
+																	<button
+																		className="cursor-pointer ml-1 text-blue-600"
+																		onClick={() =>
+																			handleEditProduct(selectedProduct)
+																		}
+																		title="Editar Produto"
+																	>
+																		<PencilLine size={21} />
+																	</button>
+																	{userLevel === "Administrador" && (
+																		<button
+																			className="text-red-500 cursor-pointer"
+																			onClick={() =>
+																				handleDeleteProduct(selectedProduct)
+																			}
+																			title="Excluir Produto"
+																		>
+																			<Trash size={21} />
+																		</button>
+																	)}
+																</>
+															)}
+														</div>
+													</h2>
 													<button
-													onClick={() => {setOpenRegisterModal(true); clearFormData()}}
-													className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+														onClick={() => {
+															setOpenRegisterModal(true);
+															clearFormData();
+														}}
+														className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
 													>
 														<Plus />
 														Nova Etapa
 													</button>
+													<div className="flex">
+														<button
+															onClick={() => {
+																setOpenRegisterModal(true);
+																clearFormData();
+															}}
+															className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+														>
+															<Plus />
+															Nova Etapa
+														</button>
+													</div>
 												</div>
-											</div>
-											{/* Tabela de Etapas */}
-											{selectedProduct.etapas &&
-											selectedProduct.etapas.length === 0 ? (
-												<div className="flex justify-center items-center h-[63vh]">
-													<p className="text-gray-800 text-lg text-center px-4">
-														Clique em <strong>Nova Etapa</strong> para adicionar
-														etapas a esse produto.
-													</p>
-												</div>
-											) : (
-												<div className="h-[63vh]">
+												{/* Tabela de Etapas */}
+												{selectedProduct.etapas &&
+												selectedProduct.etapas.length === 0 ? (
+													<div className="flex justify-center items-center h-[63vh]">
+														<p className="text-gray-800 text-lg text-center px-4">
+															Clique em <strong>Nova Etapa</strong> para
+															adicionar etapas a esse produto.
+														</p>
+													</div>
 												) : (
-												<div className="h-[63vh] lg:mb-0 mb-4">
-													<AgGridReact
-														modules={[AllCommunityModule]}
-														theme={myTheme}
-														ref={gridRef}
-														rowData={rowData}
-														columnDefs={columnDefs}
-														context={{ userLevel }}
-														localeText={agGridTranslation}
-														pagination
-														paginationPageSize={10}
-														paginationPageSizeSelector={[10, 25, 50, 100]}
-														loading={loading.has("steps")}
-														overlayLoadingTemplate={overlayLoadingTemplate}
-														overlayNoRowsTemplate={overlayNoRowsTemplate}
-													/>
-												</div>
-											)}
+													<div className="h-[63vh] lg:mb-0 mb-4">
+														<AgGridReact
+															modules={[AllCommunityModule]}
+															theme={myTheme}
+															ref={gridRef}
+															rowData={rowData}
+															columnDefs={columnDefs}
+															context={{ userLevel }}
+															localeText={agGridTranslation}
+															pagination
+															paginationPageSize={10}
+															paginationPageSizeSelector={[10, 25, 50, 100]}
+															loading={loading.has("steps")}
+															overlayLoadingTemplate={overlayLoadingTemplate}
+															overlayNoRowsTemplate={overlayNoRowsTemplate}
+														/>
+													</div>
+												)}
+											</div>
 										</>
 									) : (
 										<p className="text-gray-600 flex justify-center items-center h-full text-lg w-[680px]">
@@ -1285,9 +1233,6 @@ export default function ProductionSteps() {
 					withXButton
 					isRegister
 					registerButtonText="Cadastrar Produto"
-					modalWidth="w-1/2 h-[450px]"
-					isSideButton
-            		registerButtonText="Cadastrar Produto"
 					modalWidth="w-full md:w-4/5 lg:w-1/2 h-[450px]"
 					isSideButton={window.innerWidth >= 1024}
 					isLoading={loading.has("registerProduct")}
@@ -1322,8 +1267,6 @@ export default function ProductionSteps() {
 					withXButton
 					isRegister
 					registerButtonText="Cadastrar Etapa"
-					modalWidth="w-1/2"
-            		registerButtonText="Cadastrar Etapa"
 					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={loading.has("registerStep")}
 					onSubmit={handleStepSubmit}
@@ -1349,8 +1292,6 @@ export default function ProductionSteps() {
 					withXButton
 					rightButtonText="Editar"
 					leftButtonText="Cancelar"
-					modalWidth="w-1/2"
-            		leftButtonText="Cancelar"
 					modalWidth="w-full md:w-4/5 lg:w-1/2"
 					isLoading={loading.has("updateStep")}
 					onSubmit={handleUpdateStep}

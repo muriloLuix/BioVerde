@@ -804,6 +804,7 @@ export default function Orders() {
 									disabled={loading.size > 0}
 									className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={generateReport}
+									title="Exportar PDF"
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -816,7 +817,7 @@ export default function Orders() {
 								</button>
 								<button
 									disabled={loading.size > 0}
-									className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className={`bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${window.innerWidth} < 1024 ? "p-2" : "py-2.5 px-4"`}
 									onClick={() => {
 										const params = {
 											fileName: "pedidos.csv",
@@ -825,8 +826,6 @@ export default function Orders() {
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
 									title="Exportar CSV"
-									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
-									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 								>
 									<FileSpreadsheet />
 									{window.innerWidth >= 1024 && "Exportar CSV"}

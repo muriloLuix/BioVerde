@@ -41,39 +41,11 @@ export default function LoginPage() {
 					alt="Agricultura"
 					className="absolute inset-0 w-full h-full object-cover"
 				/>
-          <h2 className="text-2xl font-bold italic mb-1">Seja bem vindo</h2>
-          <p className="text-gray-600 mb-8">
-            Por favor, faça o login na sua conta.
-          </p>
-          <Login />
-        </div>
-      </div>
-		{/* Seção com imagem */}
-		<div className="hidden lg:flex w-1/2 relative font-montserrat">
-			{/* Imagem de fundo */}
-			<img
-				src="/soja.jpg"
-				alt="Agricultura"
-				className="absolute inset-0 w-full h-full object-cover"
-			/>
-
-				{/* Overlay esverdeado claro */}
-				<div className="absolute inset-0 bg-green-200 opacity-40 mix-blend-multiply"></div>
-
-				{/* Texto alinhado à direita e centralizado verticalmente */}
-				<div className="w-full h-full overflow-hidden">
-					<motion.div
-						initial={{ x: 100, opacity: 0 }}
-						animate={{ x: 0, opacity: 1 }}
-						transition={{ duration: 1 }}
-						className="relative z-10 flex items-center justify-end w-full h-full pr-10"
-					>
-						<div className="text-white text-4xl font-semibold text-right">
-							<p className="leading-relaxed">Da terra com cuidado,</p>
-							<p>para sua mesa com saúde.</p>
-						</div>
-					</motion.div>
-				</div>
+				<h2 className="text-2xl font-bold italic mb-1">Seja bem vindo</h2>
+				<p className="text-gray-600 mb-8">
+					Por favor, faça o login na sua conta.
+				</p>
+				<Login />
 			</div>
 		</div>
 	);
