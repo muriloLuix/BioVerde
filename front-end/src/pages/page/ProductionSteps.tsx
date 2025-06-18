@@ -1021,198 +1021,115 @@ export default function ProductionSteps() {
 										</div>
 									) : selectedProduct ? (
 										<>
-											<div className="flex items-center justify-between mb-4">
-												<h2 className="text-2xl flex items-center gap-2">
-													<strong>Produto Final:</strong>{" "}
-													{editingId === selectedProduct.produto_id ? (
-														<input
-															type="text"
-															className="border p-1 text-xl"
-															value={editedValue}
-															onChange={(e) => setEditedValue(e.target.value)}
-															onKeyDown={(e) => {
-																if (e.key === "Enter")
-																	updateProduct(
-																		selectedProduct.produto_id,
-																		editedValue
-																	);
-															}}
-															autoFocus
-														/>
-													) : (
-														selectedProduct.produto_nome
-													)}
-													{editingId === selectedProduct.produto_id ? (
-														<>
-															<button
-																className="cursor-pointer text-xl text-green-700"
-																onClick={() =>
-																	updateProduct(
-																		selectedProduct.produto_id,
-																		editedValue
-																	)
-																}
-																title="Salvar"
-															>
-																<Check />
-															</button>
-															<button
-																className="cursor-pointer text-xl text-red-700"
-																onClick={() => setEditingId(null)}
-																title="Cancelar"
-															>
-																<X />
-															</button>
-														</>
-													) : (
-														<>
-															<button
-																className="cursor-pointer ml-1 text-blue-600"
-																onClick={() =>
-																	handleEditProduct(selectedProduct)
-																}
-																title="Editar Produto"
-															>
-																<PencilLine size={21} />
-															</button>
-															{userLevel === "Administrador" && (
+											<div className="flex md:flex-row flex-col md:items-center justify-between mb-4">
+												<h2 className="lg:text-2xl text-xl md:mt-3 lg:mt-0 flex flex-row flex-wrap gap-2 md:my-0">
+													<strong>Produto Final:</strong>
+													<div className="flex flex-row items-center gap-2 lg:mb-0 mb-3">
+														{editingId === selectedProduct.produto_id ? (
+															<input
+																type="text"
+																className="border p-1 text-xl"
+																value={editedValue}
+																onChange={(e) => setEditedValue(e.target.value)}
+																onKeyDown={(e) => {
+																	if (e.key === "Enter")
+																		updateProduct(
+																			selectedProduct.produto_id,
+																			editedValue
+																		);
+																}}
+																autoFocus
+															/>
+														) : (
+															selectedProduct.produto_nome
+														)}
+														{editingId === selectedProduct.produto_id ? (
+															<>
 																<button
-																	className="text-red-500 cursor-pointer"
+																	className="cursor-pointer text-xl text-green-700"
 																	onClick={() =>
-																		handleDeleteProduct(selectedProduct)
+																		updateProduct(
+																			selectedProduct.produto_id,
+																			editedValue
+																		)
 																	}
-																	title="Excluir Produto"
+																	title="Salvar"
 																>
-																	<Trash size={21} />
+																	<Check />
 																</button>
-															)}
-														</>
-													)}
-												</h2>
-												<div className="flex md:flex-row flex-col md:items-center justify-between mb-4">
-													<h2 className="lg:text-2xl text-xl md:mt-3 lg:mt-0 flex flex-row flex-wrap gap-2 md:my-0">
-														<strong>Produto Final:</strong>
-														<div className="flex flex-row items-center gap-2 lg:mb-0 mb-3">
-															{editingId === selectedProduct.produto_id ? (
-																<input
-																	type="text"
-																	className="border p-1 text-xl"
-																	value={editedValue}
-																	onChange={(e) =>
-																		setEditedValue(e.target.value)
+																<button
+																	className="cursor-pointer text-xl text-red-700"
+																	onClick={() => setEditingId(null)}
+																	title="Cancelar"
+																>
+																	<X />
+																</button>
+															</>
+														) : (
+															<>
+																<button
+																	className="cursor-pointer ml-1 text-blue-600"
+																	onClick={() =>
+																		handleEditProduct(selectedProduct)
 																	}
-																	onKeyDown={(e) => {
-																		if (e.key === "Enter")
-																			updateProduct(
-																				selectedProduct.produto_id,
-																				editedValue
-																			);
-																	}}
-																	autoFocus
-																/>
-															) : (
-																selectedProduct.produto_nome
-															)}
-															{editingId === selectedProduct.produto_id ? (
-																<>
+																	title="Editar Produto"
+																>
+																	<PencilLine size={21} />
+																</button>
+																{userLevel === "Administrador" && (
 																	<button
-																		className="cursor-pointer text-xl text-green-700"
+																		className="text-red-500 cursor-pointer"
 																		onClick={() =>
-																			updateProduct(
-																				selectedProduct.produto_id,
-																				editedValue
-																			)
+																			handleDeleteProduct(selectedProduct)
 																		}
-																		title="Salvar"
+																		title="Excluir Produto"
 																	>
-																		<Check />
+																		<Trash size={21} />
 																	</button>
-																	<button
-																		className="cursor-pointer text-xl text-red-700"
-																		onClick={() => setEditingId(null)}
-																		title="Cancelar"
-																	>
-																		<X />
-																	</button>
-																</>
-															) : (
-																<>
-																	<button
-																		className="cursor-pointer ml-1 text-blue-600"
-																		onClick={() =>
-																			handleEditProduct(selectedProduct)
-																		}
-																		title="Editar Produto"
-																	>
-																		<PencilLine size={21} />
-																	</button>
-																	{userLevel === "Administrador" && (
-																		<button
-																			className="text-red-500 cursor-pointer"
-																			onClick={() =>
-																				handleDeleteProduct(selectedProduct)
-																			}
-																			title="Excluir Produto"
-																		>
-																			<Trash size={21} />
-																		</button>
-																	)}
-																</>
-															)}
-														</div>
-													</h2>
-													<button
-														onClick={() => {
-															setOpenRegisterModal(true);
-															clearFormData();
-														}}
-														className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-													>
-														<Plus />
-														Nova Etapa
-													</button>
-													<div className="flex">
-														<button
-															onClick={() => {
-																setOpenRegisterModal(true);
-																clearFormData();
-															}}
-															className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-														>
-															<Plus />
-															Nova Etapa
-														</button>
+																)}
+															</>
+														)}
 													</div>
-												</div>
-												{/* Tabela de Etapas */}
-												{selectedProduct.etapas &&
-												selectedProduct.etapas.length === 0 ? (
-													<div className="flex justify-center items-center h-[63vh]">
-														<p className="text-gray-800 text-lg text-center px-4">
-															Clique em <strong>Nova Etapa</strong> para
-															adicionar etapas a esse produto.
-														</p>
-													</div>
-												) : (
-													<div className="h-[63vh] lg:mb-0 mb-4">
-														<AgGridReact
-															modules={[AllCommunityModule]}
-															theme={myTheme}
-															ref={gridRef}
-															rowData={rowData}
-															columnDefs={columnDefs}
-															context={{ userLevel }}
-															localeText={agGridTranslation}
-															pagination
-															paginationPageSize={10}
-															paginationPageSizeSelector={[10, 25, 50, 100]}
-															loading={loading.has("steps")}
-															overlayLoadingTemplate={overlayLoadingTemplate}
-															overlayNoRowsTemplate={overlayNoRowsTemplate}
-														/>
-													</div>
-												)}
+												</h2>
+												<button
+													onClick={() => {
+														setOpenRegisterModal(true);
+														clearFormData();
+													}}
+													className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+												>
+													<Plus />
+													Nova Etapa
+												</button>
 											</div>
+											{/* Tabela de Etapas */}
+											{selectedProduct.etapas &&
+											selectedProduct.etapas.length === 0 ? (
+												<div className="flex justify-center items-center h-[63vh]">
+													<p className="text-gray-800 text-lg text-center px-4">
+														Clique em <strong>Nova Etapa</strong> para adicionar
+														etapas a esse produto.
+													</p>
+												</div>
+											) : (
+												<div className="h-[63vh] lg:mb-0 mb-4">
+													<AgGridReact
+														modules={[AllCommunityModule]}
+														theme={myTheme}
+														ref={gridRef}
+														rowData={rowData}
+														columnDefs={columnDefs}
+														context={{ userLevel }}
+														localeText={agGridTranslation}
+														pagination
+														paginationPageSize={10}
+														paginationPageSizeSelector={[10, 25, 50, 100]}
+														loading={loading.has("steps")}
+														overlayLoadingTemplate={overlayLoadingTemplate}
+														overlayNoRowsTemplate={overlayNoRowsTemplate}
+													/>
+												</div>
+											)}
 										</>
 									) : (
 										<p className="text-gray-600 flex justify-center items-center h-full text-lg w-[680px]">
