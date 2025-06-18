@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
 import {
@@ -824,7 +824,7 @@ export default function InventoryList() {
 	);
 
 	// Calcula dia inicial e final do mês atual
-	const calculateMonthRange = useCallback(() => {
+	const calculateMonthRange = useMemo(() => {
 		const fullMonths = [0, 2, 4, 6, 7, 9, 11];
 
 		const date = new Date();
@@ -845,12 +845,12 @@ export default function InventoryList() {
 	}, []);
 
 	// Filtra lotes deste mês perto da data de validade
-	const getExperingBatches = useCallback(() => {
+	const getExpiringBatches = useCallback(() => {
 		try {
 			// Checa se já tem um filtro
 			if (gridRef.current?.api.isAnyFilterPresent()) return;
 
-			const { begin, end } = calculateMonthRange();
+			const { begin, end } = calculateMonthRange;
 
 			gridRef.current?.api.setFilterModel({
 				lote_dtValidade: {
@@ -869,28 +869,33 @@ export default function InventoryList() {
 
 	return (
 		<>
-			<Tabs.Content value="list" className="w-full flex flex-col py-2 px-4">
+			<Tabs.Content
+				value="list"
+				className="w-full flex flex-col py-2 lg:px-4 px-2"
+			>
 				{/* Botões de Exportar CSV e Novo Lote */}
 				<div className="flex justify-between p-2">
 					{/* Botão de Abrir Modal de Cadastro de Lote */}
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
-							className="bg-verdePigmento transition-colors delay-75 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex place-content-center gap-2 mr-3 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className={`bg-verdePigmento transition-colors delay-75 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex place-content-center gap-2 md:mr-3 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+							}`}
 							disabled={loading.size > 0}
 							onClick={() => {
 								setOpenRegisterModal(true);
 								clearFormData();
 							}}
 						>
-							<Plus />
-							Novo Lote
+							<Plus className="m-2" />
+							{window.innerWidth >= 1024 && "Novo lote"}
 						</button>
 						<button
-							className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed truncate"
 							disabled={loading.size > 0 || isFiltered}
 							onClick={() => {
-								getExperingBatches();
+								getExpiringBatches();
 								reorderColumn("lote_dtValidade", "asc");
 							}}
 						>
@@ -908,7 +913,7 @@ export default function InventoryList() {
 							disabled={loading.size > 0 || !isFiltered}
 							onClick={clearFilter}
 						>
-							Limpar filtro
+							Limpar
 						</button>
 					</div>
 					{/* Botão de exportar para CSV e PDF dos dados da tabela */}
@@ -916,19 +921,23 @@ export default function InventoryList() {
 						<button
 							onClick={generateReport}
 							disabled={loading.size > 0}
-							className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className={`bg-red-700 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+							}`}
 						>
 							{loading.has("reports") ? (
 								<Loader2 className="animate-spin h-6 w-6" />
 							) : (
 								<>
 									<FileText />
-									Exportar PDF
+									{window.innerWidth >= 1024 && "Exportar PDF"}
 								</>
 							)}
 						</button>
 						<button
-							className="bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+							}`}
 							disabled={loading.size > 0}
 							onClick={() => {
 								const params = {
@@ -939,13 +948,13 @@ export default function InventoryList() {
 							}}
 						>
 							<FileSpreadsheet />
-							Exportar CSV
+							{window.innerWidth >= 1024 && "Exportar CSV"}
 						</button>
 					</div>
 				</div>
 
 				{/* Tabela de Lotes */}
-				<div className="h-[75vh]">
+				<div className="md:h-[75vh] h-[63vh]">
 					<AgGridReact
 						modules={[AllCommunityModule]}
 						theme={myTheme}
@@ -964,123 +973,123 @@ export default function InventoryList() {
 				</div>
 			</Tabs.Content>
 
-        {/* Modal de Cadastro de Lotes */}
-        <Modal
-            openModal={openRegisterModal}
-            setOpenModal={setOpenRegisterModal}
-            modalTitle="Cadastro de Lotes"
-            withXButton
-            isRegister
-            registerButtonText="Cadastrar Lote"
-            modalWidth="w-full md:w-4/5 lg:w-1/2"
-            isLoading={loading.has("register")}
-            onSubmit={handleRegister}
-        >
-            <BatchRegister
-                formData={formData}
-                options={options}
-                loading={loading}
-                errors={errors}
-                userLevel={userLevel}
-                openProductModal={() => setOpenProductModal(true)}
-                createProduct={createProduct}
-                handleChange={handleChange}
-                handlePriceChange={handlePriceChange}
-            />
-        </Modal>
+			{/* Modal de Cadastro de Lotes */}
+			<Modal
+				openModal={openRegisterModal}
+				setOpenModal={setOpenRegisterModal}
+				modalTitle="Cadastro de Lotes"
+				withXButton
+				isRegister
+				registerButtonText="Cadastrar Lote"
+				modalWidth="w-full md:w-4/5 lg:w-1/2"
+				isLoading={loading.has("register")}
+				onSubmit={handleRegister}
+			>
+				<BatchRegister
+					formData={formData}
+					options={options}
+					loading={loading}
+					errors={errors}
+					userLevel={userLevel}
+					openProductModal={() => setOpenProductModal(true)}
+					createProduct={createProduct}
+					handleChange={handleChange}
+					handlePriceChange={handlePriceChange}
+				/>
+			</Modal>
 
-        {/* Modal de Edição de Lotes */}
-        <Modal
-            openModal={openEditModal}
-            setOpenModal={setOpenEditModal}
-            modalTitle="Editar Lote"
-            withXButton
-            rightButtonText="Editar"
-            leftButtonText="Cancelar"
-            modalWidth="w-full md:w-4/5 lg:w-1/2"
-            isLoading={loading.has("updateBatch")}
-            onSubmit={handleUpdateBatch}
-        >
-            <BatchUpdate
-                formData={formData}
-                options={options}
-                loading={loading}
-                customComponents={customComponents}
-                handleChange={handleChange}
-                handlePriceChange={handlePriceChange}
-            />
-        </Modal>
+			{/* Modal de Edição de Lotes */}
+			<Modal
+				openModal={openEditModal}
+				setOpenModal={setOpenEditModal}
+				modalTitle="Editar Lote"
+				withXButton
+				rightButtonText="Editar"
+				leftButtonText="Cancelar"
+				modalWidth="w-full md:w-4/5 lg:w-1/2"
+				isLoading={loading.has("updateBatch")}
+				onSubmit={handleUpdateBatch}
+			>
+				<BatchUpdate
+					formData={formData}
+					options={options}
+					loading={loading}
+					customComponents={customComponents}
+					handleChange={handleChange}
+					handlePriceChange={handlePriceChange}
+				/>
+			</Modal>
 
-        {/* Modal de Exclusão */}
-        <Modal
-            openModal={openDeleteModal}
-            setOpenModal={setOpenDeleteModal}
-            modalTitle="Excluir Lote"
-            withXButton
-            rightButtonText="Excluir"
-            leftButtonText="Cancelar"
-            modalWidth="w-full md:w-4/5 lg:w-auto"
-            onDelete={() => {
-                setOpenConfirmModal(true);
-                setOpenDeleteModal(false);
-            }}
-        >
-            <BatchDelete
-                deleteBatch={deleteBatch}
-                loading={loading}
-                handleChange={handleChange}
-            />
-        </Modal>
-        
-        {/* Alert para confirmar exclusão do lote */}
-        <ConfirmationModal
-            openModal={openConfirmModal}
-            setOpenModal={setOpenConfirmModal}
-            confirmationModalTitle="Tem certeza que deseja excluir o lote?"
-            confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
-            onConfirm={handleDeleteBatch}
-            isLoading={loading.has("deleteBatch")}
-            confirmationLeftButtonText="Cancelar"
-            confirmationRightButtonText="Sim, excluir lote"
-        />
+			{/* Modal de Exclusão */}
+			<Modal
+				openModal={openDeleteModal}
+				setOpenModal={setOpenDeleteModal}
+				modalTitle="Excluir Lote"
+				withXButton
+				rightButtonText="Excluir"
+				leftButtonText="Cancelar"
+				modalWidth="w-full md:w-4/5 lg:w-auto"
+				onDelete={() => {
+					setOpenConfirmModal(true);
+					setOpenDeleteModal(false);
+				}}
+			>
+				<BatchDelete
+					deleteBatch={deleteBatch}
+					loading={loading}
+					handleChange={handleChange}
+				/>
+			</Modal>
+
+			{/* Alert para confirmar exclusão do lote */}
+			<ConfirmationModal
+				openModal={openConfirmModal}
+				setOpenModal={setOpenConfirmModal}
+				confirmationModalTitle="Tem certeza que deseja excluir o lote?"
+				confirmationText="Essa ação não pode ser desfeita. Tem certeza que deseja continuar?"
+				onConfirm={handleDeleteBatch}
+				isLoading={loading.has("deleteBatch")}
+				confirmationLeftButtonText="Cancelar"
+				confirmationRightButtonText="Sim, excluir lote"
+			/>
 
 			{/* Modal de Avisos */}
 			{openNoticeModal && (
 				<NoticeModal successMsg={successMsg} message={message} />
 			)}
 
-        {/* Modal de Gerencimento de Produtos */}
-        <Modal
-            openModal={openProductModal}
-            setOpenModal={setOpenProductModal}
-            modalTitle="Gerenciamento de Produtos:"
-            modalWidth="w-full md:w-4/5 lg:w-auto"
-            withExitButton
-            withXButton
-            isLoading={loading.has("options")}
-        >
-            {/* Tabela de Produtos */}
-            <div className="h-[65vh]">
-                <AgGridReact
-                    modules={[AllCommunityModule]}
-                    theme={myTheme}
-                    ref={gridRef}
-                    rowData={rowDataProduct}
-                    columnDefs={columnDefsProduct}
-                    context={{ userLevel }}
-                    localeText={agGridTranslation}
-                    pagination
-                    paginationPageSize={10}
-                    paginationPageSizeSelector={[10, 25, 50, 100]}
-                    loading={loading.has("options")}
-                    overlayLoadingTemplate={overlayLoadingTemplate}
-                    overlayNoRowsTemplate={overlayNoRowsTemplate}
-                    onCellValueChanged={(params) => {
-                        updateProduct(params.data.produto_id, params.data.produto_nome);
-                    }}
-                />
-            </div>
-        </Modal>
+			{/* Modal de Gerencimento de Produtos */}
+			<Modal
+				openModal={openProductModal}
+				setOpenModal={setOpenProductModal}
+				modalTitle="Gerenciamento de Produtos:"
+				modalWidth="w-full md:w-4/5 lg:w-auto"
+				withExitButton
+				withXButton
+				isLoading={loading.has("options")}
+			>
+				{/* Tabela de Produtos */}
+				<div className="h-[65vh]">
+					<AgGridReact
+						modules={[AllCommunityModule]}
+						theme={myTheme}
+						ref={gridRef}
+						rowData={rowDataProduct}
+						columnDefs={columnDefsProduct}
+						context={{ userLevel }}
+						localeText={agGridTranslation}
+						pagination
+						paginationPageSize={10}
+						paginationPageSizeSelector={[10, 25, 50, 100]}
+						loading={loading.has("options")}
+						overlayLoadingTemplate={overlayLoadingTemplate}
+						overlayNoRowsTemplate={overlayNoRowsTemplate}
+						onCellValueChanged={(params) => {
+							updateProduct(params.data.produto_id, params.data.produto_nome);
+						}}
+					/>
+				</div>
+			</Modal>
 
 			{/* Alert para confirmar exclusão do produto */}
 			<ConfirmationModal
