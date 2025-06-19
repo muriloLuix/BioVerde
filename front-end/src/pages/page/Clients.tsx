@@ -677,12 +677,15 @@ export default function Clients() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de Clientes
+							Lista
 						</Tabs.Trigger>
 					</Tabs.List>
 
 					{/* Aba de Lista de Clientes */}
-					<Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
+					<Tabs.Content
+						value="list"
+						className="w-full flex flex-col py-2 lg:px-4 px-2"
+					>
 						<div className="flex justify-between">
 							{/* Botão de Abrir Modal de Cadastro de Cliente */}
 							<div className="mt-1 mb-3">
@@ -705,7 +708,11 @@ export default function Clients() {
 									title="Exportar PDF"
 									onClick={gerarRelatorio}
 									className={`bg-red-700 font-semibold 
-										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
+										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
+											window.innerWidth < 1024
+												? "p-2"
+												: "py-2.5 px-4 w-[165.16px]"
+										}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />

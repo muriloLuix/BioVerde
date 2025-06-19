@@ -754,7 +754,7 @@ export default function Orders() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de pedidos
+							Lista
 						</Tabs.Trigger>
 					</Tabs.List>
 

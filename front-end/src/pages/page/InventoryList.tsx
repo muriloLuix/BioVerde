@@ -879,8 +879,8 @@ export default function InventoryList() {
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
-							className={`bg-verdePigmento transition-colors delay-75 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex place-content-center gap-2 md:mr-3 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed${
-								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+							className={`bg-verdePigmento transition-colors delay-75 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex place-content-center gap-2 md:mr-3 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"
 							}`}
 							disabled={loading.size > 0}
 							onClick={() => {
@@ -888,7 +888,7 @@ export default function InventoryList() {
 								clearFormData();
 							}}
 						>
-							<Plus className="m-2" />
+							<Plus className="m-2 md:m-0" />
 							{window.innerWidth >= 1024 && "Novo lote"}
 						</button>
 						<button
@@ -922,7 +922,7 @@ export default function InventoryList() {
 							onClick={generateReport}
 							disabled={loading.size > 0}
 							className={`bg-red-700 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
-								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
 							}`}
 						>
 							{loading.has("reports") ? (
@@ -936,7 +936,7 @@ export default function InventoryList() {
 						</button>
 						<button
 							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
-								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
 							}`}
 							disabled={loading.size > 0}
 							onClick={() => {

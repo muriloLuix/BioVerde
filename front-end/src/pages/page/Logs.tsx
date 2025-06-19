@@ -51,8 +51,18 @@ export default function Orders() {
 	const isMobile = window.innerWidth < 1024;
 
 	const columnDefs: ColDef[] = [
-		{ field: "log_id", headerName: "Id", filter: true, ...(isMobile ? { width: 100 } : { flex: 0.5 }) },
-		{ field: "log_user_nome", headerName: "Usuário", filter: true, ...(isMobile ? { width: 180 } : { flex: 1 }) },
+		{
+			field: "log_id",
+			headerName: "Id",
+			filter: true,
+			...(isMobile ? { width: 100 } : { flex: 0.5 }),
+		},
+		{
+			field: "log_user_nome",
+			headerName: "Usuário",
+			filter: true,
+			...(isMobile ? { width: 180 } : { flex: 1 }),
+		},
 		{
 			field: "log_datahora",
 			headerName: "Data/hora",
@@ -60,10 +70,26 @@ export default function Orders() {
 			valueFormatter: (params: ValueFormatterParams) =>
 				formatDateBR(params.value as string),
 		},
-		{ field: "log_pag_id", headerName: "Página", ...(isMobile ? { width: 180 } : { flex: 1 }) },
-		{ field: "log_url", headerName: "URL", ...(isMobile ? { width: 180 } : { flex: 1 }) },
-		{ field: "log_acao", headerName: "Ação", ...(isMobile ? { width: 200 } : { flex: 1.2 }) },
-		{ field: "log_conteudo", headerName: "Conteúdo", ...(isMobile ? { width: 250 } : { flex: 2 }) },
+		{
+			field: "log_pag_id",
+			headerName: "Página",
+			...(isMobile ? { width: 180 } : { flex: 1 }),
+		},
+		{
+			field: "log_url",
+			headerName: "URL",
+			...(isMobile ? { width: 180 } : { flex: 1 }),
+		},
+		{
+			field: "log_acao",
+			headerName: "Ação",
+			...(isMobile ? { width: 200 } : { flex: 1.2 }),
+		},
+		{
+			field: "log_conteudo",
+			headerName: "Conteúdo",
+			...(isMobile ? { width: 250 } : { flex: 2 }),
+		},
 		{
 			headerName: "Ações",
 			field: "acoes",
@@ -81,7 +107,7 @@ export default function Orders() {
 			pinned: "right",
 			sortable: false,
 			filter: false,
-			...(isMobile ? { width: 80 } : { width: 100 })
+			...(isMobile ? { width: 80 } : { width: 100 }),
 		},
 	];
 
@@ -146,24 +172,24 @@ export default function Orders() {
 	};
 
 	return (
-		<div className="h-screen w-full flex-1 lg:p-6 pt-20 lg:pl-[280px]">
-			<div className="h-10 mb-3 w-full flex items-center justify-center">
-				<span className="text-4xl font-semibold text-center">Logs</span>
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20 font-[inter]">
+			<div className="lg:px-6 px-3 h-10 w-full flex items-center justify-center mb-3">
+				<span className="text-4xl font-semibold text-center ">Logs</span>
 			</div>
 
 			<Tabs.Root
 				defaultValue="list"
-				className="w-full px-3 pb-5"
+				className="w-full"
 				onValueChange={setActiveTab}
 			>
 				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 					<Tabs.Trigger
 						value="list"
-						className={`relative px-4 py-2 text-verdePigmento text-lg font-semibold cursor-pointer ${
+						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "list" ? "select animation-tab" : ""
 						}`}
 					>
-						Lista de Logs
+						Lista
 					</Tabs.Trigger>
 				</Tabs.List>
 
@@ -181,7 +207,9 @@ export default function Orders() {
 								gridRef.current?.api.exportDataAsCsv(params);
 							}}
 							title="Exportar CSV"
-							className={`bg-verdePigmento hover:bg-verdeGrama text-white font-semibold sombra-botao flex place-content-center gap-2 rounded cursor-pointer ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
+							className={`bg-verdePigmento hover:bg-verdeGrama text-white font-semibold sombra-botao flex place-content-center gap-2 rounded cursor-pointer ${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"
+							}`}
 						>
 							<FileSpreadsheet />
 							{window.innerWidth >= 1024 && "Exportar CSV"}

@@ -756,7 +756,7 @@ export default function UsersPage() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de Usuários
+							Lista
 						</Tabs.Trigger>
 					</Tabs.List>
 

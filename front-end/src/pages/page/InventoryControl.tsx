@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import * as Tabs from "@radix-ui/react-tabs";
+import { Tabs } from "radix-ui";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 
 const tabMap = {
@@ -66,16 +66,7 @@ export default function InventoryControl() {
 							activeTab === "movements" ? "select animation-tab" : ""
 						}`}
 					>
-						Movimentações do Estoque
-					</Tabs.Trigger>
-
-					<Tabs.Trigger
-						value="notices"
-						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
-							activeTab === "notices" ? "select animation-tab" : ""
-						}`}
-					>
-						Avisos do Estoque
+						Movimentações
 					</Tabs.Trigger>
 				</Tabs.List>
 

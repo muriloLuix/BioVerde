@@ -41,11 +41,6 @@ export default function LoginPage() {
 					alt="Agricultura"
 					className="absolute inset-0 w-full h-full object-cover"
 				/>
-				<h2 className="text-2xl font-bold italic mb-1">Seja bem vindo</h2>
-				<p className="text-gray-600 mb-8">
-					Por favor, faça o login na sua conta.
-				</p>
-				<Login />
 			</div>
 		</div>
 	);
