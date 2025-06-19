@@ -131,7 +131,6 @@ export interface DeleteClient {
 	reason: string;
 }
 
-
 // ******** Logs ********
 export interface Logs {
 	log_id: number;
@@ -192,20 +191,20 @@ export interface BatchOptions {
 	locaisArmazenamento: Storage[];
 }
 export interface FormDataBatch {
-  lote_id: number;
-  lote_codigo: string;
-  produto: string;
-  fornecedor: string;
-  dt_colheita: string;
-  quant_max: number;
-  quant_atual: number;
-  unidade: string;
-  preco: number;
-  tipo: string;
-  dt_validade: string;
-  classificacao: string;
-  localArmazenado: string;
-  obs: string;
+	lote_id: number;
+	lote_codigo: string;
+	produto: string;
+	fornecedor: string;
+	dt_colheita: string;
+	quant_max: number;
+	quant_atual: number;
+	unidade: string;
+	preco: number;
+	tipo: string;
+	dt_validade: string;
+	classificacao: string;
+	localArmazenado: string;
+	obs: string;
 }
 export interface DeleteBatch {
 	lote_id: number;
@@ -221,14 +220,14 @@ export interface Movements {
 	pedidos: OrderType[];
 }
 export interface FormDataMovements {
-  produto: string;
-  motivo: string;
-  lote: string;
-  quantidade: number;
-  unidade: string;
-  pedido: string;
-  destino: string;
-  obs: string;
+	produto: string;
+	motivo: string;
+	lote: string;
+	quantidade: number;
+	unidade: string;
+	pedido: string;
+	destino: string;
+	obs: string;
 }
 export interface ReasenType {
 	motivo_id: number;
@@ -262,8 +261,9 @@ export interface ProductsWithSteps {
 	produto_id: number;
 	produto_nome: string;
 	etapas: Steps[];
-};
-export interface Steps extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
+}
+export interface Steps
+	extends Omit<FormDataSteps, "produto_nome" | "produto_id"> {
 	producao_id: number;
 	etor_dtCadastro?: string;
 }
@@ -275,7 +275,7 @@ export interface FormDataSteps {
 	etor_insumos: string[];
 	etor_observacoes: string;
 	etor_unidade: string;
-};
+}
 export interface DeleteSteps {
 	etor_id: number;
 	dstep: string;
@@ -289,7 +289,6 @@ export interface StepNames {
 	etapa_nome_id: number;
 	etapa_nome: string;
 }
-
 
 // ******** Pedidos ********
 export interface OrderStatus {
@@ -346,14 +345,14 @@ export interface FormDataOrders {
 	cidade: string;
 	prev_entrega: string;
 	obs: string;
-};
+}
 
 export interface DeleteOrders {
 	pedido_id: number;
 	dnum_pedido: number;
 	dnome_cliente: string;
 	reason: string;
-};
+}
 
 // ******** Outros ********
 export interface SelectEvent {
@@ -367,14 +366,7 @@ export interface Option {
 	label: string;
 }
 
-
-
-
-
-
-
-
-
-
-
-
+export type StepProps = {
+	onNext: () => void;
+	onBack: () => void;
+};

@@ -5,13 +5,41 @@ import { Tabs } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ICellRendererParams, CellValueChangedEvent, ColDef, themeQuartz } from "ag-grid-community";
+import {
+	AllCommunityModule,
+	ICellRendererParams,
+	CellValueChangedEvent,
+	ColDef,
+	themeQuartz,
+} from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
-import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
-import { UserOptions, FormDataUser, User, SelectEvent, JobPosition, DeleteUser } from "../../utils/types";
+import {
+	overlayLoadingTemplate,
+	overlayNoRowsTemplate,
+} from "../../utils/gridOverlays";
+import {
+	Pencil,
+	Trash2,
+	Plus,
+	FileSpreadsheet,
+	Loader2,
+	FileText,
+} from "lucide-react";
+import {
+	UserOptions,
+	FormDataUser,
+	User,
+	SelectEvent,
+	JobPosition,
+	DeleteUser,
+} from "../../utils/types";
 import { UserRegister, UserUpdate, UserDelete } from "../pageComponents";
-import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import {
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+	ReportModal,
+} from "../../shared";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function UsersPage() {
@@ -66,11 +94,14 @@ export default function UsersPage() {
 				const [usuariosResponse, userLevelResponse] = await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/usuarios/listar_usuarios.php",
-						{ withCredentials: true,headers: { Accept: "application/json", } }
+						{ withCredentials: true, headers: { Accept: "application/json" } }
 					),
 					axios.get(
 						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
 					),
 				]);
 				await fetchOptions();
@@ -78,18 +109,23 @@ export default function UsersPage() {
 					setUserLevel(userLevelResponse.data.userLevel);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+					setMessage(
+						userLevelResponse.data.message ||
+							"Erro ao carregar nível do usuário"
+					);
 				}
 				if (usuariosResponse.data.success) {
 					setRowData(usuariosResponse.data.usuarios);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(usuariosResponse.data.message || "Erro ao carregar usuários");
+					setMessage(
+						usuariosResponse.data.message || "Erro ao carregar usuários"
+					);
 				}
 			} catch (error) {
 				console.error(error);
-                setOpenNoticeModal(true);
-                setMessage("Erro ao conectar com o servidor");
+				setOpenNoticeModal(true);
+				setMessage("Erro ao conectar com o servidor");
 			} finally {
 				setLoading((prev) => {
 					const newLoading = new Set(prev);
@@ -112,14 +148,15 @@ export default function UsersPage() {
 			if (usuariosResponse.data.success) {
 				setRowData(usuariosResponse.data.usuarios);
 			} else {
-				const errorMessage = usuariosResponse.data.message || "Erro ao carregar dados";
+				const errorMessage =
+					usuariosResponse.data.message || "Erro ao carregar dados";
 				setMessage(errorMessage);
 				setOpenNoticeModal(true);
 			}
 		} catch (error) {
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
@@ -136,22 +173,28 @@ export default function UsersPage() {
 
 			const response = await axios.get(
 				"http://localhost/BioVerde/back-end/usuarios/listar_opcoes.php",
-				{ withCredentials: true, headers: { Accept: "application/json", "Content-Type": "application/json"} }
+				{
+					withCredentials: true,
+					headers: {
+						Accept: "application/json",
+						"Content-Type": "application/json",
+					},
+				}
 			);
 			if (response.data.success) {
 				setOptions({
 					cargos: response.data.cargos,
 					niveis: response.data.niveis,
 				});
-				setRowDataPosition(response.data.cargos)
+				setRowDataPosition(response.data.cargos);
 			} else {
 				setOpenNoticeModal(true);
 				setMessage(response.data.message || "Erro ao carregar opções");
 			}
 		} catch (error) {
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
@@ -181,14 +224,19 @@ export default function UsersPage() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/usuarios/cadastrar.usuario.php",
 				formData,
-				{headers: { "Content-Type": "application/json" }, withCredentials: true}
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
 				await refreshData();
 				setOpenRegisterModal(false);
 				setSuccessMsg(true);
-				setMessage("Usuário cadastrado com sucesso! O login e senha foram enviados por email.");
+				setMessage(
+					"Usuário cadastrado com sucesso! O login e senha foram enviados por email."
+				);
 				clearFormData();
 			} else {
 				setSuccessMsg(false);
@@ -197,8 +245,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -212,15 +260,15 @@ export default function UsersPage() {
 	//função para puxar os dados do usuario que será editado
 	const handleEditClick = (usuario: User) => {
 		setFormData({
-			user_id: 	usuario.user_id,
-			name: 		usuario.user_nome,
-			email: 		usuario.user_email,
-			tel: 		usuario.user_telefone,
-			cpf: 		usuario.user_CPF,
-			cargo: 		usuario.car_nome,
-			nivel: 		usuario.nivel_nome,
-			status: 	String(usuario.estaAtivo),
-			password: 	"",
+			user_id: usuario.user_id,
+			name: usuario.user_nome,
+			email: usuario.user_email,
+			tel: usuario.user_telefone,
+			cpf: usuario.user_CPF,
+			cargo: usuario.car_nome,
+			nivel: usuario.nivel_nome,
+			status: String(usuario.estaAtivo),
+			password: "",
 		});
 		setOpenEditModal(true);
 	};
@@ -231,12 +279,15 @@ export default function UsersPage() {
 		setLoading((prev) => new Set([...prev, "updateUser"]));
 		try {
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const { password , ...dataWithoutPassword } = formData;
+			const { password, ...dataWithoutPassword } = formData;
 			const dataToSend = formData.user_id ? dataWithoutPassword : formData;
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/usuarios/editar.usuario.php",
 				dataToSend,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -252,8 +303,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -282,7 +333,10 @@ export default function UsersPage() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/usuarios/excluir.usuario.php",
 				deleteUser,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta da exclusão:", response.data);
 			if (response.data.success) {
@@ -297,8 +351,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -314,17 +368,20 @@ export default function UsersPage() {
 		if (params.colDef?.field === "estaAtivo") {
 			const dataToSend = {
 				user_id: params.data?.user_id,
-				estaAtivo: params.data?.estaAtivo
+				estaAtivo: params.data?.estaAtivo,
 			};
 			try {
 				const response = await axios.post(
 					"http://localhost/BioVerde/back-end/usuarios/atualizar.status.usuario.php",
 					dataToSend,
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+					{
+						headers: { "Content-Type": "application/json" },
+						withCredentials: true,
+					}
 				);
 				console.log("Resposta do back-end:", response.data);
 				if (response.data.success) {
-					await refreshData(); 
+					await refreshData();
 				} else {
 					setSuccessMsg(false);
 					setMessage(response.data.message || "Erro ao atualizar status.");
@@ -334,7 +391,7 @@ export default function UsersPage() {
 				console.error(error);
 				setMessage("Erro ao conectar com o servidor");
 				setOpenNoticeModal(true);
-			} 
+			}
 		}
 	};
 
@@ -353,7 +410,10 @@ export default function UsersPage() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/cargos/cadastrar_cargo.php",
 				{ cargo: cargoNome },
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -367,8 +427,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -390,7 +450,10 @@ export default function UsersPage() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/cargos/editar_cargo.php",
 				dataToSend,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -404,8 +467,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -423,8 +486,11 @@ export default function UsersPage() {
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/cargos/excluir_cargo.php",
-				{car_id: deletedId },
-				{headers: { "Content-Type": "application/json" },withCredentials: true }
+				{ car_id: deletedId },
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			if (response.data.success) {
 				await fetchOptions();
@@ -438,8 +504,8 @@ export default function UsersPage() {
 		} catch (error) {
 			setSuccessMsg(false);
 			console.error(error);
-            setOpenNoticeModal(true);
-            setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
+			setMessage("Erro ao conectar com o servidor");
 		} finally {
 			setOpenNoticeModal(true);
 			setLoading((prev) => {
@@ -540,17 +606,19 @@ export default function UsersPage() {
 
 	/* ----- Definição de colunas e dados que a tabela de usuarios vai receber ----- */
 
-    const gridRef = useRef<AgGridReact>(null);
-    const [rowData, setRowData] = useState<User[]>([]);
-    const [columnDefs] = useState<ColDef[]>([
-        { field: "user_id", headerName: "ID", filter: true, width: 100 },
-        { field: "user_nome",headerName: "Nome", filter: true, width: 250 },
-        { field: "user_email", headerName: "Email", filter: true, width: 250 },
-        {field: "user_telefone", headerName: "Telefone", width: 160},
-        {field: "user_CPF", headerName: "CPF", filter: true, width: 180},
+	const gridRef = useRef<AgGridReact>(null);
+	const [rowData, setRowData] = useState<User[]>([]);
+	const [columnDefs] = useState<ColDef[]>([
+		{ field: "user_id", headerName: "ID", filter: true, width: 100 },
+		{ field: "user_nome", headerName: "Nome", filter: true, width: 250 },
+		{ field: "user_email", headerName: "Email", filter: true, width: 250 },
+		{ field: "user_telefone", headerName: "Telefone", width: 160 },
+		{ field: "user_CPF", headerName: "CPF", filter: true, width: 180 },
 		{
-			field: "estaAtivo", headerName: "Ativo / Inativo", width: 130,
-			cellRenderer: 'agCheckboxCellRenderer',
+			field: "estaAtivo",
+			headerName: "Ativo / Inativo",
+			width: 130,
+			cellRenderer: "agCheckboxCellRenderer",
 			cellRendererParams: { disabled: false },
 			valueGetter: (params) => params.data.estaAtivo === "1",
 			valueSetter: (params) => {
@@ -558,43 +626,54 @@ export default function UsersPage() {
 				return true;
 			},
 			editable: true,
-			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+			cellStyle: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			},
 		},
-        {field: "car_nome", headerName: "Cargo", width: 180},
-        {field: "nivel_nome", headerName: "Nível de Acesso", width: 180},
-        {
-			field: "user_dtcadastro", headerName: "Data de Cadastro", width: 180,
-			valueGetter: (params) => new Date(params.data.user_dtcadastro).toLocaleDateString("pt-BR")
+		{ field: "car_nome", headerName: "Cargo", width: 180 },
+		{ field: "nivel_nome", headerName: "Nível de Acesso", width: 180 },
+		{
+			field: "user_dtcadastro",
+			headerName: "Data de Cadastro",
+			width: 180,
+			valueGetter: (params) =>
+				new Date(params.data.user_dtcadastro).toLocaleDateString("pt-BR"),
 		},
-        {
-            headerName: "Ações",
-            field: "acoes",
-            width: 100,
-            cellRenderer: (params: ICellRendererParams<User>) => (
-                <div className="flex gap-2 mt-2.5 items-center justify-center">
-                    <button
-                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                        title="Editar Usuário"
-                        onClick={() => { if(params.data) handleEditClick(params.data) }}
-                    >
-                        <Pencil size={18} />
-                    </button>
-                    {params.context.userLevel === "Administrador" && (
-                        <button
-                            className="text-red-600 hover:text-red-800 cursor-pointer"
-                            title="Excluir Usuário"
-                            onClick={() => { if(params.data) handleDeleteClick(params.data) }}
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    )}
-                </div>
-            ),
-            pinned: "right",
-            sortable: false,
-            filter: false
-        }
-    ]);
+		{
+			headerName: "Ações",
+			field: "acoes",
+			width: 100,
+			cellRenderer: (params: ICellRendererParams<User>) => (
+				<div className="flex gap-2 mt-2.5 items-center justify-center">
+					<button
+						className="text-blue-600 hover:text-blue-800 cursor-pointer"
+						title="Editar Usuário"
+						onClick={() => {
+							if (params.data) handleEditClick(params.data);
+						}}
+					>
+						<Pencil size={18} />
+					</button>
+					{params.context.userLevel === "Administrador" && (
+						<button
+							className="text-red-600 hover:text-red-800 cursor-pointer"
+							title="Excluir Usuário"
+							onClick={() => {
+								if (params.data) handleDeleteClick(params.data);
+							}}
+						>
+							<Trash2 size={18} />
+						</button>
+					)}
+				</div>
+			),
+			pinned: "right",
+			sortable: false,
+			filter: false,
+		},
+	]);
 
 	/* ----- Definição de colunas e dados que da tabela de cargos ----- */
 
@@ -611,49 +690,52 @@ export default function UsersPage() {
 			headerName: "Ações",
 			field: "acoes",
 			width: 100,
-			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
+			cellStyle: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			},
 			cellRenderer: (params: ICellRendererParams) => {
-			return (
-				<div className="flex gap-2 items-center justify-center">
-				<button
-					className="text-blue-600 hover:text-blue-800 cursor-pointer"
-					title="Editar Cargo"
-					onClick={() => {
-						params.api.startEditingCell({
-							rowIndex: Number(params.node.rowIndex),
-							colKey: "car_nome",
-						});
-					}}
-				>
-					<Pencil size={18} />
-				</button>
-				{params.context.userLevel === "Administrador" && (
-					<button
-						className="text-red-600 hover:text-red-800 cursor-pointer"
-						title="Excluir Cargo"
-						onClick={() => handleDeletePosition(params.data)}
-					>
-						<Trash2 size={18} />
-					</button>
-				)}
-				</div>
-			);
+				return (
+					<div className="flex gap-2 items-center justify-center">
+						<button
+							className="text-blue-600 hover:text-blue-800 cursor-pointer"
+							title="Editar Cargo"
+							onClick={() => {
+								params.api.startEditingCell({
+									rowIndex: Number(params.node.rowIndex),
+									colKey: "car_nome",
+								});
+							}}
+						>
+							<Pencil size={18} />
+						</button>
+						{params.context.userLevel === "Administrador" && (
+							<button
+								className="text-red-600 hover:text-red-800 cursor-pointer"
+								title="Excluir Cargo"
+								onClick={() => handleDeletePosition(params.data)}
+							>
+								<Trash2 size={18} />
+							</button>
+						)}
+					</div>
+				);
 			},
 			sortable: false,
 			filter: false,
 		},
 	]);
 
-    //Esilos da Tabela
-    const myTheme = themeQuartz.withParams({
-        spacing: 9,
-        headerBackgroundColor: '#89C988',
-        foregroundColor: '#1B1B1B',
-        rowHoverColor: '#E2FBE2',
-        oddRowBackgroundColor: '#f5f5f5',
-        fontFamily: '"Inter", sans-serif',
-
-    });
+	//Esilos da Tabela
+	const myTheme = themeQuartz.withParams({
+		spacing: 9,
+		headerBackgroundColor: "#89C988",
+		foregroundColor: "#1B1B1B",
+		rowHoverColor: "#E2FBE2",
+		oddRowBackgroundColor: "#f5f5f5",
+		fontFamily: '"Inter", sans-serif',
+	});
 
 	return (
 		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20">
@@ -662,7 +744,11 @@ export default function UsersPage() {
 					<span className="text-4xl font-semibold text-center">Usuários</span>
 				</h1>
 				{/* Selelcionar Abas */}
-				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+				<Tabs.Root
+					defaultValue="list"
+					className="w-full"
+					onValueChange={(value) => setActiveTab(value)}
+				>
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
@@ -670,19 +756,25 @@ export default function UsersPage() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de Usuários
+							Lista
 						</Tabs.Trigger>
 					</Tabs.List>
 
 					{/* Aba de Lista de Usuários */}
-					<Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
+					<Tabs.Content
+						value="list"
+						className="w-full flex flex-col py-2 lg:px-4 px-2"
+					>
 						<div className="flex justify-between">
 							{/* Botão de Abrir Modal de Cadastro de Usuário */}
 							<div className="mt-1 mb-3">
 								<button
 									type="button"
 									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
-									onClick={() => {setOpenRegisterModal(true); clearFormData()}}
+									onClick={() => {
+										setOpenRegisterModal(true);
+										clearFormData();
+									}}
 								>
 									<Plus />
 									Novo Usuário
@@ -690,11 +782,15 @@ export default function UsersPage() {
 							</div>
 							{/* Botão de exportar para CSV e PDF dos dados da tabela */}
 							<div className="flex items-center gap-5 mt-1 mb-3">
-								<button 
+								<button
 									title="Exportar PDF"
 									onClick={gerarRelatorio}
 									className={`bg-red-700 font-semibold 
-										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
+										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
+											window.innerWidth < 1024
+												? "p-2"
+												: "py-2.5 px-4 w-[165.16px]"
+										}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -722,7 +818,7 @@ export default function UsersPage() {
 								</button>
 							</div>
 						</div>
-				
+
 						{/* Tabela de Usuários */}
 						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
@@ -807,10 +903,7 @@ export default function UsersPage() {
 						setOpenDeleteModal(false);
 					}}
 				>
-					<UserDelete
-						deleteUser={deleteUser}
-						handleChange={handleChange}
-					/>
+					<UserDelete deleteUser={deleteUser} handleChange={handleChange} />
 				</Modal>
 
 				{/* Alert para confirmar exclusão do usuário */}
@@ -880,13 +973,9 @@ export default function UsersPage() {
 				/>
 
 				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
-
+				{openNoticeModal && (
+					<NoticeModal successMsg={successMsg} message={message} />
+				)}
 			</div>
 		</div>
 	);

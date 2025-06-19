@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { StepProps } from "../../pages";
 import { Password } from "./../../shared";
 import axios from "axios";
 import { Toast } from "radix-ui";
 import { Loader2 } from "lucide-react";
+import { StepProps } from "../../utils/types";
 
 export default function NewPassword({ onNext }: StepProps) {
 	const [senha, setSenha] = useState("");

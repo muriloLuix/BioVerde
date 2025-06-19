@@ -10,6 +10,3 @@ export { default as Suppliers } from "./page/Suppliers";
 export { default as UsersPage } from "./page/UsersPage";
 export { default as InventoryList } from "./page/InventoryList";
 export { default as InventoryMovements } from "./page/InventoryMovements";
-export { default as InventoryNotices } from "./page/InventoryNotices";
-
-export type { StepProps } from "./page/RecoverPassword";

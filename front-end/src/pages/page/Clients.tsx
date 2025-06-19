@@ -5,14 +5,42 @@ import { Tabs } from "radix-ui";
 import { useNavigate } from "react-router-dom";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ICellRendererParams, CellValueChangedEvent, ColDef, themeQuartz } from "ag-grid-community";
+import {
+	AllCommunityModule,
+	ICellRendererParams,
+	CellValueChangedEvent,
+	ColDef,
+	themeQuartz,
+} from "ag-grid-community";
 import { agGridTranslation } from "../../utils/agGridTranslation";
-import { overlayLoadingTemplate, overlayNoRowsTemplate } from "../../utils/gridOverlays";
-import { Pencil, Trash2, Plus, FileSpreadsheet, Loader2, FileText } from "lucide-react";
+import {
+	overlayLoadingTemplate,
+	overlayNoRowsTemplate,
+} from "../../utils/gridOverlays";
+import {
+	Pencil,
+	Trash2,
+	Plus,
+	FileSpreadsheet,
+	Loader2,
+	FileText,
+} from "lucide-react";
 import { cepApi } from "../../utils/cepApi";
-import { Client, UF, City, SelectEvent, FormDataClient, DeleteClient } from "../../utils/types";
+import {
+	Client,
+	UF,
+	City,
+	SelectEvent,
+	FormDataClient,
+	DeleteClient,
+} from "../../utils/types";
 import { ClientRegister, ClientUpdate, ClientDelete } from "../pageComponents";
-import { ConfirmationModal, Modal, NoticeModal, ReportModal } from "../../shared";
+import {
+	ConfirmationModal,
+	Modal,
+	NoticeModal,
+	ReportModal,
+} from "../../shared";
 import useCheckAccessLevel from "../../hooks/useCheckAccessLevel";
 
 export default function Clients() {
@@ -69,14 +97,22 @@ export default function Clients() {
 		const fetchData = async () => {
 			try {
 				setLoading((prev) => new Set([...prev, "clients", "ufs", "cities"]));
-				const [clientesResponse, userLevelResponse, ufsResponse, citiesResponse] = await Promise.all([
+				const [
+					clientesResponse,
+					userLevelResponse,
+					ufsResponse,
+					citiesResponse,
+				] = await Promise.all([
 					axios.get(
 						"http://localhost/BioVerde/back-end/clientes/listar_clientes.php",
 						{ withCredentials: true, headers: { Accept: "application/json" } }
 					),
 					axios.get(
 						"http://localhost/BioVerde/back-end/auth/usuario_logado.php",
-						{ withCredentials: true, headers: { "Content-Type": "application/json" } }
+						{
+							withCredentials: true,
+							headers: { "Content-Type": "application/json" },
+						}
 					),
 					axios.get(
 						"https://servicodados.ibge.gov.br/api/v1/localidades/estados"
@@ -91,14 +127,19 @@ export default function Clients() {
 					setRowData(clientesResponse.data.clientes || []);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(clientesResponse.data.message || "Erro ao carregar clientes");
+					setMessage(
+						clientesResponse.data.message || "Erro ao carregar clientes"
+					);
 				}
 
 				if (userLevelResponse.data.success) {
 					setUserLevel(userLevelResponse.data.userLevel);
 				} else {
 					setOpenNoticeModal(true);
-					setMessage(userLevelResponse.data.message || "Erro ao carregar nível do usuário");
+					setMessage(
+						userLevelResponse.data.message ||
+							"Erro ao carregar nível do usuário"
+					);
 				}
 
 				if (ufsResponse.status === 200) {
@@ -121,7 +162,9 @@ export default function Clients() {
 			} finally {
 				setLoading((prev) => {
 					const newLoading = new Set(prev);
-					["clients", "ufs", "cities"].forEach((item) => newLoading.delete(item));
+					["clients", "ufs", "cities"].forEach((item) =>
+						newLoading.delete(item)
+					);
 					return newLoading;
 				});
 			}
@@ -169,14 +212,19 @@ export default function Clients() {
 			isCepValid: errors.isCepValid,
 		};
 		setErrors(error);
-		if (Object.values(error).some((error) => error)) {return}
+		if (Object.values(error).some((error) => error)) {
+			return;
+		}
 
 		setLoading((prev) => new Set([...prev, "submit"]));
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/clientes/cadastrar_clientes.php",
 				formData,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 
@@ -205,7 +253,7 @@ export default function Clients() {
 		}
 	};
 
-		//função para puxar os dados do cliente que será editado
+	//função para puxar os dados do cliente que será editado
 	const handleEditClick = (cliente: Client) => {
 		cepApi(
 			cliente.cliente_cep,
@@ -217,21 +265,21 @@ export default function Clients() {
 			setErrors
 		);
 		setFormData({
-			cliente_id: 			cliente.cliente_id,
-			nome_empresa_cliente: 	cliente.cliente_nome,
-			razao_social: 			cliente.cliente_razao_social,
-			email: 					cliente.cliente_email,
-			tel: 					cliente.cliente_telefone,
-			cpf_cnpj: 				cliente.cliente_documento,
-			status: 				String(cliente.estaAtivo),
-			cep: 					cliente.cliente_cep,
-			endereco: 				cliente.cliente_endereco,
-			estado: 				cliente.cliente_estado,
-			cidade: 				cliente.cliente_cidade,
-			num_endereco: 			Number(cliente.cliente_numendereco),
-			complemento: 			cliente.cliente_complemento,
-			obs: 					cliente.cliente_observacoes,
-			tipo: 					cliente.cliente_tipo,
+			cliente_id: cliente.cliente_id,
+			nome_empresa_cliente: cliente.cliente_nome,
+			razao_social: cliente.cliente_razao_social,
+			email: cliente.cliente_email,
+			tel: cliente.cliente_telefone,
+			cpf_cnpj: cliente.cliente_documento,
+			status: String(cliente.estaAtivo),
+			cep: cliente.cliente_cep,
+			endereco: cliente.cliente_endereco,
+			estado: cliente.cliente_estado,
+			cidade: cliente.cliente_cidade,
+			num_endereco: Number(cliente.cliente_numendereco),
+			complemento: cliente.cliente_complemento,
+			obs: cliente.cliente_observacoes,
+			tipo: cliente.cliente_tipo,
 		});
 		setClientType(cliente.cliente_tipo);
 		setOpenEditModal(true);
@@ -240,13 +288,18 @@ export default function Clients() {
 	// submit para atualizar o cliente após a edição dele
 	const handleUpdateClient = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if(errors.isCepValid) {return};
+		if (errors.isCepValid) {
+			return;
+		}
 		setLoading((prev) => new Set([...prev, "updateClient"]));
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/clientes/editar.cliente.php",
 				formData,
-				{headers: { "Content-Type": "application/json" }, withCredentials: true}
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -292,7 +345,10 @@ export default function Clients() {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/clientes/excluir.cliente.php",
 				deleteClient,
-				{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
 			);
 			console.log("Resposta do back-end:", response.data);
 			if (response.data.success) {
@@ -324,17 +380,20 @@ export default function Clients() {
 		if (params.colDef?.field === "estaAtivo") {
 			const dataToSend = {
 				cliente_id: params.data?.cliente_id,
-				estaAtivo: params.data?.estaAtivo
+				estaAtivo: params.data?.estaAtivo,
 			};
 			try {
 				const response = await axios.post(
 					"http://localhost/BioVerde/back-end/clientes/atualizar.status.cliente.php",
 					dataToSend,
-					{ headers: { "Content-Type": "application/json" }, withCredentials: true }
+					{
+						headers: { "Content-Type": "application/json" },
+						withCredentials: true,
+					}
 				);
 				console.log("Resposta do back-end:", response.data);
 				if (response.data.success) {
-					await refreshData(); 
+					await refreshData();
 				} else {
 					setSuccessMsg(false);
 					setMessage(response.data.message || "Erro ao atualizar status.");
@@ -344,7 +403,7 @@ export default function Clients() {
 				console.error(error);
 				setMessage("Erro ao conectar com o servidor");
 				setOpenNoticeModal(true);
-			} 
+			}
 		}
 	};
 
@@ -489,20 +548,34 @@ export default function Clients() {
 	const [rowData, setRowData] = useState<Client[]>([]);
 	const [columnDefs] = useState<ColDef[]>([
 		{ field: "cliente_id", headerName: "ID", filter: true, width: 100 },
-		{ field: "cliente_nome", headerName: "Nome Cliente/Empresa", filter: true, width: 250 },
+		{
+			field: "cliente_nome",
+			headerName: "Nome Cliente/Empresa",
+			filter: true,
+			width: 250,
+		},
 		{
 			field: "cliente_tipo",
 			headerName: "Tipo",
 			filter: true,
 			width: 150,
-			valueGetter: (params) => 
-				params.data.cliente_tipo === "juridica" ? "Pessoa Jurídica" : "Pessoa Física"
+			valueGetter: (params) =>
+				params.data.cliente_tipo === "juridica"
+					? "Pessoa Jurídica"
+					: "Pessoa Física",
 		},
-		{field: "cliente_documento", headerName: "CPF/CNPJ", filter: true, width: 180},
-		{field: "cliente_email", headerName: "Email", filter: true, width: 180},
 		{
-			field: "estaAtivo", headerName: "Ativo / Inativo", width: 130,
-			cellRenderer: 'agCheckboxCellRenderer',
+			field: "cliente_documento",
+			headerName: "CPF/CNPJ",
+			filter: true,
+			width: 180,
+		},
+		{ field: "cliente_email", headerName: "Email", filter: true, width: 180 },
+		{
+			field: "estaAtivo",
+			headerName: "Ativo / Inativo",
+			width: 130,
+			cellRenderer: "agCheckboxCellRenderer",
 			cellRendererParams: { disabled: false },
 			valueGetter: (params) => params.data.estaAtivo === "1",
 			valueSetter: (params) => {
@@ -510,21 +583,33 @@ export default function Clients() {
 				return true;
 			},
 			editable: true,
-			cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' }
+			cellStyle: {
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			},
 		},
-		{field: "cliente_telefone", headerName: "Telefone", filter: true, width: 180},
-		{field: "cliente_razao_social", headerName: "Razão Social", width: 180},
-		{field: "cliente_cep", headerName: "CEP", filter: true, width: 150},
-		{field: "cliente_endereco", headerName: "Endereço", width: 180},
-		{field: "cliente_numendereco", headerName: "Nº", width: 100},
-		{field: "cliente_complemento", headerName: "Complemento", width: 180},
-		{field: "cliente_cidade", headerName: "Cidade", width: 180},
-		{field: "cliente_estado", headerName: "Estado", width: 100},
 		{
-			field: "cliente_data_cadastro", headerName: "Data de Cadastro", width: 180,
-			valueGetter: (params) => new Date(params.data.cliente_data_cadastro).toLocaleDateString("pt-BR")
+			field: "cliente_telefone",
+			headerName: "Telefone",
+			filter: true,
+			width: 180,
 		},
-		{field: "cliente_observacoes", headerName: "Observações", width: 200},
+		{ field: "cliente_razao_social", headerName: "Razão Social", width: 180 },
+		{ field: "cliente_cep", headerName: "CEP", filter: true, width: 150 },
+		{ field: "cliente_endereco", headerName: "Endereço", width: 180 },
+		{ field: "cliente_numendereco", headerName: "Nº", width: 100 },
+		{ field: "cliente_complemento", headerName: "Complemento", width: 180 },
+		{ field: "cliente_cidade", headerName: "Cidade", width: 180 },
+		{ field: "cliente_estado", headerName: "Estado", width: 100 },
+		{
+			field: "cliente_data_cadastro",
+			headerName: "Data de Cadastro",
+			width: 180,
+			valueGetter: (params) =>
+				new Date(params.data.cliente_data_cadastro).toLocaleDateString("pt-BR"),
+		},
+		{ field: "cliente_observacoes", headerName: "Observações", width: 200 },
 		{
 			headerName: "Ações",
 			field: "acoes",
@@ -534,10 +619,12 @@ export default function Clients() {
 					<button
 						className="text-blue-600 hover:text-blue-800 cursor-pointer"
 						title="Editar Cliente"
-						onClick={() => { if(params.data) {
-							handleEditClick(params.data); 
-							setErrors({...errors, isCepValid: false})
-						} }}
+						onClick={() => {
+							if (params.data) {
+								handleEditClick(params.data);
+								setErrors({ ...errors, isCepValid: false });
+							}
+						}}
 					>
 						<Pencil size={18} />
 					</button>
@@ -545,7 +632,9 @@ export default function Clients() {
 						<button
 							className="text-red-600 hover:text-red-800 cursor-pointer"
 							title="Excluir Cliente"
-							onClick={() => { if(params.data) handleDeleteClick(params.data) }}
+							onClick={() => {
+								if (params.data) handleDeleteClick(params.data);
+							}}
 						>
 							<Trash2 size={18} />
 						</button>
@@ -554,17 +643,17 @@ export default function Clients() {
 			),
 			pinned: "right",
 			sortable: false,
-			filter: false
-		}
+			filter: false,
+		},
 	]);
 
 	//Esilos da Tabela
 	const myTheme = themeQuartz.withParams({
 		spacing: 9,
-		headerBackgroundColor: '#89C988',
-		foregroundColor: '#1B1B1B',
-		rowHoverColor: '#E2FBE2',
-		oddRowBackgroundColor: '#f5f5f5',
+		headerBackgroundColor: "#89C988",
+		foregroundColor: "#1B1B1B",
+		rowHoverColor: "#E2FBE2",
+		oddRowBackgroundColor: "#f5f5f5",
 		fontFamily: '"Inter", sans-serif',
 	});
 
@@ -576,7 +665,11 @@ export default function Clients() {
 				</h1>
 
 				{/* Selelcionar Abas */}
-				<Tabs.Root defaultValue="list" className="w-full" onValueChange={(value) => setActiveTab(value)}>
+				<Tabs.Root
+					defaultValue="list"
+					className="w-full"
+					onValueChange={(value) => setActiveTab(value)}
+				>
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
@@ -584,12 +677,15 @@ export default function Clients() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista de Clientes
+							Lista
 						</Tabs.Trigger>
 					</Tabs.List>
 
 					{/* Aba de Lista de Clientes */}
-					<Tabs.Content value="list" className="w-full flex flex-col py-2 lg:px-4 px-2">
+					<Tabs.Content
+						value="list"
+						className="w-full flex flex-col py-2 lg:px-4 px-2"
+					>
 						<div className="flex justify-between">
 							{/* Botão de Abrir Modal de Cadastro de Cliente */}
 							<div className="mt-1 mb-3">
@@ -597,8 +693,8 @@ export default function Clients() {
 									type="button"
 									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
 									onClick={() => {
-										setOpenRegisterModal(true); 
-										clearFormData(); 
+										setOpenRegisterModal(true);
+										clearFormData();
 										setClientType("juridica");
 									}}
 								>
@@ -612,7 +708,11 @@ export default function Clients() {
 									title="Exportar PDF"
 									onClick={gerarRelatorio}
 									className={`bg-red-700 font-semibold 
-										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4 w-[165.16px]"}`}
+										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
+											window.innerWidth < 1024
+												? "p-2"
+												: "py-2.5 px-4 w-[165.16px]"
+										}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -640,7 +740,7 @@ export default function Clients() {
 								</button>
 							</div>
 						</div>
-				
+
 						{/* Tabela de Clientes */}
 						<div className="md:h-[75vh] h-[63vh]">
 							<AgGridReact
@@ -674,7 +774,7 @@ export default function Clients() {
 					registerButtonText="Cadastrar Cliente"
 					isLoading={loading.has("submit")}
 					onSubmit={handleSubmit}
-				>	
+				>
 					<ClientRegister
 						formData={formData}
 						loading={loading}
@@ -754,12 +854,9 @@ export default function Clients() {
 				/>
 
 				{/* Modal de Avisos */}
-				<NoticeModal
-					openModal={openNoticeModal}
-					setOpenModal={setOpenNoticeModal}
-					successMsg={successMsg}
-					message={message}
-				/>
+				{openNoticeModal && (
+					<NoticeModal successMsg={successMsg} message={message} />
+				)}
 			</div>
 		</div>
 	);

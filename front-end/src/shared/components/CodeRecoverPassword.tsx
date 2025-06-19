@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { StepProps } from "./../../pages";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
+import { StepProps } from "../../utils/types";
 
 type CodeRecoverPasswordProps = StepProps;
 

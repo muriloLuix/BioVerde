@@ -15,7 +15,6 @@ import {
 	Suppliers,
 	InventoryList,
 	InventoryMovements,
-	InventoryNotices
 } from "./pages/index.tsx";
 
 const AppRoutes = () => {
@@ -29,13 +28,12 @@ const AppRoutes = () => {
 				<Route path="/app" element={<Home />}>
 					{/* Todos as rotas a partir daqui terão o sideBar */}
 					<Route path="dashboard" element={<Dashboard />} />
-					
+
 					<Route path="controle-estoque" element={<InventoryControl />}>
-						<Route path="lista-estoque" element={<InventoryList />} />
+						<Route path="lista" element={<InventoryList />} />
 						<Route path="movimentacoes" element={<InventoryMovements />} />
-						<Route path="avisos" element={<InventoryNotices />} />
 					</Route>
-					
+
 					<Route path="etapas-producao" element={<ProductionSteps />} />
 					<Route path="pedidos" element={<Orders />} />
 					<Route
