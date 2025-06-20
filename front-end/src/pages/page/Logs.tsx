@@ -207,8 +207,11 @@ export default function Orders() {
 								gridRef.current?.api.exportDataAsCsv(params);
 							}}
 							title="Exportar CSV"
-							className={`bg-verdePigmento hover:bg-verdeGrama text-white font-semibold sombra-botao flex place-content-center gap-2 rounded cursor-pointer ${
-								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"
+							disabled={loading.size > 0}
+							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
+							disabled:cursor-not-allowed 
+							${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
 							}`}
 						>
 							<FileSpreadsheet />

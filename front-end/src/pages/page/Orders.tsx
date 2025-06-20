@@ -11,6 +11,8 @@ import {
 	Loader2,
 	FileText,
 	Eye,
+	ListFilter,
+	X,
 } from "lucide-react";
 import { InputMaskChangeEvent } from "primereact/inputmask";
 import { AgGridReact } from "ag-grid-react";
@@ -38,7 +40,7 @@ import {
 	FormDataOrders,
 	DeleteOrders,
 } from "../../utils/types";
-import { OrderUpdate, OrderDelete } from "../pageComponents";
+import { OrderUpdate, OrderDelete, FilterOrderModal } from "../pageComponents";
 import {
 	ConfirmationModal,
 	Modal,
@@ -55,6 +57,7 @@ export default function Orders() {
 	const [openDeleteModal, setOpenDeleteModal] = useState(false);
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
+	const [openFilterModal, setOpenFilterModal] = useState(false);
 	const [userLevel, setUserLevel] = useState("");
 	const [openOrderModal, setOpenOrderModal] = useState(false);
 	const [numOrder, setNumOrder] = useState(0);
@@ -510,6 +513,11 @@ export default function Orders() {
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
+			valueFormatter: (params) => {
+				const date = params.value;
+				return date instanceof Date && !isNaN(date.getTime())
+				? date.toLocaleDateString("pt-BR") : "";
+			},
 		},
 		{
 			field: "pedido_prevEntrega",
@@ -519,6 +527,11 @@ export default function Orders() {
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.pedido_dtCadastro),
+			valueFormatter: (params) => {
+				const date = params.value;
+				return date instanceof Date && !isNaN(date.getTime())
+				? date.toLocaleDateString("pt-BR") : "";
+			},
 		},
 		{
 			field: "stapedido_nome",
@@ -762,11 +775,27 @@ export default function Orders() {
 						value="list"
 						className="flex flex-col w-full py-2 lg:px-4 px-2 gap-2"
 					>
-						<div className="flex justify-between p-2">
+						<div className="flex justify-between py-2">
 							<div className="flex items-center gap-2">
 								<button
+									onClick={() => setOpenFilterModal(true)}
 									disabled={loading.size > 0 || isFiltered}
-									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									title="Filtros"
+									className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+								>
+									<ListFilter />	
+								</button>
+								<button
+									onClick={clearFilter}
+									disabled={loading.size > 0 || !isFiltered}
+									title="Limpar Filtros"
+									className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+								>
+									<X />	
+								</button>
+								<button
+									disabled={loading.size > 0 || isFiltered}
+									className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer md:text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={() => {
 										getMonthOrdersByStatus("lessThan", "Entregue");
 										reorderColumn("pedido_prevEntrega", "asc");
@@ -776,7 +805,7 @@ export default function Orders() {
 								</button>
 								<button
 									disabled={loading.size > 0 || isFiltered}
-									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer md:text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={() => {
 										getMonthOrdersByStatus("notEqual", "Entregue");
 										reorderColumn("pedido_prevEntrega", "asc");
@@ -786,14 +815,14 @@ export default function Orders() {
 								</button>
 								<button
 									disabled={loading.size > 0 || isFiltered}
-									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-100 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-100 py-2.5 px-4 rounded cursor-pointer md:text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={() => reorderColumn("pedido_dtCadastro", "asc")}
 								>
 									Recentes
 								</button>
 								<button
 									disabled={loading.size > 0 || !isFiltered}
-									className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer md:text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={clearFilter}
 								>
 									Limpar filtro
@@ -802,7 +831,7 @@ export default function Orders() {
 							<div className="flex items-center gap-2">
 								<button
 									disabled={loading.size > 0}
-									className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									onClick={generateReport}
 									title="Exportar PDF"
 								>
@@ -810,14 +839,14 @@ export default function Orders() {
 										<Loader2 className="animate-spin h-6 w-6" />
 									) : (
 										<>
-											<FileText />
+											<FileText size={20}/>
 											{window.innerWidth >= 1024 && "Exportar PDF"}
 										</>
 									)}
 								</button>
 								<button
 									disabled={loading.size > 0}
-									className={`bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${window.innerWidth} < 1024 ? "p-2" : "py-2.5 px-4"`}
+									className={`bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${window.innerWidth} < 1024 ? "p-2" : "py-2.5 px-4"`}
 									onClick={() => {
 										const params = {
 											fileName: "pedidos.csv",
@@ -827,7 +856,7 @@ export default function Orders() {
 									}}
 									title="Exportar CSV"
 								>
-									<FileSpreadsheet />
+									<FileSpreadsheet size={20}/>
 									{window.innerWidth >= 1024 && "Exportar CSV"}
 								</button>
 							</div>
@@ -952,6 +981,16 @@ export default function Orders() {
 				>
 					<OrderDelete deleteOrder={deleteOrder} handleChange={handleChange} />
 				</Modal>
+
+				{/* Modal de Filtros dos Lotes (Apenas Mobile) */}
+				<FilterOrderModal
+					openFilterModal={openFilterModal}
+					setOpenFilterModal={setOpenFilterModal}
+					loading={loading}
+					isFiltered={isFiltered}
+					getMonthOrdersByStatus={getMonthOrdersByStatus}
+					reorderColumn={reorderColumn}
+				/>
 
 				{/* Alert para confirmar exclusão do pedido */}
 				<ConfirmationModal

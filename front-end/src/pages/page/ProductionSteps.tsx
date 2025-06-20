@@ -1007,7 +1007,8 @@ export default function ProductionSteps() {
 										title="Selecionar Produto para ver suas Etapas"
 										type="button"
 										onClick={() => setShowMobileSidebar(true)}
-										className="bg-green-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-green-800 flex sombra-botao place-content-center gap-2 w-[70vw] md:w-[40vw]"
+										disabled={loading.size > 0}
+										className="bg-green-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-green-800 flex place-content-center gap-2 w-[70vw] md:w-[40vw] disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 									>
 										Selecionar Produto
 									</button>

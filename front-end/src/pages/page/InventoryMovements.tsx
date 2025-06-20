@@ -467,8 +467,9 @@ export default function InventoryMovements() {
 						<button
 							title="Adicionar Produto"
 							type="button"
-							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex       sombra-botao  place-content-center gap-2 
-                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
+							disabled={loading.size > 0}
+							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex       place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed
+                        	${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 							onClick={() => {
 								setOpenStockInModal(true);
 								setHaveDestination(false);
@@ -481,7 +482,8 @@ export default function InventoryMovements() {
 						<button
 							title="Retirar Produto"
 							type="button"
-							className={`bg-gray-300 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex sombra-botao2 place-content-center gap-2
+							disabled={loading.size > 0}
+							className={`bg-gray-300 font-semibold rounded text-black cursor-pointer hover:bg-gray-400 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed
                         ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"} `}
 							onClick={() => {
 								setOpenStockOutModal(true);
@@ -498,12 +500,13 @@ export default function InventoryMovements() {
 						<button
 							title="Exportar PDF"
 							onClick={gerarRelatorio}
-							className={`bg-red-700 font-semibold 
-                            rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
-															window.innerWidth < 1024
-																? "p-2"
-																: "py-2.5 px-4 w-[165.16px]"
-														}`}
+							disabled={loading.size > 0}
+							className={`bg-red-700 font-semibold rounded text-white cursor-pointer
+							hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
+							disabled:cursor-not-allowed 
+							${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+							}`}
 						>
 							{loading.has("reports") ? (
 								<Loader2 className="animate-spin h-6 w-6" />
@@ -523,8 +526,12 @@ export default function InventoryMovements() {
 								gridRef.current?.api.exportDataAsCsv(params);
 							}}
 							title="Exportar CSV"
-							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex       sombra-botao  place-content-center gap-2 
-                        ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
+							disabled={loading.size > 0}
+							className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
+							disabled:cursor-not-allowed 
+							${
+								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+							}`}
 						>
 							<FileSpreadsheet />
 							{window.innerWidth >= 1024 && "Exportar CSV"}

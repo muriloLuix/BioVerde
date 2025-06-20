@@ -691,7 +691,8 @@ export default function Clients() {
 							<div className="mt-1 mb-3">
 								<button
 									type="button"
-									className="bg-verdePigmento py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex sombra-botao place-content-center gap-2"
+									disabled={loading.size > 0}
+									className={`bg-verdePigmento font-semibold py-2.5 px-4 rounded text-white cursor-pointer hover:bg-verdeGrama flex disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed  place-content-center gap-2`}
 									onClick={() => {
 										setOpenRegisterModal(true);
 										clearFormData();
@@ -707,12 +708,13 @@ export default function Clients() {
 								<button
 									title="Exportar PDF"
 									onClick={gerarRelatorio}
-									className={`bg-red-700 font-semibold 
-										rounded text-white cursor-pointer hover:bg-red-800 flex sombra-botao place-content-center gap-2 ${
-											window.innerWidth < 1024
-												? "p-2"
-												: "py-2.5 px-4 w-[165.16px]"
-										}`}
+									disabled={loading.size > 0}
+									className={`bg-red-700 font-semibold rounded text-white cursor-pointer
+									hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
+									disabled:cursor-not-allowed 
+									${
+										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+									}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -732,8 +734,12 @@ export default function Clients() {
 										gridRef.current?.api.exportDataAsCsv(params);
 									}}
 									title="Exportar CSV"
-									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex sombra-botao place-content-center gap-2 
-									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
+									disabled={loading.size > 0}
+									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
+									disabled:cursor-not-allowed 
+									${
+										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+									}`}
 								>
 									<FileSpreadsheet />
 									{window.innerWidth >= 1024 && "Exportar CSV"}

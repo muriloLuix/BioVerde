@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
@@ -8,6 +9,8 @@ import {
 	FileSpreadsheet,
 	Loader2,
 	FileText,
+	ListFilter,
+	X,
 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -29,7 +32,7 @@ import {
 } from "../../shared";
 import { useLocation, useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
-import { BatchRegister, BatchUpdate, BatchDelete } from "../pageComponents";
+import { BatchRegister, BatchUpdate, BatchDelete, FilterBatchModal } from "../pageComponents";
 import {
 	Batch,
 	BatchOptions,
@@ -47,6 +50,7 @@ export default function InventoryList() {
 	const [openConfirmModal, setOpenConfirmModal] = useState(false);
 	const [openNoticeModal, setOpenNoticeModal] = useState(false);
 	const [openProductModal, setOpenProductModal] = useState(false);
+	const [openFilterModal, setOpenFilterModal] = useState(false);
 	const [openProductConfirmModal, setOpenProductConfirmModal] = useState(false);
 	const [loading, setLoading] = useState<Set<string>>(new Set());
 	const [options, setOptions] = useState<BatchOptions>();
@@ -140,6 +144,7 @@ export default function InventoryList() {
 		}
 	};
 
+
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
 		try {
@@ -176,7 +181,7 @@ export default function InventoryList() {
 			rowData.length > 0 ||
 			location.pathname === "/app/controle-estoque/lista"
 		) {
-			rowData.map((row: any) => {
+			rowData.map((row: Batch) => {
 				if (
 					row.lote_quantAtual >=
 					row.lote_quantMax - row.lote_quantMax * 0.9
@@ -497,6 +502,9 @@ export default function InventoryList() {
 		}
 	};
 
+	
+	
+
 	//Função para excluir produto
 	const [deletedId, setDeletedId] = useState<number | null>(null);
 
@@ -648,11 +656,16 @@ export default function InventoryList() {
 		{
 			headerName: "Data De Colheita",
 			field: "lote_dtColheita",
-			cellDataType: "date",
+			cellDataType: "date", 
 			filterParams: { maxNumConditions: 1 },
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.lote_dtColheita),
+			valueFormatter: (params) => {
+				const date = params.value;
+				return date instanceof Date && !isNaN(date.getTime())
+				? date.toLocaleDateString("pt-BR") : "";
+			},
 		},
 		{
 			headerName: "Data De Validade",
@@ -662,6 +675,11 @@ export default function InventoryList() {
 			filter: true,
 			width: 180,
 			valueGetter: (params) => new Date(params.data.lote_dtValidade),
+			valueFormatter: (params) => {
+				const date = params.value;
+				return date instanceof Date && !isNaN(date.getTime())
+				? date.toLocaleDateString("pt-BR") : "";
+			},
 		},
 		{
 			headerName: "Capacidade Máxima",
@@ -874,25 +892,41 @@ export default function InventoryList() {
 				className="w-full flex flex-col py-2 lg:px-4 px-2"
 			>
 				{/* Botões de Exportar CSV e Novo Lote */}
-				<div className="flex justify-between p-2">
+				<div className="flex justify-between py-2">
 					{/* Botão de Abrir Modal de Cadastro de Lote */}
 					<div className="flex items-center gap-2">
+						
 						<button
 							type="button"
-							className={`bg-verdePigmento transition-colors delay-75 font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex place-content-center gap-2 md:mr-3 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
-								window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"
-							}`}
+							title="Novo Lote"
 							disabled={loading.size > 0}
+							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed  place-content-center gap-2 ${window.innerWidth < 768 ? "p-2" : "py-2.5 px-4"}`}
 							onClick={() => {
 								setOpenRegisterModal(true);
 								clearFormData();
 							}}
 						>
-							<Plus className="m-2 md:m-0" />
-							{window.innerWidth >= 1024 && "Novo lote"}
+							<Plus />
+							{window.innerWidth >= 768 && "Novo lote"}
 						</button>
 						<button
-							className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed truncate"
+							onClick={() => setOpenFilterModal(true)}
+							disabled={loading.size > 0 || isFiltered}
+							title="Filtros"
+							className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+						>
+							<ListFilter />	
+						</button>
+						<button
+							onClick={clearFilter}
+							disabled={loading.size > 0 || !isFiltered}
+							title="Limpar Filtros"
+							className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+						>
+							<X />	
+						</button>
+						<button
+							className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed truncate"
 							disabled={loading.size > 0 || isFiltered}
 							onClick={() => {
 								getExpiringBatches();
@@ -902,14 +936,14 @@ export default function InventoryList() {
 							Expira esse mês
 						</button>
 						<button
-							className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 							disabled={loading.size > 0 || isFiltered}
 							onClick={() => reorderColumn("lote_dtColheita", "asc")}
 						>
 							Recentes
 						</button>
 						<button
-							className="bg-gray-100 hover:bg-gray-200 transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+							className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 							disabled={loading.size > 0 || !isFiltered}
 							onClick={clearFilter}
 						>
@@ -1101,6 +1135,16 @@ export default function InventoryList() {
 				isLoading={loading.has("deleteProduct")}
 				confirmationLeftButtonText="Cancelar"
 				confirmationRightButtonText="Sim, excluir produto"
+			/>
+			
+			{/* Modal de Filtros dos Lotes (Apenas Mobile) */}
+			<FilterBatchModal
+				openFilterModal={openFilterModal}
+				setOpenFilterModal={setOpenFilterModal}
+				loading={loading}
+				isFiltered={isFiltered}
+				getExpiringBatches={getExpiringBatches}
+				reorderColumn={reorderColumn}
 			/>
 
 			{/* Modal de Relatório */}

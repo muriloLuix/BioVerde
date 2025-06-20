@@ -53,7 +53,7 @@ export default function InventoryControl() {
 				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 					<Tabs.Trigger
 						value="list"
-						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+						className={`relative px-4 py-2 flex-1 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "list" ? "select animation-tab" : ""
 						}`}
 					>
@@ -62,7 +62,7 @@ export default function InventoryControl() {
 
 					<Tabs.Trigger
 						value="movements"
-						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+						className={`relative px-4 py-2 flex-1 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "movements" ? "select animation-tab" : ""
 						}`}
 					>

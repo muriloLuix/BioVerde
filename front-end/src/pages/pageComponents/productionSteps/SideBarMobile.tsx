@@ -40,7 +40,6 @@ const SideBarMobile: React.FC<SideBarProps> = ({
                 </button>
             </Dialog.Close>
           </div>
-            {/* Conteúdo da sidebar aqui (copie o conteúdo da sua sidebar atual) */}
             <div className="bg-green-800 p-4 rounded-t-xl">
                 <h2 className="text-white text-center text-lg font-semibold">
                 Etapas de Produção

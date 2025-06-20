@@ -1,6 +1,7 @@
 export { default as BatchRegister } from "./batches/BatchRegister";
 export { default as BatchUpdate } from "./batches/BatchUpdate";
 export { default as BatchDelete } from "./batches/BatchDelete";
+export { default as FilterBatchModal } from "./batches/FilterBatchModal";
 
 export { default as ProductRegister } from "./productionSteps/ProductRegister";
 export { default as NewStep } from "./productionSteps/NewStep";
@@ -22,6 +23,7 @@ export { default as ClientDelete } from "./clients/ClientDelete";
 
 export { default as OrderUpdate } from "./orders/OrderUpdate";
 export { default as OrderDelete } from "./orders/OrderDelete";
+export { default as FilterOrderModal } from "./orders/FilterOrderModal";
 
 export { default as StockInRegister } from "./movements/StockInRegister";
 export { default as StockOutRegister } from "./movements/StockOutRegister";
