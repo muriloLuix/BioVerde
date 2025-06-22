@@ -66,7 +66,8 @@ export default function Orders() {
 		{
 			field: "log_datahora",
 			headerName: "Data/hora",
-			...(isMobile ? { width: 180 } : { flex: 1 }),
+			filter: true,
+			...(isMobile ? { width: 180 } : { flex: 1.2 }),
 			valueFormatter: (params: ValueFormatterParams) =>
 				formatDateBR(params.value as string),
 		},
@@ -172,7 +173,7 @@ export default function Orders() {
 	};
 
 	return (
-		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20 font-[inter]">
+		<div className="flex-1 lg:p-6 lg:pl-[280px] pt-20 px-3 font-[inter]">
 			<div className="lg:px-6 px-3 h-10 w-full flex items-center justify-center mb-3">
 				<span className="text-4xl font-semibold text-center ">Logs</span>
 			</div>
