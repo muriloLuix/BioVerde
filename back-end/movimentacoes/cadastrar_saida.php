@@ -37,7 +37,7 @@ $uni_id = (int) $data['unidade'];
 $lote_id = (int) $data['lote'];
 $pedido_id = (int) $data['pedido'] ?? null;
 $quantidade = (float) $data['quantidade'];
-$destino = $data['destino'];
+$destino = $data['destino'] ?? null;
 $mov_tipo = 'saida';
 $user_id = $_SESSION['user_id'];
 $mov_obs = $data['obs'] ?? null;
@@ -74,8 +74,9 @@ $preco_movimentado = $quantidade * $produto_preco;
 $novo_preco_total = max(0, $lote_preco - $preco_movimentado);
 
 /**************** INSERE NA movimentacoes_estoque *******************/
-$sql = "INSERT INTO movimentacoes_estoque (mov_tipo, motivo_id, produto_id, uni_id, mov_quantidade, preco_movimentado, lote_id,";
-$sql .= " user_id, destino, pedido_id, mov_obs) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO movimentacoes_estoque 
+    (mov_tipo, motivo_id, produto_id, uni_id, mov_quantidade, preco_movimentado, lote_id, user_id, destino, pedido_id, mov_obs) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
@@ -119,7 +120,7 @@ if ($stmt->execute()) {
     Nome: {$produto->produto_nome}\n\n 
     Quantidade retirada: {$quantidade}\n\n 
     Preço movimentado: {$preco_movimentado}\n\n 
-    Lote: {$lote->lote_codigo},
+    Lote: {$lote->lote_codigo}
     Quantidade anterior: {$lote_quantAtual},
     Nova quantidade: {$nova_quantidade}",
         Acoes::CADASTRAR_SAIDA,

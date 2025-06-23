@@ -59,6 +59,18 @@ try {
     }
     /*****************************************************************/
 
+    /**************** VERIFICAÇÕES DE MOVIMENTAÇÕES ************************/
+    $stmtCheckMov = $conn->prepare("SELECT COUNT(*) as total FROM movimentacoes_estoque WHERE lote_id = ?");
+    $stmtCheckMov->bind_param("i", $lote_id);
+    $stmtCheckMov->execute();
+    $result = $stmtCheckMov->get_result();
+    $row = $result->fetch_assoc();
+
+    if ($row['total'] > 0) {
+        throw new Exception("Este lote possui movimentações no estoque e não pode ser excluído.");
+    }
+    /***********************************************************************/
+
     /**************** DELETA O LOTE ************************/
     $exclusao = deleteData($conn, $lote_id, 'lote', "lote_id");
     if (!$exclusao['success']) {

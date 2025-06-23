@@ -138,7 +138,6 @@ const StockOutRegister: React.FC<Props> = ({
         <SmartField
             fieldName="destino" 
             fieldText="Destino do Produto"
-            error={errors.destination ? "*" : undefined}
             placeholder="Digite o Destino do Produto"
             isDisable={!!formData.pedido && isSaleCliente}
             value={formData.destino}
