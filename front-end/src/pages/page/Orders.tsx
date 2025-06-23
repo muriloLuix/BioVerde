@@ -825,7 +825,7 @@ export default function Orders() {
 								<button
 									disabled={loading.size > 0 || isFiltered}
 									className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-100 py-2.5 px-4 rounded cursor-pointer md:text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-									onClick={() => reorderColumn("pedido_dtCadastro", "asc")}
+									onClick={() => reorderColumn("pedido_dtCadastro", "desc")}
 								>
 									Recentes
 								</button>

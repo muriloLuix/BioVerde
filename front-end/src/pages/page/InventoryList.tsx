@@ -660,7 +660,7 @@ export default function InventoryList() {
 			cellDataType: "date",
 			filterParams: { maxNumConditions: 1 },
 			filter: true,
-			width: 180,
+			width: 200,
 			valueGetter: (params) => new Date(params.data.lote_dtColheita),
 			valueFormatter: (params) => {
 				const date = params.value;
@@ -970,7 +970,7 @@ export default function InventoryList() {
 						<button
 							className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
 							disabled={loading.size > 0 || isFiltered}
-							onClick={() => reorderColumn("lote_dtColheita", "asc")}
+							onClick={() => reorderColumn("lote_dtColheita", "desc")}
 						>
 							Recentes
 						</button>
