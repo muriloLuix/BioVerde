@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { checkAuth } from "../../utils/checkAuth";
 import { Tabs } from "radix-ui";
@@ -79,6 +79,11 @@ export default function UsersPage() {
 	});
 
 	/* ----- useEffects e Requisições via Axios ----- */
+
+	// Seta o state do noticeModal para false após 5 segundos
+	const handleNoticeModal = useCallback(() => {
+		setTimeout(() => setOpenNoticeModal(false), 5000);
+	}, []);
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
@@ -254,6 +259,7 @@ export default function UsersPage() {
 				newLoading.delete("submit");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -312,6 +318,7 @@ export default function UsersPage() {
 				newLoading.delete("updateUser");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -360,6 +367,7 @@ export default function UsersPage() {
 				newLoading.delete("deleteUser");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -391,6 +399,7 @@ export default function UsersPage() {
 				console.error(error);
 				setMessage("Erro ao conectar com o servidor");
 				setOpenNoticeModal(true);
+				handleNoticeModal();
 			}
 		}
 	};
@@ -436,6 +445,7 @@ export default function UsersPage() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -476,6 +486,7 @@ export default function UsersPage() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -513,6 +524,7 @@ export default function UsersPage() {
 				newLoading.delete("deletePosition");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -549,7 +561,7 @@ export default function UsersPage() {
 	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
 	const [relatorioContent, setRelatorioContent] = useState<string>("");
 
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 		try {
 			const response = await axios.get(
@@ -576,6 +588,7 @@ export default function UsersPage() {
 				newLoading.delete("reports");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -752,7 +765,7 @@ export default function UsersPage() {
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							className={`w-full px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
@@ -785,10 +798,12 @@ export default function UsersPage() {
 							<div className="flex items-center gap-5 mt-1 mb-3">
 								<button
 									title="Exportar PDF"
-									onClick={gerarRelatorio}
+									onClick={generateReport}
 									disabled={loading.size > 0}
 									className={`bg-red-700 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+										window.innerWidth < 1024
+											? "p-2"
+											: "py-2.5 px-3 w-[165.16px]"
 									}`}
 								>
 									{loading.has("reports") ? (
@@ -811,7 +826,9 @@ export default function UsersPage() {
 									title="Exportar CSV"
 									disabled={loading.size > 0}
 									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
+										window.innerWidth < 1024
+											? "p-2"
+											: "py-2.5 px-3 w-[165.16px]"
 									}`}
 								>
 									<FileSpreadsheet />
@@ -975,7 +992,11 @@ export default function UsersPage() {
 
 				{/* Modal de Avisos */}
 				{openNoticeModal && (
-					<NoticeModal successMsg={successMsg} message={message} />
+					<NoticeModal
+						successMsg={successMsg}
+						message={message}
+						setOpenNoticeModal={setOpenNoticeModal}
+					/>
 				)}
 			</div>
 		</div>

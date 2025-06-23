@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import axios from "axios";
 
@@ -9,12 +10,11 @@ import { AgChartOptions } from "ag-charts-community";
 
 import {
 	Loader2,
-	Package,
 	PackageCheck,
 	PackageOpen,
 	PackageSearch,
+	PackageX,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 interface QuantityByStatus {
 	id: number;
@@ -26,7 +26,7 @@ const Dashboard = () => {
 	const icons = [
 		<PackageOpen className="text-white" />,
 		<PackageSearch className="text-white" />,
-		<Package className="text-white" />,
+		<PackageX className="text-white" />,
 		<PackageCheck className="text-white" />,
 	];
 
@@ -360,8 +360,8 @@ const Dashboard = () => {
 								key={product.status}
 								className={`h-full lg:w-1/5 w-full md:w-2/5 flex flex-col items-center justify-center p-5 
 									lg:p-2 bg-[#83b68574] lg:bg-verdeEscuroForte lg:rounded-none rounded-lg shadow-md lg:shadow-none ${
-									index === products.length - 1 ? 'md:mr-2.5 lg:mr-0' : ''
-								}`}
+										index === products.length - 1 ? "md:mr-2.5 lg:mr-0" : ""
+									}`}
 							>
 								<div className="h-1/4 w-full flex p-1 item-center justify-center gap-2 font-medium">
 									{icons[index]}

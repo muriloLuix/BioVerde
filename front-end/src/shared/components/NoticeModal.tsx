@@ -4,9 +4,14 @@ import { X } from "lucide-react";
 type NoticeModalProps = {
 	successMsg: boolean;
 	message: string;
+	setOpenNoticeModal: React.Dispatch<React.SetStateAction<boolean>>;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-const NoticeModal = ({ successMsg, message }: NoticeModalProps) => {
+const NoticeModal = ({
+	successMsg,
+	message,
+	setOpenNoticeModal,
+}: NoticeModalProps) => {
 	return (
 		<Toast.Provider swipeDirection="right">
 			<Toast.Root
@@ -19,7 +24,7 @@ const NoticeModal = ({ successMsg, message }: NoticeModalProps) => {
 						{successMsg ? "SUCESSO" : "ALERTA"}
 					</Toast.Title>
 					<Toast.Close className="ml-4 p-1 rounded-full hover:bg-white/20 cursor-pointer [grid-area: _close]">
-						<X size={25} />
+						<X size={25} onClick={() => setOpenNoticeModal(false)} />
 					</Toast.Close>
 				</div>
 				<Toast.Description>{message}</Toast.Description>

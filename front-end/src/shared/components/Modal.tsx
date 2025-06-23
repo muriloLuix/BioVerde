@@ -72,12 +72,15 @@ const Modal = ({
 							modalSecondTitle
 						)}
 					</Dialog.Title>
-					<Dialog.Description className={`py-4 px-2 pb-0 flex flex-col gap-2 ${isOrderModal && "justify-between min-h-[40vh]"}`}>
+					<Dialog.Description
+						className={`py-4 px-2 pb-0 flex flex-col gap-2 ${
+							isOrderModal && "justify-between min-h-[40vh]"
+						}`}
+					>
 						{withExitButton ? (
-							<>	
-			
+							<>
 								{children}
-	
+
 								<div
 									className={`mt-3 ${
 										isOrderModal && "flex justify-between items-center"
@@ -92,7 +95,7 @@ const Modal = ({
 									<Dialog.Close asChild>
 										<div className="flex justify-end">
 											<button
-												className="bg-verdeMedio p-2 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2 hover:bg-verdeEscuro"
+												className="bg-green-600 p-2 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2 hover:bg-green-700"
 												aria-label="Close"
 											>
 												Fechar
@@ -114,49 +117,55 @@ const Modal = ({
 								}}
 							>
 								<div className={`${isSideButton && "flex"}`}>
-								{children}
-								{isRegister ? (
-									<Form.Submit asChild>
-										<div className="flex place-content-center mt-6">
-											<button
-												type="submit"
-												className={`bg-verdePigmento font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-verdeGrama flex place-content-center ${isSideButton ? "p-2 w-40 h-11 mt-3 ml-7 text-sm" : "p-4 w-50"}`}
-											>
-												{isLoading ? (
-													<Loader2 className="animate-spin h-6 w-6" />
-												) : (
-													<span className={`${isSideButton && "mt-1"}`}>{registerButtonText}</span>
-												)}
-											</button>
-										</div>
-									</Form.Submit>
-									) : (
-									<div className="flex justify-end items-center gap-3 m-2">
-										<Dialog.Close asChild>
-											<button
-											type="button"
-											onClick={onCancel}
-											className="bg-gray-300 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-400"
-											aria-label="Close"
-											>
-											{leftButtonText}
-											</button>
-										</Dialog.Close>
-								
-										<Form.Submit>
-											<button
-											type="submit"
-											className="bg-verdeMedio p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-verdeEscuro"
-											>
-											{isLoading ? (
-												<Loader2 className="animate-spin h-6 w-6" />
-											) : (
-												rightButtonText
-											)}
-											</button>
+									{children}
+									{isRegister ? (
+										<Form.Submit asChild>
+											<div className="flex place-content-center mt-6">
+												<button
+													type="submit"
+													className={`bg-green-600 font-semibold rounded-lg text-white cursor-pointer sombra  hover:bg-green-700 flex place-content-center ${
+														isSideButton
+															? "p-2 w-40 h-11 mt-3 ml-7 text-sm"
+															: "p-4 w-50"
+													}`}
+												>
+													{isLoading ? (
+														<Loader2 className="animate-spin h-6 w-6" />
+													) : (
+														<span className={`${isSideButton && "mt-1"}`}>
+															{registerButtonText}
+														</span>
+													)}
+												</button>
+											</div>
 										</Form.Submit>
-									</div>
-								)}
+									) : (
+										<div className="flex justify-end items-center gap-3 m-2">
+											<Dialog.Close asChild>
+												<button
+													type="button"
+													onClick={onCancel}
+													className="bg-gray-100 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-200"
+													aria-label="Close"
+												>
+													{leftButtonText}
+												</button>
+											</Dialog.Close>
+
+											<Form.Submit>
+												<button
+													type="submit"
+													className="bg-green-600 p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-green-700"
+												>
+													{isLoading ? (
+														<Loader2 className="animate-spin h-6 w-6" />
+													) : (
+														rightButtonText
+													)}
+												</button>
+											</Form.Submit>
+										</div>
+									)}
 								</div>
 							</Form.Root>
 						)}
