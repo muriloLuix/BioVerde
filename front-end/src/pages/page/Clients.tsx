@@ -193,9 +193,10 @@ export default function Clients() {
 			}
 		} catch (error) {
 			console.error(error);
-			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
+			setOpenNoticeModal(true);
 		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("clients");
@@ -236,20 +237,21 @@ export default function Clients() {
 			if (response.data.success) {
 				await refreshData();
 				setSuccessMsg(true);
-				setOpenRegisterModal(false);
 				setMessage("Cliente cadastrado com sucesso!");
+				setOpenNoticeModal(true);
+				setOpenRegisterModal(false);
 				clearFormData();
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao cadastrar cliente");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
+			setSuccessMsg(false);
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
-			setOpenNoticeModal(true);
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("submit");
@@ -313,10 +315,12 @@ export default function Clients() {
 				setOpenEditModal(false);
 				setSuccessMsg(true);
 				setMessage("Cliente atualizado com sucesso!");
+				setOpenNoticeModal(true);
 				clearFormData();
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao atualizar cliente.");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
 			setSuccessMsg(false);
@@ -324,13 +328,12 @@ export default function Clients() {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
-			setOpenNoticeModal(true);
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("updateClient");
 				return newLoading;
 			});
-			handleNoticeModal();
 		}
 	};
 
@@ -722,9 +725,7 @@ export default function Clients() {
 									className={`bg-red-700 font-semibold rounded text-white cursor-pointer
 									hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
 									disabled:cursor-not-allowed 
-									${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
-									}`}
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -747,9 +748,7 @@ export default function Clients() {
 									disabled={loading.size > 0}
 									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
 									disabled:cursor-not-allowed 
-									${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
-									}`}
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"}`}
 								>
 									<FileSpreadsheet />
 									{window.innerWidth >= 1024 && "Exportar CSV"}

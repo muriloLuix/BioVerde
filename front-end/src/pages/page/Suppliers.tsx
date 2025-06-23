@@ -238,20 +238,20 @@ export default function Suppliers() {
 			if (response.data.success) {
 				await refreshData();
 				setSuccessMsg(true);
-				setOpenRegisterModal(false);
 				setMessage("Fornecedor cadastrado com sucesso!");
+				setOpenNoticeModal(true);
+				setOpenRegisterModal(false);
 				clearFormData();
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao cadastrar fornecedor");
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
-			setOpenNoticeModal(true);
+			setSuccessMsg(false);
 			setMessage("Erro ao conectar com o servidor");
-		} finally {
 			setOpenNoticeModal(true);
+		} finally {
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("submit");
@@ -414,6 +414,7 @@ export default function Suppliers() {
 				console.error(error);
 				setMessage("Erro ao conectar com o servidor");
 				setOpenNoticeModal(true);
+			} finally {
 				handleNoticeModal();
 			}
 		}
@@ -731,9 +732,7 @@ export default function Suppliers() {
 									className={`bg-red-700 font-semibold rounded text-white cursor-pointer
 									hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
 									disabled:cursor-not-allowed 
-									${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
-									}`}
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"}`}
 								>
 									{loading.has("reports") ? (
 										<Loader2 className="animate-spin h-6 w-6" />
@@ -756,9 +755,7 @@ export default function Suppliers() {
 									disabled={loading.size > 0}
 									className={`bg-verdeGrama font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
 									disabled:cursor-not-allowed 
-									${
-										window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"
-									}`}
+									${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-3 w-[165.16px]"}`}
 								>
 									<FileSpreadsheet />
 									{window.innerWidth >= 1024 && "Exportar CSV"}
