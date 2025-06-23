@@ -145,7 +145,7 @@ const Modal = ({
 												<button
 													type="button"
 													onClick={onCancel}
-													className="bg-gray-100 p-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-200"
+													className="bg-gray-100 py-3 px-6 rounded-xl text-black cursor-pointer flex place-content-center gap-2 hover:bg-gray-200"
 													aria-label="Close"
 												>
 													{leftButtonText}
@@ -155,7 +155,7 @@ const Modal = ({
 											<Form.Submit>
 												<button
 													type="submit"
-													className="bg-green-600 p-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-green-700"
+													className="bg-green-600 py-3 px-6 w-[88.52px] rounded-xl text-white cursor-pointer flex place-content-center gap-2  hover:bg-green-700"
 												>
 													{isLoading ? (
 														<Loader2 className="animate-spin h-6 w-6" />

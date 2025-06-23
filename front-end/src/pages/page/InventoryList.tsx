@@ -30,9 +30,14 @@ import {
 	ConfirmationModal,
 	ReportModal,
 } from "../../shared";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { checkAuth } from "../../utils/checkAuth";
-import { BatchRegister, BatchUpdate, BatchDelete, FilterBatchModal } from "../pageComponents";
+import {
+	BatchRegister,
+	BatchUpdate,
+	BatchDelete,
+	FilterBatchModal,
+} from "../pageComponents";
 import {
 	Batch,
 	BatchOptions,
@@ -98,7 +103,11 @@ export default function InventoryList() {
 
 	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
 	const navigate = useNavigate();
-	const location = useLocation();
+
+	// Seta o state do noticeModal para false após 5 segundos
+	const handleNoticeModal = useCallback(() => {
+		setTimeout(() => setOpenNoticeModal(false), 5000);
+	}, []);
 
 	const fetchData = async () => {
 		try {
@@ -136,6 +145,7 @@ export default function InventoryList() {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				["batches", "options"].forEach((item) => newLoading.delete(item));
@@ -143,7 +153,6 @@ export default function InventoryList() {
 			});
 		}
 	};
-
 
 	//Função para Atualizar a Tabela após ação
 	const refreshData = async () => {
@@ -164,6 +173,7 @@ export default function InventoryList() {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("batches");
@@ -173,14 +183,9 @@ export default function InventoryList() {
 	};
 
 	useEffect(() => {
-		setOpenNoticeModal(false);
-
 		checkAuth({ navigate, setMessage, setOpenNoticeModal });
 
-		if (
-			rowData.length > 0 ||
-			location.pathname === "/app/controle-estoque/lista"
-		) {
+		if (rowData.length > 0 && loading.has("updateBatch")) {
 			rowData.map((row: Batch) => {
 				if (
 					row.lote_quantAtual >=
@@ -189,13 +194,15 @@ export default function InventoryList() {
 					try {
 						setOpenNoticeModal(true);
 						setMessage(row.lote_codigo + " está quase lotado!");
-					} catch (error) {
-						console.error(error);
+					} catch (err) {
+						console.error(err);
+					} finally {
+						handleNoticeModal();
 					}
 				}
 			});
 		}
-	}, [navigate, fetchData, refreshData]);
+	}, [navigate, rowData]);
 
 	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
 	useEffect(() => {
@@ -235,6 +242,7 @@ export default function InventoryList() {
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
@@ -268,6 +276,7 @@ export default function InventoryList() {
 
 		setLoading((prev) => new Set([...prev, "register"]));
 		console.log("Dados enviados no formData:", formData);
+
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/lotes/cadastrar_lotes.php",
@@ -277,26 +286,30 @@ export default function InventoryList() {
 					withCredentials: true,
 				}
 			);
+
 			console.log("Resposta do back-end:", response.data);
+
 			if (response.data.success) {
 				await refreshData();
-				setSuccessMsg(true);
 				setOpenRegisterModal(false);
+				setSuccessMsg(true);
 				setMessage(
 					`Lote ${response.data.lote_codigo} foi cadastrado com sucesso!`
 				);
+				setOpenNoticeModal(true);
 				clearFormData();
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message ?? "Erro ao cadastrar lote");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
+			setSuccessMsg(false);
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
-			setOpenNoticeModal(true);
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("register");
@@ -308,9 +321,8 @@ export default function InventoryList() {
 	/* ----- Funções para Atualizar Lote após edição ----- */
 
 	//Formata as Datas
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toISOString().split("T")[0];
-	};
+	const formatDate = (dateString: string) =>
+		new Date(dateString).toISOString().split("T")[0];
 
 	//função para puxar os dados do lote que será editado
 	const handleEdit = (lote: Batch) => {
@@ -350,6 +362,7 @@ export default function InventoryList() {
 			if (response.data.success) {
 				await refreshData();
 				setOpenEditModal(false);
+				setOpenNoticeModal(true);
 				setSuccessMsg(true);
 				setMessage(
 					`Lote ${response.data.lote_codigo} foi atualizado com sucesso!`
@@ -358,14 +371,15 @@ export default function InventoryList() {
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao atualizar lote.");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
+			setSuccessMsg(false);
 			setOpenNoticeModal(true);
 			setMessage("Erro ao conectar com o servidor");
 		} finally {
-			setOpenNoticeModal(true);
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("updateBatch");
@@ -406,17 +420,19 @@ export default function InventoryList() {
 				setOpenConfirmModal(false);
 				setSuccessMsg(true);
 				setMessage("Lote excluído com sucesso!");
+				setOpenNoticeModal(true);
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao excluir lote.");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
-			setOpenNoticeModal(true);
+			setSuccessMsg(false);
 			setMessage("Erro ao conectar com o servidor");
-		} finally {
 			setOpenNoticeModal(true);
+		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("deleteBatch");
@@ -439,22 +455,26 @@ export default function InventoryList() {
 					withCredentials: true,
 				}
 			);
+
 			console.log("Resposta do back-end:", response.data);
+
 			if (response.data.success) {
 				await fetchOptions();
 				setSuccessMsg(true);
 				setMessage("Produto cadastrado com sucesso!");
+				setOpenNoticeModal(true);
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao cadastrar Produto");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
-			setOpenNoticeModal(true);
+			setSuccessMsg(false);
 			setMessage("Erro ao conectar com o servidor");
-		} finally {
 			setOpenNoticeModal(true);
+		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
@@ -470,6 +490,7 @@ export default function InventoryList() {
 				produto_id: id,
 				produto_nome: editedValue,
 			};
+
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/produtos/editar_produto.php",
 				dataToSend,
@@ -478,22 +499,26 @@ export default function InventoryList() {
 					withCredentials: true,
 				}
 			);
+
 			console.log("Resposta do back-end:", response.data);
+
 			if (response.data.success) {
 				await fetchOptions();
 				setSuccessMsg(true);
 				setMessage("Produto atualizado com sucesso!");
+				setOpenNoticeModal(true);
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao atualizar Produto.");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
-			setOpenNoticeModal(true);
+			setSuccessMsg(false);
 			setMessage("Erro ao conectar com o servidor");
-		} finally {
 			setOpenNoticeModal(true);
+		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("options");
@@ -502,9 +527,6 @@ export default function InventoryList() {
 		}
 	};
 
-	
-	
-
 	//Função para excluir produto
 	const [deletedId, setDeletedId] = useState<number | null>(null);
 
@@ -512,9 +534,11 @@ export default function InventoryList() {
 		setDeletedId(produto.produto_id);
 		setOpenProductConfirmModal(true);
 	};
+
 	const deleteProduct = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading((prev) => new Set([...prev, "deleteProduct"]));
+
 		try {
 			const response = await axios.post(
 				"http://localhost/BioVerde/back-end/produtos/excluir_produto.php",
@@ -524,22 +548,25 @@ export default function InventoryList() {
 					withCredentials: true,
 				}
 			);
+
 			if (response.data.success) {
 				await fetchOptions();
 				setOpenProductConfirmModal(false);
 				setSuccessMsg(true);
 				setMessage("Produto excluído com sucesso!");
+				setOpenNoticeModal(true);
 			} else {
 				setSuccessMsg(false);
 				setMessage(response.data.message || "Erro ao excluir Produto.");
+				setOpenNoticeModal(true);
 			}
 		} catch (error) {
-			setSuccessMsg(false);
 			console.error(error);
-			setOpenNoticeModal(true);
+			setSuccessMsg(false);
 			setMessage("Erro ao conectar com o servidor");
-		} finally {
 			setOpenNoticeModal(true);
+		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("deleteProduct");
@@ -628,6 +655,7 @@ export default function InventoryList() {
 			setMessage("Erro ao gerar relatório");
 			setOpenNoticeModal(true);
 		} finally {
+			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("reports");
@@ -656,7 +684,7 @@ export default function InventoryList() {
 		{
 			headerName: "Data De Colheita",
 			field: "lote_dtColheita",
-			cellDataType: "date", 
+			cellDataType: "date",
 			filterParams: { maxNumConditions: 1 },
 			filter: true,
 			width: 180,
@@ -664,7 +692,8 @@ export default function InventoryList() {
 			valueFormatter: (params) => {
 				const date = params.value;
 				return date instanceof Date && !isNaN(date.getTime())
-				? date.toLocaleDateString("pt-BR") : "";
+					? date.toLocaleDateString("pt-BR")
+					: "";
 			},
 		},
 		{
@@ -678,7 +707,8 @@ export default function InventoryList() {
 			valueFormatter: (params) => {
 				const date = params.value;
 				return date instanceof Date && !isNaN(date.getTime())
-				? date.toLocaleDateString("pt-BR") : "";
+					? date.toLocaleDateString("pt-BR")
+					: "";
 			},
 		},
 		{
@@ -856,10 +886,10 @@ export default function InventoryList() {
 		const firstDay = date.getDate() / date.getDate();
 		const lastDay = date.getDate() - limit;
 
-		const begin = new Date(year, month, firstDay).toISOString();
+		const start = new Date(year, month, firstDay).toISOString();
 		const end = new Date(year, month, lastDay).toISOString();
 
-		return { begin, end };
+		return { start, end };
 	}, []);
 
 	// Filtra lotes deste mês perto da data de validade
@@ -868,13 +898,13 @@ export default function InventoryList() {
 			// Checa se já tem um filtro
 			if (gridRef.current?.api.isAnyFilterPresent()) return;
 
-			const { begin, end } = calculateMonthRange;
+			const { start, end } = calculateMonthRange;
 
 			gridRef.current?.api.setFilterModel({
 				lote_dtValidade: {
 					filterType: "date",
 					type: "inRange",
-					dateFrom: begin,
+					dateFrom: start,
 					dateTo: end,
 				},
 			});
@@ -895,12 +925,13 @@ export default function InventoryList() {
 				<div className="flex justify-between py-2">
 					{/* Botão de Abrir Modal de Cadastro de Lote */}
 					<div className="flex items-center gap-2">
-						
 						<button
 							type="button"
 							title="Novo Lote"
 							disabled={loading.size > 0}
-							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed  place-content-center gap-2 ${window.innerWidth < 768 ? "p-2" : "py-2.5 px-4"}`}
+							className={`bg-verdePigmento font-semibold rounded text-white cursor-pointer hover:bg-verdeGrama flex disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed  place-content-center gap-2 ${
+								window.innerWidth < 768 ? "p-2" : "py-2.5 px-4"
+							}`}
 							onClick={() => {
 								setOpenRegisterModal(true);
 								clearFormData();
@@ -915,7 +946,7 @@ export default function InventoryList() {
 							title="Filtros"
 							className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
 						>
-							<ListFilter />	
+							<ListFilter />
 						</button>
 						<button
 							onClick={clearFilter}
@@ -923,7 +954,7 @@ export default function InventoryList() {
 							title="Limpar Filtros"
 							className={`md:hidden bg-gray-200 p-2 text-black font-semibold rounded cursor-pointer hover:bg-gray-300 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
 						>
-							<X />	
+							<X />
 						</button>
 						<button
 							className="bg-gray-100 hover:bg-gray-200 hidden md:flex transition-colors delay-75 py-2.5 px-4 rounded cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed truncate"
@@ -1089,7 +1120,11 @@ export default function InventoryList() {
 
 			{/* Modal de Avisos */}
 			{openNoticeModal && (
-				<NoticeModal successMsg={successMsg} message={message} />
+				<NoticeModal
+					successMsg={successMsg}
+					message={message}
+					setOpenNoticeModal={setOpenNoticeModal}
+				/>
 			)}
 
 			{/* Modal de Gerencimento de Produtos */}
@@ -1136,7 +1171,7 @@ export default function InventoryList() {
 				confirmationLeftButtonText="Cancelar"
 				confirmationRightButtonText="Sim, excluir produto"
 			/>
-			
+
 			{/* Modal de Filtros dos Lotes (Apenas Mobile) */}
 			<FilterBatchModal
 				openFilterModal={openFilterModal}
