@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { Modal, NoticeModal } from "../../shared";
 import { Eye, FileSpreadsheet } from "lucide-react";
 import { Logs } from "../../utils/types.ts";
+import { checkAuth } from "../../utils/checkAuth";
 import { agGridTranslation } from "../../utils/agGridTranslation.ts";
 import {
 	overlayLoadingTemplate,
@@ -47,6 +48,11 @@ export default function Orders() {
 		setSelectedLog(log);
 		setOpenModal(true);
 	};
+
+	//Checa a autenticação do usuário, se for false expulsa o usuário da sessão
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+	}, [navigate]);
 
 	const isMobile = window.innerWidth < 1024;
 
@@ -125,27 +131,6 @@ export default function Orders() {
 		fetchData();
 	}, []);
 
-	useEffect(() => {
-		const checkAuth = async () => {
-			try {
-				const resp = await axios.get(
-					"http://localhost/BioVerde/back-end/auth/check_session.php",
-					{ withCredentials: true }
-				);
-				if (!resp.data.loggedIn) {
-					setMessage("Sessão expirada. Por favor, faça login novamente.");
-					setOpenNoticeModal(true);
-					setTimeout(() => navigate("/"), 1900);
-				}
-			} catch {
-				setMessage("Sessão expirada. Por favor, faça login novamente.");
-				setOpenNoticeModal(true);
-				setTimeout(() => navigate("/"), 1900);
-			}
-		};
-		checkAuth();
-	}, [navigate]);
-
 	const fetchData = async () => {
 		try {
 			setLoading((prev) => new Set([...prev, "logs"]));
@@ -186,11 +171,11 @@ export default function Orders() {
 				<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 					<Tabs.Trigger
 						value="list"
-						className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+						className={`w-full px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 							activeTab === "list" ? "select animation-tab" : ""
 						}`}
 					>
-						Lista
+						Histórico de Logs
 					</Tabs.Trigger>
 				</Tabs.List>
 
@@ -284,7 +269,14 @@ export default function Orders() {
 				</Modal>
 			</Tabs.Root>
 
-			{openNoticeModal && <NoticeModal successMsg={false} message={message} />}
+			{/* Modal de Avisos */}
+			{openNoticeModal && (
+				<NoticeModal
+					successMsg={false}
+					message={message}
+					setOpenNoticeModal={setOpenNoticeModal}
+				/>
+			)}
 		</div>
 	);
 }

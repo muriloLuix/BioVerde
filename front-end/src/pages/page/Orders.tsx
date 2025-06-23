@@ -113,6 +113,11 @@ export default function Orders() {
 		}
 	}, [loading]);
 
+	// Seta o state do noticeModal para false após 5 segundos
+	const handleNoticeModal = useCallback(() => {
+		setTimeout(() => setOpenNoticeModal(false), 5000);
+	}, []);
+
 	//Carrega os clientes e status do pedido
 	const fetchOptions = async () => {
 		try {
@@ -147,6 +152,7 @@ export default function Orders() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -312,6 +318,7 @@ export default function Orders() {
 				newLoading.delete("updateOrder");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -370,6 +377,7 @@ export default function Orders() {
 				newLoading.delete("deleteOrder");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -763,11 +771,11 @@ export default function Orders() {
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative">
 						<Tabs.Trigger
 							value="list"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							className={`w-full px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista
+							Lista de Pedidos
 						</Tabs.Trigger>
 					</Tabs.List>
 
@@ -831,12 +839,18 @@ export default function Orders() {
 							<div className="flex items-center gap-2">
 								<button
 									disabled={loading.size > 0}
-									className="bg-red-700 py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+									className={`bg-red-700 font-semibold rounded text-white cursor-pointer hover:bg-red-800 flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed 
+									${
+										window.innerWidth < 1024
+											? "p-2"
+											: "py-2.5 px-3 w-[149.03px]" 
+									
+									}`}
 									onClick={generateReport}
 									title="Exportar PDF"
 								>
 									{loading.has("reports") ? (
-										<Loader2 className="animate-spin h-6 w-6" />
+										<Loader2 className="animate-spin h-5 w-5" />
 									) : (
 										<>
 											<FileText size={20}/>
@@ -846,7 +860,7 @@ export default function Orders() {
 								</button>
 								<button
 									disabled={loading.size > 0}
-									className={`bg-verdeGrama py-2.5 px-4 font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${window.innerWidth} < 1024 ? "p-2" : "py-2.5 px-4"`}
+									className={`bg-verdeGrama  font-semibold rounded text-white cursor-pointer hover:bg-[#246227] flex place-content-center md:text-sm gap-2 transition-colors delay-75 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed ${window.innerWidth < 1024 ? "p-2" : "py-2.5 px-4"}`}
 									onClick={() => {
 										const params = {
 											fileName: "pedidos.csv",
@@ -938,7 +952,11 @@ export default function Orders() {
 
 				{/* Modal de Avisos */}
 				{openNoticeModal && (
-					<NoticeModal successMsg={successMsg} message={message} />
+					<NoticeModal
+						successMsg={successMsg}
+						message={message}
+						setOpenNoticeModal={setOpenNoticeModal}
+					/>
 				)}
 
 				{/* Modal de Edição */}

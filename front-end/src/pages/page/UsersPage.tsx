@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { checkAuth } from "../../utils/checkAuth";
@@ -206,6 +207,7 @@ export default function UsersPage() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -769,7 +771,7 @@ export default function UsersPage() {
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 						>
-							Lista
+							Lista de Usuários
 						</Tabs.Trigger>
 					</Tabs.List>
 

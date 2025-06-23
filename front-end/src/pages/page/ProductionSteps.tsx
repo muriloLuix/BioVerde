@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { Tabs } from "radix-ui";
 import {
@@ -99,6 +100,11 @@ export default function ProductionSteps() {
 	useEffect(() => {
 		checkAuth({ navigate, setMessage, setOpenNoticeModal });
 	}, [navigate]);
+
+	// Seta o state do noticeModal para false após 5 segundos
+	const handleNoticeModal = useCallback(() => {
+		setTimeout(() => setOpenNoticeModal(false), 5000);
+	}, []);
 
 	//Carrega a lista de Etapas e as opções nos selects ao renderizar a página
 	useEffect(() => {
@@ -243,6 +249,7 @@ export default function ProductionSteps() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -301,6 +308,7 @@ export default function ProductionSteps() {
 				newLoading.delete("registerStep");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -371,6 +379,7 @@ export default function ProductionSteps() {
 				newLoading.delete("updateStep");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -425,6 +434,7 @@ export default function ProductionSteps() {
 				newLoading.delete("deleteStep");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -489,6 +499,7 @@ export default function ProductionSteps() {
 				newLoading.delete("registerProduct");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -530,6 +541,7 @@ export default function ProductionSteps() {
 				newLoading.delete("steps");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -568,6 +580,7 @@ export default function ProductionSteps() {
 				newLoading.delete("deleteProduct");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -606,6 +619,7 @@ export default function ProductionSteps() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -646,6 +660,7 @@ export default function ProductionSteps() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -689,6 +704,7 @@ export default function ProductionSteps() {
 				newLoading.delete("deleteStepName");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -901,12 +917,12 @@ export default function ProductionSteps() {
 					<Tabs.List className="flex gap-5 border-b border-verdePigmento relative lg:mb-7 mb-5">
 						<Tabs.Trigger
 							value="list"
-							className={`relative px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
+							className={`w-full px-4 py-2 text-verdePigmento font-medium cursor-pointer ${
 								activeTab === "list" ? "select animation-tab" : ""
 							}`}
 							onClick={() => setActiveTab("list")}
 						>
-							Lista de Etapas de Produção
+							Produtos com Etapas de Produção
 						</Tabs.Trigger>
 					</Tabs.List>
 
@@ -1311,7 +1327,11 @@ export default function ProductionSteps() {
 
 				{/* Modal de Avisos */}
 				{openNoticeModal && (
-					<NoticeModal successMsg={successMsg} message={message} />
+					<NoticeModal
+						successMsg={successMsg}
+						message={message}
+						setOpenNoticeModal={setOpenNoticeModal}
+					/>
 				)}
 			</div>
 		</div>

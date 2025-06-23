@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { checkAuth } from "../../utils/checkAuth";
 import { useNavigate } from "react-router-dom";
@@ -61,6 +62,11 @@ export default function InventoryMovements() {
 	useEffect(() => {
 		checkAuth({ navigate, setMessage, setOpenNoticeModal });
 	}, [navigate]);
+
+	// Seta o state do noticeModal para false após 5 segundos
+	const handleNoticeModal = useCallback(() => {
+		setTimeout(() => setOpenNoticeModal(false), 5000);
+	}, []);
 
 	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
 	useEffect(() => {
@@ -162,6 +168,7 @@ export default function InventoryMovements() {
 				newLoading.delete("options");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -221,6 +228,7 @@ export default function InventoryMovements() {
 				newLoading.delete("stockIn");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -235,7 +243,7 @@ export default function InventoryMovements() {
 			product: !formData.produto,
 			batch: !formData.lote,
 			quantity: !formData.quantidade,
-			destination: haveDestination ? !formData.destino : false,
+			destination: false,
 			reason: !formData.motivo,
 			order: isSaleCliente ? !formData.pedido : false,
 		};
@@ -279,6 +287,7 @@ export default function InventoryMovements() {
 				newLoading.delete("stockOut");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -350,7 +359,7 @@ export default function InventoryMovements() {
 	//Gerar Relatório
 	const [relatorioModalOpen, setRelatorioModalOpen] = useState(false);
 	const [relatorioContent, setRelatorioContent] = useState<string>("");
-	const gerarRelatorio = async () => {
+	const generateReport = async () => {
 		setLoading((prev) => new Set([...prev, "reports"]));
 		try {
 			const response = await axios.get(
@@ -499,7 +508,7 @@ export default function InventoryMovements() {
 					<div className="flex items-center gap-5 mt-1 mb-3">
 						<button
 							title="Exportar PDF"
-							onClick={gerarRelatorio}
+							onClick={generateReport}
 							disabled={loading.size > 0}
 							className={`bg-red-700 font-semibold rounded text-white cursor-pointer
 							hover:bg-red-800 flex place-content-center gap-2 disabled:bg-gray-100 disabled:text-gray-400 
@@ -614,7 +623,11 @@ export default function InventoryMovements() {
 
 			{/* Modal de Avisos */}
 			{openNoticeModal && (
-				<NoticeModal successMsg={successMsg} message={message} />
+				<NoticeModal
+					successMsg={successMsg}
+					message={message}
+					setOpenNoticeModal={setOpenNoticeModal}
+				/>
 			)}
 		</>
 	);
