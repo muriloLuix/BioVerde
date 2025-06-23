@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Form } from "radix-ui";
-import Select, { GroupBase, Props} from "react-select";
+import Select, { GroupBase, Props } from "react-select";
 import CreatableSelect, { CreatableProps } from "react-select/creatable";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { InputMask, InputMaskProps } from "primereact/inputmask";
@@ -34,10 +34,9 @@ type InputPropsBase = {
 	openManagementModal?: () => void;
 	generatePassword?: () => void;
 	onCreateNewOption?: (inputValue: string) => Promise<void>;
-	onChangeSelect?: (
-		e: { target: { name: string; value: string | string[] } }
-	) => void;
-
+	onChangeSelect?: (e: {
+		target: { name: string; value: string | string[] };
+	}) => void;
 };
 
 type InputProps =
@@ -76,7 +75,8 @@ const SmartField = ({
 }: InputProps) => {
 	const [isHidden, setIsHidden] = useState(false);
 
-	const regex = (text: string) => text.trim().toLowerCase().replace(/\s+/g, "-");
+	const regex = (text: string) =>
+		text.trim().toLowerCase().replace(/\s+/g, "-");
 
 	return (
 		<Form.Field
@@ -89,29 +89,21 @@ const SmartField = ({
 			>
 				<span className="text-xl pb-2 font-light">{fieldText}:</span>
 				<div className="flex items-center pb-1 gap-2">
-					{userLevel === "Administrador" && (
-						isCreatableSelect && (
-							<button 
-								title={creatableConfigName}
-								onClick={openManagementModal}
-							>
-								<Settings size={20} className="text-gray-600 cursor-pointer" />
-							</button>
-						) 
+					{userLevel === "Administrador" && isCreatableSelect && (
+						<button title={creatableConfigName} onClick={openManagementModal}>
+							<Settings size={20} className="text-gray-600 cursor-pointer" />
+						</button>
 					)}
 					{error && (
 						<span
 							className={`text-red-500 ${
-							error === "*" ? "text-base" : "text-xs"
+								error === "*" ? "text-base" : "text-xs"
 							}`}
 						>
 							{error}
 						</span>
 					)}
-					<Form.Message
-						className="text-red-500 text-base"
-						match="valueMissing"
-					>
+					<Form.Message className="text-red-500 text-base" match="valueMissing">
 						*
 					</Form.Message>
 					<Form.Message className="text-red-500 text-xs" match="typeMismatch">
@@ -123,13 +115,9 @@ const SmartField = ({
 					>
 						Formato inválido*
 					</Form.Message>
-					<Form.Message
-						className="text-red-500 text-xs"
-						match="rangeUnderflow"
-					>
+					<Form.Message className="text-red-500 text-xs" match="rangeUnderflow">
 						Valor inválido*
 					</Form.Message>
-
 				</div>
 			</Form.Label>
 			{isSelect ? (
@@ -217,8 +205,8 @@ const SmartField = ({
 							value={
 								isMulti
 									? options?.filter((opt) =>
-										Array.isArray(value) ? value.includes(opt.value) : false
-									)
+											Array.isArray(value) ? value.includes(opt.value) : false
+									  )
 									: options?.find((opt) => opt.value === value) || null
 							}
 							onChange={(selected) => {
@@ -285,7 +273,7 @@ const SmartField = ({
 					{/* Botão de Gerar Senha Aleatoria */}
 					<button
 						type="button"
-						className="bg-verdeMedio p-2.5 rounded-2xl whitespace-nowrap text-white cursor-pointer hover:bg-verdeEscuro"
+						className="bg-green-600 p-2.5 rounded-2xl whitespace-nowrap text-white cursor-pointer hover:bg-green-700"
 						onClick={generatePassword}
 					>
 						Gerar Senha
@@ -336,7 +324,11 @@ const SmartField = ({
 							id={regex(fieldName)}
 							required={required}
 							value={value}
-							className={`${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 ${isDisable ? "bg-gray-100 text-gray-600 cursor-default" : "bg-white"} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
+							className={`${inputWidth} h-[45.6px] border border-separator rounded-lg p-2.5 outline-0 ${
+								isDisable
+									? "bg-gray-100 text-gray-600 cursor-default"
+									: "bg-white"
+							} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield]`}
 						/>
 					)}
 				</Form.Control>
