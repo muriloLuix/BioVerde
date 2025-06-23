@@ -15,7 +15,7 @@ const NoticeModal = ({
 	return (
 		<Toast.Provider swipeDirection="right">
 			<Toast.Root
-				className={`sm:w-95 w-[90vw] p-4 rounded-lg text-white sombra ${
+				className={`sm:w-95 w-[90vw] p-4 rounded-lg text-white sombra mb-4 last:mb-0 ${
 					successMsg ? "bg-verdePigmento" : "bg-ErroModal"
 				}`}
 			>
@@ -30,7 +30,10 @@ const NoticeModal = ({
 				<Toast.Description>{message}</Toast.Description>
 			</Toast.Root>
 
-			<Toast.Viewport className="fixed bottom-4 right-4 z-1000" />
+			<Toast.Viewport
+				className="fixed bottom-4 right-4 z-1000 flex flex-col items-end gap-4 max-w-full"
+				style={{ maxHeight: "calc(100vh - 2rem)", overflowY: "auto" }}
+			/>
 		</Toast.Provider>
 	);
 };

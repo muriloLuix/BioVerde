@@ -182,33 +182,6 @@ export default function InventoryList() {
 		}
 	};
 
-	useEffect(() => {
-		checkAuth({ navigate, setMessage, setOpenNoticeModal });
-
-		if (rowData.length > 0 && loading.has("updateBatch")) {
-			rowData.map((row: Batch) => {
-				if (
-					row.lote_quantAtual >=
-					row.lote_quantMax - row.lote_quantMax * 0.9
-				) {
-					try {
-						setOpenNoticeModal(true);
-						setMessage(row.lote_codigo + " está quase lotado!");
-					} catch (err) {
-						console.error(err);
-					} finally {
-						handleNoticeModal();
-					}
-				}
-			});
-		}
-	}, [navigate, rowData]);
-
-	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
-	useEffect(() => {
-		fetchData();
-	}, []);
-
 	// Função que busca as opções
 	const fetchOptions = async () => {
 		try {
@@ -914,6 +887,33 @@ export default function InventoryList() {
 			console.error(error);
 		}
 	}, [clearFilter]);
+
+	useEffect(() => {
+		checkAuth({ navigate, setMessage, setOpenNoticeModal });
+
+		if (rowData.length > 0 && !message.includes(" atualizado com sucesso!")) {
+			rowData.map((row: Batch) => {
+				if (
+					row.lote_quantAtual >=
+					row.lote_quantMax - row.lote_quantMax * 0.9
+				) {
+					try {
+						setOpenNoticeModal(true);
+						setMessage(row.lote_codigo + " está quase lotado!");
+					} catch (err) {
+						console.error(err);
+					} finally {
+						handleNoticeModal();
+					}
+				}
+			});
+		}
+	}, [navigate, rowData]);
+
+	//Carrega a lista os lotes e as opções nos selects ao renderizar a página
+	useEffect(() => {
+		fetchData();
+	}, []);
 
 	return (
 		<>
