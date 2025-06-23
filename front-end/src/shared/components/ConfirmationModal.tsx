@@ -64,7 +64,7 @@ const ConfirmationModal = ({
 						<AlertDialog.Action asChild>
 							<button
 								type="button"
-								className={`bg-red-600 py-3 px-6 rounded-xl text-white cursor-pointer gap-2 hover:bg-red-700 ${
+								className={`bg-red-600 py-3 px-2 rounded-xl text-white cursor-pointer gap-2 hover:bg-red-700 flex place-content-center ${
 									isLogout ? "w-[100px]" : "w-[186px]"
 								}`}
 								onClick={onConfirm}
