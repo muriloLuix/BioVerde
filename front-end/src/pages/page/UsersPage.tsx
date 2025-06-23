@@ -667,6 +667,7 @@ export default function UsersPage() {
 						title="Editar Usuário"
 						onClick={() => {
 							if (params.data) handleEditClick(params.data);
+							setSuccessMsg(true);
 						}}
 					>
 						<Pencil size={18} />

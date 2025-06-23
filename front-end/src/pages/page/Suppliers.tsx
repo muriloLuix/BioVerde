@@ -643,6 +643,7 @@ export default function Suppliers() {
 							if (params.data) {
 								handleEditClick(params.data);
 								setErrors({ ...errors, isCepValid: false });
+								setSuccessMsg(true);
 							}
 						}}
 					>

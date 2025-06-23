@@ -405,12 +405,12 @@ export default function InventoryList() {
 			setMessage("Erro ao conectar com o servidor");
 			setOpenNoticeModal(true);
 		} finally {
-			handleNoticeModal();
 			setLoading((prev) => {
 				const newLoading = new Set(prev);
 				newLoading.delete("deleteBatch");
 				return newLoading;
 			});
+			handleNoticeModal();
 		}
 	};
 
@@ -741,6 +741,7 @@ export default function InventoryList() {
 						title="Editar Lote"
 						onClick={() => {
 							if (params.data) handleEdit(params.data);
+							setSuccessMsg(true);
 						}}
 					>
 						<Pencil size={18} />
@@ -891,7 +892,7 @@ export default function InventoryList() {
 	useEffect(() => {
 		checkAuth({ navigate, setMessage, setOpenNoticeModal });
 
-		if (rowData.length > 0 && !message.includes(" atualizado com sucesso!")) {
+		if (rowData.length > 0 && !message.includes(" sucesso!")) {
 			rowData.map((row: Batch) => {
 				if (
 					row.lote_quantAtual >=

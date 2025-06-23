@@ -608,6 +608,7 @@ export default function Orders() {
 							if (params.data) {
 								handleEditClick(params.data);
 								setErrors({ isCepValid: false });
+								setSuccessMsg(true);
 							}
 						}}
 					>

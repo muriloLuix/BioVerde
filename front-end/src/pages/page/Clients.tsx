@@ -636,6 +636,7 @@ export default function Clients() {
 							if (params.data) {
 								handleEditClick(params.data);
 								setErrors({ ...errors, isCepValid: false });
+								setSuccessMsg(true);
 							}
 						}}
 					>
