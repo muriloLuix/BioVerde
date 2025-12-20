@@ -72,12 +72,8 @@ O projeto será desenvolvido com as seguintes tecnologias:
 ## 🤝 Contribuidores
 
 👨‍💻 **Murilo Luiz Jaboinski**  
-👩‍💻 **Fernando Kotinda**  
-👩‍💻 **Ana Beatriz da Costa Silva**  
+👩‍💻 **Fernando Kotinda**   
 👩‍💻 **Carlos Bandeira**  
-👩‍💻 **André Laurindo**  
-👩‍💻 **Leonardo Oliveira**  
-👩‍💻 **Guilherme Anholeto**
 
 Se deseja contribuir com o projeto, sinta-se à vontade para abrir um pull request! 🚀
 
@@ -88,3 +84,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ---
 
 📌 **BioVerde** - Transformando o futuro da agricultura com inovação e tecnologia! 🌾🚀
+
